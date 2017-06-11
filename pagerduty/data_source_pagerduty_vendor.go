@@ -5,8 +5,8 @@ import (
 	"log"
 	"regexp"
 
-	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func dataSourcePagerDutyVendor() *schema.Resource {
@@ -38,11 +38,11 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 
 	searchName := d.Get("name").(string)
 
-	o := &pagerduty.ListVendorOptions{
+	o := &pagerduty.ListVendorsOptions{
 		Query: searchName,
 	}
 
-	resp, err := client.ListVendors(*o)
+	resp, _, err := client.Vendors.List(o)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 
 	for _, vendor := range resp.Vendors {
 		if r.MatchString(vendor.Name) {
-			found = &vendor
+			found = vendor
 			break
 		}
 	}

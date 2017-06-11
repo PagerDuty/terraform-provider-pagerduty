@@ -3,8 +3,8 @@ package pagerduty
 import (
 	"log"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func resourcePagerDutyTeam() *schema.Resource {
@@ -31,7 +31,7 @@ func resourcePagerDutyTeam() *schema.Resource {
 }
 
 func buildTeamStruct(d *schema.ResourceData) *pagerduty.Team {
-	team := pagerduty.Team{
+	team := &pagerduty.Team{
 		Name: d.Get("name").(string),
 	}
 
@@ -39,7 +39,7 @@ func buildTeamStruct(d *schema.ResourceData) *pagerduty.Team {
 		team.Description = attr.(string)
 	}
 
-	return &team
+	return team
 }
 
 func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error {
@@ -49,8 +49,7 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Creating PagerDuty team %s", team.Name)
 
-	team, err := client.CreateTeam(team)
-
+	team, _, err := client.Teams.Create(team)
 	if err != nil {
 		return err
 	}
@@ -66,10 +65,9 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty team %s", d.Id())
 
-	team, err := client.GetTeam(d.Id())
-
+	team, _, err := client.Teams.Get(d.Id())
 	if err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	d.Set("name", team.Name)
@@ -85,7 +83,7 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Updating PagerDuty team %s", d.Id())
 
-	if _, err := client.UpdateTeam(d.Id(), team); err != nil {
+	if _, _, err := client.Teams.Update(d.Id(), team); err != nil {
 		return err
 	}
 
@@ -97,7 +95,7 @@ func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Deleting PagerDuty team %s", d.Id())
 
-	if err := client.DeleteTeam(d.Id()); err != nil {
+	if _, err := client.Teams.Delete(d.Id()); err != nil {
 		return err
 	}
 

@@ -3,8 +3,11 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"runtime"
 
-	"github.com/PagerDuty/go-pagerduty"
+	"github.com/hashicorp/terraform/helper/logging"
+	"github.com/hashicorp/terraform/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 // Config defines the configuration options for the PagerDuty client
@@ -30,16 +33,22 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		return nil, fmt.Errorf(invalidCreds)
 	}
 
-	client := pagerduty.NewClient(c.Token)
+	config := &pagerduty.Config{
+		Debug:     logging.IsDebugOrHigher(),
+		Token:     c.Token,
+		UserAgent: fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraform.VersionString()),
+	}
+
+	client, err := pagerduty.NewClient(config)
+	if err != nil {
+		return nil, err
+	}
 
 	if !c.SkipCredsValidation {
 		// Validate the credentials by calling the abilities endpoint,
 		// if we get a 401 response back we return an error to the user
-		if _, err := client.ListAbilities(); err != nil {
-			if isUnauthorized(err) {
-				return nil, fmt.Errorf(fmt.Sprintf("%s\n%s", err, invalidCreds))
-			}
-			return nil, err
+		if err := client.ValidateAuth(); err != nil {
+			return nil, fmt.Errorf(fmt.Sprintf("%s\n%s", err, invalidCreds))
 		}
 	}
 

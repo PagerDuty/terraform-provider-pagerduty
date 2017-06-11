@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyUser_Basic(t *testing.T) {
@@ -119,11 +119,7 @@ func testAccCheckPagerDutyUserDestroy(s *terraform.State) error {
 			continue
 		}
 
-		opts := pagerduty.GetUserOptions{}
-
-		_, err := client.GetUser(r.Primary.ID, opts)
-
-		if err == nil {
+		if _, _, err := client.Users.Get(r.Primary.ID, &pagerduty.GetUserOptions{}); err == nil {
 			return fmt.Errorf("User still exists")
 		}
 
@@ -143,7 +139,7 @@ func testAccCheckPagerDutyUserExists(n string) resource.TestCheckFunc {
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, err := client.GetUser(rs.Primary.ID, pagerduty.GetUserOptions{})
+		found, _, err := client.Users.Get(rs.Primary.ID, &pagerduty.GetUserOptions{})
 		if err != nil {
 			return err
 		}

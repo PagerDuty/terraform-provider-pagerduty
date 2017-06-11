@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyTeam_Basic(t *testing.T) {
@@ -50,9 +50,7 @@ func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.GetTeam(r.Primary.ID)
-
-		if err == nil {
+		if _, _, err := client.Teams.Get(r.Primary.ID); err == nil {
 			return fmt.Errorf("Team still exists")
 		}
 
@@ -64,7 +62,7 @@ func testAccCheckPagerDutyTeamExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*pagerduty.Client)
 		for _, r := range s.RootModule().Resources {
-			if _, err := client.GetTeam(r.Primary.ID); err != nil {
+			if _, _, err := client.Teams.Get(r.Primary.ID); err != nil {
 				return fmt.Errorf("Received an error retrieving team %s ID: %s", err, r.Primary.ID)
 			}
 		}

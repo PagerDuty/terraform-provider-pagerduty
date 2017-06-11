@@ -3,8 +3,8 @@ package pagerduty
 import (
 	"log"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func resourcePagerDutySchedule() *schema.Resource {
@@ -114,19 +114,17 @@ func resourcePagerDutySchedule() *schema.Resource {
 }
 
 func buildScheduleStruct(d *schema.ResourceData) *pagerduty.Schedule {
-	scheduleLayers := d.Get("layer").([]interface{})
-
-	schedule := pagerduty.Schedule{
+	schedule := &pagerduty.Schedule{
 		Name:           d.Get("name").(string),
 		TimeZone:       d.Get("time_zone").(string),
-		ScheduleLayers: expandScheduleLayers(scheduleLayers),
+		ScheduleLayers: expandScheduleLayers(d.Get("layer")),
 	}
 
 	if attr, ok := d.GetOk("description"); ok {
 		schedule.Description = attr.(string)
 	}
 
-	return &schedule
+	return schedule
 }
 
 func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) error {
@@ -136,8 +134,7 @@ func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Creating PagerDuty schedule: %s", schedule.Name)
 
-	schedule, err := client.CreateSchedule(*schedule)
-
+	schedule, _, err := client.Schedules.Create(schedule)
 	if err != nil {
 		return err
 	}
@@ -152,8 +149,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
 
-	schedule, err := client.GetSchedule(d.Id(), pagerduty.GetScheduleOptions{})
-
+	schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
 	if err != nil {
 		return err
 	}
@@ -176,7 +172,7 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Updating PagerDuty schedule: %s", d.Id())
 
-	if _, err := client.UpdateSchedule(d.Id(), *schedule); err != nil {
+	if _, _, err := client.Schedules.Update(d.Id(), schedule); err != nil {
 		return err
 	}
 
@@ -188,11 +184,106 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", d.Id())
 
-	if err := client.DeleteSchedule(d.Id()); err != nil {
+	if _, err := client.Schedules.Delete(d.Id()); err != nil {
 		return err
 	}
 
 	d.SetId("")
 
 	return nil
+}
+
+func expandScheduleLayers(v interface{}) []*pagerduty.ScheduleLayer {
+	var scheduleLayers []*pagerduty.ScheduleLayer
+
+	for _, sl := range v.([]interface{}) {
+		rsl := sl.(map[string]interface{})
+		scheduleLayer := &pagerduty.ScheduleLayer{
+			ID:                        rsl["id"].(string),
+			Name:                      rsl["name"].(string),
+			Start:                     rsl["start"].(string),
+			End:                       rsl["end"].(string),
+			RotationVirtualStart:      rsl["rotation_virtual_start"].(string),
+			RotationTurnLengthSeconds: rsl["rotation_turn_length_seconds"].(int),
+		}
+
+		for _, slu := range rsl["users"].([]interface{}) {
+			user := &pagerduty.UserReferenceWrapper{
+				User: &pagerduty.UserReference{
+					ID:   slu.(string),
+					Type: "user",
+				},
+			}
+			scheduleLayer.Users = append(scheduleLayer.Users, user)
+		}
+
+		for _, slr := range rsl["restriction"].([]interface{}) {
+			rslr := slr.(map[string]interface{})
+
+			restriction := &pagerduty.Restriction{
+				Type:            rslr["type"].(string),
+				StartTimeOfDay:  rslr["start_time_of_day"].(string),
+				StartDayOfWeek:  rslr["start_day_of_week"].(int),
+				DurationSeconds: rslr["duration_seconds"].(int),
+			}
+
+			scheduleLayer.Restrictions = append(scheduleLayer.Restrictions, restriction)
+		}
+
+		scheduleLayers = append(scheduleLayers, scheduleLayer)
+	}
+
+	return scheduleLayers
+}
+
+func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) []map[string]interface{} {
+	var scheduleLayers []map[string]interface{}
+
+	for _, sl := range v {
+		scheduleLayer := map[string]interface{}{
+			"id":                           sl.ID,
+			"name":                         sl.Name,
+			"end":                          sl.End,
+			"start":                        sl.Start,
+			"rotation_virtual_start":       sl.RotationVirtualStart,
+			"rotation_turn_length_seconds": sl.RotationTurnLengthSeconds,
+		}
+
+		var users []string
+
+		for _, slu := range sl.Users {
+			users = append(users, slu.User.ID)
+		}
+
+		scheduleLayer["users"] = users
+
+		var restrictions []map[string]interface{}
+
+		for _, slr := range sl.Restrictions {
+			restriction := map[string]interface{}{
+				"duration_seconds":  slr.DurationSeconds,
+				"start_time_of_day": slr.StartTimeOfDay,
+				"type":              slr.Type,
+			}
+
+			if slr.StartDayOfWeek > 0 {
+				restriction["start_day_of_week"] = slr.StartDayOfWeek
+			}
+
+			restrictions = append(restrictions, restriction)
+		}
+
+		scheduleLayer["restriction"] = restrictions
+
+		scheduleLayers = append(scheduleLayers, scheduleLayer)
+	}
+
+	// Reverse the final result and return it
+	resultReversed := make([]map[string]interface{}, 0, len(scheduleLayers))
+
+	for i := len(scheduleLayers) - 1; i >= 0; i-- {
+		resultReversed = append(resultReversed, scheduleLayers[i])
+	}
+
+	return resultReversed
 }

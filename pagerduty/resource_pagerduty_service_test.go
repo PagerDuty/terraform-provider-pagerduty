@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyService_Basic(t *testing.T) {
@@ -311,9 +311,7 @@ func testAccCheckPagerDutyServiceDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.GetService(r.Primary.ID, &pagerduty.GetServiceOptions{})
-
-		if err == nil {
+		if _, _, err := client.Services.Get(r.Primary.ID, &pagerduty.GetServiceOptions{}); err == nil {
 			return fmt.Errorf("Service still exists")
 		}
 
@@ -334,7 +332,7 @@ func testAccCheckPagerDutyServiceExists(n string) resource.TestCheckFunc {
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, err := client.GetService(rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
 		if err != nil {
 			return err
 		}

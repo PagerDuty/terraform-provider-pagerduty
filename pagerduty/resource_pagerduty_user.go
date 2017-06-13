@@ -3,7 +3,7 @@ package pagerduty
 import (
 	"log"
 
-	"github.com/PagerDuty/go-pagerduty"
+	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -67,11 +67,15 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"contact_method": &schema.Schema{
-				Type:     schema.TypeList,
+			"contact_methods": &schema.Schema{
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"type": {
 							Type:     schema.TypeString,
 							Required: true,
@@ -104,17 +108,6 @@ func resourcePagerDutyUser() *schema.Resource {
 	}
 }
 
-// func buildContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMethod {
-// 	contactMethod := pagerduty.ContactMethod{
-// 		Type:           d.Get("type").(string),
-// 		Label:          d.Get("label").(string),
-// 		Address:        d.Get("address").(string),
-// 		SendShortEmail: d.Get("send_short_email").(bool),
-// 	}
-
-// 	return &contactMethod
-// }
-
 func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	user := pagerduty.User{
 		Name:  d.Get("name").(string),
@@ -128,9 +121,9 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 		user.Color = attr.(string)
 	}
 
-	if attr, ok := d.GetOk("contact_methods"); ok {
-		user.ContactMethods = attr.([]ContactMethods)
-	}
+	// if attr, ok := d.GetOk("contact_methods"); ok {
+	// 	user.ContactMethods = attr.([]pagerduty.ContactMethod)
+	// }
 
 	if attr, ok := d.GetOk("role"); ok {
 		role := attr.(string)

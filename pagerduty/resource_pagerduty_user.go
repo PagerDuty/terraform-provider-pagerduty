@@ -67,6 +67,30 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"contact_method": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"send_short_email": {
+							Type:     schema.TypeBool,
+							Required: true,
+						},
+						"address": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 			"invitation_sent": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -80,6 +104,17 @@ func resourcePagerDutyUser() *schema.Resource {
 	}
 }
 
+// func buildContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMethod {
+// 	contactMethod := pagerduty.ContactMethod{
+// 		Type:           d.Get("type").(string),
+// 		Label:          d.Get("label").(string),
+// 		Address:        d.Get("address").(string),
+// 		SendShortEmail: d.Get("send_short_email").(bool),
+// 	}
+
+// 	return &contactMethod
+// }
+
 func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	user := pagerduty.User{
 		Name:  d.Get("name").(string),
@@ -91,6 +126,10 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 
 	if attr, ok := d.GetOk("color"); ok {
 		user.Color = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("contact_methods"); ok {
+		user.ContactMethods = attr.([]ContactMethods)
 	}
 
 	if attr, ok := d.GetOk("role"); ok {
@@ -153,6 +192,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", user.Description)
 	d.Set("job_title", user.JobTitle)
 	d.Set("teams", user.Teams)
+	d.Set("contact_methods", user.ContactMethods)
 
 	return nil
 }

@@ -3,7 +3,7 @@ package pagerduty
 import (
 	"log"
 
-	"github.com/PagerDuty/go-pagerduty"
+	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -67,6 +67,34 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"contact_methods": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"send_short_email": {
+							Type:     schema.TypeBool,
+							Required: true,
+						},
+						"address": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 			"invitation_sent": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -92,6 +120,10 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	if attr, ok := d.GetOk("color"); ok {
 		user.Color = attr.(string)
 	}
+
+	// if attr, ok := d.GetOk("contact_methods"); ok {
+	// 	user.ContactMethods = attr.([]pagerduty.ContactMethod)
+	// }
 
 	if attr, ok := d.GetOk("role"); ok {
 		role := attr.(string)
@@ -153,6 +185,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", user.Description)
 	d.Set("job_title", user.JobTitle)
 	d.Set("teams", user.Teams)
+	d.Set("contact_methods", user.ContactMethods)
 
 	return nil
 }

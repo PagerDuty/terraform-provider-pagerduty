@@ -26,7 +26,7 @@ func init() {
 	})
 
 	resource.AddTestSweepers("pagerduty_team", &resource.Sweeper{
-		Name: "pagerdutypagerduty_team_user",
+		Name: "pagerduty_team",
 		F:    testSweepTeam,
 	})
 

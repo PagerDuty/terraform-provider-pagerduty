@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"testing"
 
@@ -12,7 +13,12 @@ import (
 )
 
 func testSweepEscalationPolicy(region string) error {
-	client, err := sweeperClient()
+	config, err := sharedConfigForRegion(region)
+	if err != nil {
+		return err
+	}
+
+	client, err := config.Client()
 	if err != nil {
 		return err
 	}
@@ -24,6 +30,7 @@ func testSweepEscalationPolicy(region string) error {
 
 	for _, escalation := range resp.EscalationPolicies {
 		if strings.HasPrefix(escalation.Name, "test") || strings.HasPrefix(escalation.Name, "tf-") {
+			log.Printf("Destroying escalation policy %s (%s)", escalation.Name, escalation.ID)
 			if _, err := client.EscalationPolicies.Delete(escalation.ID); err != nil {
 				return err
 			}

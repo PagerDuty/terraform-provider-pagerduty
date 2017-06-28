@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"testing"
 
@@ -12,7 +13,12 @@ import (
 )
 
 func testSweepTeam(region string) error {
-	client, err := sweeperClient()
+	config, err := sharedConfigForRegion(region)
+	if err != nil {
+		return err
+	}
+
+	client, err := config.Client()
 	if err != nil {
 		return err
 	}
@@ -24,6 +30,7 @@ func testSweepTeam(region string) error {
 
 	for _, team := range resp.Teams {
 		if strings.HasPrefix(team.Name, "test") || strings.HasPrefix(team.Name, "tf-") {
+			log.Printf("Destroying team %s (%s)", team.Name, team.ID)
 			if _, err := client.Teams.Delete(team.ID); err != nil {
 				return err
 			}

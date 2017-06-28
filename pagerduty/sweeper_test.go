@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -45,15 +44,16 @@ func TestMain(m *testing.M) {
 	resource.TestMain(m)
 }
 
-func sweeperClient() (*pagerduty.Client, error) {
+// sharedConfigForRegion returns a common config setup needed for the sweeper
+// functions for a given region
+func sharedConfigForRegion(region string) (*Config, error) {
 	if os.Getenv("PAGERDUTY_SWEEPER_TOKEN") == "" {
 		return nil, fmt.Errorf("$PAGERDUTY_SWEEPER_TOKEN must be set")
 	}
 
-	config := &pagerduty.Config{
+	config := &Config{
 		Token: os.Getenv("PAGERDUTY_SWEEPER_TOKEN"),
-		Debug: true,
 	}
 
-	return pagerduty.NewClient(config)
+	return config, nil
 }

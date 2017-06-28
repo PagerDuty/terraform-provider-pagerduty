@@ -14,8 +14,8 @@ func TestAccDataSourcePagerDutySchedule_Basic(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.com", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "Europe/Berlin"
-	start := "2020-05-24T20:00:00-04:00"
-	rotationVirtualStart := "2020-05-24T20:00:00-04:00"
+	start := "2020-05-25T02:00:00+02:00"
+	rotationVirtualStart := "2020-05-25T02:00:00+02:00"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },

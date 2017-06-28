@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -9,6 +10,28 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
+
+func testSweepEscalationPolicy(region string) error {
+	client, err := sweeperClient()
+	if err != nil {
+		return err
+	}
+
+	resp, _, err := client.EscalationPolicies.List(&pagerduty.ListEscalationPoliciesOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, escalation := range resp.EscalationPolicies {
+		if strings.HasPrefix(escalation.Name, "test") || strings.HasPrefix(escalation.Name, "tf-") {
+			if _, err := client.EscalationPolicies.Delete(escalation.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
 
 func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))

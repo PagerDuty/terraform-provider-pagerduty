@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -9,6 +10,28 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
+
+func testSweepSchedule(region string) error {
+	client, err := sweeperClient()
+	if err != nil {
+		return err
+	}
+
+	resp, _, err := client.Schedules.List(&pagerduty.ListSchedulesOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, schedule := range resp.Schedules {
+		if strings.HasPrefix(schedule.Name, "test") || strings.HasPrefix(schedule.Name, "tf-") {
+			if _, err := client.Schedules.Delete(schedule.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
 
 func TestAccPagerDutySchedule_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))

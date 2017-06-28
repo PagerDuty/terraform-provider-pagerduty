@@ -2,6 +2,8 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -9,6 +11,34 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
+
+func testSweepAddon(region string) error {
+	config, err := sharedConfigForRegion(region)
+	if err != nil {
+		return err
+	}
+
+	client, err := config.Client()
+	if err != nil {
+		return err
+	}
+
+	resp, _, err := client.Addons.List(&pagerduty.ListAddonsOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, addon := range resp.Addons {
+		if strings.HasPrefix(addon.Name, "test") || strings.HasPrefix(addon.Name, "tf-") {
+			log.Printf("Destroying add-on %s (%s)", addon.Name, addon.ID)
+			if _, err := client.Addons.Delete(addon.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
 
 func TestAccPagerDutyAddon_Basic(t *testing.T) {
 	addon := fmt.Sprintf("tf-%s", acctest.RandString(5))

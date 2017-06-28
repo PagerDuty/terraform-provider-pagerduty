@@ -32,19 +32,28 @@ type EscalationPolicy struct {
 
 // ListEscalationPoliciesResponse represents a list response of escalation policies.
 type ListEscalationPoliciesResponse struct {
-	*Pagination
+	Limit              int                 `url:"limit,omitempty"`
+	More               bool                `url:"more,omitempty"`
+	Offset             int                 `url:"offset,omitempty"`
+	Total              int                 `url:"total,omitempty"`
 	EscalationPolicies []*EscalationPolicy `json:"escalation_policies,omitempty"`
 }
 
 // ListEscalationRulesResponse represents a list response of escalation rules.
 type ListEscalationRulesResponse struct {
-	*Pagination
+	Limit           int               `url:"limit,omitempty"`
+	More            bool              `url:"more,omitempty"`
+	Offset          int               `url:"offset,omitempty"`
+	Total           int               `url:"total,omitempty"`
 	EscalationRules []*EscalationRule `json:"escalation_rules,omitempty"`
 }
 
 // ListEscalationPoliciesOptions represents options when listing escalation policies.
 type ListEscalationPoliciesOptions struct {
-	Pagination
+	Limit    int      `url:"limit,omitempty"`
+	More     bool     `url:"more,omitempty"`
+	Offset   int      `url:"offset,omitempty"`
+	Total    int      `url:"total,omitempty"`
 	Includes []string `url:"include,omitempty,brackets"`
 	Query    string   `url:"query,omitempty"`
 	SortBy   string   `url:"sort_by,omitempty"`

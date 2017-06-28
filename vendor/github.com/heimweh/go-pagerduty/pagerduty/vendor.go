@@ -27,13 +27,19 @@ type Vendor struct {
 
 // ListVendorsOptions represents options when listing vendors.
 type ListVendorsOptions struct {
-	*Pagination
-	Query string `url:"query,omitempty"`
+	Limit  int    `url:"limit,omitempty"`
+	More   bool   `url:"more,omitempty"`
+	Offset int    `url:"offset,omitempty"`
+	Total  int    `url:"total,omitempty"`
+	Query  string `url:"query,omitempty"`
 }
 
 // ListVendorsResponse represents a list response of vendors.
 type ListVendorsResponse struct {
-	*Pagination
+	Limit   int       `url:"limit,omitempty"`
+	More    bool      `url:"more,omitempty"`
+	Offset  int       `url:"offset,omitempty"`
+	Total   int       `url:"total,omitempty"`
 	Vendors []*Vendor `json:"vendors,omitempty"`
 }
 

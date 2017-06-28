@@ -49,14 +49,6 @@ type Response struct {
 	*http.Response
 }
 
-// Pagination contains pagination information
-type Pagination struct {
-	Limit  int  `url:"limit,omitempty"`
-	More   bool `url:"more,omitempty"`
-	Offset int  `url:"offset,omitempty"`
-	Total  int  `url:"total,omitempty"`
-}
-
 // NewClient returns a new PagerDuty API client.
 func NewClient(config *Config) (*Client, error) {
 	if config.HTTPClient == nil {

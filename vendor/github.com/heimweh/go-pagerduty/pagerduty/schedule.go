@@ -1,6 +1,9 @@
 package pagerduty
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // ScheduleService handles the communication with schedule
 // related methods of the PagerDuty API.
@@ -62,13 +65,19 @@ type ScheduleLayer struct {
 
 // ListSchedulesOptions represents options when listing schedules.
 type ListSchedulesOptions struct {
-	*Pagination
-	Query string `url:"query,omitempty"`
+	Limit  int    `url:"limit,omitempty"`
+	More   bool   `url:"more,omitempty"`
+	Offset int    `url:"offset,omitempty"`
+	Total  int    `url:"total,omitempty"`
+	Query  string `url:"query,omitempty"`
 }
 
 // ListSchedulesResponse represents a list response of schedules.
 type ListSchedulesResponse struct {
-	*Pagination
+	Limit     int         `url:"limit,omitempty"`
+	More      bool        `url:"more,omitempty"`
+	Offset    int         `url:"offset,omitempty"`
+	Total     int         `url:"total,omitempty"`
 	Schedules []*Schedule `json:"schedules,omitempty"`
 }
 
@@ -102,6 +111,12 @@ func (s *ScheduleService) Create(schedule *Schedule) (*Schedule, *Response, erro
 	u := "/schedules"
 	v := new(Schedule)
 
+	for _, layer := range schedule.ScheduleLayers {
+		if err := normalizeTime(layer); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	resp, err := s.client.newRequestDo("POST", u, nil, &Schedule{Schedule: schedule}, &v)
 	if err != nil {
 		return nil, nil, err
@@ -134,10 +149,49 @@ func (s *ScheduleService) Update(id string, schedule *Schedule) (*Schedule, *Res
 	u := fmt.Sprintf("/schedules/%s", id)
 	v := new(Schedule)
 
+	for _, layer := range schedule.ScheduleLayers {
+		if err := normalizeTime(layer); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	resp, err := s.client.newRequestDo("PUT", u, nil, &Schedule{Schedule: schedule}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return v.Schedule, resp, nil
+}
+
+func normalizeTime(l *ScheduleLayer) error {
+	s, err := timeToUTC(l.Start)
+	if err != nil {
+		return err
+	}
+	l.Start = s
+
+	rvs, err := timeToUTC(l.RotationVirtualStart)
+	if err != nil {
+		return err
+	}
+	l.RotationVirtualStart = rvs
+
+	if l.End != "" {
+		e, err := timeToUTC(l.End)
+		if err != nil {
+			return err
+		}
+		l.End = e
+	}
+
+	return nil
+}
+
+func timeToUTC(v string) (string, error) {
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return "", err
+	}
+
+	return t.UTC().String(), nil
 }

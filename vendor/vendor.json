@@ -3,12 +3,6 @@
 	"ignore": "appengine test github.com/hashicorp/nomad/",
 	"package": [
 		{
-			"checksumSHA1": "iysTPYhDNP3x2reGLTMgNHw+iL0=",
-			"path": "github.com/PagerDuty/go-pagerduty",
-			"revision": "cc53abe550274c2dec666e7f44cefc9ee10e429d",
-			"revisionTime": "2017-03-09T00:45:39Z"
-		},
-		{
 			"checksumSHA1": "FIL83loX9V9APvGQIjJpbxq53F0=",
 			"path": "github.com/apparentlymart/go-cidr/cidr",
 			"revision": "7e4b007599d4e2076d9a81be723b3912852dda2c",
@@ -247,9 +241,10 @@
 			"revisionTime": "2017-01-17T13:00:17Z"
 		},
 		{
-			"checksumSHA1": "Evpv9y6iPdy+8FeAVDmKrqV1sqo=",
+			"checksumSHA1": "p3IB18uJRs4dL2K5yx24MrLYE9A=",
 			"path": "github.com/google/go-querystring/query",
-			"revision": "2a60fc2ba6c19de80291203597d752e9ba58e4c0"
+			"revision": "53e6ce116135b80d037921a7fdd5138cf32d7a8a",
+			"revisionTime": "2017-01-11T10:11:55Z"
 		},
 		{
 			"checksumSHA1": "cdOCt0Yb+hdErz8NAQqayxPmRsY=",
@@ -499,6 +494,12 @@
 			"path": "github.com/hashicorp/yamux",
 			"revision": "d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd",
 			"revisionTime": "2016-07-20T23:31:40Z"
+		},
+		{
+			"checksumSHA1": "Zoo7/Qb2MiAicSMYdrBwB0uhu70=",
+			"path": "github.com/heimweh/go-pagerduty/pagerduty",
+			"revision": "5c1b519e2baf3f98c7eb3799e28781de10f0bdcc",
+			"revisionTime": "2017-06-27T14:55:55Z"
 		},
 		{
 			"checksumSHA1": "0ZrwvB6KoGPj2PoDNSEJwxQ6Mog=",

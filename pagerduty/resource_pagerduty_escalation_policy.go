@@ -3,8 +3,8 @@ package pagerduty
 import (
 	"log"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func resourcePagerDutyEscalationPolicy() *schema.Resource {
@@ -75,11 +75,9 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 }
 
 func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPolicy {
-	escalationRules := d.Get("rule").([]interface{})
-
-	escalationPolicy := pagerduty.EscalationPolicy{
+	escalationPolicy := &pagerduty.EscalationPolicy{
 		Name:            d.Get("name").(string),
-		EscalationRules: expandEscalationRules(escalationRules),
+		EscalationRules: expandEscalationRules(d.Get("rule").([]interface{})),
 	}
 
 	if attr, ok := d.GetOk("description"); ok {
@@ -87,14 +85,14 @@ func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPo
 	}
 
 	if attr, ok := d.GetOk("num_loops"); ok {
-		escalationPolicy.NumLoops = uint(attr.(int))
+		escalationPolicy.NumLoops = attr.(int)
 	}
 
 	if attr, ok := d.GetOk("teams"); ok {
 		escalationPolicy.Teams = expandTeams(attr.([]interface{}))
 	}
 
-	return &escalationPolicy
+	return escalationPolicy
 }
 
 func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interface{}) error {
@@ -104,8 +102,7 @@ func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Creating PagerDuty escalation policy: %s", escalationPolicy.Name)
 
-	escalationPolicy, err := client.CreateEscalationPolicy(*escalationPolicy)
-
+	escalationPolicy, _, err := client.EscalationPolicies.Create(escalationPolicy)
 	if err != nil {
 		return err
 	}
@@ -122,10 +119,9 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 
 	o := &pagerduty.GetEscalationPolicyOptions{}
 
-	escalationPolicy, err := client.GetEscalationPolicy(d.Id(), o)
-
+	escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 	if err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	d.Set("name", escalationPolicy.Name)
@@ -147,7 +143,7 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Updating PagerDuty escalation policy: %s", d.Id())
 
-	if _, err := client.UpdateEscalationPolicy(d.Id(), escalationPolicy); err != nil {
+	if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
 		return err
 	}
 
@@ -159,11 +155,74 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 
-	if err := client.DeleteEscalationPolicy(d.Id()); err != nil {
+	if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
 		return err
 	}
 
 	d.SetId("")
 
 	return nil
+}
+
+func expandEscalationRules(v interface{}) []*pagerduty.EscalationRule {
+	var escalationRules []*pagerduty.EscalationRule
+
+	for _, er := range v.([]interface{}) {
+		rer := er.(map[string]interface{})
+		escalationRule := &pagerduty.EscalationRule{
+			EscalationDelayInMinutes: rer["escalation_delay_in_minutes"].(int),
+		}
+
+		for _, ert := range rer["target"].([]interface{}) {
+			rert := ert.(map[string]interface{})
+			escalationRuleTarget := &pagerduty.EscalationTargetReference{
+				ID:   rert["id"].(string),
+				Type: rert["type"].(string),
+			}
+
+			escalationRule.Targets = append(escalationRule.Targets, escalationRuleTarget)
+		}
+
+		escalationRules = append(escalationRules, escalationRule)
+	}
+
+	return escalationRules
+}
+
+func flattenEscalationRules(v []*pagerduty.EscalationRule) []map[string]interface{} {
+	var escalationRules []map[string]interface{}
+
+	for _, er := range v {
+		escalationRule := map[string]interface{}{
+			"id": er.ID,
+			"escalation_delay_in_minutes": er.EscalationDelayInMinutes,
+		}
+
+		var targets []map[string]interface{}
+
+		for _, ert := range er.Targets {
+			escalationRuleTarget := map[string]interface{}{"id": ert.ID, "type": ert.Type}
+			targets = append(targets, escalationRuleTarget)
+		}
+
+		escalationRule["target"] = targets
+
+		escalationRules = append(escalationRules, escalationRule)
+	}
+
+	return escalationRules
+}
+
+func expandTeams(v interface{}) []*pagerduty.TeamReference {
+	var teams []*pagerduty.TeamReference
+
+	for _, t := range v.([]interface{}) {
+		team := &pagerduty.TeamReference{
+			ID:   t.(string),
+			Type: "team_reference",
+		}
+		teams = append(teams, team)
+	}
+
+	return teams
 }

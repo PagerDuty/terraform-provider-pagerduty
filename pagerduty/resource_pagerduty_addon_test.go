@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyAddon_Basic(t *testing.T) {
@@ -50,7 +50,7 @@ func testAccCheckPagerDutyAddonDestroy(s *terraform.State) error {
 			continue
 		}
 
-		if _, err := client.GetAddon(r.Primary.ID); err == nil {
+		if _, _, err := client.Addons.Get(r.Primary.ID); err == nil {
 			return fmt.Errorf("Add-on still exists")
 		}
 
@@ -71,7 +71,7 @@ func testAccCheckPagerDutyAddonExists(n string) resource.TestCheckFunc {
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, err := client.GetAddon(rs.Primary.ID)
+		found, _, err := client.Addons.Get(rs.Primary.ID)
 		if err != nil {
 			return err
 		}

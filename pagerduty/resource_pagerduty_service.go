@@ -3,8 +3,8 @@ package pagerduty
 import (
 	"log"
 
-	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func resourcePagerDutyService() *schema.Resource {
@@ -53,6 +53,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"incident_urgency_rule": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -176,9 +177,6 @@ func buildServiceStruct(d *schema.ResourceData) *pagerduty.Service {
 	service := pagerduty.Service{
 		Name:   d.Get("name").(string),
 		Status: d.Get("status").(string),
-		APIObject: pagerduty.APIObject{
-			ID: d.Id(),
-		},
 	}
 
 	if attr, ok := d.GetOk("description"); ok {
@@ -186,32 +184,28 @@ func buildServiceStruct(d *schema.ResourceData) *pagerduty.Service {
 	}
 
 	if attr, ok := d.GetOk("auto_resolve_timeout"); ok {
-		autoResolveTimeout := uint(attr.(int))
-		service.AutoResolveTimeout = &autoResolveTimeout
+		service.AutoResolveTimeout = attr.(int)
 	}
 
 	if attr, ok := d.GetOk("acknowledgement_timeout"); ok {
-		acknowledgementTimeout := uint(attr.(int))
-		service.AcknowledgementTimeout = &acknowledgementTimeout
+		service.AcknowledgementTimeout = attr.(int)
 	}
 
-	escalationPolicy := &pagerduty.EscalationPolicy{
-		APIObject: pagerduty.APIObject{
-			ID:   d.Get("escalation_policy").(string),
+	if attr, ok := d.GetOk("escalation_policy"); ok {
+		service.EscalationPolicy = &pagerduty.EscalationPolicyReference{
+			ID:   attr.(string),
 			Type: "escalation_policy_reference",
-		},
-	}
-
-	service.EscalationPolicy = *escalationPolicy
-
-	if attr, ok := d.GetOk("incident_urgency_rule"); ok {
-		if iur, ok := expandIncidentUrgencyRule(attr); ok {
-			service.IncidentUrgencyRule = iur
 		}
 	}
+
+	if attr, ok := d.GetOk("incident_urgency_rule"); ok {
+		service.IncidentUrgencyRule = expandIncidentUrgencyRule(attr)
+	}
+
 	if attr, ok := d.GetOk("support_hours"); ok {
 		service.SupportHours = expandSupportHours(attr)
 	}
+
 	if attr, ok := d.GetOk("scheduled_actions"); ok {
 		service.ScheduledActions = expandScheduledActions(attr)
 	}
@@ -226,8 +220,7 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Creating PagerDuty service %s", service.Name)
 
-	service, err := client.CreateService(*service)
-
+	service, _, err := client.Services.Create(service)
 	if err != nil {
 		return err
 	}
@@ -242,36 +235,37 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 
 	log.Printf("[INFO] Reading PagerDuty service %s", d.Id())
 
-	o := &pagerduty.GetServiceOptions{}
-
-	service, err := client.GetService(d.Id(), o)
-
+	service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
 	if err != nil {
-		if isNotFound(err) {
-			d.SetId("")
-			return nil
-		}
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	d.Set("name", service.Name)
 	d.Set("status", service.Status)
-	d.Set("created_at", service.CreateAt)
+	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)
 	d.Set("auto_resolve_timeout", service.AutoResolveTimeout)
 	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
 	d.Set("acknowledgement_timeout", service.AcknowledgementTimeout)
 
-	if incidentUrgencyRule, ok := flattenIncidentUrgencyRule(service); ok {
-		d.Set("incident_urgency_rule", incidentUrgencyRule)
+	if service.IncidentUrgencyRule != nil {
+		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
+			return err
+		}
 	}
 
-	supportHours := flattenSupportHours(service)
-	d.Set("support_hours", supportHours)
+	if service.SupportHours != nil {
+		if err := d.Set("support_hours", flattenSupportHours(service.SupportHours)); err != nil {
+			return err
+		}
+	}
 
-	scheduledActions := flattenScheduledActions(service)
-	d.Set("scheduled_actions", scheduledActions)
+	if service.ScheduledActions != nil {
+		if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -283,7 +277,7 @@ func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
 
-	if _, err := client.UpdateService(*service); err != nil {
+	if _, _, err := client.Services.Update(d.Id(), service); err != nil {
 		return err
 	}
 
@@ -295,11 +289,182 @@ func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Deleting PagerDuty service %s", d.Id())
 
-	if err := client.DeleteService(d.Id()); err != nil {
+	if _, err := client.Services.Delete(d.Id()); err != nil {
 		return err
 	}
 
 	d.SetId("")
 
 	return nil
+}
+
+func expandIncidentUrgencyRule(v interface{}) *pagerduty.IncidentUrgencyRule {
+	riur := v.([]interface{})[0].(map[string]interface{})
+	incidentUrgencyRule := &pagerduty.IncidentUrgencyRule{
+		Type: riur["type"].(string),
+	}
+
+	if val, ok := riur["urgency"]; ok {
+		incidentUrgencyRule.Urgency = val.(string)
+	}
+
+	if val, ok := riur["during_support_hours"]; ok {
+		if len(val.([]interface{})) > 0 {
+			incidentUrgencyRule.DuringSupportHours = expandIncidentUrgencyType(val)
+		}
+	}
+
+	if val, ok := riur["outside_support_hours"]; ok {
+		if len(val.([]interface{})) > 0 {
+			incidentUrgencyRule.OutsideSupportHours = expandIncidentUrgencyType(val)
+		}
+	}
+
+	return incidentUrgencyRule
+}
+
+func flattenIncidentUrgencyRule(v *pagerduty.IncidentUrgencyRule) []interface{} {
+	incidentUrgencyRule := map[string]interface{}{
+		"type":    v.Type,
+		"urgency": v.Urgency,
+	}
+
+	if v.DuringSupportHours != nil {
+		incidentUrgencyRule["during_support_hours"] = flattenIncidentUrgencyType(v.DuringSupportHours)
+	}
+
+	if v.OutsideSupportHours != nil {
+		incidentUrgencyRule["outside_support_hours"] = flattenIncidentUrgencyType(v.OutsideSupportHours)
+	}
+
+	return []interface{}{incidentUrgencyRule}
+}
+
+func expandIncidentUrgencyType(v interface{}) *pagerduty.IncidentUrgencyType {
+	riut := v.([]interface{})[0].(map[string]interface{})
+	incidentUrgencyType := &pagerduty.IncidentUrgencyType{}
+
+	if v, ok := riut["type"]; ok {
+		incidentUrgencyType.Type = v.(string)
+	}
+
+	if v, ok := riut["urgency"]; ok {
+		incidentUrgencyType.Urgency = v.(string)
+	}
+
+	return incidentUrgencyType
+}
+
+func flattenIncidentUrgencyType(v *pagerduty.IncidentUrgencyType) []interface{} {
+	incidentUrgencyType := map[string]interface{}{
+		"type":    v.Type,
+		"urgency": v.Urgency,
+	}
+	return []interface{}{incidentUrgencyType}
+}
+
+func expandSupportHours(v interface{}) *pagerduty.SupportHours {
+	supportHours := &pagerduty.SupportHours{}
+
+	rsh := v.([]interface{})[0].(map[string]interface{})
+
+	if v, ok := rsh["type"]; ok {
+		supportHours.Type = v.(string)
+	}
+
+	if v, ok := rsh["time_zone"]; ok {
+		supportHours.TimeZone = v.(string)
+	}
+
+	if v, ok := rsh["start_time"]; ok {
+		supportHours.StartTime = v.(string)
+	}
+
+	if v, ok := rsh["end_time"]; ok {
+		supportHours.EndTime = v.(string)
+	}
+
+	if v, ok := rsh["days_of_week"]; ok {
+		var daysOfWeek []int
+
+		for _, dof := range v.([]interface{}) {
+			daysOfWeek = append(daysOfWeek, dof.(int))
+		}
+
+		supportHours.DaysOfWeek = daysOfWeek
+	}
+
+	return supportHours
+}
+
+func flattenSupportHours(v *pagerduty.SupportHours) []interface{} {
+	supportHours := map[string]interface{}{}
+
+	if v.Type != "" {
+		supportHours["type"] = v.Type
+	}
+
+	if v.TimeZone != "" {
+		supportHours["time_zone"] = v.TimeZone
+	}
+
+	if v.StartTime != "" {
+		supportHours["start_time"] = v.StartTime
+	}
+
+	if v.EndTime != "" {
+		supportHours["end_time"] = v.EndTime
+	}
+
+	if len(v.DaysOfWeek) > 0 {
+		supportHours["days_of_week"] = v.DaysOfWeek
+	}
+
+	return []interface{}{supportHours}
+}
+
+func expandScheduledActions(v interface{}) []*pagerduty.ScheduledAction {
+	var scheduledActions []*pagerduty.ScheduledAction
+
+	for _, sa := range v.([]interface{}) {
+		rsa := sa.(map[string]interface{})
+
+		scheduledAction := &pagerduty.ScheduledAction{
+			Type:      rsa["type"].(string),
+			ToUrgency: rsa["to_urgency"].(string),
+			At:        expandScheduledActionAt(rsa["at"]),
+		}
+
+		scheduledActions = append(scheduledActions, scheduledAction)
+	}
+
+	return scheduledActions
+}
+
+func flattenScheduledActions(v []*pagerduty.ScheduledAction) []interface{} {
+	var scheduledActions []interface{}
+
+	for _, sa := range v {
+		scheduledAction := map[string]interface{}{
+			"type":       sa.Type,
+			"to_urgency": sa.ToUrgency,
+			"at":         flattenScheduledActionAt(sa.At),
+		}
+		scheduledActions = append(scheduledActions, scheduledAction)
+	}
+
+	return scheduledActions
+}
+
+func expandScheduledActionAt(v interface{}) *pagerduty.At {
+	rat := v.([]interface{})[0].(map[string]interface{})
+	return &pagerduty.At{
+		Type: rat["type"].(string),
+		Name: rat["name"].(string),
+	}
+}
+
+func flattenScheduledActionAt(v *pagerduty.At) []interface{} {
+	at := map[string]interface{}{"type": v.Type, "name": v.Name}
+	return []interface{}{at}
 }

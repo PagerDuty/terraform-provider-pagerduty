@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutySchedule_Basic(t *testing.T) {
@@ -195,9 +195,7 @@ func testAccCheckPagerDutyScheduleDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.GetSchedule(r.Primary.ID, pagerduty.GetScheduleOptions{})
-
-		if err == nil {
+		if _, _, err := client.Schedules.Get(r.Primary.ID, &pagerduty.GetScheduleOptions{}); err == nil {
 			return fmt.Errorf("Schedule still exists")
 		}
 
@@ -217,7 +215,7 @@ func testAccCheckPagerDutyScheduleExists(n string) resource.TestCheckFunc {
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, err := client.GetSchedule(rs.Primary.ID, pagerduty.GetScheduleOptions{})
+		found, _, err := client.Schedules.Get(rs.Primary.ID, &pagerduty.GetScheduleOptions{})
 		if err != nil {
 			return err
 		}

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
@@ -121,9 +121,7 @@ func testAccCheckPagerDutyEscalationPolicyDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.GetEscalationPolicy(r.Primary.ID, &pagerduty.GetEscalationPolicyOptions{})
-
-		if err == nil {
+		if _, _, err := client.EscalationPolicies.Get(r.Primary.ID, &pagerduty.GetEscalationPolicyOptions{}); err == nil {
 			return fmt.Errorf("Escalation Policy still exists")
 		}
 
@@ -143,7 +141,7 @@ func testAccCheckPagerDutyEscalationPolicyExists(n string) resource.TestCheckFun
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, err := client.GetEscalationPolicy(rs.Primary.ID, &pagerduty.GetEscalationPolicyOptions{})
+		found, _, err := client.EscalationPolicies.Get(rs.Primary.ID, &pagerduty.GetEscalationPolicyOptions{})
 		if err != nil {
 			return err
 		}

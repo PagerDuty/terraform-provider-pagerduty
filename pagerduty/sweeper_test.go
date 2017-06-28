@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -45,6 +46,10 @@ func TestMain(m *testing.M) {
 }
 
 func sweeperClient() (*pagerduty.Client, error) {
+	if os.Getenv("PAGERDUTY_SWEEPER_TOKEN") == "" {
+		return nil, fmt.Errorf("$PAGERDUTY_SWEEPER_TOKEN must be set")
+	}
+
 	config := &pagerduty.Config{
 		Token: os.Getenv("PAGERDUTY_SWEEPER_TOKEN"),
 		Debug: true,

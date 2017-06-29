@@ -42,7 +42,10 @@ type User struct {
 
 // ListUsersOptions represents options when listing users.
 type ListUsersOptions struct {
-	*Pagination
+	Limit   int      `url:"limit,omitempty"`
+	More    bool     `url:"more,omitempty"`
+	Offset  int      `url:"offset,omitempty"`
+	Total   int      `url:"total,omitempty"`
 	Include []string `url:"include,omitempty,brackets"`
 	Query   string   `url:"query,omitempty"`
 	TeamIDs []string `url:"team_ids,omitempty,brackets"`
@@ -50,8 +53,11 @@ type ListUsersOptions struct {
 
 // ListUsersResponse represents a list response of users.
 type ListUsersResponse struct {
-	*Pagination
-	Users []*User `json:"users,omitempty"`
+	Limit  int     `url:"limit,omitempty"`
+	More   bool    `url:"more,omitempty"`
+	Offset int     `url:"offset,omitempty"`
+	Total  int     `url:"total,omitempty"`
+	Users  []*User `json:"users,omitempty"`
 }
 
 // GetUserOptions represents options when retrieving a user.

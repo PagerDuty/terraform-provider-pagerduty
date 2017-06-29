@@ -20,14 +20,20 @@ type Team struct {
 
 // ListTeamsOptions represents options when listing teams.
 type ListTeamsOptions struct {
-	*Pagination
-	Query string `url:"query,omitempty"`
+	Limit  int    `url:"limit,omitempty"`
+	More   bool   `url:"more,omitempty"`
+	Offset int    `url:"offset,omitempty"`
+	Total  int    `url:"total,omitempty"`
+	Query  string `url:"query,omitempty"`
 }
 
 // ListTeamsResponse represents a list response of teams.
 type ListTeamsResponse struct {
-	*Pagination
-	Teams []*Team `json:"teams,omitempty"`
+	Limit  int     `url:"limit,omitempty"`
+	More   bool    `url:"more,omitempty"`
+	Offset int     `url:"offset,omitempty"`
+	Total  int     `url:"total,omitempty"`
+	Teams  []*Team `json:"teams,omitempty"`
 }
 
 // List lists existing teams.

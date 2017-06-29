@@ -20,7 +20,10 @@ type Addon struct {
 
 // ListAddonsOptions represents options when listing add-ons.
 type ListAddonsOptions struct {
-	*Pagination
+	Limit      int      `url:"limit,omitempty"`
+	More       bool     `url:"more,omitempty"`
+	Offset     int      `url:"offset,omitempty"`
+	Total      int      `url:"total,omitempty"`
 	Filter     string   `url:"filter,omitempty"`
 	Include    []string `url:"include,omitempty,brackets"`
 	ServiceIDs []string `url:"service_ids,omitempty,brackets"`
@@ -28,7 +31,10 @@ type ListAddonsOptions struct {
 
 // ListAddonsResponse represents a list response of add-ons.
 type ListAddonsResponse struct {
-	Pagination
+	Limit  int      `url:"limit,omitempty"`
+	More   bool     `url:"more,omitempty"`
+	Offset int      `url:"offset,omitempty"`
+	Total  int      `url:"total,omitempty"`
 	Addons []*Addon `json:"addons,omitempty"`
 }
 

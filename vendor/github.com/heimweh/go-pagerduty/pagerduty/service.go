@@ -90,7 +90,10 @@ type GetIntegrationOptions struct {
 
 // ListServicesOptions represents options when listing services.
 type ListServicesOptions struct {
-	*Pagination
+	Limit    int      `url:"limit,omitempty"`
+	More     bool     `url:"more,omitempty"`
+	Offset   int      `url:"offset,omitempty"`
+	Total    int      `url:"total,omitempty"`
 	Includes []string `url:"include,omitempty,brackets"`
 	Query    string   `url:"query,omitempty"`
 	SortBy   string   `url:"sort_by,omitempty"`
@@ -100,7 +103,10 @@ type ListServicesOptions struct {
 
 // ListServicesResponse represents a list response of services.
 type ListServicesResponse struct {
-	*Pagination
+	Limit    int  `url:"limit,omitempty"`
+	More     bool `url:"more,omitempty"`
+	Offset   int  `url:"offset,omitempty"`
+	Total    int  `url:"total,omitempty"`
 	Services []*Service
 }
 

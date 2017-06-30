@@ -45,6 +45,7 @@ The following attributes are exported:
 
   * `id` - The ID of the user.
   * `avatar_url` - The URL of the user's avatar.
+  * `time_zone` - The timezone of the user
   * `html_url` - URL at which the entity is uniquely displayed in the Web app
   * `invitation_sent` - If true, the user has an outstanding invitation.
 

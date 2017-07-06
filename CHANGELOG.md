@@ -4,6 +4,7 @@ BUG FIXES:
 
 * resource/pagerduty_service: Fixing updates for `escalation_policy` [GH-7]
 * resource/pagerduty_schedule: Fix diff issues related to `start`, `rotation_virtual_start`, `end` [GH-4]
+* r/pagerdy_service_integration: Protect against panics on imports [GH-16]
 
 ## 0.1.0 (June 21, 2017)
 

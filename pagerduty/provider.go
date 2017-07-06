@@ -39,6 +39,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_service_integration": resourcePagerDutyServiceIntegration(),
 			"pagerduty_service":             resourcePagerDutyService(),
 			"pagerduty_team":                resourcePagerDutyTeam(),
+			"pagerduty_team_membership":     resourcePagerDutyTeamMembership(),
 			"pagerduty_user":                resourcePagerDutyUser(),
 		},
 

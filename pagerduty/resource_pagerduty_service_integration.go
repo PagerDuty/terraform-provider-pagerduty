@@ -132,8 +132,15 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 
 	d.Set("name", serviceIntegration.Name)
 	d.Set("type", serviceIntegration.Type)
-	d.Set("service", serviceIntegration.Service.ID)
-	d.Set("vendor", serviceIntegration.Vendor.ID)
+
+	if serviceIntegration.Service != nil {
+		d.Set("service", serviceIntegration.Service.ID)
+	}
+
+	if serviceIntegration.Vendor != nil {
+		d.Set("vendor", serviceIntegration.Vendor.ID)
+	}
+
 	d.Set("integration_key", serviceIntegration.IntegrationKey)
 	d.Set("integration_email", serviceIntegration.IntegrationEmail)
 

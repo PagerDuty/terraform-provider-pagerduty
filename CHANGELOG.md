@@ -1,5 +1,9 @@
 ## 0.1.1 (Unreleased)
 
+FEATURES:
+
+* **New Resource:** `pagerduty_team_membership` [GH-15]
+
 BUG FIXES:
 
 * resource/pagerduty_service: Fixing updates for `escalation_policy` [GH-7]

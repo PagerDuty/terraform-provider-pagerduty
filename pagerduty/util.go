@@ -2,9 +2,20 @@ package pagerduty
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
+
+// validateRFC3339 validates that a date string has the correct RFC3339 layout
+func validateRFC3339(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	if _, err := time.Parse(time.RFC3339, value); err != nil {
+		errors = append(errors, fmt.Errorf("%s is not a valid format for argument: %s. Expected format: %s (RFC3339)", value, k, time.RFC3339))
+	}
+
+	return
+}
 
 // Validate a value against a set of possible values
 func validateValueFunc(values []string) schema.SchemaValidateFunc {

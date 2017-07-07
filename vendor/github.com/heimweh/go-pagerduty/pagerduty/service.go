@@ -103,10 +103,10 @@ type ListServicesOptions struct {
 
 // ListServicesResponse represents a list response of services.
 type ListServicesResponse struct {
-	Limit    int  `url:"limit,omitempty"`
-	More     bool `url:"more,omitempty"`
-	Offset   int  `url:"offset,omitempty"`
-	Total    int  `url:"total,omitempty"`
+	Limit    int  `json:"limit,omitempty"`
+	More     bool `json:"more,omitempty"`
+	Offset   int  `json:"offset,omitempty"`
+	Total    int  `json:"total,omitempty"`
 	Services []*Service
 }
 

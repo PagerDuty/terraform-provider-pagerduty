@@ -9,6 +9,15 @@ import (
 // related methods of the PagerDuty API.
 type ScheduleService service
 
+// Override represents an override
+type Override struct {
+	Override *Override      `json:"override,omitempty"`
+	ID       string         `json:"id,omitempty"`
+	Start    string         `json:"start,omitempty"`
+	End      string         `json:"end,omitempty"`
+	User     *UserReference `json:"user,omitempty"`
+}
+
 // Schedule represents a schedule.
 type Schedule struct {
 	Description          string                       `json:"description,omitempty"`
@@ -68,17 +77,47 @@ type ListSchedulesOptions struct {
 	Limit  int    `url:"limit,omitempty"`
 	More   bool   `url:"more,omitempty"`
 	Offset int    `url:"offset,omitempty"`
-	Total  int    `url:"total,omitempty"`
 	Query  string `url:"query,omitempty"`
+	Total  int    `url:"total,omitempty"`
 }
 
 // ListSchedulesResponse represents a list response of schedules.
 type ListSchedulesResponse struct {
-	Limit     int         `url:"limit,omitempty"`
-	More      bool        `url:"more,omitempty"`
-	Offset    int         `url:"offset,omitempty"`
-	Total     int         `url:"total,omitempty"`
+	Limit     int         `json:"limit,omitempty"`
+	More      bool        `json:"more,omitempty"`
+	Offset    int         `json:"offset,omitempty"`
 	Schedules []*Schedule `json:"schedules,omitempty"`
+	Total     int         `json:"total,omitempty"`
+}
+
+// ListOnCallsOptions represents options when listing on calls.
+type ListOnCallsOptions struct {
+	ID    string `url:"id,omitempty"`
+	Since string `url:"since,omitempty"`
+	Until string `url:"until,omitempty"`
+}
+
+// ListOnCallsResponse represents a list response of on calls.
+type ListOnCallsResponse struct {
+	Users []*User `json:"users,omitempty"`
+}
+
+// ListOverridesOptions represents options when listing overrides.
+type ListOverridesOptions struct {
+	Editable bool   `url:"editable,omitempty"`
+	ID       string `url:"id,omitempty"`
+	Overflow bool   `url:"overflow,omitempty"`
+	Since    string `url:"since,omitempty"`
+	Until    string `url:"until,omitempty"`
+}
+
+// ListOverridesResponse represents a list response of schedules.
+type ListOverridesResponse struct {
+	Limit     int         `json:"limit,omitempty"`
+	More      bool        `json:"more,omitempty"`
+	Offset    int         `json:"offset,omitempty"`
+	Overrides []*Override `json:"overrides,omitempty"`
+	Total     int         `json:"total,omitempty"`
 }
 
 // GetScheduleOptions represents options when retrieving a schedule.
@@ -161,6 +200,51 @@ func (s *ScheduleService) Update(id string, schedule *Schedule) (*Schedule, *Res
 	}
 
 	return v.Schedule, resp, nil
+}
+
+// ListOnCalls lists all of the users on call in a given schedule for a given time range.
+func (s *ScheduleService) ListOnCalls(scheduleID string, o *ListOnCallsOptions) (*ListOnCallsResponse, *Response, error) {
+	u := fmt.Sprintf("/schedules/%s/users", scheduleID)
+	v := new(ListOnCallsResponse)
+
+	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
+// ListOverrides lists existing overrides.
+func (s *ScheduleService) ListOverrides(scheduleID string, o *ListOverridesOptions) (*ListOverridesResponse, *Response, error) {
+	u := fmt.Sprintf("/schedules/%s/overrides", scheduleID)
+	v := new(ListOverridesResponse)
+
+	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
+// CreateOverride creates an override for a specific user covering the specified time range.
+func (s *ScheduleService) CreateOverride(id string, override *Override) (*Override, *Response, error) {
+	u := fmt.Sprintf("/schedules/%s/overrides", id)
+	v := new(Override)
+
+	resp, err := s.client.newRequestDo("POST", u, nil, &Override{Override: override}, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.Override, resp, nil
+}
+
+// DeleteOverride deletes an override.
+func (s *ScheduleService) DeleteOverride(id string, overrideID string) (*Response, error) {
+	u := fmt.Sprintf("/schedules/%s/overrides/%s", id, overrideID)
+	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
 }
 
 func normalizeTime(l *ScheduleLayer) error {

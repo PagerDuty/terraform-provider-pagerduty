@@ -40,6 +40,46 @@ type User struct {
 	User              *User                     `json:"user,omitempty"`
 }
 
+// ContactMethod represents a contact method for a user.
+type ContactMethod struct {
+	ContactMethod *ContactMethod `json:"contact_method,omitempty"`
+	ID            string         `json:"id,omitempty"`
+	Summary       string         `json:"summary,omitempty"`
+	Type          string         `json:"type,omitempty"`
+	Self          string         `json:"self,omitempty"`
+	HTMLURL       string         `json:"html_url,omitempty"`
+	Label         string         `json:"label,omitempty"`
+	Address       string         `json:"address,omitempty"`
+	BlackListed   bool           `json:"blacklisted,omitempty"`
+
+	// Email contact method options
+	SendShortEmail bool `json:"send_short_email,omitempty"`
+
+	// Phone contact method options
+	CountryCode int  `json:"country_code,omitempty"`
+	Enabled     bool `json:"enabled,omitempty"`
+
+	// Push contact method options
+	DeviceType string                    `json:"device_type,omitempty"`
+	Sounds     []*PushContactMethodSound `json:"sounds,omitempty"`
+	CreatedAt  string                    `json:"created_at,omitempty"`
+}
+
+// PushContactMethodSound represents a sound for a push contact method.
+type PushContactMethodSound struct {
+	Type string `json:"type,omitempty"`
+	File string `json:"file,omitempty"`
+}
+
+// ListContactMethodsResponse represents
+type ListContactMethodsResponse struct {
+	Limit  int     `json:"limit,omitempty"`
+	More   bool    `json:"more,omitempty"`
+	Offset int     `json:"offset,omitempty"`
+	Total  int     `json:"total,omitempty"`
+	Users  []*User `json:"users,omitempty"`
+}
+
 // ListUsersOptions represents options when listing users.
 type ListUsersOptions struct {
 	Limit   int      `url:"limit,omitempty"`
@@ -53,10 +93,10 @@ type ListUsersOptions struct {
 
 // ListUsersResponse represents a list response of users.
 type ListUsersResponse struct {
-	Limit  int     `url:"limit,omitempty"`
-	More   bool    `url:"more,omitempty"`
-	Offset int     `url:"offset,omitempty"`
-	Total  int     `url:"total,omitempty"`
+	Limit  int     `json:"limit,omitempty"`
+	More   bool    `json:"more,omitempty"`
+	Offset int     `json:"offset,omitempty"`
+	Total  int     `json:"total,omitempty"`
 	Users  []*User `json:"users,omitempty"`
 }
 
@@ -121,4 +161,62 @@ func (s *UserService) Update(id string, user *User) (*User, *Response, error) {
 	}
 
 	return v.User, resp, nil
+}
+
+// ListContactMethods lists contact methods for a user.
+func (s *UserService) ListContactMethods(userID string) (*ListContactMethodsResponse, *Response, error) {
+	u := fmt.Sprintf("/users/%s/contact_methods", userID)
+	v := new(ListContactMethodsResponse)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
+// CreateContactMethod creates a new contact method for a user.
+func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
+	u := fmt.Sprintf("/users/%s/contact_methods", userID)
+	v := new(ContactMethod)
+
+	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethod{ContactMethod: contactMethod}, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.ContactMethod, resp, nil
+}
+
+// GetContactMethod retrieves a contact method for a user.
+func (s *UserService) GetContactMethod(userID string, contactMethodID string) (*ContactMethod, *Response, error) {
+	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+	v := new(ContactMethod)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.ContactMethod, resp, nil
+}
+
+// UpdateContactMethod updates a contact method for a user.
+func (s *UserService) UpdateContactMethod(userID, contactMethodID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
+	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+	v := new(ContactMethod)
+
+	resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethod{ContactMethod: contactMethod}, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.ContactMethod, resp, nil
+}
+
+// DeleteContactMethod deletes a contact method for a user.
+func (s *UserService) DeleteContactMethod(userID, contactMethodID string) (*Response, error) {
+	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
 }

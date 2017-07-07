@@ -29,10 +29,10 @@ type ListTeamsOptions struct {
 
 // ListTeamsResponse represents a list response of teams.
 type ListTeamsResponse struct {
-	Limit  int     `url:"limit,omitempty"`
-	More   bool    `url:"more,omitempty"`
-	Offset int     `url:"offset,omitempty"`
-	Total  int     `url:"total,omitempty"`
+	Limit  int     `json:"limit,omitempty"`
+	More   bool    `json:"more,omitempty"`
+	Offset int     `json:"offset,omitempty"`
+	Total  int     `json:"total,omitempty"`
 	Teams  []*Team `json:"teams,omitempty"`
 }
 
@@ -103,5 +103,17 @@ func (s *TeamService) RemoveUser(teamID, userID string) (*Response, error) {
 // AddUser adds a user to a team.
 func (s *TeamService) AddUser(teamID, userID string) (*Response, error) {
 	u := fmt.Sprintf("/teams/%s/users/%s", teamID, userID)
+	return s.client.newRequestDo("PUT", u, nil, nil, nil)
+}
+
+// RemoveEscalationPolicy removes an escalation policy from a team.
+func (s *TeamService) RemoveEscalationPolicy(teamID, escID string) (*Response, error) {
+	u := fmt.Sprintf("/teams/%s/escalation_policies/%s", teamID, escID)
+	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+}
+
+// AddEscalationPolicy adds an escalation policy to a team.
+func (s *TeamService) AddEscalationPolicy(teamID, escID string) (*Response, error) {
+	u := fmt.Sprintf("/teams/%s/escalation_policies/%s", teamID, escID)
 	return s.client.newRequestDo("PUT", u, nil, nil, nil)
 }

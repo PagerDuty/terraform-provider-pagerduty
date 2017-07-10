@@ -3,6 +3,7 @@
 FEATURES:
 
 * **New Resource:** `pagerduty_team_membership` [GH-15]
+* **New Resource:** `pagerduty_maintenance_window` [GH-17]
 
 BUG FIXES:
 

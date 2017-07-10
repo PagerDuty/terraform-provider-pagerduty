@@ -37,6 +37,7 @@ type Client struct {
 	Abilities          *AbilityService
 	Addons             *AddonService
 	EscalationPolicies *EscalationPolicyService
+	MaintenanceWindows *MaintenanceWindowService
 	Schedules          *ScheduleService
 	Services           *ServicesService
 	Teams              *TeamService
@@ -73,6 +74,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.Abilities = &AbilityService{c}
 	c.Addons = &AddonService{c}
 	c.EscalationPolicies = &EscalationPolicyService{c}
+	c.MaintenanceWindows = &MaintenanceWindowService{c}
 	c.Schedules = &ScheduleService{c}
 	c.Services = &ServicesService{c}
 	c.Teams = &TeamService{c}

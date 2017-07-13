@@ -191,6 +191,7 @@ resource "pagerduty_user" "foo" {
   role        = "user"
   job_title   = "foo"
   description = "foo"
+  time_zone   = "Europe/Berlin"
 }`, username, email)
 }
 
@@ -203,6 +204,7 @@ resource "pagerduty_user" "foo" {
   role        = "team_responder"
   job_title   = "bar"
   description = "bar"
+  time_zone   = "Europe/Dublin"
 }`, username, email)
 }
 

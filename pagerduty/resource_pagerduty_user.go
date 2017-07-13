@@ -21,15 +21,18 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+
 			"email": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+
 			"color": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
+
 			"role": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -43,14 +46,17 @@ func resourcePagerDutyUser() *schema.Resource {
 					"user",
 				}),
 			},
+
 			"job_title": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+
 			"avatar_url": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
 			"teams": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -59,18 +65,23 @@ func resourcePagerDutyUser() *schema.Resource {
 				},
 				Set: schema.HashString,
 			},
+
 			"time_zone": {
 				Type:     schema.TypeString,
+				Optional: true,
 				Computed: true,
 			},
+
 			"html_url": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
 			"invitation_sent": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -88,6 +99,10 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 
 	if attr, ok := d.GetOk("color"); ok {
 		user.Color = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("time_zone"); ok {
+		user.TimeZone = attr.(string)
 	}
 
 	if attr, ok := d.GetOk("role"); ok {

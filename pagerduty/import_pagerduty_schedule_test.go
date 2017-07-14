@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -13,8 +14,8 @@ func TestAccPagerDutySchedule_import(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.com", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "Europe/Berlin"
-	start := "2020-05-12T20:00:00+02:00"
-	rotationVirtualStart := "2020-05-12T20:00:00+02:00"
+	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

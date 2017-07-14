@@ -11,8 +11,8 @@ import (
 
 func TestAccPagerDutyMaintenanceWindow_import(t *testing.T) {
 	window := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	windowStartTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
-	windowEndTime := time.Now().Add(48 * time.Hour).Format(time.RFC3339)
+	windowStartTime := timeNowInAccLoc().Add(24 * time.Hour).Format(time.RFC3339)
+	windowEndTime := timeNowInAccLoc().Add(48 * time.Hour).Format(time.RFC3339)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

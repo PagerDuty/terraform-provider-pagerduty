@@ -43,11 +43,11 @@ func testSweepMaintenanceWindow(region string) error {
 
 func TestAccPagerDutyMaintenanceWindow_Basic(t *testing.T) {
 	window := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	windowStartTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
-	windowEndTime := time.Now().Add(48 * time.Hour).Format(time.RFC3339)
+	windowStartTime := timeNowInAccLoc().Add(24 * time.Hour).Format(time.RFC3339)
+	windowEndTime := timeNowInAccLoc().Add(48 * time.Hour).Format(time.RFC3339)
 	windowUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	windowUpdatedStartTime := time.Now().Add(48 * time.Hour).Format(time.RFC3339)
-	windowUpdatedEndTime := time.Now().Add(72 * time.Hour).Format(time.RFC3339)
+	windowUpdatedStartTime := timeNowInAccLoc().Add(48 * time.Hour).Format(time.RFC3339)
+	windowUpdatedEndTime := timeNowInAccLoc().Add(72 * time.Hour).Format(time.RFC3339)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -73,7 +73,7 @@ func TestAccPagerDutyMaintenanceWindow_Basic(t *testing.T) {
 func testAccCheckPagerDutyMaintenanceWindowDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*pagerduty.Client)
 	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_maintenance_windodw" {
+		if r.Type != "pagerduty_maintenance_window" {
 			continue
 		}
 
@@ -104,7 +104,7 @@ func testAccCheckPagerDutyMaintenanceWindowExists(n string) resource.TestCheckFu
 		}
 
 		if found.ID != rs.Primary.ID {
-			return fmt.Errorf("maintenacne window not found: %v - %v", rs.Primary.ID, found)
+			return fmt.Errorf("maintenance window not found: %v - %v", rs.Primary.ID, found)
 		}
 
 		return nil

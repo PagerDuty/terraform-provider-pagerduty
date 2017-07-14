@@ -5,6 +5,10 @@ FEATURES:
 * **New Resource:** `pagerduty_team_membership` [GH-15]
 * **New Resource:** `pagerduty_maintenance_window` [GH-17]
 
+IMPROVEMENTS: 
+
+* r/pagerduty_user: Set time_zone as optional [GH-19]
+
 BUG FIXES:
 
 * resource/pagerduty_service: Fixing updates for `escalation_policy` [GH-7]

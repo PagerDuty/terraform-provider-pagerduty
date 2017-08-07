@@ -1,4 +1,9 @@
 ## 0.1.2 (Unreleased)
+
+BUG FIXES: 
+
+* resource/pagerduty_service_integration: Fix panic on nil `integration_key` [#20]
+
 ## 0.1.1 (August 04, 2017)
 
 FEATURES:

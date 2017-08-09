@@ -21,15 +21,23 @@ func resourcePagerDutySchedule() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+
 			"time_zone": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+
+			"overflow": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "Managed by Terraform",
 			},
+
 			"layer": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -40,27 +48,33 @@ func resourcePagerDutySchedule() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+
 						"name": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
+
 						"start": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
+
 						"end": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+
 						"rotation_virtual_start": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
+
 						"rotation_turn_length_seconds": {
 							Type:     schema.TypeInt,
 							Required: true,
 						},
+
 						"users": {
 							Type:     schema.TypeList,
 							Required: true,
@@ -68,6 +82,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+
 						"restriction": {
 							Optional: true,
 							Type:     schema.TypeList,
@@ -77,14 +92,17 @@ func resourcePagerDutySchedule() *schema.Resource {
 										Type:     schema.TypeString,
 										Required: true,
 									},
+
 									"start_time_of_day": {
 										Type:     schema.TypeString,
 										Required: true,
 									},
+
 									"start_day_of_week": {
 										Type:     schema.TypeInt,
 										Optional: true,
 									},
+
 									"duration_seconds": {
 										Type:     schema.TypeInt,
 										Required: true,
@@ -99,28 +117,42 @@ func resourcePagerDutySchedule() *schema.Resource {
 	}
 }
 
-func buildScheduleStruct(d *schema.ResourceData) *pagerduty.Schedule {
+func buildScheduleStruct(d *schema.ResourceData) (*pagerduty.Schedule, error) {
+	layers, err := expandScheduleLayers(d.Get("layer"))
+	if err != nil {
+		return nil, err
+	}
+
 	schedule := &pagerduty.Schedule{
 		Name:           d.Get("name").(string),
 		TimeZone:       d.Get("time_zone").(string),
-		ScheduleLayers: expandScheduleLayers(d.Get("layer")),
+		ScheduleLayers: layers,
 	}
 
 	if attr, ok := d.GetOk("description"); ok {
 		schedule.Description = attr.(string)
 	}
 
-	return schedule
+	return schedule, nil
 }
 
 func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	schedule := buildScheduleStruct(d)
+	schedule, err := buildScheduleStruct(d)
+	if err != nil {
+		return err
+	}
+
+	o := &pagerduty.CreateScheduleOptions{}
+
+	if v, ok := d.GetOk("overflow"); ok {
+		o.Overflow = v.(bool)
+	}
 
 	log.Printf("[INFO] Creating PagerDuty schedule: %s", schedule.Name)
 
-	schedule, _, err := client.Schedules.Create(schedule)
+	schedule, _, err = client.Schedules.Create(schedule, o)
 	if err != nil {
 		return err
 	}
@@ -154,11 +186,20 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	schedule := buildScheduleStruct(d)
+	schedule, err := buildScheduleStruct(d)
+	if err != nil {
+		return err
+	}
+
+	o := &pagerduty.UpdateScheduleOptions{}
+
+	if v, ok := d.GetOk("overflow"); ok {
+		o.Overflow = v.(bool)
+	}
 
 	log.Printf("[INFO] Updating PagerDuty schedule: %s", d.Id())
 
-	if _, _, err := client.Schedules.Update(d.Id(), schedule); err != nil {
+	if _, _, err := client.Schedules.Update(d.Id(), schedule, o); err != nil {
 		return err
 	}
 
@@ -179,17 +220,29 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 	return nil
 }
 
-func expandScheduleLayers(v interface{}) []*pagerduty.ScheduleLayer {
+func expandScheduleLayers(v interface{}) ([]*pagerduty.ScheduleLayer, error) {
 	var scheduleLayers []*pagerduty.ScheduleLayer
 
 	for _, sl := range v.([]interface{}) {
 		rsl := sl.(map[string]interface{})
+
+		// This is a temporary fix to prevent getting back the wrong rotation_virtual_start time.
+		// The background here is that if a user specifies a rotation_virtual_start time to be:
+		// "2017-09-01T10:00:00+02:00" the API returns back "2017-09-01T12:00:00+02:00".
+		// With this fix in place, we get the correct rotation_virtual_start time, thus
+		// eliminating the diff issues we've been seeing in the past.
+		// This has been confirmed working by PagerDuty support.
+		rvs, err := timeToUTC(rsl["rotation_virtual_start"].(string))
+		if err != nil {
+			return nil, err
+		}
+
 		scheduleLayer := &pagerduty.ScheduleLayer{
 			ID:                        rsl["id"].(string),
 			Name:                      rsl["name"].(string),
 			Start:                     rsl["start"].(string),
 			End:                       rsl["end"].(string),
-			RotationVirtualStart:      rsl["rotation_virtual_start"].(string),
+			RotationVirtualStart:      rvs,
 			RotationTurnLengthSeconds: rsl["rotation_turn_length_seconds"].(int),
 		}
 
@@ -219,7 +272,7 @@ func expandScheduleLayers(v interface{}) []*pagerduty.ScheduleLayer {
 		scheduleLayers = append(scheduleLayers, scheduleLayer)
 	}
 
-	return scheduleLayers
+	return scheduleLayers, nil
 }
 
 func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) []map[string]interface{} {

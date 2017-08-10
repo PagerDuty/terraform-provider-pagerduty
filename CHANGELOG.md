@@ -1,4 +1,4 @@
-## 0.1.2 (Unreleased)
+## 0.1.2 (August 10, 2017)
 
 BUG FIXES: 
 

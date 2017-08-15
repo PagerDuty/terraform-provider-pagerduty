@@ -73,11 +73,11 @@ type PushContactMethodSound struct {
 
 // ListContactMethodsResponse represents
 type ListContactMethodsResponse struct {
-	Limit  int     `json:"limit,omitempty"`
-	More   bool    `json:"more,omitempty"`
-	Offset int     `json:"offset,omitempty"`
-	Total  int     `json:"total,omitempty"`
-	Users  []*User `json:"users,omitempty"`
+	Limit          int              `json:"limit,omitempty"`
+	More           bool             `json:"more,omitempty"`
+	Offset         int              `json:"offset,omitempty"`
+	Total          int              `json:"total,omitempty"`
+	ContactMethods []*ContactMethod `json:"contact_methods,omitempty"`
 }
 
 // ListUsersOptions represents options when listing users.

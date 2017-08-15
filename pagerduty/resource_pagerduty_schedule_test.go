@@ -99,6 +99,36 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyScheduleOverflow_Basic(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	scheduleUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	location := "America/New_York"
+	start := timeNowInLoc(location).Add(30 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(30 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyScheduleOverflowConfig(username, email, schedule, location, start, rotationVirtualStart),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleOverflowConfigUpdated(username, email, scheduleUpdated, location, start, rotationVirtualStart),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutySchedule_BasicWeek(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.com", username)
@@ -327,6 +357,64 @@ resource "pagerduty_user" "foo" {
 resource "pagerduty_schedule" "foo" {
   name = "%s"
 
+  time_zone = "%s"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = ["${pagerduty_user.foo.id}"]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+`, username, email, schedule, location, start, rotationVirtualStart)
+}
+
+func testAccCheckPagerDutyScheduleOverflowConfig(username, email, schedule, location, start, rotationVirtualStart string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name      = "%s"
+  overflow  = true
+  time_zone = "%s"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = ["${pagerduty_user.foo.id}"]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+`, username, email, schedule, location, start, rotationVirtualStart)
+}
+
+func testAccCheckPagerDutyScheduleOverflowConfigUpdated(username, email, schedule, location, start, rotationVirtualStart string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name      = "%s"
+  overflow  = false
   time_zone = "%s"
 
   layer {

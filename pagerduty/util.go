@@ -7,6 +7,15 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+func timeToUTC(v string) (string, error) {
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return "", err
+	}
+
+	return t.UTC().String(), nil
+}
+
 // validateRFC3339 validates that a date string has the correct RFC3339 layout
 func validateRFC3339(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)

@@ -2,7 +2,6 @@ package pagerduty
 
 import (
 	"fmt"
-	"time"
 )
 
 // ScheduleService handles the communication with schedule
@@ -127,6 +126,11 @@ type GetScheduleOptions struct {
 	Until    string `url:"until,omitempty"`
 }
 
+// CreateScheduleOptions represents options when creating a schedule.
+type CreateScheduleOptions struct {
+	Overflow bool `url:"overflow,omitempty"`
+}
+
 // UpdateScheduleOptions represents options when updating a schedule.
 type UpdateScheduleOptions struct {
 	Overflow bool `url:"overflow,omitempty"`
@@ -146,17 +150,11 @@ func (s *ScheduleService) List(o *ListSchedulesOptions) (*ListSchedulesResponse,
 }
 
 // Create creates a new schedule.
-func (s *ScheduleService) Create(schedule *Schedule) (*Schedule, *Response, error) {
+func (s *ScheduleService) Create(schedule *Schedule, o *CreateScheduleOptions) (*Schedule, *Response, error) {
 	u := "/schedules"
 	v := new(Schedule)
 
-	for _, layer := range schedule.ScheduleLayers {
-		if err := normalizeTime(layer); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	resp, err := s.client.newRequestDo("POST", u, nil, &Schedule{Schedule: schedule}, &v)
+	resp, err := s.client.newRequestDo("POST", u, o, &Schedule{Schedule: schedule}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -184,17 +182,11 @@ func (s *ScheduleService) Get(id string, o *GetScheduleOptions) (*Schedule, *Res
 }
 
 // Update updates an existing schedule.
-func (s *ScheduleService) Update(id string, schedule *Schedule) (*Schedule, *Response, error) {
+func (s *ScheduleService) Update(id string, schedule *Schedule, o *UpdateScheduleOptions) (*Schedule, *Response, error) {
 	u := fmt.Sprintf("/schedules/%s", id)
 	v := new(Schedule)
 
-	for _, layer := range schedule.ScheduleLayers {
-		if err := normalizeTime(layer); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	resp, err := s.client.newRequestDo("PUT", u, nil, &Schedule{Schedule: schedule}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, o, &Schedule{Schedule: schedule}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -245,37 +237,4 @@ func (s *ScheduleService) CreateOverride(id string, override *Override) (*Overri
 func (s *ScheduleService) DeleteOverride(id string, overrideID string) (*Response, error) {
 	u := fmt.Sprintf("/schedules/%s/overrides/%s", id, overrideID)
 	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
-}
-
-func normalizeTime(l *ScheduleLayer) error {
-	s, err := timeToUTC(l.Start)
-	if err != nil {
-		return err
-	}
-	l.Start = s
-
-	rvs, err := timeToUTC(l.RotationVirtualStart)
-	if err != nil {
-		return err
-	}
-	l.RotationVirtualStart = rvs
-
-	if l.End != "" {
-		e, err := timeToUTC(l.End)
-		if err != nil {
-			return err
-		}
-		l.End = e
-	}
-
-	return nil
-}
-
-func timeToUTC(v string) (string, error) {
-	t, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return "", err
-	}
-
-	return t.UTC().String(), nil
 }

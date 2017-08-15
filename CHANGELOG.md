@@ -1,4 +1,9 @@
 ## 0.1.3 (Unreleased)
+
+BUG FIXES: 
+
+* r/pagerduty_schedule: Add support for overflow [GH-23]
+
 ## 0.1.2 (August 10, 2017)
 
 BUG FIXES: 

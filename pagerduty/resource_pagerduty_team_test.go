@@ -12,6 +12,13 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+func init() {
+	resource.AddTestSweepers("pagerduty_team", &resource.Sweeper{
+		Name: "pagerduty_team",
+		F:    testSweepTeam,
+	})
+}
+
 func testSweepTeam(region string) error {
 	config, err := sharedConfigForRegion(region)
 	if err != nil {

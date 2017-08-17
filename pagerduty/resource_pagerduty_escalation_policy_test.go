@@ -12,6 +12,17 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+func init() {
+	resource.AddTestSweepers("pagerduty_escalation_policy", &resource.Sweeper{
+		Name: "pagerduty_escalation_policy",
+		F:    testSweepEscalationPolicy,
+		Dependencies: []string{
+			"pagerduty_team",
+			"pagerduty_user",
+		},
+	})
+}
+
 func testSweepEscalationPolicy(region string) error {
 	config, err := sharedConfigForRegion(region)
 	if err != nil {

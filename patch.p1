@@ -1,0 +1,986 @@
+diff --git a/pagerduty/import_pagerduty_user_contact_method_test.go b/pagerduty/import_pagerduty_user_contact_method_test.go
+new file mode 100644
+index 0000000..68d0c7e
+--- /dev/null
++++ b/pagerduty/import_pagerduty_user_contact_method_test.go
+@@ -0,0 +1,30 @@
++package pagerduty
++
++import (
++	"fmt"
++	"testing"
++
++	"github.com/hashicorp/terraform/helper/acctest"
++	"github.com/hashicorp/terraform/helper/resource"
++)
++
++func TestAccPagerDutyUserContactMethod_import(t *testing.T) {
++	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	email := fmt.Sprintf("%s@foo.com", username)
++
++	resource.Test(t, resource.TestCase{
++		PreCheck:     func() { testAccPreCheck(t) },
++		Providers:    testAccProviders,
++		CheckDestroy: testAccCheckPagerDutyUserDestroy,
++		Steps: []resource.TestStep{
++			{
++				Config: testAccCheckPagerDutyUserContactMethodEmailConfig(username, email),
++			},
++			{
++				ResourceName:      "pagerduty_user_contact_method.foo",
++				ImportState:       true,
++				ImportStateVerify: true,
++			},
++		},
++	})
++}
+diff --git a/pagerduty/provider.go b/pagerduty/provider.go
+index 3431006..b5cd9da 100644
+--- a/pagerduty/provider.go
++++ b/pagerduty/provider.go
+@@ -33,15 +33,17 @@ func Provider() terraform.ResourceProvider {
+ 		},
+ 
+ 		ResourcesMap: map[string]*schema.Resource{
+-			"pagerduty_addon":               resourcePagerDutyAddon(),
+-			"pagerduty_escalation_policy":   resourcePagerDutyEscalationPolicy(),
+-			"pagerduty_maintenance_window":  resourcePagerDutyMaintenanceWindow(),
+-			"pagerduty_schedule":            resourcePagerDutySchedule(),
+-			"pagerduty_service":             resourcePagerDutyService(),
+-			"pagerduty_service_integration": resourcePagerDutyServiceIntegration(),
+-			"pagerduty_team":                resourcePagerDutyTeam(),
+-			"pagerduty_team_membership":     resourcePagerDutyTeamMembership(),
+-			"pagerduty_user":                resourcePagerDutyUser(),
++			"pagerduty_addon":                  resourcePagerDutyAddon(),
++			"pagerduty_escalation_policy":      resourcePagerDutyEscalationPolicy(),
++			"pagerduty_maintenance_window":     resourcePagerDutyMaintenanceWindow(),
++			"pagerduty_schedule":               resourcePagerDutySchedule(),
++			"pagerduty_service":                resourcePagerDutyService(),
++			"pagerduty_service_integration":    resourcePagerDutyServiceIntegration(),
++			"pagerduty_team":                   resourcePagerDutyTeam(),
++			"pagerduty_team_membership":        resourcePagerDutyTeamMembership(),
++			"pagerduty_user":                   resourcePagerDutyUser(),
++			"pagerduty_user_notification_rule": resourcePagerDutyUserNotificationRule(),
++			"pagerduty_user_contact_method":    resourcePagerDutyUserContactMethod(),
+ 		},
+ 
+ 		ConfigureFunc: providerConfigure,
+diff --git a/pagerduty/resource_pagerduty_user_contact_method.go b/pagerduty/resource_pagerduty_user_contact_method.go
+new file mode 100644
+index 0000000..5883cb3
+--- /dev/null
++++ b/pagerduty/resource_pagerduty_user_contact_method.go
+@@ -0,0 +1,173 @@
++package pagerduty
++
++import (
++	"fmt"
++	"log"
++	"strings"
++
++	"github.com/hashicorp/terraform/helper/schema"
++	"github.com/heimweh/go-pagerduty/pagerduty"
++)
++
++func resourcePagerDutyUserContactMethod() *schema.Resource {
++	return &schema.Resource{
++		Create: resourcePagerDutyUserContactMethodCreate,
++		Read:   resourcePagerDutyUserContactMethodRead,
++		Update: resourcePagerDutyUserContactMethodUpdate,
++		Delete: resourcePagerDutyUserContactMethodDelete,
++		Importer: &schema.ResourceImporter{
++			State: schema.ImportStatePassthrough,
++		},
++		Schema: map[string]*schema.Schema{
++			"user_id": {
++				Type:     schema.TypeString,
++				Required: true,
++			},
++
++			"type": {
++				Type:     schema.TypeString,
++				Required: true,
++				ValidateFunc: validateValueFunc([]string{
++					"email_contact_method",
++					"phone_contact_method",
++					"sms_contact_method",
++				}),
++			},
++
++			"send_short_email": {
++				Type:     schema.TypeString,
++				Optional: true,
++			},
++
++			"country_code": {
++				Type:     schema.TypeInt,
++				Optional: true,
++			},
++
++			"enabled": {
++				Type:     schema.TypeBool,
++				Computed: true,
++			},
++
++			"blacklisted": {
++				Type:     schema.TypeBool,
++				Computed: true,
++			},
++
++			"label": {
++				Type:     schema.TypeString,
++				Required: true,
++			},
++
++			"address": {
++				Type:     schema.TypeString,
++				Required: true,
++			},
++
++			"contact_method_id": {
++				Type:     schema.TypeString,
++				Computed: true,
++			},
++		},
++	}
++}
++
++func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMethod {
++	contactMethod := &pagerduty.ContactMethod{
++		Type:    d.Get("type").(string),
++		Label:   d.Get("label").(string),
++		Address: d.Get("address").(string),
++	}
++
++	if v, ok := d.GetOk("send_short_email"); ok {
++		contactMethod.SendShortEmail = v.(bool)
++	}
++
++	if v, ok := d.GetOk("country_code"); ok {
++		contactMethod.CountryCode = v.(int)
++	}
++
++	if v, ok := d.GetOk("enabled"); ok {
++		contactMethod.Enabled = v.(bool)
++	}
++
++	return contactMethod
++}
++
++func resourcePagerDutyUserContactMethodParseID(id string) (string, string) {
++	// userID, contactMethodID
++	parts := strings.Split(id, ":")
++	return parts[0], parts[1]
++}
++
++func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	userID := d.Get("user_id").(string)
++
++	contactMethod := buildUserContactMethodStruct(d)
++
++	resp, _, err := client.Users.CreateContactMethod(userID, contactMethod)
++	if err != nil {
++		return err
++	}
++
++	d.SetId(fmt.Sprintf("%s:%s", userID, resp.ID))
++
++	return resourcePagerDutyUserContactMethodRead(d, meta)
++}
++
++func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	userID, cmID := resourcePagerDutyUserContactMethodParseID(d.Id())
++
++	resp, _, err := client.Users.GetContactMethod(userID, cmID)
++	if err != nil {
++		return handleNotFoundError(err, d)
++	}
++
++	d.Set("address", resp.Address)
++	d.Set("blacklisted", resp.BlackListed)
++	d.Set("contact_method_id", cmID)
++	d.Set("country_code", resp.CountryCode)
++	d.Set("enabled", resp.Enabled)
++	d.Set("label", resp.Label)
++	d.Set("send_short_email", resp.SendShortEmail)
++	d.Set("type", resp.Type)
++	d.Set("user_id", userID)
++
++	return nil
++}
++
++func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	contactMethod := buildUserContactMethodStruct(d)
++
++	log.Printf("[INFO] Updating PagerDuty user contact method %s", d.Id())
++
++	userID, cmID := resourcePagerDutyUserContactMethodParseID(d.Id())
++
++	if _, _, err := client.Users.UpdateContactMethod(userID, cmID, contactMethod); err != nil {
++		return err
++	}
++
++	return resourcePagerDutyUserContactMethodRead(d, meta)
++}
++
++func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	log.Printf("[INFO] Deleting PagerDuty user contact method %s", d.Id())
++
++	userID, cmID := resourcePagerDutyUserContactMethodParseID(d.Id())
++
++	if _, err := client.Users.DeleteContactMethod(userID, cmID); err != nil {
++		return err
++	}
++
++	d.SetId("")
++
++	return nil
++}
+diff --git a/pagerduty/resource_pagerduty_user_contact_method_test.go b/pagerduty/resource_pagerduty_user_contact_method_test.go
+new file mode 100644
+index 0000000..590eb3e
+--- /dev/null
++++ b/pagerduty/resource_pagerduty_user_contact_method_test.go
+@@ -0,0 +1,261 @@
++package pagerduty
++
++import (
++	"fmt"
++	"testing"
++
++	"github.com/hashicorp/terraform/helper/acctest"
++	"github.com/hashicorp/terraform/helper/resource"
++	"github.com/hashicorp/terraform/terraform"
++	"github.com/heimweh/go-pagerduty/pagerduty"
++)
++
++func TestAccPagerDutyUserContactMethodEmail_Basic(t *testing.T) {
++	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	email := fmt.Sprintf("%s@foo.com", username)
++	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
++
++	resource.Test(t, resource.TestCase{
++		PreCheck:     func() { testAccPreCheck(t) },
++		Providers:    testAccProviders,
++		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
++		Steps: []resource.TestStep{
++			{
++				Config: testAccCheckPagerDutyUserContactMethodEmailConfig(username, email),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
++				),
++			},
++			{
++				Config: testAccCheckPagerDutyUserContactMethodEmailConfigUpdated(usernameUpdated, emailUpdated),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
++				),
++			},
++		},
++	})
++}
++
++func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
++	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	email := fmt.Sprintf("%s@foo.com", username)
++	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
++
++	resource.Test(t, resource.TestCase{
++		PreCheck:     func() { testAccPreCheck(t) },
++		Providers:    testAccProviders,
++		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
++		Steps: []resource.TestStep{
++			{
++				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
++				),
++			},
++			{
++				Config: testAccCheckPagerDutyUserContactMethodPhoneConfigUpdated(usernameUpdated, emailUpdated),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
++				),
++			},
++		},
++	})
++}
++
++func TestAccPagerDutyUserContactMethodSMS_Basic(t *testing.T) {
++	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	email := fmt.Sprintf("%s@foo.com", username)
++	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
++
++	resource.Test(t, resource.TestCase{
++		PreCheck:     func() { testAccPreCheck(t) },
++		Providers:    testAccProviders,
++		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
++		Steps: []resource.TestStep{
++			{
++				Config: testAccCheckPagerDutyUserContactMethodSMSConfig(username, email),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
++				),
++			},
++			{
++				Config: testAccCheckPagerDutyUserContactMethodSMSConfigUpdated(usernameUpdated, emailUpdated),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
++				),
++			},
++		},
++	})
++}
++
++func testAccCheckPagerDutyUserContactMethodDestroy(s *terraform.State) error {
++	client := testAccProvider.Meta().(*pagerduty.Client)
++	for _, r := range s.RootModule().Resources {
++		if r.Type != "pagerduty_user_contact_method" {
++			continue
++		}
++
++		userID, cmID := resourcePagerDutyUserContactMethodParseID(r.Primary.ID)
++
++		if _, _, err := client.Users.GetContactMethod(userID, cmID); err == nil {
++			return fmt.Errorf("User contact method still exists")
++		}
++
++	}
++	return nil
++}
++
++func testAccCheckPagerDutyUserContactMethodExists(n string) resource.TestCheckFunc {
++	return func(s *terraform.State) error {
++		rs, ok := s.RootModule().Resources[n]
++		if !ok {
++			return fmt.Errorf("Not found: %s", n)
++		}
++
++		if rs.Primary.ID == "" {
++			return fmt.Errorf("No user contact method ID is set")
++		}
++
++		client := testAccProvider.Meta().(*pagerduty.Client)
++
++		userID, cmID := resourcePagerDutyUserContactMethodParseID(rs.Primary.ID)
++
++		found, _, err := client.Users.GetContactMethod(userID, cmID)
++		if err != nil {
++			return err
++		}
++
++		if found.ID != cmID {
++			return fmt.Errorf("Contact method not found: %v - %v", rs.Primary.ID, found)
++		}
++
++		return nil
++	}
++}
++
++func testAccCheckPagerDutyUserContactMethodEmailConfig(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id = "${pagerduty_user.foo.id}"
++  type    = "email_contact_method"
++  address = "%[1]v%[2]v"
++  label   = "%[1]v"
++}
++`, username, email)
++}
++
++func testAccCheckPagerDutyUserContactMethodEmailConfigUpdated(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id = "${pagerduty_user.foo.id}"
++  type    = "email_contact_method"
++  address = "%[1]v%[2]v"
++  label   = "%[1]v"
++}
++`, username, email)
++}
++
++func testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id      = "${pagerduty_user.foo.id}"
++  type         = "phone_contact_method"
++  country_code = "+1"
++  address      = "2025550199"
++  label        = "%[1]v"
++}
++`, username, email)
++}
++
++func testAccCheckPagerDutyUserContactMethodPhoneConfigUpdated(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id      = "${pagerduty_user.foo.id}"
++  type         = "phone_contact_method"
++  country_code = "+1"
++  address      = "2025550104"
++  label        = "%[1]v"
++}
++`, username, email)
++}
++
++func testAccCheckPagerDutyUserContactMethodSMSConfig(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id      = "${pagerduty_user.foo.id}"
++  type         = "sms_contact_method"
++  country_code = "+1"
++  address      = "2025550199"
++  label        = "%[1]v"
++}
++`, username, email)
++}
++
++func testAccCheckPagerDutyUserContactMethodSMSConfigUpdated(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id      = "${pagerduty_user.foo.id}"
++  type         = "sms_contact_method"
++  country_code = "+1"
++  address      = "2025550104"
++  label        = "%[1]v"
++}
++`, username, email)
++}
+diff --git a/pagerduty/resource_pagerduty_user_notification_rule.go b/pagerduty/resource_pagerduty_user_notification_rule.go
+new file mode 100644
+index 0000000..27f1f36
+--- /dev/null
++++ b/pagerduty/resource_pagerduty_user_notification_rule.go
+@@ -0,0 +1,140 @@
++package pagerduty
++
++import (
++	"fmt"
++	"log"
++	"strings"
++
++	"github.com/hashicorp/terraform/helper/schema"
++	"github.com/heimweh/go-pagerduty/pagerduty"
++)
++
++func resourcePagerDutyUserNotificationRule() *schema.Resource {
++	return &schema.Resource{
++		Create: resourcePagerDutyUserNotificationRuleCreate,
++		Read:   resourcePagerDutyUserNotificationRuleRead,
++		Update: resourcePagerDutyUserNotificationRuleUpdate,
++		Delete: resourcePagerDutyUserNotificationRuleDelete,
++		Importer: &schema.ResourceImporter{
++			State: schema.ImportStatePassthrough,
++		},
++		Schema: map[string]*schema.Schema{
++			"user_id": {
++				Type:     schema.TypeString,
++				Required: true,
++			},
++
++			"contact_method_id": {
++				Type:     schema.TypeString,
++				Required: true,
++			},
++
++			"contact_method_type": {
++				Type:     schema.TypeString,
++				Required: true,
++			},
++
++			"start_delay_in_minutes": {
++				Type:     schema.TypeInt,
++				Required: true,
++			},
++
++			"urgency": {
++				Type:     schema.TypeString,
++				Required: true,
++				ValidateFunc: validateValueFunc([]string{
++					"high",
++					"low",
++				}),
++			},
++		},
++	}
++}
++
++func buildUserNotificationRuleStruct(d *schema.ResourceData) *pagerduty.NotificationRule {
++	rule := &pagerduty.NotificationRule{
++		Type:                "assignment_notification_rule",
++		StartDelayInMinutes: d.Get("start_delay_in_minutes").(int),
++		Urgency:             d.Get("urgency").(string),
++		ContactMethod: &pagerduty.ContactMethodReference{
++			ID:   d.Get("contact_method_id").(string),
++			Type: d.Get("contact_method_type").(string),
++		},
++	}
++
++	return rule
++}
++
++func resourcePagerDutyUserNotificationRuleParseID(id string) (string, string) {
++	// userID, ruleID
++	parts := strings.Split(id, ":")
++	return parts[0], parts[1]
++}
++
++func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	userID := d.Get("user_id").(string)
++
++	rule := buildUserNotificationRuleStruct(d)
++
++	resp, _, err := client.Users.CreateNotificationRule(userID, rule)
++	if err != nil {
++		return err
++	}
++
++	d.SetId(fmt.Sprintf("%s:%s", userID, resp.ID))
++
++	return resourcePagerDutyUserNotificationRuleUpdate(d, meta)
++}
++
++func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	userID, ruleID := resourcePagerDutyUserNotificationRuleParseID(d.Id())
++
++	resp, _, err := client.Users.GetNotificationRule(userID, ruleID)
++	if err != nil {
++		return handleNotFoundError(err, d)
++	}
++
++	d.Set("user_id", userID)
++	d.Set("contact_method_id", resp.ContactMethod.ID)
++	d.Set("contact_method_type", resp.ContactMethod.Type)
++	d.Set("urgency", resp.Urgency)
++	d.Set("start_delay_in_minutes", resp.StartDelayInMinutes)
++
++	return nil
++}
++
++func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	rule := buildUserNotificationRuleStruct(d)
++
++	log.Printf("[INFO] Updating PagerDuty user notification rule: %s", d.Id())
++
++	userID, ruleID := resourcePagerDutyUserNotificationRuleParseID(d.Id())
++
++	if _, _, err := client.Users.UpdateNotificationRule(userID, ruleID, rule); err != nil {
++		return err
++	}
++
++	return nil
++}
++
++func resourcePagerDutyUserNotificationRuleDelete(d *schema.ResourceData, meta interface{}) error {
++	client := meta.(*pagerduty.Client)
++
++	log.Printf("[INFO] Deleting PagerDuty user notification rule: %s", d.Id())
++
++	userID, ruleID := resourcePagerDutyUserNotificationRuleParseID(d.Id())
++
++	if _, err := client.Users.DeleteNotificationRule(userID, ruleID); err != nil {
++		return err
++	}
++
++	d.SetId("")
++
++	return nil
++}
+diff --git a/pagerduty/resource_pagerduty_user_notification_rule_test.go b/pagerduty/resource_pagerduty_user_notification_rule_test.go
+new file mode 100644
+index 0000000..6bbb6c7
+--- /dev/null
++++ b/pagerduty/resource_pagerduty_user_notification_rule_test.go
+@@ -0,0 +1,140 @@
++package pagerduty
++
++import (
++	"fmt"
++	"testing"
++
++	"github.com/hashicorp/terraform/helper/acctest"
++	"github.com/hashicorp/terraform/helper/resource"
++	"github.com/hashicorp/terraform/terraform"
++	"github.com/heimweh/go-pagerduty/pagerduty"
++)
++
++func TestAccPagerDutyUserNotificationRule_Basic(t *testing.T) {
++	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
++	email := fmt.Sprintf("%s@foo.com", username)
++	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
++
++	resource.Test(t, resource.TestCase{
++		PreCheck:     func() { testAccPreCheck(t) },
++		Providers:    testAccProviders,
++		CheckDestroy: testAccCheckPagerDutyUserNotificationRuleDestroy,
++		Steps: []resource.TestStep{
++			{
++				Config: testAccCheckPagerDutyUserNotificationRuleConfig(username, email),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserNotificationRuleExists("pagerduty_user_notification_rule.foo"),
++				),
++			},
++			{
++				Config: testAccCheckPagerDutyUserNotificationRuleConfigUpdated(usernameUpdated, emailUpdated),
++				Check: resource.ComposeTestCheckFunc(
++					testAccCheckPagerDutyUserNotificationRuleExists("pagerduty_user_notification_rule.foo"),
++				),
++			},
++		},
++	})
++}
++
++func testAccCheckPagerDutyUserNotificationRuleDestroy(s *terraform.State) error {
++	client := testAccProvider.Meta().(*pagerduty.Client)
++	for _, r := range s.RootModule().Resources {
++		if r.Type != "pagerduty_user_notification_rule" {
++			continue
++		}
++
++		userID, ruleID := resourcePagerDutyUserNotificationRuleParseID(r.Primary.ID)
++
++		if _, _, err := client.Users.GetNotificationRule(userID, ruleID); err == nil {
++			return fmt.Errorf("User notification rule still exists")
++		}
++
++	}
++	return nil
++}
++
++func testAccCheckPagerDutyUserNotificationRuleExists(n string) resource.TestCheckFunc {
++	return func(s *terraform.State) error {
++		rs, ok := s.RootModule().Resources[n]
++		if !ok {
++			return fmt.Errorf("Not found: %s", n)
++		}
++
++		if rs.Primary.ID == "" {
++			return fmt.Errorf("No user notification rule ID is set")
++		}
++
++		client := testAccProvider.Meta().(*pagerduty.Client)
++
++		userID, ruleID := resourcePagerDutyUserNotificationRuleParseID(rs.Primary.ID)
++
++		found, _, err := client.Users.GetNotificationRule(userID, ruleID)
++		if err != nil {
++			return err
++		}
++
++		if found.ID != ruleID {
++			return fmt.Errorf("Notification rule not found: %v - %v", rs.Primary.ID, found)
++		}
++
++		return nil
++	}
++}
++
++func testAccCheckPagerDutyUserNotificationRuleConfig(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id = "${pagerduty_user.foo.id}"
++  type    = "email_contact_method"
++  address = "%[1]v%[2]v"
++  label   = "%[1]v"
++}
++
++resource "pagerduty_user_notification_rule" "foo" {
++	user_id = "${pagerduty_user.foo.id}"
++	contact_method_id = "${pagerduty_user_contact_method.foo.contact_method_id}"
++	contact_method_type = "${pagerduty_user_contact_method.foo.type}"
++	start_delay_in_minutes = 10
++	urgency = "high"
++}
++`, username, email)
++}
++
++func testAccCheckPagerDutyUserNotificationRuleConfigUpdated(username, email string) string {
++	return fmt.Sprintf(`
++resource "pagerduty_user" "foo" {
++  name        = "%[1]v"
++  email       = "%[2]v"
++  color       = "red"
++  role        = "user"
++  job_title   = "bar"
++  description = "bar"
++}
++
++resource "pagerduty_user_contact_method" "foo" {
++  user_id = "${pagerduty_user.foo.id}"
++  type    = "email_contact_method"
++  address = "%[1]v%[2]v"
++  label   = "%[1]v"
++}
++
++resource "pagerduty_user_notification_rule" "foo" {
++	user_id = "${pagerduty_user.foo.id}"
++	contact_method_id = "${pagerduty_user_contact_method.foo.contact_method_id}"
++	contact_method_type = "${pagerduty_user_contact_method.foo.type}"
++	start_delay_in_minutes = 10
++	urgency = "high"
++}
++
++`, username, email)
++}
+diff --git a/vendor/github.com/heimweh/go-pagerduty/pagerduty/user.go b/vendor/github.com/heimweh/go-pagerduty/pagerduty/user.go
+index 464d3c5..025d613 100644
+--- a/vendor/github.com/heimweh/go-pagerduty/pagerduty/user.go
++++ b/vendor/github.com/heimweh/go-pagerduty/pagerduty/user.go
+@@ -1,6 +1,8 @@
+ package pagerduty
+ 
+-import "fmt"
++import (
++	"fmt"
++)
+ 
+ // UserService handles the communication with user
+ // related methods of the PagerDuty API.
+@@ -8,6 +10,7 @@ type UserService service
+ 
+ // NotificationRule represents a user notification rule.
+ type NotificationRule struct {
++	NotificationRule    *NotificationRule       `json:"notification_rule,omitempty"`
+ 	ContactMethod       *ContactMethodReference `json:"contact_method,omitempty"`
+ 	HTMLURL             string                  `json:"html_url,omitempty"`
+ 	ID                  string                  `json:"id,omitempty"`
+@@ -220,3 +223,48 @@ func (s *UserService) DeleteContactMethod(userID, contactMethodID string) (*Resp
+ 	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+ 	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+ }
++
++// CreateNotificationRule creates a new notification rule for a user.
++func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRule) (*NotificationRule, *Response, error) {
++	u := fmt.Sprintf("/users/%s/notification_rules", userID)
++	v := new(NotificationRule)
++
++	resp, err := s.client.newRequestDo("POST", u, nil, &NotificationRule{NotificationRule: rule}, &v)
++	if err != nil {
++		return nil, nil, err
++	}
++
++	return v.NotificationRule, resp, nil
++}
++
++// GetNotificationRule retrieves a notification rule for a user.
++func (s *UserService) GetNotificationRule(userID string, ruleID string) (*NotificationRule, *Response, error) {
++	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
++	v := new(NotificationRule)
++
++	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
++	if err != nil {
++		return nil, nil, err
++	}
++
++	return v.NotificationRule, resp, nil
++}
++
++// UpdateNotificationRule updates a notification rulefor a user.
++func (s *UserService) UpdateNotificationRule(userID, ruleID string, rule *NotificationRule) (*NotificationRule, *Response, error) {
++	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
++	v := new(NotificationRule)
++
++	resp, err := s.client.newRequestDo("PUT", u, nil, &NotificationRule{NotificationRule: rule}, &v)
++	if err != nil {
++		return nil, nil, err
++	}
++
++	return v.NotificationRule, resp, nil
++}
++
++// DeleteNotificationRule deletes a notification rule for a user.
++func (s *UserService) DeleteNotificationRule(userID, ruleID string) (*Response, error) {
++	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
++	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
++}
+diff --git a/vendor/vendor.json b/vendor/vendor.json
+index f99c203..087b62f 100644
+--- a/vendor/vendor.json
++++ b/vendor/vendor.json
+@@ -522,10 +522,10 @@
+ 			"revisionTime": "2016-07-20T23:31:40Z"
+ 		},
+ 		{
+-			"checksumSHA1": "dUAQZ2MR++DUDweCwlkwvAJRW2c=",
++			"checksumSHA1": "lpRecseIUuSbM9/8T5WhBNGjQ8Q=",
+ 			"path": "github.com/heimweh/go-pagerduty/pagerduty",
+-			"revision": "274147fdf0518851dae256b9a80044a94ab814a3",
+-			"revisionTime": "2017-08-09T21:49:27Z"
++			"revision": "5659e9ce0726c8a033e6856565d78862797e412e",
++			"revisionTime": "2017-08-22T22:07:44Z"
+ 		},
+ 		{
+ 			"checksumSHA1": "0ZrwvB6KoGPj2PoDNSEJwxQ6Mog=",
+diff --git a/website/docs/r/user_contact_method.html.markdown b/website/docs/r/user_contact_method.html.markdown
+new file mode 100644
+index 0000000..43e1373
+--- /dev/null
++++ b/website/docs/r/user_contact_method.html.markdown
+@@ -0,0 +1,71 @@
++---
++layout: "pagerduty"
++page_title: "PagerDuty: pagerduty_user_contact_method"
++sidebar_current: "docs-pagerduty-resource-user-contact-method"
++description: |-
++  Creates and manages contact methods for a user in PagerDuty.
++---
++
++# pagerduty_user_contact_method
++
++A [contact method](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Users/get_users_id_contact_methods) is a contact method for a PagerDuty user (email, phone or SMS).
++
++
++## Example Usage
++
++```hcl
++resource "pagerduty_user" "example" {
++  name  = "Earline Greenholt"
++  email = "125.greenholt.earline@graham.name"
++  teams = ["${pagerduty_team.example.id}"]
++}
++
++resource "pagerduty_user_contact_method" "email" {
++  user_id = "${pagerduty_user.example.id}"
++  type    = "email_contact_method"
++  address = "foo@bar.com"
++  label   = "Work"
++}
++
++resource "pagerduty_user_contact_method" "phone" {
++  user_id      = "${pagerduty_user.example.id}"
++  type         = "phone_contact_method"
++  country_code = "+1"
++  address      = "2025550199"
++  label        = "Work"
++}
++
++resource "pagerduty_user_contact_method" "sms" {
++  user_id      = "${pagerduty_user.example.id}"
++  type         = "sms_contact_method"
++  country_code = "+1"
++  address      = "2025550199"
++  label        = "Work"
++}
++```
++
++## Argument Reference
++
++The following arguments are supported:
++
++  * `user_id` - (Required) The ID of the user.
++  * `label` - (Required) The label (e.g., "Work", "Mobile", etc.).
++  * `address` - (Required) The "address" to deliver to: `email`, `phone number`, etc., depending on the type.
++  * `type` - (Required) The contact method type. May be (`email_contact_method`, `phone_contact_method`, `sms_contact_method`).
++  * `send_short_email` - (Optional) Send an abbreviated email message instead of the standard email output.
++  * `country_code` - (Optional) The 1-to-3 digit country calling code. Required when using `phone_contact_method` or `sms_contact_method`.
++
++## Attributes Reference
++
++The following attributes are exported:
++  * `contact_method_id` the ID of the contact method.
++  * `blacklisted` - If true, this phone has been blacklisted by PagerDuty and no messages will be sent to it.
++  * `enabled` - If true, this phone is capable of receiving SMS messages.
++
++## Import
++
++Contact methods can be imported using the `user_id` and the `id`, e.g.
++
++```
++$ terraform import pagerduty_user_contact_method.main PLBP09X:PLBP09X
++```
+diff --git a/website/pagerduty.erb b/website/pagerduty.erb
+index 5d09c03..195a231 100644
+--- a/website/pagerduty.erb
++++ b/website/pagerduty.erb
+@@ -58,6 +58,9 @@
+                 <li<%= sidebar_current("docs-pagerduty-resource-user") %>>
+                     <a href="/docs/providers/pagerduty/r/user.html">pagerduty_user</a>
+                 </li>
++                <li<%= sidebar_current("docs-pagerduty-resource-user-contact-method") %>>
++                    <a href="/docs/providers/pagerduty/r/user_contact_method.html">pagerduty_user_contact_method</a>
++                </li>
+             </ul>
+         </li>
+     </ul>
+

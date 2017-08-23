@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_user
 
-Use this data source to get information about a specific [user][1] that you can use for other Pager Duty resources.
+Use this data source to get information about a specific [user][1] that you can use for other PagerDuty resources.
 
 ## Example Usage
 

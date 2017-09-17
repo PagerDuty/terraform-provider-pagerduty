@@ -3,7 +3,6 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -19,6 +18,7 @@ func Provider() terraform.ResourceProvider {
 				Optional: true,
 				Default:  false,
 			},
+
 			"token": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -50,7 +50,7 @@ func Provider() terraform.ResourceProvider {
 }
 
 func handleNotFoundError(err error, d *schema.ResourceData) error {
-	if perr, ok := err.(*pagerduty.Error); ok && strings.Contains(perr.Message, "Not Found") {
+	if perr, ok := err.(*pagerduty.Error); ok && perr.ErrorResponse.StatusCode == 404 {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")
 		return nil

@@ -169,7 +169,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
 	if err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	d.Set("name", schedule.Name)

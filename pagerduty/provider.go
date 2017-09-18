@@ -18,6 +18,7 @@ func Provider() terraform.ResourceProvider {
 				Optional: true,
 				Default:  false,
 			},
+
 			"token": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -49,7 +50,7 @@ func Provider() terraform.ResourceProvider {
 }
 
 func handleNotFoundError(err error, d *schema.ResourceData) error {
-	if perr, ok := err.(*pagerduty.Error); ok && perr.Code == 2100 {
+	if perr, ok := err.(*pagerduty.Error); ok && perr.ErrorResponse.StatusCode == 404 {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")
 		return nil

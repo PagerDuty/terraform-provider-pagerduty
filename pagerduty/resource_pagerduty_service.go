@@ -26,6 +26,15 @@ func resourcePagerDutyService() *schema.Resource {
 				Optional: true,
 				Default:  "Managed by Terraform",
 			},
+			"alert_creation": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "create_incidents",
+				ValidateFunc: validateValueFunc([]string{
+					"create_alerts_and_incidents",
+					"create_incidents",
+				}),
+			},
 			"auto_resolve_timeout": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -191,6 +200,10 @@ func buildServiceStruct(d *schema.ResourceData) *pagerduty.Service {
 		service.AcknowledgementTimeout = attr.(int)
 	}
 
+	if attr, ok := d.GetOk("alert_creation"); ok {
+		service.AlertCreation = attr.(string)
+	}
+
 	if attr, ok := d.GetOk("escalation_policy"); ok {
 		service.EscalationPolicy = &pagerduty.EscalationPolicyReference{
 			ID:   attr.(string),
@@ -248,6 +261,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("auto_resolve_timeout", service.AutoResolveTimeout)
 	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
 	d.Set("acknowledgement_timeout", service.AcknowledgementTimeout)
+	d.Set("alert_creation", service.AlertCreation)
 
 	if service.IncidentUrgencyRule != nil {
 		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {

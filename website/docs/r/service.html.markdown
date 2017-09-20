@@ -39,6 +39,7 @@ resource "pagerduty_service" "example" {
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
   escalation_policy       = "${pagerduty_escalation_policy.example.id}"
+  alert_creation          = "create_incidents"
 }
 ```
 
@@ -52,6 +53,7 @@ The following arguments are supported:
   * `auto_resolve_timeout` - (Optional) Time in seconds that an incident is automatically resolved if left open for that long. Disabled if not set.
   * `acknowledgement_timeout` - (Optional) Time in seconds that an incident changes to the Triggered State after being Acknowledged. Disabled if not set.
   * `escalation_policy` - (Required) The escalation policy used by this service.
+  * `alert_creation` - (Optional) Must be one of two values. PagerDuty receives events from your monitoring systems and can then create incidents in different ways. Value "create_incidents" is default: events will create an incident that cannot be merged. Value "create_alerts_and_incidents" is the alternative: events will create an alert and then add it to a new incident, these incidents can be merged.
 
 You may specify one optional `incident_urgency_rule` block configuring what urgencies to use.
 Your PagerDuty account must have the `urgencies` ability to assign an incident urgency rule.

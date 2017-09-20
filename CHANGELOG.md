@@ -1,5 +1,9 @@
 ## 0.1.3 (Unreleased)
 
+IMPROVEMENTS:
+
+* r/pagerduty_service: Add alert_creation attribute [GH-38]
+
 BUG FIXES: 
 
 * r/pagerduty_schedule: Add support for overflow [GH-23]

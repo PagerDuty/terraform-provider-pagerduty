@@ -187,7 +187,7 @@ func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta inte
 func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*pagerduty.Client)
 
-	resp, _, err := client.Services.List(&pagerduty.ListServicesOptions{})
+	resp, _, err := client.Services.List(&pagerduty.ListServicesOptions{Limit: 100})
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

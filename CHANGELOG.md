@@ -7,6 +7,7 @@ IMPROVEMENTS:
 BUG FIXES: 
 
 * r/pagerduty_schedule: Add support for overflow [GH-23]
+* r/pagerduty_service_integration: Set Limit for /services GET to be at most 100 results when importing a service integration [GH-39]
 
 ## 0.1.2 (August 10, 2017)
 

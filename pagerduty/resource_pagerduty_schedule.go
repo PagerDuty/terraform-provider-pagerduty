@@ -176,6 +176,19 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 	d.Set("time_zone", schedule.TimeZone)
 	d.Set("description", schedule.Description)
 
+	// Here we override whatever `start` value we get back from the API
+	// and use what's in the configuration. This is to prevent a diff issue
+	// because we always get back a new `start` value from the PagerDuty API.
+	for _, sl := range schedule.ScheduleLayers {
+		for _, rsl := range d.Get("layer").([]interface{}) {
+			ssl := rsl.(map[string]interface{})
+
+			if sl.ID == ssl["id"].(string) {
+				sl.Start = ssl["start"].(string)
+			}
+		}
+	}
+
 	if err := d.Set("layer", flattenScheduleLayers(schedule.ScheduleLayers)); err != nil {
 		return err
 	}

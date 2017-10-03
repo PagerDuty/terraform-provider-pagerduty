@@ -36,6 +36,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 					"aws_cloudwatch_inbound_integration",
 					"cloudkick_inbound_integration",
 					"event_transformer_api_inbound_integration",
+					"events_api_v2_inbound_integration",
 					"generic_email_inbound_integration",
 					"generic_events_api_inbound_integration",
 					"keynote_inbound_integration",

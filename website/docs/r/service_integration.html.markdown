@@ -88,6 +88,8 @@ The following arguments are supported:
 
   * `service` - (Optional) The ID of the service the integration should belong to.
   * `vendor` - (Optional) The ID of the vendor the integration should integrate with (e.g Datadog or Amazon Cloudwatch).
+  * `integration_key` - (Optional) This is the unique key used to route events to this integration when received via the PagerDuty Events API.
+  * `integration_email` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.
 
     **Note:** You can use the `pagerduty_vendor` data source to locate the appropriate vendor ID.
 ## Attributes Reference

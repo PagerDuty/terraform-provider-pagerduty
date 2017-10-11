@@ -1,6 +1,8 @@
 package pagerduty
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // UserService handles the communication with user
 // related methods of the PagerDuty API.
@@ -8,6 +10,7 @@ type UserService service
 
 // NotificationRule represents a user notification rule.
 type NotificationRule struct {
+	NotificationRule    *NotificationRule       `json:"notification_rule,omitempty"`
 	ContactMethod       *ContactMethodReference `json:"contact_method,omitempty"`
 	HTMLURL             string                  `json:"html_url,omitempty"`
 	ID                  string                  `json:"id,omitempty"`
@@ -218,5 +221,50 @@ func (s *UserService) UpdateContactMethod(userID, contactMethodID string, contac
 // DeleteContactMethod deletes a contact method for a user.
 func (s *UserService) DeleteContactMethod(userID, contactMethodID string) (*Response, error) {
 	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+}
+
+// CreateNotificationRule creates a new notification rule for a user.
+func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRule) (*NotificationRule, *Response, error) {
+	u := fmt.Sprintf("/users/%s/notification_rules", userID)
+	v := new(NotificationRule)
+
+	resp, err := s.client.newRequestDo("POST", u, nil, &NotificationRule{NotificationRule: rule}, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.NotificationRule, resp, nil
+}
+
+// GetNotificationRule retrieves a notification rule for a user.
+func (s *UserService) GetNotificationRule(userID string, ruleID string) (*NotificationRule, *Response, error) {
+	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
+	v := new(NotificationRule)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.NotificationRule, resp, nil
+}
+
+// UpdateNotificationRule updates a notification rulefor a user.
+func (s *UserService) UpdateNotificationRule(userID, ruleID string, rule *NotificationRule) (*NotificationRule, *Response, error) {
+	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
+	v := new(NotificationRule)
+
+	resp, err := s.client.newRequestDo("PUT", u, nil, &NotificationRule{NotificationRule: rule}, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.NotificationRule, resp, nil
+}
+
+// DeleteNotificationRule deletes a notification rule for a user.
+func (s *UserService) DeleteNotificationRule(userID, ruleID string) (*Response, error) {
+	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
 	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
 }

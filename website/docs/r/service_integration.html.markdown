@@ -71,6 +71,7 @@ resource "pagerduty_service_integration" "cloudwatch" {
 
 The following arguments are supported:
 
+  * `service` - (Required) The ID of the service the integration should belong to.
   * `name` - (Optional) The name of the service integration.
   * `type` - (Optional) The service type. Can be:
   `aws_cloudwatch_inbound_integration`,
@@ -86,7 +87,6 @@ The following arguments are supported:
     **Note:** This is meant for **generic** service integrations.
     To integrate with a **vendor** (e.g Datadog or Amazon Cloudwatch) use the `vendor` field instead.
 
-  * `service` - (Optional) The ID of the service the integration should belong to.
   * `vendor` - (Optional) The ID of the vendor the integration should integrate with (e.g Datadog or Amazon Cloudwatch).
   * `integration_key` - (Optional) This is the unique key used to route events to this integration when received via the PagerDuty Events API.
   * `integration_email` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.

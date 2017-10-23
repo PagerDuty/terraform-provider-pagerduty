@@ -24,7 +24,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			},
 			"service": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 			},
 			"type": {
 				Type:          schema.TypeString,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccPagerDutyServiceIntegration_import(t *testing.T) {
@@ -26,9 +27,14 @@ func TestAccPagerDutyServiceIntegration_import(t *testing.T) {
 
 			{
 				ResourceName:      "pagerduty_service_integration.foo",
+				ImportStateIdFunc: testAccCheckPagerDutyServiceIntegrationId,
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 		},
 	})
+}
+
+func testAccCheckPagerDutyServiceIntegrationId(s *terraform.State) (string, error) {
+	return fmt.Sprintf("%v.%v", s.RootModule().Resources["pagerduty_service.foo"].Primary.ID, s.RootModule().Resources["pagerduty_service_integration.foo"].Primary.ID), nil
 }

@@ -39,6 +39,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"auto_resolve_timeout": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "14400",
 			},
 			"last_incident_timestamp": {
 				Type:     schema.TypeString,
@@ -55,6 +56,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"acknowledgement_timeout": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "1800",
 			},
 			"escalation_policy": {
 				Type:     schema.TypeString,

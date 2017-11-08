@@ -60,10 +60,10 @@ type Integration struct {
 
 // Service represents a service.
 type Service struct {
-	AcknowledgementTimeout int                        `json:"acknowledgement_timeout"`
+	AcknowledgementTimeout *int                       `json:"acknowledgement_timeout"`
 	Addons                 []*AddonReference          `json:"addons,omitempty"`
 	AlertCreation          string                     `json:"alert_creation,omitempty"`
-	AutoResolveTimeout     int                        `json:"auto_resolve_timeout"`
+	AutoResolveTimeout     *int                       `json:"auto_resolve_timeout"`
 	CreatedAt              string                     `json:"created_at,omitempty"`
 	Description            string                     `json:"description,omitempty"`
 	EscalationPolicy       *EscalationPolicyReference `json:"escalation_policy,omitempty"`

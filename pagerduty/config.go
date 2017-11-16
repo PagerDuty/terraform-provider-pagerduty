@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"runtime"
 
 	"github.com/hashicorp/terraform/helper/logging"
@@ -33,10 +34,15 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		return nil, fmt.Errorf(invalidCreds)
 	}
 
+	var httpClient *http.Client
+	httpClient = http.DefaultClient
+	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
+
 	config := &pagerduty.Config{
-		Debug:     logging.IsDebugOrHigher(),
-		Token:     c.Token,
-		UserAgent: fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraform.VersionString()),
+		Debug:      logging.IsDebugOrHigher(),
+		HTTPClient: httpClient,
+		Token:      c.Token,
+		UserAgent:  fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraform.VersionString()),
 	}
 
 	client, err := pagerduty.NewClient(config)

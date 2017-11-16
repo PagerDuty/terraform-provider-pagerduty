@@ -165,7 +165,7 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 	userID, cmID := resourcePagerDutyUserContactMethodParseID(d.Id())
 
 	if _, err := client.Users.DeleteContactMethod(userID, cmID); err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	d.SetId("")

@@ -35,8 +35,9 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 			},
 
 			"send_short_email": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  false,
 			},
 
 			"country_code": {

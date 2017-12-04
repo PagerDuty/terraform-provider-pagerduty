@@ -9,7 +9,7 @@ BUG FIXES:
 * r/pagerduty_service: Allow disabling service incident timeouts [GH-44]
 * r/pagerduty_schedule: Add support for overflow [GH-23]
 * r/pagerduty_schedule: Don't read back `start` value for schedule layers [GH-35]
-* r/pagerduty_service_integration: Set Limit for /services GET to be at most 100 results when importing a service integration [GH-39]
+* r/pagerduty_service_integration: Fix import issue when more than 100 services exist [GH-39] [GH-47]
 
 ## 0.1.2 (August 10, 2017)
 

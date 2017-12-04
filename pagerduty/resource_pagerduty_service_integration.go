@@ -1,11 +1,12 @@
 package pagerduty
 
 import (
-	"fmt"
 	"log"
 
+	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
+	"strings"
 )
 
 func resourcePagerDutyServiceIntegration() *schema.Resource {
@@ -24,7 +25,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			},
 			"service": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 			},
 			"type": {
 				Type:          schema.TypeString,
@@ -188,26 +189,20 @@ func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta inte
 func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*pagerduty.Client)
 
-	resp, _, err := client.Services.List(&pagerduty.ListServicesOptions{Limit: 100})
+	ids := strings.Split(d.Id(), ".")
+
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_service_integration. Expecting an importation ID formed as '<service_id>.<integration_id>'")
+	}
+	sid, id := ids[0], ids[1]
+
+	_, _, err := client.Services.GetIntegration(sid, id, nil)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
-	var serviceID string
-
-	for _, service := range resp.Services {
-		for _, integration := range service.Integrations {
-			if integration.ID == d.Id() {
-				serviceID = service.ID
-			}
-		}
-	}
-
-	if serviceID == "" {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_service_integration. Could not locate a service ID for the integration")
-	}
-
-	d.Set("service", serviceID)
+	d.SetId(id)
+	d.Set("service", sid)
 
 	return []*schema.ResourceData{d}, nil
 }

@@ -74,13 +74,19 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "time_zone", location),
 					resource.TestCheckResourceAttr(
-						"pagerduty_schedule.foo", "layer.#", "1"),
+						"pagerduty_schedule.foo", "layer.#", "2"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.0.name", "foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.0.start", start),
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.0.rotation_virtual_start", rotationVirtualStart),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.1.name", "bar"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.1.start", start),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.1.rotation_virtual_start", rotationVirtualStart),
 				),
 			},
 			{
@@ -328,20 +334,34 @@ func testAccCheckPagerDutyScheduleExists(n string) resource.TestCheckFunc {
 func testAccCheckPagerDutyScheduleConfig(username, email, schedule, location, start, rotationVirtualStart string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
-  name  = "%s"
-  email = "%s"
+  name  = "%[1]v"
+  email = "%[2]v"
 }
 
 resource "pagerduty_schedule" "foo" {
-  name = "%s"
+  name = "%[3]v"
 
-  time_zone   = "%s"
+  time_zone   = "%[4]v"
   description = "foo"
 
   layer {
     name                         = "foo"
-    start                        = "%s"
-    rotation_virtual_start       = "%s"
+    start                        = "%[5]v"
+    rotation_virtual_start       = "%[6]v"
+    rotation_turn_length_seconds = 86400
+    users                        = ["${pagerduty_user.foo.id}"]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+
+  layer {
+    name                         = "bar"
+    start                        = "%[5]v"
+    rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
     users                        = ["${pagerduty_user.foo.id}"]
 

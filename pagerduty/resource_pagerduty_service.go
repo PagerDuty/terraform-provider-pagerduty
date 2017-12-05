@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -36,8 +37,9 @@ func resourcePagerDutyService() *schema.Resource {
 				}),
 			},
 			"auto_resolve_timeout": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "14400",
 			},
 			"last_incident_timestamp": {
 				Type:     schema.TypeString,
@@ -52,8 +54,9 @@ func resourcePagerDutyService() *schema.Resource {
 				Computed: true,
 			},
 			"acknowledgement_timeout": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "1800",
 			},
 			"escalation_policy": {
 				Type:     schema.TypeString,
@@ -182,7 +185,7 @@ func resourcePagerDutyService() *schema.Resource {
 	}
 }
 
-func buildServiceStruct(d *schema.ResourceData) *pagerduty.Service {
+func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	service := pagerduty.Service{
 		Name:   d.Get("name").(string),
 		Status: d.Get("status").(string),
@@ -193,11 +196,23 @@ func buildServiceStruct(d *schema.ResourceData) *pagerduty.Service {
 	}
 
 	if attr, ok := d.GetOk("auto_resolve_timeout"); ok {
-		service.AutoResolveTimeout = attr.(int)
+		if attr.(string) != "null" {
+			if val, err := strconv.Atoi(attr.(string)); err == nil {
+				service.AutoResolveTimeout = &val
+			} else {
+				return nil, err
+			}
+		}
 	}
 
 	if attr, ok := d.GetOk("acknowledgement_timeout"); ok {
-		service.AcknowledgementTimeout = attr.(int)
+		if attr.(string) != "null" {
+			if val, err := strconv.Atoi(attr.(string)); err == nil {
+				service.AcknowledgementTimeout = &val
+			} else {
+				return nil, err
+			}
+		}
 	}
 
 	if attr, ok := d.GetOk("alert_creation"); ok {
@@ -223,17 +238,20 @@ func buildServiceStruct(d *schema.ResourceData) *pagerduty.Service {
 		service.ScheduledActions = expandScheduledActions(attr)
 	}
 
-	return &service
+	return &service, nil
 }
 
 func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	service := buildServiceStruct(d)
+	service, err := buildServiceStruct(d)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Creating PagerDuty service %s", service.Name)
 
-	service, _, err := client.Services.Create(service)
+	service, _, err = client.Services.Create(service)
 	if err != nil {
 		return err
 	}
@@ -258,9 +276,17 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)
-	d.Set("auto_resolve_timeout", service.AutoResolveTimeout)
+	if service.AutoResolveTimeout == nil {
+		d.Set("auto_resolve_timeout", "null")
+	} else {
+		d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
+	}
 	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
-	d.Set("acknowledgement_timeout", service.AcknowledgementTimeout)
+	if service.AcknowledgementTimeout == nil {
+		d.Set("acknowledgement_timeout", "null")
+	} else {
+		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
+	}
 	d.Set("alert_creation", service.AlertCreation)
 
 	if service.IncidentUrgencyRule != nil {
@@ -287,7 +313,10 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	service := buildServiceStruct(d)
+	service, err := buildServiceStruct(d)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
 

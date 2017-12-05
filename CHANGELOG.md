@@ -6,7 +6,7 @@ IMPROVEMENTS:
 * r/pagerduty_service_integration: Allow for generation of events-api-v2 service integration [GH-40]
 
 BUG FIXES: 
-* r/pagerduty_service: Allow disabling service incident timeouts [GH-44]
+* r/pagerduty_service: Allow disabling service incident timeouts [GH-44] [GH-52]
 * r/pagerduty_schedule: Add support for overflow [GH-23]
 * r/pagerduty_schedule: Don't read back `start` value for schedule layers [GH-35]
 * r/pagerduty_service_integration: Fix import issue when more than 100 services exist [GH-39] [GH-47]

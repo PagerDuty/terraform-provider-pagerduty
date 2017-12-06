@@ -59,8 +59,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-  * `id` - The ID of the user and contact method in the format of (<userID>:<contactMethodID>)
-  * `contact_method_id` - The ID of the contact method.
+  * `id` - The ID of the contact method.
   * `blacklisted` - If true, this phone has been blacklisted by PagerDuty and no messages will be sent to it.
   * `enabled` - If true, this phone is capable of receiving SMS messages.
 

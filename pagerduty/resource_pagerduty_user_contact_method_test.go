@@ -98,9 +98,7 @@ func testAccCheckPagerDutyUserContactMethodDestroy(s *terraform.State) error {
 			continue
 		}
 
-		userID, cmID := resourcePagerDutyUserContactMethodParseID(r.Primary.ID)
-
-		if _, _, err := client.Users.GetContactMethod(userID, cmID); err == nil {
+		if _, _, err := client.Users.GetContactMethod(r.Primary.Attributes["user_id"], r.Primary.ID); err == nil {
 			return fmt.Errorf("User contact method still exists")
 		}
 
@@ -121,14 +119,12 @@ func testAccCheckPagerDutyUserContactMethodExists(n string) resource.TestCheckFu
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		userID, cmID := resourcePagerDutyUserContactMethodParseID(rs.Primary.ID)
-
-		found, _, err := client.Users.GetContactMethod(userID, cmID)
+		found, _, err := client.Users.GetContactMethod(rs.Primary.Attributes["user_id"], rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		if found.ID != cmID {
+		if found.ID != rs.Primary.ID {
 			return fmt.Errorf("Contact method not found: %v - %v", rs.Primary.ID, found)
 		}
 

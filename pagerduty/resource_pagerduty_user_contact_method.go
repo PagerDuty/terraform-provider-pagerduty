@@ -16,7 +16,7 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 		Update: resourcePagerDutyUserContactMethodUpdate,
 		Delete: resourcePagerDutyUserContactMethodDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourcePagerDutyUserContactMethodImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {
@@ -64,11 +64,6 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-
-			"contact_method_id": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 		},
 	}
 }
@@ -94,13 +89,6 @@ func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMeth
 
 	return contactMethod
 }
-
-func resourcePagerDutyUserContactMethodParseID(id string) (string, string) {
-	// userID, contactMethodID
-	parts := strings.Split(id, ":")
-	return parts[0], parts[1]
-}
-
 func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
@@ -113,7 +101,7 @@ func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta inter
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("%s:%s", userID, resp.ID))
+	d.SetId(resp.ID)
 
 	return resourcePagerDutyUserContactMethodRead(d, meta)
 }
@@ -121,22 +109,20 @@ func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta inter
 func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	userID, cmID := resourcePagerDutyUserContactMethodParseID(d.Id())
+	userID := d.Get("user_id").(string)
 
-	resp, _, err := client.Users.GetContactMethod(userID, cmID)
+	resp, _, err := client.Users.GetContactMethod(userID, d.Id())
 	if err != nil {
 		return handleNotFoundError(err, d)
 	}
 
 	d.Set("address", resp.Address)
 	d.Set("blacklisted", resp.BlackListed)
-	d.Set("contact_method_id", resp.ID)
 	d.Set("country_code", resp.CountryCode)
 	d.Set("enabled", resp.Enabled)
 	d.Set("label", resp.Label)
 	d.Set("send_short_email", resp.SendShortEmail)
 	d.Set("type", resp.Type)
-	d.Set("user_id", userID)
 
 	return nil
 }
@@ -148,9 +134,9 @@ func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta inter
 
 	log.Printf("[INFO] Updating PagerDuty user contact method %s", d.Id())
 
-	userID, cmID := resourcePagerDutyUserContactMethodParseID(d.Id())
+	userID := d.Get("user_id").(string)
 
-	if _, _, err := client.Users.UpdateContactMethod(userID, cmID, contactMethod); err != nil {
+	if _, _, err := client.Users.UpdateContactMethod(userID, d.Id(), contactMethod); err != nil {
 		return err
 	}
 
@@ -162,13 +148,34 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 
 	log.Printf("[INFO] Deleting PagerDuty user contact method %s", d.Id())
 
-	userID, cmID := resourcePagerDutyUserContactMethodParseID(d.Id())
+	userID := d.Get("user_id").(string)
 
-	if _, err := client.Users.DeleteContactMethod(userID, cmID); err != nil {
+	if _, err := client.Users.DeleteContactMethod(userID, d.Id()); err != nil {
 		return handleNotFoundError(err, d)
 	}
 
 	d.SetId("")
 
 	return nil
+}
+
+func resourcePagerDutyUserContactMethodImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*pagerduty.Client)
+
+	ids := strings.Split(d.Id(), ":")
+
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_user_contact_method. Expecting an ID formed as '<user_id>.<contact_method_id>'")
+	}
+	uid, id := ids[0], ids[1]
+
+	_, _, err := client.Users.GetContactMethod(uid, id)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(id)
+	d.Set("user_id", uid)
+
+	return []*schema.ResourceData{d}, nil
 }

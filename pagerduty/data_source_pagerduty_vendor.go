@@ -49,12 +49,23 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 
 	var found *pagerduty.Vendor
 
-	r := regexp.MustCompile("(?i)" + searchName)
+	er := regexp.MustCompile(fmt.Sprintf("^(?i)%s$", searchName))
 
 	for _, vendor := range resp.Vendors {
-		if r.MatchString(vendor.Name) {
+		if er.MatchString(vendor.Name) {
 			found = vendor
 			break
+		}
+	}
+
+	// We didn't find an exact match, so let's fallback to partial matching.
+	if found == nil {
+		pr := regexp.MustCompile("(?i)" + searchName)
+		for _, vendor := range resp.Vendors {
+			if pr.MatchString(vendor.Name) {
+				found = vendor
+				break
+			}
 		}
 	}
 

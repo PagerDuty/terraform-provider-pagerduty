@@ -1,5 +1,9 @@
 ## 0.1.3 (Unreleased)
 
+FEATURES:
+
+* **New Resource:** `pagerduty_user_contact_method` [GH-29]
+
 IMPROVEMENTS:
 
 * r/pagerduty_service: Add alert_creation attribute [GH-38]

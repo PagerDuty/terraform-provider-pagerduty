@@ -69,7 +69,8 @@ The block contains the following arguments.
 
   * `type` - The type of support hours. Can be `fixed_time_per_day`.
   * `time_zone` - The time zone for the support hours.
-  * `days_of_week` - Array of days of week as integers.
+  * `days_of_week` - Array of days of week as integers. `1` to `7`, `1` being
+    Monday and `7` being Sunday.
   * `start_time` - The support hours' starting time of day.
   * `end_time` - The support hours' ending time of day.
 

@@ -1,19 +1,19 @@
-## 0.1.3 (Unreleased)
+## 0.1.3 (January 16, 2018)
 
 FEATURES:
 
-* **New Resource:** `pagerduty_user_contact_method` [GH-29]
+* **New Resource:** `pagerduty_user_contact_method` ([#29](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/29))
 
 IMPROVEMENTS:
 
-* r/pagerduty_service: Add alert_creation attribute [GH-38]
-* r/pagerduty_service_integration: Allow for generation of events-api-v2 service integration [GH-40]
+* r/pagerduty_service: Add alert_creation attribute ([#38](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/38))
+* r/pagerduty_service_integration: Allow for generation of events-api-v2 service integration ([#40](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/40))
 
 BUG FIXES: 
-* r/pagerduty_service: Allow disabling service incident timeouts [GH-44] [GH-52]
-* r/pagerduty_schedule: Add support for overflow [GH-23]
-* r/pagerduty_schedule: Don't read back `start` value for schedule layers [GH-35]
-* r/pagerduty_service_integration: Fix import issue when more than 100 services exist [GH-39] [GH-47]
+* r/pagerduty_service: Allow disabling service incident timeouts ([#44](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/44)] [[#52](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/52))
+* r/pagerduty_schedule: Add support for overflow ([#23](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/23))
+* r/pagerduty_schedule: Don't read back `start` value for schedule layers ([#35](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/35))
+* r/pagerduty_service_integration: Fix import issue when more than 100 services exist ([#39](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/39)] [[#47](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/47))
 
 ## 0.1.2 (August 10, 2017)
 

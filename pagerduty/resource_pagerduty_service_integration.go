@@ -1,12 +1,12 @@
 package pagerduty
 
 import (
-	"log"
-
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
-	"strings"
 )
 
 func resourcePagerDutyServiceIntegration() *schema.Resource {
@@ -61,6 +61,10 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			"integration_email": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
+			},
+			"html_url": {
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 		},
@@ -149,6 +153,10 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 
 	if serviceIntegration.IntegrationEmail != "" {
 		d.Set("integration_email", serviceIntegration.IntegrationEmail)
+	}
+
+	if serviceIntegration.HTMLURL != "" {
+		d.Set("html_url", serviceIntegration.HTMLURL)
 	}
 
 	return nil

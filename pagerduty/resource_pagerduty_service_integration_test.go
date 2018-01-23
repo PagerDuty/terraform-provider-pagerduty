@@ -45,6 +45,8 @@ func TestAccPagerDutyServiceIntegration_Basic(t *testing.T) {
 						"pagerduty_service_integration.foo", "type", "generic_events_api_inbound_integration"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "vendor", "PAM4FGS"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_service_integration.foo", "html_url"),
 				),
 			},
 		},

@@ -37,10 +37,12 @@ type Client struct {
 	Abilities          *AbilityService
 	Addons             *AddonService
 	EscalationPolicies *EscalationPolicyService
+	Extensions         *ExtensionService
 	MaintenanceWindows *MaintenanceWindowService
 	Schedules          *ScheduleService
 	Services           *ServicesService
 	Teams              *TeamService
+	ExtensionSchemas   *ExtensionSchemaService
 	Users              *UserService
 	Vendors            *VendorService
 }
@@ -80,6 +82,8 @@ func NewClient(config *Config) (*Client, error) {
 	c.Teams = &TeamService{c}
 	c.Users = &UserService{c}
 	c.Vendors = &VendorService{c}
+	c.Extensions = &ExtensionService{c}
+	c.ExtensionSchemas = &ExtensionSchemaService{c}
 
 	return c, nil
 }

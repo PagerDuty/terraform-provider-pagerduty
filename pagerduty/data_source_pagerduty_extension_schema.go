@@ -50,7 +50,7 @@ func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interfa
 	}
 
 	d.SetId(found.ID)
-	d.Set("label", found.Label)
+	d.Set("name", found.Label)
 	d.Set("type", found.Type)
 
 	return nil

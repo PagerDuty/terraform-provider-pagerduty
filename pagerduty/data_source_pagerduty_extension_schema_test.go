@@ -38,8 +38,8 @@ func testAccDataSourcePagerDutyExtensionSchema(n string) resource.TestCheckFunc 
 			return fmt.Errorf("Expected the Slack Extension Schema ID to be: PD8SURB, but got: %s", a["id"])
 		}
 
-		if a["name"] != "slack" {
-			return fmt.Errorf("Expected the Slack Extension Schema Name to be: slack, but got: %s", a["name"])
+		if a["name"] != "Slack" {
+			return fmt.Errorf("Expected the Slack Extension Schema Name to be: Slack, but got: %s", a["name"])
 		}
 
 		if a["type"] != "extension_schema" {

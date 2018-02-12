@@ -45,6 +45,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_team_membership":     resourcePagerDutyTeamMembership(),
 			"pagerduty_user":                resourcePagerDutyUser(),
 			"pagerduty_user_contact_method": resourcePagerDutyUserContactMethod(),
+			"pagerduty_extension":           resourcePagerDutyExtension(),
 		},
 
 		ConfigureFunc: providerConfigure,

@@ -1,4 +1,12 @@
 ## 0.1.4 (Unreleased)
+
+FEATURES:
+
+IMPROVEMENTS:
+
+BUG FIXES: 
+* r/service_integration: Add `html_url` as a computed value [GH-59]
+
 ## 0.1.3 (January 16, 2018)
 
 FEATURES:

@@ -99,6 +99,7 @@ The following attributes are exported:
   * `id` - The ID of the service integration.
   * `integration_key` - This is the unique key used to route events to this integration when received via the PagerDuty Events API.
   * `integration_email` - This is the unique fully-qualified email address used for routing emails to this integration for processing.
+  * `html_url` - Configure your events to send webhooks to this endpoint. This is described as Integration URL in some Pagerduty documentation.
 
 ## Import
 

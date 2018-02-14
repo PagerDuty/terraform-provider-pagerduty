@@ -6,6 +6,7 @@ IMPROVEMENTS:
 
 BUG FIXES: 
 * r/service_integration: Add `html_url` as a computed value [GH-59]
+* r/pagerduty_service: allow incident_urgency_rule to be computed [GH-63]
 * d/pagerduty_vendor: Match whole string and fallback to partial matching [GH-55]
 
 ## 0.1.3 (January 16, 2018)

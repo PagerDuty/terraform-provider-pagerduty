@@ -64,6 +64,7 @@ func resourcePagerDutyService() *schema.Resource {
 			},
 			"incident_urgency_rule": &schema.Schema{
 				Type:     schema.TypeList,
+				Computed: true,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -258,7 +259,7 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 
 	d.SetId(service.ID)
 
-	return nil
+	return resourcePagerDutyServiceRead(d, meta)
 }
 
 func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {

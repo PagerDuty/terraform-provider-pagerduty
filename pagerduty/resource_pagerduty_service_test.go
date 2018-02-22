@@ -371,6 +371,105 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 	})
 }
 
+func TestAccPagerDutyService_ScheduledActionsChange(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service_id := ""
+	p_service_id := &service_id
+	updated_service_id := ""
+	p_updated_service_id := &updated_service_id
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceWithIncidentUrgencyRulesConfig(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					testAccCheckPagerDutyServiceSaveServiceId(p_service_id, "pagerduty_service.foo"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceWithScheduledActionsConfigUpdated(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					testAccCheckPagerDutyServiceSaveServiceId(p_updated_service_id, "pagerduty_service.foo"),
+				),
+			},
+		},
+	})
+
+	if service_id != updated_service_id {
+		t.Error(fmt.Errorf("Expected service id to be %s, but found %s", service_id, updated_service_id))
+	}
+}
+
+func TestAccPagerDutyService_SupportHoursChange(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service_id := ""
+	p_service_id := &service_id
+	updated_service_id := ""
+	p_updated_service_id := &updated_service_id
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceWithIncidentUrgencyRulesConfig(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					testAccCheckPagerDutyServiceSaveServiceId(p_service_id, "pagerduty_service.foo"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceWithSupportHoursConfigUpdated(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					testAccCheckPagerDutyServiceSaveServiceId(p_updated_service_id, "pagerduty_service.foo"),
+				),
+			},
+		},
+	})
+
+	if service_id != updated_service_id {
+		t.Error(fmt.Errorf("Expected service id to be %s, but found %s", service_id, updated_service_id))
+	}
+}
+
+func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Service ID is set")
+		}
+
+		*p = rs.Primary.ID
+
+		return nil
+	}
+}
+
 func testAccCheckPagerDutyServiceDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*pagerduty.Client)
 	for _, r := range s.RootModule().Resources {
@@ -641,6 +740,136 @@ resource "pagerduty_service" "foo" {
 		start_time   = "09:00:00"
 		end_time     = "17:00:00"
 		days_of_week = [ 1, 2, 3, 4, 5 ]
+	}]
+
+	scheduled_actions {
+		type = "urgency_change"
+		to_urgency = "high"
+		at {
+			type = "named_time",
+			name = "support_hours_start"
+		}
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceWithScheduledActionsConfigUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = "${pagerduty_user.foo.id}"
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+
+	incident_urgency_rule {
+		type = "use_support_hours"
+
+		during_support_hours {
+			type    = "constant"
+			urgency = "low"
+		}
+		outside_support_hours {
+			type    = "constant"
+			urgency = "high"
+		}
+	}
+
+	support_hours = [{
+		type         = "fixed_time_per_day"
+		time_zone    = "America/Lima"
+		start_time   = "09:00:00"
+		end_time     = "17:00:00"
+		days_of_week = [ 1, 2, 3, 4, 5 ]
+	}]
+
+	scheduled_actions {
+		type = "urgency_change"
+		to_urgency = "high"
+		at {
+			type = "named_time",
+			name = "support_hours_end"
+		}
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceWithSupportHoursConfigUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = "${pagerduty_user.foo.id}"
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+
+	incident_urgency_rule {
+		type = "use_support_hours"
+
+		during_support_hours {
+			type    = "constant"
+			urgency = "high"
+		}
+		outside_support_hours {
+			type    = "constant"
+			urgency = "low"
+		}
+	}
+
+	support_hours = [{
+		type         = "fixed_time_per_day"
+		time_zone    = "America/Lima"
+		start_time   = "08:00:00"
+		end_time     = "18:00:00"
+		days_of_week = [ 1, 2, 3, 4 ]
 	}]
 
 	scheduled_actions {

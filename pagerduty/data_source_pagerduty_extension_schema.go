@@ -14,11 +14,6 @@ func dataSourcePagerDutyExtensionSchema() *schema.Resource {
 		Read: dataSourcePagerDutyExtensionSchemaRead,
 
 		Schema: map[string]*schema.Schema{
-			"name_regex": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Removed:  "Use `name` instead. This attribute will be removed in a future version",
-			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,

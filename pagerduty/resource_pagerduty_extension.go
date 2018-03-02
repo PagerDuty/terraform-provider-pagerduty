@@ -89,8 +89,8 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 		return handleNotFoundError(err, d)
 	}
 
-	d.Set("name", extension.Name)
 	d.Set("summary", extension.Summary)
+	d.Set("name", extension.Name)
 	d.Set("endpoint_url", extension.EndpointURL)
 	d.Set("extension_objects", extension.ExtensionObjects)
 	d.Set("extension_schema", extension.ExtensionSchema)

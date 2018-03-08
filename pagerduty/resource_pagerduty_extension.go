@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -76,7 +77,7 @@ func resourcePagerDutyExtensionCreate(d *schema.ResourceData, meta interface{}) 
 
 	d.SetId(extension.ID)
 
-	return nil
+	return resourcePagerDutyExtensionRead(d, meta)
 }
 
 func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) error {
@@ -109,7 +110,7 @@ func resourcePagerDutyExtensionUpdate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	return nil
+	return resourcePagerDutyExtensionRead(d, meta)
 }
 
 func resourcePagerDutyExtensionDelete(d *schema.ResourceData, meta interface{}) error {
@@ -136,7 +137,7 @@ func resourcePagerDutyExtensionImport(d *schema.ResourceData, meta interface{}) 
 	extension, _, err := client.Extensions.Get(d.Id())
 
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_extension. Expecting an importation ID for extension.")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_extension. Expecting an importation ID for extension")
 	}
 
 	d.Set("endpoint_url", extension.EndpointURL)

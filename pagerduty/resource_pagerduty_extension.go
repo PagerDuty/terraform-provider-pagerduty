@@ -93,7 +93,9 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 	d.Set("summary", extension.Summary)
 	d.Set("name", extension.Name)
 	d.Set("endpoint_url", extension.EndpointURL)
-	d.Set("extension_objects", extension.ExtensionObjects)
+	if err := d.Set("extension_objects", flattenExtensionObjects(extension.ExtensionObjects)); err != nil {
+		log.Printf("[WARN] error setting extension_objects: %s", err)
+	}
 	d.Set("extension_schema", extension.ExtensionSchema)
 
 	return nil
@@ -158,5 +160,17 @@ func expandServiceObjects(v interface{}) []*pagerduty.ServiceReference {
 		services = append(services, service)
 	}
 
+	return services
+}
+
+func flattenExtensionObjects(serviceList []*pagerduty.ServiceReference) interface{} {
+	var services []interface{}
+	for _, s := range serviceList {
+		// only flatten service_reference types, because that's all we send at this
+		// time
+		if s.Type == "service_reference" {
+			services = append(services, s.ID)
+		}
+	}
 	return services
 }

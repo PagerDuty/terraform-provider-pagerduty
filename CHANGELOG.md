@@ -4,6 +4,9 @@ FEATURES:
 
 IMPROVEMENTS:
 
+* **New Resource:** `pagerduty_extension` [GH-69]
+* **New Data Source:** `pagerduty_extension_schema` [GH-69]
+
 BUG FIXES: 
 * r/service_integration: Add `html_url` as a computed value [GH-59]
 * r/pagerduty_service: allow incident_urgency_rule to be computed [GH-63]

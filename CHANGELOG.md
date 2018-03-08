@@ -1,16 +1,16 @@
-## 1.0.0 (Unreleased)
+## 1.0.0 (March 08, 2018)
 
 FEATURES:
 
 IMPROVEMENTS:
 
-* **New Resource:** `pagerduty_extension` [GH-69]
-* **New Data Source:** `pagerduty_extension_schema` [GH-69]
+* **New Resource:** `pagerduty_extension` ([#69](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/69))
+* **New Data Source:** `pagerduty_extension_schema` ([#69](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/69))
 
 BUG FIXES: 
-* r/service_integration: Add `html_url` as a computed value [GH-59]
-* r/pagerduty_service: allow incident_urgency_rule to be computed [GH-63]
-* d/pagerduty_vendor: Match whole string and fallback to partial matching [GH-55]
+* r/service_integration: Add `html_url` as a computed value ([#59](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/59))
+* r/pagerduty_service: allow incident_urgency_rule to be computed ([#63](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/63))
+* d/pagerduty_vendor: Match whole string and fallback to partial matching ([#55](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/55))
 
 ## 0.1.3 (January 16, 2018)
 

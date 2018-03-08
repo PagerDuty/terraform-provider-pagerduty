@@ -42,3 +42,6 @@ type EscalationTargetReference resourceReference
 
 // VendorReference represents a reference to a vendor
 type VendorReference resourceReference
+
+// ExtensionSchemaReference represents a reference to an extension schema
+type ExtensionSchemaReference resourceReference

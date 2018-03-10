@@ -61,3 +61,11 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```sh
 $ make testacc
 ```
+
+## Developing with Docker
+
+Running the following commands will build the docker image and run the container with the code volume mounted to the correct location:
+```sh
+$ docker build -t terraform-provider-pagerduty .
+$ docker run -v $(pwd):/go/src/github.com/terraform-providers/terraform-provider-pagerduty -it terraform-provider-pagerduty
+```

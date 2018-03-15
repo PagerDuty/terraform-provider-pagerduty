@@ -106,5 +106,5 @@ The following attributes are exported:
 Services can be imported using their related `service` id and service integration `id` separated by a dot, e.g.
 
 ```
-$ terraform import pagerduty_service.main PLSSSSS.PLIIIII
+$ terraform import pagerduty_service_integration.main PLSSSSS.PLIIIII
 ```

@@ -14,8 +14,9 @@ func dataSourcePagerDutyTeam() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of the team to find in the PagerDuty API",
 			},
 			"description": {
 				Type:     schema.TypeString,

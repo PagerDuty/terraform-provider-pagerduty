@@ -63,8 +63,7 @@ The block contains the following arguments.
   * `during_support_hours` - (Optional) Incidents' urgency during support hours.
   * `outside_support_hours` - (Optional) Incidents' urgency outside of support hours.
 
-When using `type = "use_support_hours"` in `incident_urgency_rule` you have to specify exactly one otherwise optional `support_hours` block.
-Changes to `support_hours` necessitate re-creating the service resource. Account must have the `service_support_hours` ability to assign support hours.
+When using `type = "use_support_hours"` in `incident_urgency_rule` you have to specify exactly one otherwise optional `support_hours` block. Account must have the `service_support_hours` ability to assign support hours.
 The block contains the following arguments.
 
   * `type` - The type of support hours. Can be `fixed_time_per_day`.
@@ -74,7 +73,7 @@ The block contains the following arguments.
   * `start_time` - The support hours' starting time of day.
   * `end_time` - The support hours' ending time of day.
 
-When using `type = "use_support_hours"` in the `incident_urgency_rule` block you have to also specify `scheduled_actions` for the service. Otherwise `scheduled_actions` is optional. Changes necessitate re-createing the service resource.
+When using `type = "use_support_hours"` in the `incident_urgency_rule` block you have to also specify `scheduled_actions` for the service. Otherwise `scheduled_actions` is optional.
 
   * `type` - The type of scheduled action. Currently, this must be set to `urgency_change`.
   * `at` - Represents when scheduled action will occur.

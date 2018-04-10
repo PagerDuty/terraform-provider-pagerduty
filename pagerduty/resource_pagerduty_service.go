@@ -121,7 +121,7 @@ func resourcePagerDutyService() *schema.Resource {
 				Optional: true,
 				MaxItems: 1,
 				MinItems: 1,
-				ForceNew: true,
+				ForceNew: false,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -152,7 +152,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"scheduled_actions": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: true,
+				ForceNew: false,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {

@@ -371,6 +371,75 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 	})
 }
 
+func TestAccPagerDutyService_SupportHoursChange(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service_id := ""
+	p_service_id := &service_id
+	updated_service_id := ""
+	p_updated_service_id := &updated_service_id
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceWithIncidentUrgencyRulesConfig(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					testAccCheckPagerDutyServiceSaveServiceId(p_service_id, "pagerduty_service.foo"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceWithSupportHoursConfigUpdated(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					testAccCheckPagerDutyServiceSaveServiceId(p_updated_service_id, "pagerduty_service.foo"),
+				),
+			},
+		},
+	})
+
+	if service_id != updated_service_id {
+		t.Error(fmt.Errorf("Expected service id to be %s, but found %s", service_id, updated_service_id))
+	}
+}
+
+func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Service ID is set")
+		}
+
+		client := testAccProvider.Meta().(*pagerduty.Client)
+
+		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		if err != nil {
+			return err
+		}
+
+		if found.ID != rs.Primary.ID {
+			return fmt.Errorf("Service not found: %v - %v", rs.Primary.ID, found)
+		}
+
+		*p = found.ID
+
+		return nil
+	}
+}
+
 func testAccCheckPagerDutyServiceDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*pagerduty.Client)
 	for _, r := range s.RootModule().Resources {
@@ -651,6 +720,47 @@ resource "pagerduty_service" "foo" {
 			name = "support_hours_start"
 		}
 	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceWithSupportHoursConfigUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = "${pagerduty_user.foo.id}"
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+
+	incident_urgency_rule {
+		type = "constant"
+		urgency = "high"
+	}
+
 }
 `, username, email, escalationPolicy, service)
 }

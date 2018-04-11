@@ -20,7 +20,7 @@ func TestAccDataSourcePagerDutyTeam_Basic(t *testing.T) {
 			{
 				Config: testAccDataSourcePagerDutyTeamConfig(name, description),
 				Check: resource.ComposeTestCheckFunc(
-					testAccDataSourcePagerDutyUser("pagerduty_team.test", "data.pagerduty_team.by_name"),
+					testAccDataSourcePagerDutyTeam("pagerduty_team.test", "data.pagerduty_team.by_name"),
 				),
 			},
 		},
@@ -60,7 +60,7 @@ resource "pagerduty_team" "test" {
 }
 
 data "pagerduty_team" "by_name" {
-	name = "${pagerduty_user.test.name}"
+	name = "${pagerduty_team.test.name}"
 }
 `, name, description)
 }

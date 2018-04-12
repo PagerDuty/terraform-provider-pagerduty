@@ -1,12 +1,12 @@
-## 1.1.0 (Unreleased)
+## 1.1.0 (April 12, 2018)
 
 FEATURES:
 
-* **New Data Source:** `pagerduty_team` [GH-65]
+* **New Data Source:** `pagerduty_team` ([#65](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/65))
 
 IMPROVEMENTS:
 
-* resource/pagerduty_service: Don't re-create services if support hours or scheduled actions change [GH-68]
+* resource/pagerduty_service: Don't re-create services if support hours or scheduled actions change ([#68](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/68))
 
 
 ## 1.0.0 (March 08, 2018)

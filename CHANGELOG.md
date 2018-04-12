@@ -6,7 +6,7 @@ FEATURES:
 
 IMPROVEMENTS:
 
-resource/pagerduty_service: Don't re-create services if support hours or scheduled actions change [GH-68]
+* resource/pagerduty_service: Don't re-create services if support hours or scheduled actions change [GH-68]
 
 
 ## 1.0.0 (March 08, 2018)

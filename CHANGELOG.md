@@ -2,6 +2,8 @@
 
 FEATURES:
 
+* **New Data Source:** `pagerduty_team` [GH-65]
+
 IMPROVEMENTS:
 
 resource/pagerduty_service: Don't re-create services if support hours or scheduled actions change [GH-68]

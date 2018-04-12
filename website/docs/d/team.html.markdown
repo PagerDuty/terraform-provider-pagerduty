@@ -1,0 +1,51 @@
+---
+layout: "pagerduty"
+page_title: "PagerDuty: pagerduty_team"
+sidebar_current: "docs-pagerduty-datasource-team"
+description: |-
+  Get information about a team that you can use with escalation_policies, schedules etc.
+---
+
+# pagerduty\_team
+
+Use this data source to get information about a specific [team][1] that you can use for other PagerDuty resources.
+
+## Example Usage
+
+```hcl
+data "pagerduty_user" "me" {
+  email = "me@example.com"
+}
+
+data "pagerduty_team" "devops" {
+  name = "devops"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "DevOps Escalation Policy"
+  num_loops = 2
+
+  teams = ["${data.pagerduty_team.devops}"]
+
+  rule {
+    escalation_delay_in_minutes = 10
+
+    target {
+      type = "user"
+      id   = "${data.pagerduty_user.me.id}"
+    }
+  }
+}
+```
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `name` - (Required) The name of the team to find in the PagerDuty API.
+
+## Attributes Reference
+* `name` - The name of the team.
+* `description` - A description of the team.
+
+[1]: https://v1.developer.pagerduty.com/documentation/rest/teams/list

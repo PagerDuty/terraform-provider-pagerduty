@@ -1,7 +1,7 @@
 ---
 layout: "pagerduty"
 page_title: "PagerDuty: pagerduty_escalation_policy"
-sidebar_current: "docs-pagerduty-resource-escalation_policy"
+sidebar_current: "docs-pagerduty-resource-escalation-policy"
 description: |-
   Creates and manages an escalation policy in PagerDuty.
 ---

@@ -76,6 +76,5 @@ Extensions can be imported using the id.e.g.
 
 ```
 $ terraform import pagerduty_extension.main PLBP09X
-
 ```
 

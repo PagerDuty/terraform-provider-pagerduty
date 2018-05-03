@@ -4,6 +4,7 @@ page_title: "PagerDuty: pagerduty_extension_schema"
 sidebar_current: "docs-pagerduty-datasource-extension-schema"
 description: |-
   Get information about an extension vendor that you can use for a service (e.g: Slack, Generic Webhook, ServiceNow).
+---
 
 # pagerduty\_extension\_schema
 

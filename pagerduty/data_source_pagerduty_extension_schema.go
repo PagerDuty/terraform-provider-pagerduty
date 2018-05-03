@@ -33,7 +33,7 @@ func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interfa
 
 	searchName := d.Get("name").(string)
 
-	resp, _, err := client.ExtensionSchemas.List()
+	resp, _, err := client.ExtensionSchemas.List(&pagerduty.ListExtensionSchemasOptions{Query: searchName})
 	if err != nil {
 		return err
 	}

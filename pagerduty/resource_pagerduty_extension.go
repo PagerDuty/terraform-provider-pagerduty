@@ -31,7 +31,7 @@ func resourcePagerDutyExtension() *schema.Resource {
 			},
 			"endpoint_url": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"extension_objects": {
 				Type:     schema.TypeSet,

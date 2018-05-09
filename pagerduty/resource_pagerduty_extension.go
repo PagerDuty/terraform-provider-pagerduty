@@ -5,8 +5,11 @@ import (
 
 	"fmt"
 
+	"encoding/json"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
+	"reflect"
 )
 
 func resourcePagerDutyExtension() *schema.Resource {
@@ -44,6 +47,12 @@ func resourcePagerDutyExtension() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 			},
+			"config": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateFunc:     validation.ValidateJsonString,
+				DiffSuppressFunc: jsonExtensionConfigDiffSuppress,
+			},
 		},
 	}
 }
@@ -58,6 +67,7 @@ func buildExtensionStruct(d *schema.ResourceData) *pagerduty.Extension {
 			ID:   d.Get("extension_schema").(string),
 		},
 		ExtensionObjects: expandServiceObjects(d.Get("extension_objects")),
+		Config:           expandExtensionConfig(d.Get("config")),
 	}
 
 	return Extension
@@ -97,6 +107,10 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[WARN] error setting extension_objects: %s", err)
 	}
 	d.Set("extension_schema", extension.ExtensionSchema)
+
+	if err := d.Set("config", flattenExtensionConfig(extension.Config)); err != nil {
+		log.Printf("[WARN] error setting extension config: %s", err)
+	}
 
 	return nil
 }
@@ -173,4 +187,36 @@ func flattenExtensionObjects(serviceList []*pagerduty.ServiceReference) interfac
 		}
 	}
 	return services
+}
+
+func expandExtensionConfig(v interface{}) interface{} {
+	var config interface{}
+	if err := json.Unmarshal([]byte(v.(string)), &config); err != nil {
+		log.Printf("[ERROR] Could not unmarshal extension config %s: %v", v.(string), err)
+		return nil
+	}
+
+	return config
+}
+
+func flattenExtensionConfig(config interface{}) interface{} {
+	json, err := json.Marshal(config)
+	if err != nil {
+		log.Printf("[ERROR] Could not marshal extension config %s: %v", config.(string), err)
+		return nil
+	}
+	return json
+}
+
+func jsonExtensionConfigDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
+	var oldConfig, newConfig interface{}
+	if err := json.Unmarshal([]byte(old), &oldConfig); err != nil {
+		log.Printf("[ERROR] Could not unmarshal old extension config %s: %v", old, err)
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &newConfig); err != nil {
+		log.Printf("[ERROR] Could not unmarshal new extension config %s: %v", new, err)
+		return false
+	}
+	return reflect.DeepEqual(oldConfig, newConfig)
 }

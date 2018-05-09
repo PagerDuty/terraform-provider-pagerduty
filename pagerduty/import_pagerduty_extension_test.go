@@ -19,7 +19,7 @@ func TestAccPagerDutyExtension_import(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyExtensionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url),
+				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url, "false", "any"),
 			},
 
 			{

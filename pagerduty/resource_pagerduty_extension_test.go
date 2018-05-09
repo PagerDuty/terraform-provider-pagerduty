@@ -59,7 +59,7 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyExtensionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url),
+				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url, "false", "any"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyExtensionExists("pagerduty_extension.foo"),
 					resource.TestCheckResourceAttr(
@@ -68,10 +68,12 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 						"pagerduty_extension.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "endpoint_url", url),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension.foo", "config", "{\n\t\"restrict\": \"any\",\n\t\"notify_types\": {\n\t\t\t\"resolve\": false,\n\t\t\t\"acknowledge\": false,\n\t\t\t\"assignments\": false\n\t}\n}\n"),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name_updated, url_updated),
+				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name_updated, url_updated, "true", "pd-users"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyExtensionExists("pagerduty_extension.foo"),
 					resource.TestCheckResourceAttr(
@@ -80,6 +82,8 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 						"pagerduty_extension.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "endpoint_url", url_updated),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension.foo", "config", "{\n\t\"restrict\": \"pd-users\",\n\t\"notify_types\": {\n\t\t\t\"resolve\": true,\n\t\t\t\"acknowledge\": true,\n\t\t\t\"assignments\": true\n\t}\n}\n"),
 				),
 			},
 		},
@@ -127,7 +131,7 @@ func testAccCheckPagerDutyExtensionExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckPagerDutyExtensionConfig(name string, extension_name string, url string) string {
+func testAccCheckPagerDutyExtensionConfig(name string, extension_name string, url string, notify_types string, restrict string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
@@ -174,7 +178,18 @@ resource "pagerduty_extension" "foo"{
   name = "%s"
   endpoint_url = "%s"
   extension_schema = "${data.pagerduty_extension_schema.foo.id}"
-  extension_objects    = ["${pagerduty_service.foo.id}"]
+  extension_objects = ["${pagerduty_service.foo.id}"]
+  config = <<EOF
+{
+	"restrict": "%[4]v",
+	"notify_types": {
+			"resolve": %[5]v,
+			"acknowledge": %[5]v,
+			"assignments": %[5]v
+	}
 }
-`, name, extension_name, url)
+EOF
+}
+
+`, name, extension_name, url, restrict, notify_types)
 }

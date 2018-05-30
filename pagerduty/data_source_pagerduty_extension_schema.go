@@ -43,6 +43,7 @@ func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interfa
 	for _, schema := range resp.ExtensionSchemas {
 		if strings.EqualFold(schema.Label, searchName) {
 			found = schema
+			break
 		}
 	}
 

@@ -1,4 +1,8 @@
 ## 1.1.1 (Unreleased)
+
+BUG FIXES:
+* Fix `Unable to locate any extension schema` bug [GH-79]
+
 ## 1.1.0 (April 12, 2018)
 
 FEATURES:

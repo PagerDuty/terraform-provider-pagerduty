@@ -49,13 +49,13 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email),
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "4153013250"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyUserContactMethodPhoneConfigUpdated(usernameUpdated, emailUpdated),
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(usernameUpdated, emailUpdated, "8669351337"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
 				),
@@ -172,7 +172,7 @@ resource "pagerduty_user_contact_method" "foo" {
 `, username, email)
 }
 
-func testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email string) string {
+func testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, phone string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
@@ -187,31 +187,10 @@ resource "pagerduty_user_contact_method" "foo" {
   user_id      = "${pagerduty_user.foo.id}"
   type         = "phone_contact_method"
   country_code = "+1"
-  address      = "2025550199"
+  address      = "%[3]s"
   label        = "%[1]v"
 }
-`, username, email)
-}
-
-func testAccCheckPagerDutyUserContactMethodPhoneConfigUpdated(username, email string) string {
-	return fmt.Sprintf(`
-resource "pagerduty_user" "foo" {
-  name        = "%[1]v"
-  email       = "%[2]v"
-  color       = "red"
-  role        = "user"
-  job_title   = "bar"
-  description = "bar"
-}
-
-resource "pagerduty_user_contact_method" "foo" {
-  user_id      = "${pagerduty_user.foo.id}"
-  type         = "phone_contact_method"
-  country_code = "+1"
-  address      = "2025550104"
-  label        = "%[1]v"
-}
-`, username, email)
+`, username, email, phone)
 }
 
 func testAccCheckPagerDutyUserContactMethodSMSConfig(username, email string) string {

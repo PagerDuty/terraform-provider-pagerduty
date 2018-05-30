@@ -1,7 +1,7 @@
-## 1.1.1 (Unreleased)
+## 1.1.1 (May 30, 2018)
 
 BUG FIXES:
-* Fix `Unable to locate any extension schema` bug [GH-79]
+* Fix `Unable to locate any extension schema` bug ([#79](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/79))
 
 ## 1.1.0 (April 12, 2018)
 

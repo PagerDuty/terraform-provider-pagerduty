@@ -33,12 +33,20 @@ type ListExtensionSchemasResponse struct {
 	Total            int                `json:"total,omitempty"`
 }
 
+// ListExtensionSchemasOptions represents options when listing extension schemas.
+type ListExtensionSchemasOptions struct {
+	Limit  int    `url:"limit,omitempty"`
+	Offset int    `url:"offset,omitempty"`
+	Total  int    `url:"total,omitempty"`
+	Query  string `url:"query,omitempty"`
+}
+
 // List lists extension schemas.
-func (s *ExtensionSchemaService) List() (*ListExtensionSchemasResponse, *Response, error) {
+func (s *ExtensionSchemaService) List(o *ListExtensionSchemasOptions) (*ListExtensionSchemasResponse, *Response, error) {
 	u := "/extension_schemas"
 	v := new(ListExtensionSchemasResponse)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
 	if err != nil {
 		return nil, nil, err
 	}

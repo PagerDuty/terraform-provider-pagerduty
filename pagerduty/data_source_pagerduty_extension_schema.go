@@ -3,7 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -33,12 +33,19 @@ func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interfa
 
 	searchName := d.Get("name").(string)
 
-	resp, _, err := client.ExtensionSchemas.List()
+	resp, _, err := client.ExtensionSchemas.List(&pagerduty.ListExtensionSchemasOptions{Query: searchName})
 	if err != nil {
 		return err
 	}
 
-	var found *pagerduty.ExtensionSchema = findExtensionSchema(resp.ExtensionSchemas, searchName)
+	var found *pagerduty.ExtensionSchema
+
+	for _, schema := range resp.ExtensionSchemas {
+		if strings.EqualFold(schema.Label, searchName) {
+			found = schema
+			break
+		}
+	}
 
 	if found == nil {
 		return fmt.Errorf("Unable to locate any extension schema with the name: %s", searchName)
@@ -48,23 +55,5 @@ func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interfa
 	d.Set("name", found.Label)
 	d.Set("type", found.Type)
 
-	return nil
-}
-
-func findExtensionSchema(extensionSchemas []*pagerduty.ExtensionSchema, searchName string) *pagerduty.ExtensionSchema {
-	r := regexp.MustCompile("(?i)" + searchName)
-	var closeMatch *pagerduty.ExtensionSchema
-	for _, extensionSchema := range extensionSchemas {
-		if searchName == extensionSchema.Label {
-			return extensionSchema
-		}
-		if r.MatchString(extensionSchema.Label) {
-			closeMatch = extensionSchema
-		}
-	}
-
-	if closeMatch != nil {
-		return closeMatch
-	}
 	return nil
 }

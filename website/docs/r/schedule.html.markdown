@@ -69,6 +69,7 @@ Restriction blocks (`restriction`) supports the following:
 * `type` - (Required) Can be `daily_restriction` or `weekly_restriction`
 * `start_time_of_day` - (Required) The start time in `HH:mm:ss` format.
 * `duration_seconds` - (Required) The duration of the restriction in `seconds`.
+* `start_day_of_week` - (Required for `weekly_restriction`) Number of the day when restriction starts. From 1 to 7 where 1 is Monday and 7 is Sunday.
 
 ## Attributes Reference
 

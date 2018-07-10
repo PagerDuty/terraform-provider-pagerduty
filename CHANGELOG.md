@@ -1,4 +1,12 @@
 ## 1.2.0 (Unreleased)
+
+FEATURES:
+
+IMPROVEMENTS:
+* resource/pagerduty_extension: `endpoint_url` is now an optional field [GH-83]
+
+BUG FIXES:
+
 ## 1.1.1 (May 30, 2018)
 
 BUG FIXES:

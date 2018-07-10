@@ -58,7 +58,7 @@ resource "pagerduty_extension" "slack"{
 The following arguments are supported:
 
   * `name` - (Optional) The name of the service extension.
-  * `endpoint_url` - (Required) The url of the extension.
+  * `endpoint_url` - (Optional) The url of the extension.
   * `extension_schema` - (Required) This is the schema for this extension.
   * `extension_objects` - (Required) This is the objects for which the extension applies (An array of service ids).
 

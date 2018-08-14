@@ -59,7 +59,8 @@ You may specify one optional `incident_urgency_rule` block configuring what urge
 Your PagerDuty account must have the `urgencies` ability to assign an incident urgency rule.
 The block contains the following arguments.
 
-  * `type` - The type of incident urgency: `constant` or `use_support_hours` (when depending on specific suppor hours; see `support_hours`).
+  * `type` - The type of incident urgency: `constant` or `use_support_hours` (when depending on specific support hours; see `support_hours`).
+  * `urgency` - The urgency: `low` (does not escalate), or `high` (follows escalation rules).
   * `during_support_hours` - (Optional) Incidents' urgency during support hours.
   * `outside_support_hours` - (Optional) Incidents' urgency outside of support hours.
 

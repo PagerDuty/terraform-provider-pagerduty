@@ -1,15 +1,15 @@
 package pagerduty
 
 import (
+	"encoding/json"
 	"log"
 
 	"fmt"
 
-	"encoding/json"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/structure"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
-	"reflect"
 )
 
 func resourcePagerDutyExtension() *schema.Resource {
@@ -51,7 +51,7 @@ func resourcePagerDutyExtension() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateFunc:     validation.ValidateJsonString,
-				DiffSuppressFunc: jsonExtensionConfigDiffSuppress,
+				DiffSuppressFunc: structure.SuppressJsonDiff,
 			},
 		},
 	}
@@ -188,7 +188,6 @@ func flattenExtensionObjects(serviceList []*pagerduty.ServiceReference) interfac
 	}
 	return services
 }
-
 func expandExtensionConfig(v interface{}) interface{} {
 	var config interface{}
 	if err := json.Unmarshal([]byte(v.(string)), &config); err != nil {
@@ -206,17 +205,4 @@ func flattenExtensionConfig(config interface{}) interface{} {
 		return nil
 	}
 	return json
-}
-
-func jsonExtensionConfigDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
-	var oldConfig, newConfig interface{}
-	if err := json.Unmarshal([]byte(old), &oldConfig); err != nil {
-		log.Printf("[ERROR] Could not unmarshal old extension config %s: %v", old, err)
-		return false
-	}
-	if err := json.Unmarshal([]byte(new), &newConfig); err != nil {
-		log.Printf("[ERROR] Could not unmarshal new extension config %s: %v", new, err)
-		return false
-	}
-	return reflect.DeepEqual(oldConfig, newConfig)
 }

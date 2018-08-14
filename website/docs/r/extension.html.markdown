@@ -50,6 +50,19 @@ resource "pagerduty_extension" "slack"{
   endpoint_url = "https://generic_webhook_url/XXXXXX/BBBBBB"
   extension_schema = "${data.pagerduty_extension_schema.webhook.id}"
   extension_objects    = ["${pagerduty_service.example.id}"]
+
+  config = <<EOF
+{
+	"restrict": "any",
+	"notify_types": {
+			"resolve": false,
+			"acknowledge": false,
+			"assignments": false
+	},
+  "access_token": "XXX"
+}
+EOF
+
 }
 ```
 
@@ -61,6 +74,7 @@ The following arguments are supported:
   * `endpoint_url` - (Required) The url of the extension.
   * `extension_schema` - (Required) This is the schema for this extension.
   * `extension_objects` - (Required) This is the objects for which the extension applies (An array of service ids).
+  * `config` - (Optional) The configuration of the service extension as string containing plain JSON-encoded data.
 
     **Note:** You can use the `pagerduty_extension_schema` data source to locate the appropriate extension vendor ID.
 ## Attributes Reference

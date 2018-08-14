@@ -623,12 +623,11 @@
 		},
 		{
 			"checksumSHA1": "Ez902eFqUlwyHWthdBr9ZgeQo0g=",
-			"origin": "github.com/pdecat/go-pagerduty/pagerduty",
 			"path": "github.com/heimweh/go-pagerduty/pagerduty",
-			"revision": "a20469ea5a887593db713a0560a56f03eb6ba27a",
-			"revisionTime": "2018-05-09T12:59:45Z",
-			"version": "=f-extension-config",
-			"versionExact": "f-extension-config"
+			"revision": "50c26113895331bc0411100a6c658b8be043efda",
+			"revisionTime": "2018-08-14T13:52:48Z",
+			"version": "=master",
+			"versionExact": "master"
 		},
 		{
 			"checksumSHA1": "0ZrwvB6KoGPj2PoDNSEJwxQ6Mog=",

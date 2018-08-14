@@ -67,7 +67,10 @@ func buildExtensionStruct(d *schema.ResourceData) *pagerduty.Extension {
 			ID:   d.Get("extension_schema").(string),
 		},
 		ExtensionObjects: expandServiceObjects(d.Get("extension_objects")),
-		Config:           expandExtensionConfig(d.Get("config")),
+	}
+
+	if v, ok := d.GetOk("config"); ok {
+		Extension.Config = expandExtensionConfig(v)
 	}
 
 	return Extension

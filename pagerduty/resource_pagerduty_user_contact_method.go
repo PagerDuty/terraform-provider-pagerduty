@@ -30,6 +30,7 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 				ValidateFunc: validateValueFunc([]string{
 					"email_contact_method",
 					"phone_contact_method",
+					"push_notification_contact_method",
 					"sms_contact_method",
 				}),
 			},

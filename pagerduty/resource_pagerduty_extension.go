@@ -207,5 +207,5 @@ func flattenExtensionConfig(config interface{}) interface{} {
 		log.Printf("[ERROR] Could not marshal extension config %s: %v", config.(string), err)
 		return nil
 	}
-	return json
+	return string(json)
 }

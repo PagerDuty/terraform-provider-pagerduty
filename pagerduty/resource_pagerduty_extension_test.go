@@ -69,7 +69,7 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "endpoint_url", url),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension.foo", "config", "{\n\t\"restrict\": \"any\",\n\t\"notify_types\": {\n\t\t\t\"resolve\": false,\n\t\t\t\"acknowledge\": false,\n\t\t\t\"assignments\": false\n\t}\n}\n"),
+						"pagerduty_extension.foo", "config", "{\"notify_types\":{\"acknowledge\":false,\"assignments\":false,\"resolve\":false},\"restrict\":\"any\"}"),
 				),
 			},
 			{
@@ -83,7 +83,7 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "endpoint_url", url_updated),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension.foo", "config", "{\n\t\"restrict\": \"pd-users\",\n\t\"notify_types\": {\n\t\t\t\"resolve\": true,\n\t\t\t\"acknowledge\": true,\n\t\t\t\"assignments\": true\n\t}\n}\n"),
+						"pagerduty_extension.foo", "config", "{\"notify_types\":{\"acknowledge\":true,\"assignments\":true,\"resolve\":true},\"restrict\":\"pd-users\"}"),
 				),
 			},
 		},

@@ -4,6 +4,7 @@ FEATURES:
 
 IMPROVEMENTS:
 * resource/pagerduty_extension: `endpoint_url` is now an optional field [GH-83]
+* resource/pagerduty_extension: Manage extension configuration as plain JSON [GH-84]
 * resource/pagerduty_service_integration: Documentation regarding integration url for events [GH-91]
 * resource/pagerduty_user_contact_method: Add support for push_notification_contact_method [GH-93]
 

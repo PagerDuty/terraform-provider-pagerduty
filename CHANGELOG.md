@@ -1,10 +1,10 @@
-## 1.2.0 (Unreleased)
+## 1.2.0 (August 16, 2018)
 
 IMPROVEMENTS:
-* resource/pagerduty_extension: `endpoint_url` is now an optional field [GH-83]
-* resource/pagerduty_extension: Manage extension configuration as plain JSON [GH-84]
-* resource/pagerduty_service_integration: Documentation regarding integration url for events [GH-91]
-* resource/pagerduty_user_contact_method: Add support for push_notification_contact_method [GH-93]
+* resource/pagerduty_extension: `endpoint_url` is now an optional field ([#83](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/83))
+* resource/pagerduty_extension: Manage extension configuration as plain JSON ([#84](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/84))
+* resource/pagerduty_service_integration: Documentation regarding integration url for events ([#91](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/91))
+* resource/pagerduty_user_contact_method: Add support for push_notification_contact_method ([#93](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/93))
 
 ## 1.1.1 (May 30, 2018)
 

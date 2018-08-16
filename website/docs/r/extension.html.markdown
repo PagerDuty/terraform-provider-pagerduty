@@ -59,7 +59,7 @@ resource "pagerduty_extension" "slack"{
 			"acknowledge": false,
 			"assignments": false
 	},
-  "access_token": "XXX"
+	"access_token": "XXX"
 }
 EOF
 

@@ -18,6 +18,7 @@ type Extension struct {
 	EndpointURL      string                    `json:"endpoint_url,omitempty"`
 	ExtensionObjects []*ServiceReference       `json:"extension_objects,omitempty"`
 	ExtensionSchema  *ExtensionSchemaReference `json:"extension_schema"`
+	Config           interface{}               `json:"config,omitempty"`
 }
 
 // ListExtensionsOptions represents options when listing extensions.

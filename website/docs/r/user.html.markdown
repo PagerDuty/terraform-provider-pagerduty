@@ -32,7 +32,7 @@ The following arguments are supported:
 
   * `name` - (Required) The name of the user.
   * `email` - (Required) The user's email address.
-  * `color` - (Optional) The schedule color for the user. Valid options are blue, blue, violet, brown, cayenne, chocolate, crimson, dark, cyan, dark, goldenrod, dark, green, dark, magenta, dark, olive, green, dark, orange, dark, orchid, dark, red, dark, slate, blue, dark, slate, gray, dark, slate, grey, darkolive, green, deep, pink, firebrick, forest, green, green, grey20, indigo, lime, lime, green, maroon, medium, violet, red, midnight, blue, olivedrab, orange, orange, red, purple, red, royal, blue, saddle, brown, sea, green, slate, blue, steel, blue, teal, or turquoise.
+  * `color` - (Optional) The schedule color for the user. Valid options are blue, brown, cayenne, chocolate, crimson, cyan, dark, darkolive, deep, firebrick, forest, goldenrod, gray, green, grey, grey20, indigo, lime, magenta, maroon, medium, midnight, olive, olivedrab, orange, orchid, pink, purple, red, royal, saddle, sea, slate, steel, teal, turquoise or violet.
   * `role` - (Optional) The user role. Account must have the `read_only_users` ability to set a user as a `read_only_user`. Can be `admin`, `limited_user`, `owner`, `read_only_user`, `team_responder` or `user`
   * `job_title` - (Optional) The user's title.
   * `teams` - (Optional) A list of teams the user should belong to.

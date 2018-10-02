@@ -48,7 +48,7 @@ resource "pagerduty_service" "example" {
 The following arguments are supported:
 
   * `name` - (Required) The name of the service.
-  * `description` - (Optional) A human-friendly description of the escalation policy.
+  * `description` - (Optional) A human-friendly description of the service.
     If not set, a placeholder of "Managed by Terraform" will be set.
   * `auto_resolve_timeout` - (Optional) Time in seconds that an incident is automatically resolved if left open for that long. Disabled if set to the `"null"` string.
   * `acknowledgement_timeout` - (Optional) Time in seconds that an incident changes to the Triggered State after being Acknowledged. Disabled if set to the `"null"` string.
@@ -57,15 +57,16 @@ The following arguments are supported:
 
 You may specify one optional `incident_urgency_rule` block configuring what urgencies to use.
 Your PagerDuty account must have the `urgencies` ability to assign an incident urgency rule.
-The block contains the following arguments.
+The block contains the following arguments:
 
   * `type` - The type of incident urgency: `constant` or `use_support_hours` (when depending on specific support hours; see `support_hours`).
   * `urgency` - The urgency: `low` (does not escalate), or `high` (follows escalation rules).
   * `during_support_hours` - (Optional) Incidents' urgency during support hours.
   * `outside_support_hours` - (Optional) Incidents' urgency outside of support hours.
 
-When using `type = "use_support_hours"` in `incident_urgency_rule` you have to specify exactly one otherwise optional `support_hours` block. Account must have the `service_support_hours` ability to assign support hours.
-The block contains the following arguments.
+When using `type = "use_support_hours"` in `incident_urgency_rule` you must specify exactly one (otherwise optional) `support_hours` block.
+Your PagerDuty account must have the `service_support_hours` ability to assign support hours.
+The block contains the following arguments:
 
   * `type` - The type of support hours. Can be `fixed_time_per_day`.
   * `time_zone` - The time zone for the support hours.
@@ -74,10 +75,15 @@ The block contains the following arguments.
   * `start_time` - The support hours' starting time of day.
   * `end_time` - The support hours' ending time of day.
 
-When using `type = "use_support_hours"` in the `incident_urgency_rule` block you have to also specify `scheduled_actions` for the service. Otherwise `scheduled_actions` is optional.
+When using `type = "use_support_hours"` in `incident_urgency_rule` you must specify at least one (otherwise optional) `scheduled_actions` block.
+The block contains the following arguments:
 
   * `type` - The type of scheduled action. Currently, this must be set to `urgency_change`.
-  * `at` - Represents when scheduled action will occur.
+  * `to_urgency` - The urgency to change to: `low` (does not escalate), or `high` (follows escalation rules).
+  * `at` - A block representing when the scheduled action will occur.
+
+The `at` block contains the following arguments:
+  * `type` - The type of time specification. Currently, this must be set to `named_time`.
   * `name` - Designates either the start or the end of the scheduled action. Can be `support_hours_start` or `support_hours_end`.
 
 Below is an example for a `pagerduty_service` resource with `incident_urgency_rules` with `type = "use_support_hours"`, `support_hours` and a default `scheduled_action` as well.

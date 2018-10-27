@@ -17,7 +17,7 @@ func TestAccDataSourcePagerDutyVendor_Basic(t *testing.T) {
 				Config: testAccDataSourcePagerDutyVendorConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceName, "id", "PZQ6AUS"),
-					resource.TestCheckResourceAttr(dataSourceName, "name", "Amazon Cloudwatch"),
+					resource.TestCheckResourceAttr(dataSourceName, "name", "Amazon CloudWatch"),
 				),
 			},
 		},

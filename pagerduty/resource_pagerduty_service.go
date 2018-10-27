@@ -229,7 +229,7 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("incident_urgency_rule"); ok {
 		service.IncidentUrgencyRule = expandIncidentUrgencyRule(attr)
-		if service.IncidentUrgencyRule != nil && service.IncidentUrgencyRule.Type == "use_support_hours" {
+		if service.IncidentUrgencyRule.Type == "use_support_hours" {
 			service.ScheduledActions = make([]*pagerduty.ScheduledAction, 1)
 		}
 	}

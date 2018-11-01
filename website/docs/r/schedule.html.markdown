@@ -44,7 +44,7 @@ resource "pagerduty_schedule" "foo" {
 
 The following arguments are supported:
 
-* `name` - (Optional) The name of the escalation policy.
+* `name` - (Optional) The name of the schedule.
 * `time_zone` - (Required) The time zone of the schedule (e.g Europe/Berlin).
 * `description` - (Optional) The description of the schedule
 * `layer` - (Required) A schedule layer block. Schedule layers documented below.

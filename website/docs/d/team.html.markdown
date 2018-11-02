@@ -45,7 +45,8 @@ The following arguments are supported:
 * `name` - (Required) The name of the team to find in the PagerDuty API.
 
 ## Attributes Reference
-* `name` - The name of the team.
-* `description` - A description of the team.
+* `id` - The ID of the found team.
+* `name` - The name of the found team.
+* `description` - A description of the found team.
 
 [1]: https://v1.developer.pagerduty.com/documentation/rest/teams/list

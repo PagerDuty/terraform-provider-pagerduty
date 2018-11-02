@@ -5,7 +5,7 @@ sidebar_current: "docs-pagerduty-datasource-escalation-policy"
 description: |-
   Provides information about a Escalation Policy.
 
-  This data source can be helpful when an escalation policy is handled outside Terraform but still want to reference it in other resources.
+  This data source can be helpful when an escalation policy is handled outside Terraform but you still want to reference it in other resources.
 ---
 
 # pagerduty\_escalation_policy
@@ -34,6 +34,7 @@ The following arguments are supported:
 * `name` - (Required) The name to use to find an escalation policy in the PagerDuty API.
 
 ## Attributes Reference
+* `id` - The ID of the found escalation policy.
 * `name` - The short name of the found escalation policy.
 
 [1]: https://v2.developer.pagerduty.com/v2/page/api-reference#!/Escalation_Policies/get_escalation_policies

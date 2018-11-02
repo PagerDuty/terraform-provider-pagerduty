@@ -60,6 +60,7 @@ The following arguments are supported:
 * `name` - (Required) The extension name to use to find an extension vendor in the PagerDuty API.
 
 ## Attributes Reference
+* `id` - The ID of the found extension vendor.
 * `name` - The short name of the found extension vendor.
 * `type` - The generic service type for this extension vendor.
 

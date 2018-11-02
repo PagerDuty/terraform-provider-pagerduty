@@ -229,14 +229,17 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("incident_urgency_rule"); ok {
 		service.IncidentUrgencyRule = expandIncidentUrgencyRule(attr)
-	}
-
-	if attr, ok := d.GetOk("support_hours"); ok {
-		service.SupportHours = expandSupportHours(attr)
+		if service.IncidentUrgencyRule.Type == "use_support_hours" {
+			service.ScheduledActions = make([]*pagerduty.ScheduledAction, 1)
+		}
 	}
 
 	if attr, ok := d.GetOk("scheduled_actions"); ok {
 		service.ScheduledActions = expandScheduledActions(attr)
+	}
+
+	if attr, ok := d.GetOk("support_hours"); ok {
+		service.SupportHours = expandSupportHours(attr)
 	}
 
 	return &service, nil

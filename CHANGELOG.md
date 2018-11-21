@@ -1,4 +1,4 @@
-## 1.3.0 (Unreleased)
+## 1.2.1 (Unreleased)
 
 BUG FIXES:
 * resource/pagerduty_service: Fix `scheduled_actions` bug [GH-99]

@@ -13,10 +13,6 @@ func dataSourcePagerDutyUsers() *schema.Resource {
 		Read: dataSourcePagerDutyUsersRead,
 
 		Schema: map[string]*schema.Schema{
-			// "users": {
-			// 	Type:     schema.TypeString,
-			// 	Computed: true,
-			// },
 			"team": {
 				Type:     schema.TypeString,
 				Required: true,

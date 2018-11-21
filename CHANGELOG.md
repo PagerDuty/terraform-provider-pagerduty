@@ -1,7 +1,7 @@
-## 1.2.1 (Unreleased)
+## 1.2.1 (November 21, 2018)
 
 BUG FIXES:
-* resource/pagerduty_service: Fix `scheduled_actions` bug [GH-99]
+* resource/pagerduty_service: Fix `scheduled_actions` bug ([#99](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/99))
 
 ## 1.2.0 (August 16, 2018)
 

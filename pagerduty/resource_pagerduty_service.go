@@ -62,7 +62,7 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"incident_urgency_rule": &schema.Schema{
+			"incident_urgency_rule": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Optional: true,
@@ -116,7 +116,7 @@ func resourcePagerDutyService() *schema.Resource {
 					},
 				},
 			},
-			"support_hours": &schema.Schema{
+			"support_hours": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
@@ -149,7 +149,7 @@ func resourcePagerDutyService() *schema.Resource {
 					},
 				},
 			},
-			"scheduled_actions": &schema.Schema{
+			"scheduled_actions": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: false,
@@ -163,7 +163,7 @@ func resourcePagerDutyService() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"at": &schema.Schema{
+						"at": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{

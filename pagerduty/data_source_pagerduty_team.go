@@ -33,7 +33,11 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 
 	searchTeam := d.Get("name").(string)
 
-	resp, _, err := client.Teams.List(&pagerduty.ListTeamsOptions{})
+	o := &pagerduty.ListTeamsOptions{
+		Query: searchTeam,
+	}
+
+	resp, _, err := client.Teams.List(o)
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,8 @@
 ## 1.3.0 (Unreleased)
+
+BUG FIXES:
+* data-source/pagerduty_team: Fix team search issue [GH-110] 
+
 ## 1.2.1 (November 21, 2018)
 
 BUG FIXES:

@@ -17,8 +17,7 @@ func init() {
 		Name: "pagerduty_escalation_policy",
 		F:    testSweepEscalationPolicy,
 		Dependencies: []string{
-			"pagerduty_team",
-			"pagerduty_user",
+			"pagerduty_service",
 		},
 	})
 }

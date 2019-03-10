@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -24,6 +25,20 @@ func validateRFC3339(v interface{}, k string) (we []string, errors []error) {
 	}
 
 	return
+}
+
+func suppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) bool {
+	oldT, err := time.Parse(time.RFC3339, oldTime)
+	if err != nil {
+		log.Printf("[ERROR] Failed to parse %q (old %q). Expected format: %s (RFC3339)", oldTime, k, time.RFC3339)
+		return false
+	}
+	newT, err := time.Parse(time.RFC3339, newTime)
+	if err != nil {
+		log.Printf("[ERROR] Failed to parse %q (new %q). Expected format: %s (RFC3339)", newTime, k, time.RFC3339)
+		return false
+	}
+	return oldT.Equal(newT)
 }
 
 // Validate a value against a set of possible values

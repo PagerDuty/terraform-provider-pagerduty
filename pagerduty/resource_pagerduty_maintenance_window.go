@@ -18,14 +18,16 @@ func resourcePagerDutyMaintenanceWindow() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"start_time": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validateRFC3339,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validateRFC3339,
+				DiffSuppressFunc: suppressRFC3339Diff,
 			},
 			"end_time": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validateRFC3339,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validateRFC3339,
+				DiffSuppressFunc: suppressRFC3339Diff,
 			},
 
 			"services": {

@@ -15,9 +15,8 @@ import (
 
 func init() {
 	resource.AddTestSweepers("pagerduty_schedule", &resource.Sweeper{
-		Name:         "pagerduty_schedule",
-		F:            testSweepSchedule,
-		Dependencies: []string{"pagerduty_user"},
+		Name: "pagerduty_schedule",
+		F:    testSweepSchedule,
 	})
 }
 

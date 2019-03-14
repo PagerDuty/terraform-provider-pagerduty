@@ -208,7 +208,7 @@ resource "pagerduty_user_contact_method" "foo" {
   user_id      = "${pagerduty_user.foo.id}"
   type         = "sms_contact_method"
   country_code = "+1"
-  address      = "2025550199"
+  address      = "8448003889"
   label        = "%[1]v"
 }
 `, username, email)
@@ -229,7 +229,7 @@ resource "pagerduty_user_contact_method" "foo" {
   user_id      = "${pagerduty_user.foo.id}"
   type         = "sms_contact_method"
   country_code = "+1"
-  address      = "2025550104"
+  address      = "6509892965"
   label        = "%[1]v"
 }
 `, username, email)

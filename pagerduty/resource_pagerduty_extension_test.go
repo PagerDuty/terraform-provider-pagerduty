@@ -47,9 +47,9 @@ func testSweepExtension(region string) error {
 }
 
 func TestAccPagerDutyExtension_Basic(t *testing.T) {
-	extension_name := resource.PrefixedUniqueId("tf")
-	extension_name_updated := resource.PrefixedUniqueId("tf")
-	name := resource.PrefixedUniqueId("tf")
+	extension_name := resource.PrefixedUniqueId("tf-")
+	extension_name_updated := resource.PrefixedUniqueId("tf-")
+	name := resource.PrefixedUniqueId("tf-")
 	url := "https://example.com/recieve_a_pagerduty_webhook"
 	url_updated := "https://example.com/webhook_foo"
 

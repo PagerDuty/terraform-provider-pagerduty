@@ -1,16 +1,20 @@
 ## 1.3.0 (Unreleased)
 
 BUG FIXES:
+
 * data-source/pagerduty_team: Fix team search issue [GH-110] 
+* resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` [GH-116]
 
 ## 1.2.1 (November 21, 2018)
 
 BUG FIXES:
+
 * resource/pagerduty_service: Fix `scheduled_actions` bug ([#99](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/99))
 
 ## 1.2.0 (August 16, 2018)
 
 IMPROVEMENTS:
+
 * resource/pagerduty_extension: `endpoint_url` is now an optional field ([#83](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/83))
 * resource/pagerduty_extension: Manage extension configuration as plain JSON ([#84](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/84))
 * resource/pagerduty_service_integration: Documentation regarding integration url for events ([#91](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/91))
@@ -19,6 +23,7 @@ IMPROVEMENTS:
 ## 1.1.1 (May 30, 2018)
 
 BUG FIXES:
+
 * Fix `Unable to locate any extension schema` bug ([#79](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/79))
 
 ## 1.1.0 (April 12, 2018)
@@ -42,6 +47,7 @@ IMPROVEMENTS:
 * **New Data Source:** `pagerduty_extension_schema` ([#69](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/69))
 
 BUG FIXES:
+
 * r/service_integration: Add `html_url` as a computed value ([#59](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/59))
 * r/pagerduty_service: allow incident_urgency_rule to be computed ([#63](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/63))
 * d/pagerduty_vendor: Match whole string and fallback to partial matching ([#55](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/55))
@@ -58,6 +64,7 @@ IMPROVEMENTS:
 * r/pagerduty_service_integration: Allow for generation of events-api-v2 service integration ([#40](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/40))
 
 BUG FIXES:
+
 * r/pagerduty_service: Allow disabling service incident timeouts ([#44](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/44)] [[#52](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/52))
 * r/pagerduty_schedule: Add support for overflow ([#23](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/23))
 * r/pagerduty_schedule: Don't read back `start` value for schedule layers ([#35](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/35))

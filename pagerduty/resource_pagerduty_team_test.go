@@ -16,6 +16,11 @@ func init() {
 	resource.AddTestSweepers("pagerduty_team", &resource.Sweeper{
 		Name: "pagerduty_team",
 		F:    testSweepTeam,
+		Dependencies: []string{
+			"pagerduty_escalation_policy",
+			"pagerduty_service",
+			"pagerduty_schedule",
+		},
 	})
 }
 

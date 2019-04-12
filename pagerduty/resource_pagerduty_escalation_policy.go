@@ -194,7 +194,7 @@ func flattenEscalationRules(v []*pagerduty.EscalationRule) []map[string]interfac
 
 	for _, er := range v {
 		escalationRule := map[string]interface{}{
-			"id":                          er.ID,
+			"id": er.ID,
 			"escalation_delay_in_minutes": er.EscalationDelayInMinutes,
 		}
 

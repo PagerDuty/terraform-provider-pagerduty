@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -125,9 +126,12 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 	}
 
 	d.Set("name", escalationPolicy.Name)
-	d.Set("teams", escalationPolicy.Teams)
 	d.Set("description", escalationPolicy.Description)
 	d.Set("num_loops", escalationPolicy.NumLoops)
+
+	if err := d.Set("teams", flattenTeams(escalationPolicy.Teams)); err != nil {
+		return fmt.Errorf("error setting teams: %s", err)
+	}
 
 	if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules)); err != nil {
 		return err
@@ -225,4 +229,13 @@ func expandTeams(v interface{}) []*pagerduty.TeamReference {
 	}
 
 	return teams
+}
+
+func flattenTeams(teams []*pagerduty.TeamReference) []string {
+	res := make([]string, len(teams))
+	for i, t := range teams {
+		res[i] = t.ID
+	}
+
+	return res
 }

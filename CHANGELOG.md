@@ -4,6 +4,7 @@ BUG FIXES:
 
 * data-source/pagerduty_team: Fix team search issue [GH-110] 
 * resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` [GH-116]
+* resource/pagerduty_service: Set invitation_sent [GH-127] 
 
 ## 1.2.1 (November 21, 2018)
 

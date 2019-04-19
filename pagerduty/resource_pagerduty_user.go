@@ -161,6 +161,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", user.Description)
 	d.Set("job_title", user.JobTitle)
 	d.Set("teams", user.Teams)
+	d.Set("invitation_sent", user.InvitationSent)
 
 	return nil
 }

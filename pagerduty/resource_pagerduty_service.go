@@ -276,7 +276,6 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("name", service.Name)
-	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)

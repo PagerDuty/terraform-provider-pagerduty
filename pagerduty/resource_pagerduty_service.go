@@ -189,7 +189,6 @@ func resourcePagerDutyService() *schema.Resource {
 func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	service := pagerduty.Service{
 		Name:   d.Get("name").(string),
-		Status: d.Get("status").(string),
 	}
 
 	if attr, ok := d.GetOk("description"); ok {
@@ -276,6 +275,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("name", service.Name)
+	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)

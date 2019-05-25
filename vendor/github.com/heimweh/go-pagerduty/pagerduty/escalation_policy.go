@@ -26,7 +26,7 @@ type EscalationPolicy struct {
 	Self             string              `json:"self,omitempty"`
 	Services         []*ServiceReference `json:"services,omitempty"`
 	Summary          string              `json:"summary,omitempty"`
-	Teams            []*TeamReference    `json:"teams,omitempty"`
+	Teams            []*TeamReference    `json:"teams"`
 	Type             string              `json:"type,omitempty"`
 }
 

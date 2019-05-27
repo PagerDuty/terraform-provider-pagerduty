@@ -7,6 +7,10 @@ BUG FIXES:
 * resource/pagerduty_service: Set invitation_sent [GH-127] 
 * resource/pagerduty_escalation_policy: Correctly set teams [GH-129]
 
+IMPROVEMENTS:
+
+* Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. This is the first release to use the 0.12 SDK required for Terraform 0.12 support. Some provider behaviour may have changed as a result of changes made by the new SDK version [GH-126]
+
 ## 1.2.1 (November 21, 2018)
 
 BUG FIXES:

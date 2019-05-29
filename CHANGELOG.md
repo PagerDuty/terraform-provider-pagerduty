@@ -1,15 +1,15 @@
-## 1.3.0 (Unreleased)
+## 1.3.0 (May 29, 2019)
 
 BUG FIXES:
 
-* data-source/pagerduty_team: Fix team search issue [GH-110] 
-* resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` [GH-116]
-* resource/pagerduty_service: Set invitation_sent [GH-127] 
-* resource/pagerduty_escalation_policy: Correctly set teams [GH-129]
+* data-source/pagerduty_team: Fix team search issue [[#110](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/110)] 
+* resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` ([#116](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/116))
+* resource/pagerduty_service: Set invitation_sent [[#127](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/127)] 
+* resource/pagerduty_escalation_policy: Correctly set teams ([#129](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/129))
 
 IMPROVEMENTS:
 
-* Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. This is the first release to use the 0.12 SDK required for Terraform 0.12 support. Some provider behaviour may have changed as a result of changes made by the new SDK version [GH-126]
+* Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. This is the first release to use the 0.12 SDK required for Terraform 0.12 support. Some provider behaviour may have changed as a result of changes made by the new SDK version ([#126](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/126))
 
 ## 1.2.1 (November 21, 2018)
 

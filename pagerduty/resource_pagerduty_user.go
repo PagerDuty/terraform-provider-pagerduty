@@ -40,9 +40,8 @@ func resourcePagerDutyUser() *schema.Resource {
 				ValidateFunc: validateValueFunc([]string{
 					"admin",
 					"limited_user",
-					"owner",
 					"read_only_user",
-					"team_responder",
+					"observer",
 					"user",
 				}),
 			},
@@ -106,12 +105,7 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	}
 
 	if attr, ok := d.GetOk("role"); ok {
-		role := attr.(string)
-		// Skip setting the role if the user is the owner of the account.
-		// Can't change this through the API.
-		if role != "owner" {
-			user.Role = role
-		}
+		user.Role = attr.(string)
 	}
 
 	if attr, ok := d.GetOk("job_title"); ok {

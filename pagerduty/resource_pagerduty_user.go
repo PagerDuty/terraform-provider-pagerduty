@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -160,7 +161,11 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("avatar_url", user.AvatarURL)
 	d.Set("description", user.Description)
 	d.Set("job_title", user.JobTitle)
-	d.Set("teams", user.Teams)
+
+	if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
+		return fmt.Errorf("error setting teams: %s", err)
+	}
+
 	d.Set("invitation_sent", user.InvitationSent)
 
 	return nil

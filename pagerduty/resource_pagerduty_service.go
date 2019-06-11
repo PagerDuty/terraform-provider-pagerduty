@@ -36,6 +36,18 @@ func resourcePagerDutyService() *schema.Resource {
 					"create_incidents",
 				}),
 			},
+			"alert_grouping": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validateValueFunc([]string{
+					"time",
+					"intelligent",
+				}),
+			},
+			"alert_grouping_timeout": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"auto_resolve_timeout": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -217,6 +229,15 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("alert_creation"); ok {
 		service.AlertCreation = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("alert_grouping"); ok {
+		service.AlertGrouping = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
+		val := attr.(int)
+		service.AlertGroupingTimeout = &val
 	}
 
 	if attr, ok := d.GetOk("escalation_policy"); ok {

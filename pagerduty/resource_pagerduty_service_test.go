@@ -130,7 +130,6 @@ func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.com", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	// serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

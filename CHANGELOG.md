@@ -1,4 +1,7 @@
-## 1.4.0 (Unreleased)
+## 1.3.1 (Unreleased)
+* resource/pagerduty_user: Remove invalid role types [GH-135]
+* resource/pagerduty_service: Remove status from payload [GH-133]
+
 ## 1.3.0 (May 29, 2019)
 
 BUG FIXES:

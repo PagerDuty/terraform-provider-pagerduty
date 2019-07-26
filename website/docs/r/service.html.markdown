@@ -60,7 +60,7 @@ Your PagerDuty account must have the `urgencies` ability to assign an incident u
 The block contains the following arguments:
 
   * `type` - The type of incident urgency: `constant` or `use_support_hours` (when depending on specific support hours; see `support_hours`).
-  * `urgency` - The urgency: `low` (does not escalate), or `high` (follows escalation rules).
+  * `urgency` - The urgency: `low` Notify responders (does not escalate), `high` (follows escalation rules) or `severity_based` Set's the urgency of the incident based on the severity set by the triggering monitoring tool.
   * `during_support_hours` - (Optional) Incidents' urgency during support hours.
   * `outside_support_hours` - (Optional) Incidents' urgency outside of support hours.
 

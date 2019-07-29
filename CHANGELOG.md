@@ -1,3 +1,4 @@
+## 1.3.2 (Unreleased)
 ## 1.3.1 (July 29, 2019)
 * resource/pagerduty_user: Remove invalid role types ([#135](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/135))
 * resource/pagerduty_service: Remove status from payload ([#133](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/133))

@@ -19,9 +19,9 @@ func TestAccDataSourcePagerDutyService_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyEscalationPolicyConfig(username, email, service),
+				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccDataSourcePagerDutyEscalationPolicy("pagerduty_service.test", "data.pagerduty_service.by_name"),
+					testAccDataSourcePagerDutyService("pagerduty_service.test", "data.pagerduty_service.by_name"),
 				),
 			},
 		},

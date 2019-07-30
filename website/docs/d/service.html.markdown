@@ -38,7 +38,5 @@ The following arguments are supported:
 ## Attributes Reference
 * `id` - The ID of the found service.
 * `name` - The short name of the found service.
-* `created_at`- Creation timestamp of the service
-* `status`- The status of the service
 
 [1]: https://api-reference.pagerduty.com/#!/Services/get_services

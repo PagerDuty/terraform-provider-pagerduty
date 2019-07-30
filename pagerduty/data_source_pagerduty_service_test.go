@@ -13,13 +13,14 @@ func TestAccDataSourcePagerDutyService_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.com", username)
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service),
+				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyService("pagerduty_service.test", "data.pagerduty_service.by_name"),
 				),
@@ -53,11 +54,23 @@ func testAccDataSourcePagerDutyService(src, n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyServiceConfig(username, email, service string) string {
+func testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "test" {
   name  = "%s"
   email = "%s"
+}
+
+resource "pagerduty_escalation_policy" "test" {
+  name        = "%s"
+  num_loops   = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = "${pagerduty_user.test.id}"
+    }
+  }
 }
 
 resource "pagerduty_service" "test" {
@@ -71,5 +84,5 @@ resource "pagerduty_service" "test" {
 data "pagerduty_service" "by_name" {
   name = "${pagerduty_escalation_policy.test.name}"
 }
-`, username, email, service)
+`, username, email, service, escalationPolicy)
 }

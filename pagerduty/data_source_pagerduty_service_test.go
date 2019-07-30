@@ -82,7 +82,7 @@ resource "pagerduty_service" "test" {
 }
 
 data "pagerduty_service" "by_name" {
-  name = "${pagerduty_escalation_policy.test.name}"
+  name = "${pagerduty_service.test.name}"
 }
 `, username, email, service, escalationPolicy)
 }

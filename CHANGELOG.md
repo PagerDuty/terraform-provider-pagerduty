@@ -4,6 +4,10 @@ FEATURES
 
 * **New Data Source:** `pagerduty_service` [GH-141]
 
+BUG FIXES:
+
+* resource/pagerduty_maintenance_window: Allow services to be unordered [GH-142]
+
 ## 1.3.1 (July 29, 2019)
 
 BUG FIXES:

@@ -198,11 +198,24 @@ resource "pagerduty_service" "foo" {
   }
 }
 
+resource "pagerduty_service" "foo2" {
+  name                    = "%[1]v2"
+  description             = "foo2"
+  auto_resolve_timeout    = 1800
+  acknowledgement_timeout = 1800
+  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+
+  incident_urgency_rule {
+    type    = "constant"
+    urgency = "high"
+  }
+}
+
 resource "pagerduty_maintenance_window" "foo" {
   description = "%[1]v"
   start_time  = "%[2]v"
   end_time    = "%[3]v"
-  services    = ["${pagerduty_service.foo.id}"]
+  services    = ["${pagerduty_service.foo.id}", "${pagerduty_service.foo2.id}"]
 }
 `, desc, start, end)
 }

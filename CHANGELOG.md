@@ -8,6 +8,10 @@ BUG FIXES:
 
 * resource/pagerduty_maintenance_window: Allow services to be unordered [GH-142]
 
+IMPROVEMENTS:
+
+* resource/pagerduty_service: Add support for alert_grouping and alert_grouping_timeout [GH-143]
+
 ## 1.3.1 (July 29, 2019)
 
 BUG FIXES:

@@ -35,7 +35,7 @@ The following arguments are supported:
   * `color` - (Optional) The schedule color for the user. Valid options are blue, brown, cayenne, chocolate, crimson, cyan, dark, darkolive, deep, firebrick, forest, goldenrod, gray, green, grey, grey20, indigo, lime, magenta, maroon, medium, midnight, olive, olivedrab, orange, orchid, pink, purple, red, royal, saddle, sea, slate, steel, teal, turquoise or violet.
   * `role` - (Optional) The user role. Account must have the `read_only_users` ability to set a user as a `read_only_user`. Can be `admin`, `limited_user`, `owner`, `read_only_user`, `team_responder` or `user`
   * `job_title` - (Optional) The user's title.
-  * `teams` - (Optional) A list of teams the user should belong to.
+  * `teams` - (Optional, **DEPRECATED**) A list of teams the user should belong to. Please use `pagerduty_team_membership` instead.
   * `description` - (Optional) A human-friendly description of the user.
     If not set, a placeholder of "Managed by Terraform" will be set.
 

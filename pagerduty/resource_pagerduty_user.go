@@ -52,6 +52,7 @@ func resourcePagerDutyUser() *schema.Resource {
 
 			"teams": {
 				Type:     schema.TypeSet,
+				Computed: true,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

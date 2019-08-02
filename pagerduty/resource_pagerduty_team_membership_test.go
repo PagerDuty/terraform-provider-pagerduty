@@ -81,7 +81,6 @@ func testAccCheckPagerDutyTeamMembershipConfig(user, team string) string {
 resource "pagerduty_user" "foo" {
   name = "%[1]v"
   email = "%[1]v@foo.com"
-  teams = ["${pagerduty_team.foo.id}"]
 }
 
 resource "pagerduty_team" "foo" {

@@ -1,6 +1,9 @@
 ## 1.4.0 (Unreleased)
 
-FEATURES
+NOTES:
+resource/pagerduty_user: The `teams` attribute has been deprecated in favor of the `pagerduty_team_membership` resource [GH-146]
+
+FEATURES:
 
 * **New Data Source:** `pagerduty_service` [GH-141]
 

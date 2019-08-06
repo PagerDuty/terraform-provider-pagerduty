@@ -51,8 +51,10 @@ func resourcePagerDutyUser() *schema.Resource {
 			},
 
 			"teams": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:       schema.TypeSet,
+				Deprecated: "Use the 'pagerduty_team_membership' resource instead.",
+				Computed:   true,
+				Optional:   true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

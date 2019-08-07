@@ -135,31 +135,31 @@ func testAccCheckPagerDutyEventRuleConfig(eventRule string) string {
 	variable "action_list" {
 		default = [
 			[
-				["route"],
-				["P5DTL0K"]
+				"route",
+				"P5DTL0K"
 			],
 			[
-				["severity"],
-				["warning"]
+				"severity",
+				"warning"
 			],
 			[
-				["annotate"],
-				["%s"]
+				"annotate",
+				"%s"
 			],
 			[
-				["priority"],
-				["PL451DT"]
+				"priority",
+				"PL451DT"
 			]
 		]
 	}
 	variable "condition_list" {
 		default = [
-			["and"],
+			"and",
 			["contains",["path","payload","source"],"website"]		]
 	}
 	resource "pagerduty_event_rule" "first" {
-		action_json = "${jsonencode(var.action_list)}"
-		condition_json = "${jsonencode(var.condition_list)}"
+		action_json = jsonencode(var.action_list)
+		condition_json = jsonencode(var.condition_list)
 	}
 `, eventRule)
 }
@@ -170,33 +170,33 @@ func testAccCheckPagerDutyEventRuleConfigUpdated(eventRule string) string {
 		variable "action_list" {
 			default = [
 				[
-					["route"],
-					["P5DTL0K"]
+					"route",
+					"P5DTL0K"
 				],
 				[
-					["severity"],
-					["warning"]
+					"severity",
+					"warning"
 				],
 				[
-					["annotate"],
-					["%s"]
+					"annotate",
+					"%s"
 				],
 				[
-					["priority"],
-					["PL451DT"]
+					"priority",
+					"PL451DT"
 				]
 			]
 		}
 		variable "condition_list" {
 			default = [
-				["and"],
+				"and",
 				["contains",["path","payload","source"],"website"],
 				["contains",["path","headers","from","0","address"],"homer"]
 			]
 		}
 		resource "pagerduty_event_rule" "first" {
-			action_json = "${jsonencode(var.action_list)}"
-			condition_json = "${jsonencode(var.condition_list)}"
+			action_json = jsonencode(var.action_list)
+			condition_json = jsonencode(var.condition_list)
 		}
 `, eventRule)
 }

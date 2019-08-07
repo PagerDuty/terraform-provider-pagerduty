@@ -79,7 +79,7 @@ func resourcePagerDutyEventRuleCreate(d *schema.ResourceData, meta interface{}) 
 
 	eventRule := buildEventRuleStruct(d)
 
-	log.Printf("[INFO] Creating PagerDuty event rule: %s", "rule")
+	log.Printf("[INFO] Creating PagerDuty event rule: %s", "eventRule")
 
 	eventRule, _, err := client.EventRules.Create(eventRule)
 	if err != nil {

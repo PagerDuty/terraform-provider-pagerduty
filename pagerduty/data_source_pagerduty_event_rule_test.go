@@ -56,51 +56,51 @@ func testAccDataSourcePagerDutyEventRuleConfig(eventRule string) string {
 variable "action_list" {
 	default = [
 		[
-			["route"],
-			["P5DTL0K"]
+			"route",
+			"P5DTL0K"
 		],
 		[
-			["severity"],
-			["warning"]
+			"severity",
+			"warning"
 		],
 		[
-			["annotate"],
-			["foo bar"]
+			"annotate",
+			"foo bar"
 		],
 		[
-			["priority"],
-			["PL451DT"]
+			"priority",
+			"PL451DT"
 		]
 	]
 }
 variable "condition_list" {
 	default = [
-		["and"],
+		"and",
 		["contains",["path","payload","source"],"website"]		]
 }
 variable "action_list_suppress" {
 	default = [["suppress",true]]
 }
 resource "pagerduty_event_rule" "test_data_source" {
-	action_json = "${jsonencode(var.action_list)}"
-	condition_json = "${jsonencode(var.condition_list)}"
+	action_json = jsonencode(var.action_list)
+	condition_json = jsonencode(var.condition_list)
 	catch_all = false
 	advanced_condition_json = [%s]
 }
 
 resource "pagerduty_event_rule" "foo_data_source" {
-	action_json = "${jsonencode(var.action_list)}"
-	condition_json = "${jsonencode(var.condition_list)}"
+	action_json = jsonencode(var.action_list)
+	condition_json = jsonencode(var.condition_list)
 }
 
 resource "pagerduty_event_rule" "test_catchall" {
 	catch_all = true,
-	action_json = "${jsonencode(var.action_list_suppress)}"
+	action_json = jsonencode(var.action_list_suppress)
 	condition_json = []
 }
 
 data "pagerduty_event_rule" "by_adv_cond" {
-  advanced_condition_json = "${pagerduty_event_rule.test_data_source.advanced_condition_json}"
+  advanced_condition_json = pagerduty_event_rule.test_data_source.advanced_condition_json
 }
 `, eventRule)
 }

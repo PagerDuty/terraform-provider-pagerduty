@@ -43,7 +43,7 @@ func dataSourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if found == nil {
-		return fmt.Errorf("Unable to locate any escalation policy with the name: %s", searchId)
+		return fmt.Errorf("Unable to locate any event rule with the id: %s", searchId)
 	}
 
 	d.SetId(found.ID)

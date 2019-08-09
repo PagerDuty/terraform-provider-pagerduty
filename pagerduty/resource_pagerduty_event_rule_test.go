@@ -62,7 +62,7 @@ func TestAccPagerDutyEventRule_Basic(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyEventRuleConfig(eventRule),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventRuleExists("pagerduty_event_rule.foo_resource"),
+					testAccCheckPagerDutyEventRuleExists("pagerduty_event_rule.first"),
 				),
 			},
 
@@ -132,71 +132,30 @@ func testAccCheckPagerDutyEventRuleExists(n string) resource.TestCheckFunc {
 
 func testAccCheckPagerDutyEventRuleConfig(eventRule string) string {
 	return fmt.Sprintf(`
-	variable "action_list" {
-		default = [
-			[
-				"route",
-				"P5DTL0K"
-			],
-			[
-				"severity",
-				"warning"
-			],
-			[
-				"annotate",
-				"%s"
-			],
-			[
-				"priority",
-				"PL451DT"
-			]
-		]
-	}
-	variable "condition_list" {
-		default = [
-			"and",
-			["contains",["path","payload","source"],"website"]		]
-	}
-	resource "pagerduty_event_rule" "first" {
-		action_json = jsonencode(var.action_list)
-		condition_json = jsonencode(var.condition_list)
-	}
+variable "action_list" {
+	default = [["route","P5DTL0K"],["severity","warning"],["annotate","%s"],["priority","PL451DT"]]
+}
+variable "condition_list" {
+	default = ["and",["contains",["path","payload","source"],"website"]]
+}
+resource "pagerduty_event_rule" "first" {
+	action_json = jsonencode(var.action_list)
+	condition_json = jsonencode(var.condition_list)
+}
 `, eventRule)
 }
 
 func testAccCheckPagerDutyEventRuleConfigUpdated(eventRule string) string {
 	return fmt.Sprintf(`
-	resource "pagerduty_event_rule" "foo_resource_updated" {
-		variable "action_list" {
-			default = [
-				[
-					"route",
-					"P5DTL0K"
-				],
-				[
-					"severity",
-					"warning"
-				],
-				[
-					"annotate",
-					"%s"
-				],
-				[
-					"priority",
-					"PL451DT"
-				]
-			]
-		}
-		variable "condition_list" {
-			default = [
-				"and",
-				["contains",["path","payload","source"],"website"],
-				["contains",["path","headers","from","0","address"],"homer"]
-			]
-		}
-		resource "pagerduty_event_rule" "first" {
-			action_json = jsonencode(var.action_list)
-			condition_json = jsonencode(var.condition_list)
-		}
+variable "action_list" {
+	default = [["route","P5DTL0K"],["severity","warning"],["annotate","%s"],["priority","PL451DT"]]
+}
+variable "condition_list" {
+	default = ["and",["contains",["path","payload","source"],"website"],["contains",["path","headers","from","0","address"],"homer"]]
+}
+resource "pagerduty_event_rule" "foo_resource_updated" {
+	action_json = jsonencode(var.action_list)
+	condition_json = jsonencode(var.condition_list)
+}
 `, eventRule)
 }

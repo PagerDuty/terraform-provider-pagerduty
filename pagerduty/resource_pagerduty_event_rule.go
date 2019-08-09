@@ -44,7 +44,7 @@ func buildEventRuleStruct(d *schema.ResourceData) *pagerduty.EventRule {
 		Condition: expandString(d.Get("condition_json").(string)),
 	}
 
-	if attr, ok := d.GetOk("advanced_condition"); ok {
+	if attr, ok := d.GetOk("advanced_condition_json"); ok {
 		eventRule.AdvancedCondition = expandString(attr.(string))
 	}
 
@@ -96,13 +96,12 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Reading PagerDuty event rule: %s", d.Id())
 
-	var eventRule *pagerduty.EventRule
-
 	resp, _, err := client.EventRules.List()
 	if err != nil {
 		return err
 	}
 	for _, rule := range resp.EventRules {
+		log.Printf("[DEBUG] Resp rule.ID: %s", rule.ID)
 		if rule.ID == d.Id() {
 			d.Set("action_json", flattenSlice(rule.Actions))
 			d.Set("condition_json", flattenSlice(rule.Condition))
@@ -111,7 +110,8 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 
 		}
 	}
-	if eventRule.ID != d.Id() {
+	// check if eventRule  not  found
+	if _, ok := d.GetOk("action_json"); !ok {
 		return handleNotFoundError(err, d)
 	}
 

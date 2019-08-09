@@ -65,7 +65,7 @@ variable "action_list" {
 		],
 		[
 			"annotate",
-			"foo bar"
+			"foo bar %s"
 		],
 		[
 			"priority",
@@ -73,34 +73,20 @@ variable "action_list" {
 		]
 	]
 }
+
 variable "condition_list" {
 	default = [
 		"and",
-		["contains",["path","payload","source"],"website"]		]
+		["contains",["path","payload","source"],"website"]]
 }
-variable "action_list_suppress" {
-	default = [["suppress",true]]
-}
+
 resource "pagerduty_event_rule" "test_data_source" {
 	action_json = jsonencode(var.action_list)
 	condition_json = jsonencode(var.condition_list)
-	catch_all = false
-	advanced_condition_json = [%s]
 }
 
-resource "pagerduty_event_rule" "foo_data_source" {
-	action_json = jsonencode(var.action_list)
-	condition_json = jsonencode(var.condition_list)
-}
-
-resource "pagerduty_event_rule" "test_catchall" {
-	catch_all = true,
-	action_json = jsonencode(var.action_list_suppress)
-	condition_json = []
-}
-
-data "pagerduty_event_rule" "by_adv_cond" {
-  advanced_condition_json = pagerduty_event_rule.test_data_source.advanced_condition_json
-}
+data "pagerduty_event_rule" "by_id" {
+	id = "${pagerduty_event_rule.test_data_source.id}"
+  }
 `, eventRule)
 }

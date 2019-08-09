@@ -138,9 +138,26 @@ variable "action_list" {
 variable "condition_list" {
 	default = ["and",["contains",["path","payload","source"],"website"]]
 }
+variable "advanced_condition_list" {
+    default = [
+                [
+                    "scheduled-weekly",
+                    1565392127032,
+                    3600000,
+                    "America/Los_Angeles",
+                    [
+                        1,
+                        3,
+                        5,
+                        7
+                    ]
+                ]
+	]
+}
 resource "pagerduty_event_rule" "first" {
 	action_json = jsonencode(var.action_list)
 	condition_json = jsonencode(var.condition_list)
+	advanced_condition_json = jsonencode(var.advanced_condition_list)
 }
 `, eventRule)
 }
@@ -153,9 +170,26 @@ variable "action_list" {
 variable "condition_list" {
 	default = ["and",["contains",["path","payload","source"],"website"],["contains",["path","headers","from","0","address"],"homer"]]
 }
+variable "advanced_condition_list" {
+    default = [
+                [
+                    "scheduled-weekly",
+                    1565392127032,
+                    3600000,
+                    "America/Los_Angeles",
+                    [
+                        1,
+                        3,
+                        5,
+                        7
+                    ]
+                ]
+	]
+}
 resource "pagerduty_event_rule" "foo_resource_updated" {
 	action_json = jsonencode(var.action_list)
 	condition_json = jsonencode(var.condition_list)
+	advanced_condition_json = jsonencode(var.advanced_condition_list)
 }
 `, eventRule)
 }

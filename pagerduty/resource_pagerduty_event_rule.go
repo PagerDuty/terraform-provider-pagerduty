@@ -105,9 +105,8 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 		if rule.ID == d.Id() {
 			d.Set("action_json", flattenSlice(rule.Actions))
 			d.Set("condition_json", flattenSlice(rule.Condition))
-			d.Set("action_json", flattenSlice(rule.Actions))
+			d.Set("advanced_condition_json", flattenSlice(rule.AdvancedCondition))
 			d.Set("catch_all", rule.CatchAll)
-
 		}
 	}
 	// check if eventRule  not  found

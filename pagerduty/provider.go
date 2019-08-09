@@ -33,7 +33,6 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_team":              dataSourcePagerDutyTeam(),
 			"pagerduty_vendor":            dataSourcePagerDutyVendor(),
 			"pagerduty_extension_schema":  dataSourcePagerDutyExtensionSchema(),
-			"pagerduty_event_rule":        dataSourcePagerDutyEventRule(),
 			"pagerduty_service":           dataSourcePagerDutyService(),
 		},
 

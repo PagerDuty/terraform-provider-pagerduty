@@ -57,19 +57,19 @@ func buildEventRuleStruct(d *schema.ResourceData) *pagerduty.EventRule {
 
 func expandString(v string) []interface{} {
 	var obj []interface{}
-	err := json.Unmarshal([]byte(v), &obj)
-
-	if err != nil {
-		log.Printf(string(err.Error()))
+	if err := json.Unmarshal([]byte(v), &obj); err != nil {
+		log.Printf("[ERROR] Could not unmarshal event rule field %s: %v", v, err)
+		return nil
 	}
 
 	return obj
 }
 
-func flattenSlice(v []interface{}) string {
+func flattenSlice(v []interface{}) interface{} {
 	b, err := json.Marshal(v)
 	if err != nil {
-		log.Printf(string(err.Error()))
+		log.Printf("[ERROR] Could not marshal event rule field %s: %v", v, err)
+		return nil
 	}
 	return string(b)
 }
@@ -100,19 +100,25 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 	if err != nil {
 		return err
 	}
+	var foundRule *pagerduty.EventRule
+
 	for _, rule := range resp.EventRules {
 		log.Printf("[DEBUG] Resp rule.ID: %s", rule.ID)
 		if rule.ID == d.Id() {
-			d.Set("action_json", flattenSlice(rule.Actions))
-			d.Set("condition_json", flattenSlice(rule.Condition))
-			d.Set("advanced_condition_json", flattenSlice(rule.AdvancedCondition))
-			d.Set("catch_all", rule.CatchAll)
+			foundRule = rule
+			break
 		}
 	}
 	// check if eventRule  not  found
-	if _, ok := d.GetOk("action_json"); !ok {
-		return handleNotFoundError(err, d)
+	if foundRule == nil {
+		d.SetId("")
+		return nil
 	}
+	// if event rule is found set to ResourceData
+	d.Set("action_json", flattenSlice(foundRule.Actions))
+	d.Set("condition_json", flattenSlice(foundRule.Condition))
+	d.Set("advanced_condition_json", flattenSlice(foundRule.AdvancedCondition))
+	d.Set("catch_all", foundRule.CatchAll)
 
 	return nil
 }

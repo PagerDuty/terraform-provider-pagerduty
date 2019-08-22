@@ -6,6 +6,7 @@ resource/pagerduty_user: The `teams` attribute has been deprecated in favor of t
 FEATURES:
 
 * **New Data Source:** `pagerduty_service` [GH-141]
+* **New Resource:** `pagerduty_event_rule` [GH-150]
 
 BUG FIXES:
 

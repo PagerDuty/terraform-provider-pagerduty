@@ -48,6 +48,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_user":                resourcePagerDutyUser(),
 			"pagerduty_user_contact_method": resourcePagerDutyUserContactMethod(),
 			"pagerduty_extension":           resourcePagerDutyExtension(),
+			"pagerduty_event_rule":          resourcePagerDutyEventRule(),
 		},
 
 		ConfigureFunc: providerConfigure,

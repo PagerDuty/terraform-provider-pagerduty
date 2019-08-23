@@ -13,14 +13,13 @@ type EventRule struct {
 	CatchAll          bool          `json:"catch_all,omitempty"`
 	Condition         []interface{} `json:"condition,omitempty"`
 	ID                string        `json:"id,omitempty"`
-	Options           []interface{} `json:"options,omitempty"`
 }
 
 // ListEventRulesResponse represents a list response of event rules.
 type ListEventRulesResponse struct {
 	ExternalID    string       `json:"external_id,omitempty"`
 	ObjectVersion string       `json:"object_version,omitempty"`
-	FormatVersion int          `json:"format_version,omitempty"`
+	FormatVersion int          `json:"format_version,string,omitempty"`
 	EventRules    []*EventRule `json:"rules,omitempty"`
 }
 

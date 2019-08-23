@@ -1,21 +1,21 @@
-## 1.4.0 (Unreleased)
+## 1.4.0 (August 23, 2019)
 
 NOTES:
 
-* resource/pagerduty_user: The `teams` attribute has been deprecated in favor of the `pagerduty_team_membership` resource [GH-146]
+* resource/pagerduty_user: The `teams` attribute has been deprecated in favor of the `pagerduty_team_membership` resource ([#146](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/146))
 
 FEATURES:
 
-* **New Data Source:** `pagerduty_service` [GH-141]
-* **New Resource:** `pagerduty_event_rule` [GH-150]
+* **New Data Source:** `pagerduty_service` ([#141](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/141))
+* **New Resource:** `pagerduty_event_rule` ([#150](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/150))
 
 BUG FIXES:
 
-* resource/pagerduty_maintenance_window: Allow services to be unordered [GH-142]
+* resource/pagerduty_maintenance_window: Allow services to be unordered ([#142](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/142))
 
 IMPROVEMENTS:
 
-* resource/pagerduty_service: Add support for alert_grouping and alert_grouping_timeout [GH-143]
+* resource/pagerduty_service: Add support for alert_grouping and alert_grouping_timeout ([#143](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/143))
 
 ## 1.3.1 (July 29, 2019)
 

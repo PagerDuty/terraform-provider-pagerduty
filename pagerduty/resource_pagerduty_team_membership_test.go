@@ -13,6 +13,7 @@ import (
 func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
 	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	role := "manager"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -20,7 +21,7 @@ func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyTeamMembershipConfig(user, team),
+				Config: testAccCheckPagerDutyTeamMembershipConfig(user, team, role),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
 				),
@@ -62,6 +63,7 @@ func testAccCheckPagerDutyTeamMembershipExists(n string) resource.TestCheckFunc 
 
 		userID := rs.Primary.Attributes["user_id"]
 		teamID := rs.Primary.Attributes["team_id"]
+		role := rs.Primary.Attributes["role"]
 
 		user, _, err := client.Users.Get(userID, &pagerduty.GetUserOptions{})
 		if err != nil {
@@ -72,11 +74,24 @@ func testAccCheckPagerDutyTeamMembershipExists(n string) resource.TestCheckFunc 
 			return fmt.Errorf("%s is not a member of: %s", userID, teamID)
 		}
 
+		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, member := range resp.Members {
+			if member.User.ID == userID {
+				if member.Role != role {
+					return fmt.Errorf("%s does not have the role: %s in: %s", userID, role, teamID)
+				}
+			}
+		}
+
 		return nil
 	}
 }
 
-func testAccCheckPagerDutyTeamMembershipConfig(user, team string) string {
+func testAccCheckPagerDutyTeamMembershipConfig(user, team, role string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name = "%[1]v"
@@ -91,6 +106,7 @@ resource "pagerduty_team" "foo" {
 resource "pagerduty_team_membership" "foo" {
   user_id = "${pagerduty_user.foo.id}"
   team_id = "${pagerduty_team.foo.id}"
+  role    = "%[3]v"
 }
-`, user, team)
+`, user, team, role)
 }

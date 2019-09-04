@@ -30,6 +30,12 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"role": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -38,11 +44,12 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	userID := d.Get("user_id").(string)
 	teamID := d.Get("team_id").(string)
+	role := d.Get("role").(string)
 
-	log.Printf("[DEBUG] Adding user: %s to team: %s", userID, teamID)
+	log.Printf("[DEBUG] Adding user: %s to team: %s with role: %s", userID, teamID, role)
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
-		if _, err := client.Teams.AddUser(teamID, userID); err != nil {
+		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
 				return resource.RetryableError(err)
 			}
@@ -73,7 +80,21 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 		return err
 	}
 
-	if !isTeamMember(user, teamID) {
+	d.Set("role", "")
+
+	if isTeamMember(user, teamID) {
+		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, member := range resp.Members {
+			if member.User.ID == userID {
+				d.Set("role", member.Role)
+				break
+			}
+		}
+	} else {
 		log.Printf("[WARN] Removing %s since the user: %s is not a member of: %s", d.Id(), userID, teamID)
 		d.SetId("")
 	}

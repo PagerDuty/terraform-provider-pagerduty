@@ -202,6 +202,8 @@ github.com/heimweh/go-pagerduty v0.0.0-20190625093811-4038e4c7ddb6 h1:K1vFV+w33Q
 github.com/heimweh/go-pagerduty v0.0.0-20190625093811-4038e4c7ddb6/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/heimweh/go-pagerduty v0.0.0-20190807171021-2a6540956dc5 h1:UZQ03lpxS/AUrMTlh1yQ/MJEJ+2he5bCItZ4W9Lgs1c=
 github.com/heimweh/go-pagerduty v0.0.0-20190807171021-2a6540956dc5/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20190903123207-5a16d0d0290f h1:KxRmqNpunRKzTdjqdM5IG5v38NGWCpQjZ/vGULImZjQ=
+github.com/heimweh/go-pagerduty v0.0.0-20190903123207-5a16d0d0290f/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/jellevandenhooff/dkim v0.0.0-20150330215556-f50fe3d243e1/go.mod h1:E0B/fFc00Y+Rasa88328GlI/XbtyysCtTHZS8h7IrBU=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=

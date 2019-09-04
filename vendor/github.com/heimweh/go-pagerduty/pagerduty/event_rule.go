@@ -13,6 +13,7 @@ type EventRule struct {
 	CatchAll          bool          `json:"catch_all,omitempty"`
 	Condition         []interface{} `json:"condition,omitempty"`
 	ID                string        `json:"id,omitempty"`
+	Options           []interface{} `json:"options,omitempty"`
 }
 
 // ListEventRulesResponse represents a list response of event rules.

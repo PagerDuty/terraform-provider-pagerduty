@@ -18,6 +18,12 @@ type Team struct {
 	Type        string `json:"type,omitempty"`
 }
 
+// Member represents a team member.
+type Member struct {
+	User *UserReference `json:"user,omitempty"`
+	Role string         `json:"role,omitempty"`
+}
+
 // ListTeamsOptions represents options when listing teams.
 type ListTeamsOptions struct {
 	Limit  int    `url:"limit,omitempty"`
@@ -34,6 +40,28 @@ type ListTeamsResponse struct {
 	Offset int     `json:"offset,omitempty"`
 	Total  int     `json:"total,omitempty"`
 	Teams  []*Team `json:"teams,omitempty"`
+}
+
+// GetMembersOptions represents options when get member informations in team.
+type GetMembersOptions struct {
+	Limit    int      `url:"limit,omitempty"`
+	More     bool     `url:"more,omitempty"`
+	Offset   int      `url:"offset,omitempty"`
+	Total    int      `url:"total,omitempty"`
+	Includes []string `url:"include,omitempty,brackets"`
+}
+
+// GetMembersResponse represents member informations response of a team.
+type GetMembersResponse struct {
+	Limit   int       `json:"limit,omitempty"`
+	More    bool      `json:"more,omitempty"`
+	Offset  int       `json:"offset,omitempty"`
+	Total   int       `json:"total,omitempty"`
+	Members []*Member `json:"members,omitempty"`
+}
+
+type teamRole struct {
+	Role string `json:"role,omitempty"`
 }
 
 // List lists existing teams.
@@ -104,6 +132,26 @@ func (s *TeamService) RemoveUser(teamID, userID string) (*Response, error) {
 func (s *TeamService) AddUser(teamID, userID string) (*Response, error) {
 	u := fmt.Sprintf("/teams/%s/users/%s", teamID, userID)
 	return s.client.newRequestDo("PUT", u, nil, nil, nil)
+}
+
+// AddUserWithRole adds a user with the specified role (one of observer, manager, or responder[default])
+func (s *TeamService) AddUserWithRole(teamID, userID string, role string) (*Response, error) {
+	tr := teamRole{Role: role}
+	u := fmt.Sprintf("/teams/%s/users/%s", teamID, userID)
+	return s.client.newRequestDo("PUT", u, nil, tr, nil)
+}
+
+// GetMembers retrieves information about members on a team.
+func (s *TeamService) GetMembers(teamID string, o *GetMembersOptions) (*GetMembersResponse, *Response, error) {
+	u := fmt.Sprintf("/teams/%s/members", teamID)
+	v := new(GetMembersResponse)
+
+	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
 }
 
 // RemoveEscalationPolicy removes an escalation policy from a team.

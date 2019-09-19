@@ -33,7 +33,6 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 			"role": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 				ForceNew: true,
 			},
 		},

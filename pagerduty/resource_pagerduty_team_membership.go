@@ -33,6 +33,11 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 			"role": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ValidateFunc: validateValueFunc([]string{
+					"observer",
+					"responder",
+					"manager",
+				}),
 				ForceNew: true,
 			},
 		},

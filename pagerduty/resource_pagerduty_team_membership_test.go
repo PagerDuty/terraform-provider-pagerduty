@@ -13,6 +13,25 @@ import (
 func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
 	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamMembershipConfig(user, team),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyTeamMembership_WithRole(t *testing.T) {
+	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	role := "manager"
 
 	resource.Test(t, resource.TestCase{
@@ -21,7 +40,7 @@ func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyTeamMembershipConfig(user, team, role),
+				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, role),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
 				),
@@ -91,7 +110,26 @@ func testAccCheckPagerDutyTeamMembershipExists(n string) resource.TestCheckFunc 
 	}
 }
 
-func testAccCheckPagerDutyTeamMembershipConfig(user, team, role string) string {
+func testAccCheckPagerDutyTeamMembershipConfig(user, team string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name = "%[1]v"
+  email = "%[1]v@foo.com"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[2]v"
+  description = "foo"
+}
+
+resource "pagerduty_team_membership" "foo" {
+  user_id = "${pagerduty_user.foo.id}"
+  team_id = "${pagerduty_team.foo.id}"
+}
+`, user, team)
+}
+
+func testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, role string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name = "%[1]v"

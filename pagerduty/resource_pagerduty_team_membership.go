@@ -15,6 +15,7 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutyTeamMembershipCreate,
 		Read:   resourcePagerDutyTeamMembershipRead,
+		Update: resourcePagerDutyTeamMembershipUpdate,
 		Delete: resourcePagerDutyTeamMembershipDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -38,7 +39,6 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 					"responder",
 					"manager",
 				}),
-				ForceNew: true,
 			},
 		},
 	}
@@ -105,6 +105,36 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 
 	d.Set("user_id", userID)
 	d.Set("team_id", teamID)
+
+	return nil
+}
+
+func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*pagerduty.Client)
+
+	userID := d.Get("user_id").(string)
+	teamID := d.Get("team_id").(string)
+	role := d.Get("role").(string)
+
+	log.Printf("[DEBUG] Updating user: %s to team: %s with role: %s", userID, teamID, role)
+
+	// To update existing membership resource, We can use the same API as creating a new membership.
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
+			if isErrCode(err, 500) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		}
+
+		return nil
+	})
+	if retryErr != nil {
+		return retryErr
+	}
+
+	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
 	return nil
 }

@@ -80,32 +80,23 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 
-	user, _, err := client.Users.Get(userID, &pagerduty.GetUserOptions{})
+	resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 	if err != nil {
 		return err
 	}
 
-	d.Set("role", "")
+	for _, member := range resp.Members {
+		if member.User.ID == userID {
+			d.Set("user_id", userID)
+			d.Set("team_id", teamID)
+			d.Set("role", member.Role)
 
-	if isTeamMember(user, teamID) {
-		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
-		if err != nil {
-			return err
+			return nil
 		}
-
-		for _, member := range resp.Members {
-			if member.User.ID == userID {
-				d.Set("role", member.Role)
-				break
-			}
-		}
-	} else {
-		log.Printf("[WARN] Removing %s since the user: %s is not a member of: %s", d.Id(), userID, teamID)
-		d.SetId("")
 	}
 
-	d.Set("user_id", userID)
-	d.Set("team_id", teamID)
+	log.Printf("[WARN] Removing %s since the user: %s is not a member of: %s", d.Id(), userID, teamID)
+	d.SetId("")
 
 	return nil
 }

@@ -36,7 +36,7 @@ The following arguments are supported:
 
   * `user_id` - (Required) The ID of the user to add to the team.
   * `team_id` - (Required) The ID of the team in which the user will belong.
-  * `role`    - (Optional) The role of the user in the team
+  * `role`    - (Optional) The role of the user in the team. One of `observer`, `responder`, or `manager`. Defaults to `observer`.
 
 ## Attributes Reference
 

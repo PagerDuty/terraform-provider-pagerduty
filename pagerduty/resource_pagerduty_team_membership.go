@@ -70,7 +70,7 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 
 	user, _, err := client.Users.Get(userID, &pagerduty.GetUserOptions{})
 	if err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	if !isTeamMember(user, teamID) {

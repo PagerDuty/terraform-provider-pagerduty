@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"runtime"
 
 	"github.com/hashicorp/terraform/helper/logging"
 	"github.com/hashicorp/terraform/terraform"
@@ -18,6 +17,9 @@ type Config struct {
 
 	// Skip validation of the token against the PagerDuty API
 	SkipCredsValidation bool
+
+	// UserAgent for API Client
+	UserAgent string
 }
 
 const invalidCreds = `
@@ -42,7 +44,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		Debug:      logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
 		Token:      c.Token,
-		UserAgent:  fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraform.VersionString()),
+		UserAgent:  c.UserAgent,
 	}
 
 	client, err := pagerduty.NewClient(config)

@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"runtime"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -11,7 +12,7 @@ import (
 
 // Provider represents a resource provider in Terraform
 func Provider() terraform.ResourceProvider {
-	return &schema.Provider{
+	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"skip_credentials_validation": {
 				Type:     schema.TypeBool,
@@ -50,9 +51,19 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_extension":           resourcePagerDutyExtension(),
 			"pagerduty_event_rule":          resourcePagerDutyEventRule(),
 		},
-
-		ConfigureFunc: providerConfigure,
 	}
+
+	p.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
+		terraformVersion := p.TerraformVersion
+		if terraformVersion == "" {
+			// Terraform 0.12 introduced this field to the protocol
+			// We can therefore assume that if it's missing it's 0.10 or 0.11
+			terraformVersion = "0.11+compatible"
+		}
+		return providerConfigure(d, terraformVersion)
+	}
+
+	return p
 }
 
 func isErrCode(err error, code int) bool {
@@ -73,10 +84,11 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
 }
 
-func providerConfigure(data *schema.ResourceData) (interface{}, error) {
+func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	config := Config{
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
+		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
 	}
 
 	log.Println("[INFO] Initializing PagerDuty client")

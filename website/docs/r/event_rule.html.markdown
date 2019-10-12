@@ -88,7 +88,7 @@ The following arguments are supported:
 
 * `action_json` - (Required) A list of one or more actions for each rule. Each action within the list is itself a list.
 * `condition_json` - (Required) Contains a list of conditions. The first field in the list is `and` or `or`, followed by a list of operators and values.
-* `advanced_condition_json` - (Required) Contains a list of specific conditions including `active-between`,`scheduled-weekly`, and `frequency-over`. The first element in the list is the label for the condition, followed by a list of values for the specific condition. For more details on these conditions see [Advanced Condition](https://v2.developer.pagerduty.com/docs/global-event-rules-api#section-advanced-condition) in the PagerDuty API documentation.
+* `advanced_condition_json` - (Optional) Contains a list of specific conditions including `active-between`,`scheduled-weekly`, and `frequency-over`. The first element in the list is the label for the condition, followed by a list of values for the specific condition. For more details on these conditions see [Advanced Condition](https://v2.developer.pagerduty.com/docs/global-event-rules-api#section-advanced-condition) in the PagerDuty API documentation.
 * `catch_all` - (Optional) A boolean that indicates whether the rule is a catch all for the account. 
 * `depends_on` - (Optional) A [Terraform meta-parameter](https://www.terraform.io/docs/configuration-0-11/resources.html#depends_on) that ensures that the `event_rule` specified is created before the current rule. This is important because Event Rules in PagerDuty are executed in order. `depends_on` ensures that  the rules are created in the order specified.
 

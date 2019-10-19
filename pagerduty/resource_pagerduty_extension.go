@@ -27,6 +27,10 @@ func resourcePagerDutyExtension() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"html_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"type": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -106,6 +110,7 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 	d.Set("summary", extension.Summary)
 	d.Set("name", extension.Name)
 	d.Set("endpoint_url", extension.EndpointURL)
+	d.Set("html_url", extension.HTMLURL)
 	if err := d.Set("extension_objects", flattenExtensionObjects(extension.ExtensionObjects)); err != nil {
 		log.Printf("[WARN] error setting extension_objects: %s", err)
 	}

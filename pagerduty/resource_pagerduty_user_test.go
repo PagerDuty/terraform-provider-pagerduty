@@ -79,6 +79,8 @@ func TestAccPagerDutyUser_Basic(t *testing.T) {
 						"pagerduty_user.foo", "job_title", "foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "description", "foo"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_user.foo", "html_url"),
 				),
 			},
 			{

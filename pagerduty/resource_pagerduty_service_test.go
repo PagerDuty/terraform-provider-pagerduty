@@ -83,6 +83,8 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_service.foo", "html_url"),
 				),
 			},
 			{

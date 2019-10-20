@@ -70,6 +70,8 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 						"pagerduty_extension.foo", "endpoint_url", url),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "config", "{\"notify_types\":{\"acknowledge\":false,\"assignments\":false,\"resolve\":false},\"restrict\":\"any\"}"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension.foo", "html_url", ""),
 				),
 			},
 			{

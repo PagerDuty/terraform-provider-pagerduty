@@ -69,6 +69,8 @@ func TestAccPagerDutyTeam_Basic(t *testing.T) {
 						"pagerduty_team.foo", "name", team),
 					resource.TestCheckResourceAttr(
 						"pagerduty_team.foo", "description", "foo"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_team.foo", "html_url"),
 				),
 			},
 			{

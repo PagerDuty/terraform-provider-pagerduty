@@ -22,6 +22,10 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"html_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -296,6 +300,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("name", service.Name)
+	d.Set("html_url", service.HTMLURL)
 	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)

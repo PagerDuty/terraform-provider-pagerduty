@@ -34,6 +34,7 @@ The following arguments are supported:
 The following attributes are exported:
 
   * `id` - The ID of the team.
+  * `html_url` - URL at which the entity is uniquely displayed in the Web app
 
 ## Import
 

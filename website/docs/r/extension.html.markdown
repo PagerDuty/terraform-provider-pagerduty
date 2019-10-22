@@ -71,7 +71,8 @@ EOF
 The following arguments are supported:
 
   * `name` - (Optional) The name of the service extension.
-  * `endpoint_url` - (Optional) The url of the extension.
+  * `endpoint_url` - (Reqeuired|Optional) The url of the extension.  
+  **Note:** The [endpoint URL is Optional API wise](https://api-reference.pagerduty.com/#!/Extensions/post_extensions) in most cases. But in some cases it is a _Required_ parameter. For example, `pagerduty_extension_schema` named `Generic V2 Webhook` doesn't accept `pagerduty_extension` with no `endpoint_url`, but one with named `Slack` accepts.
   * `extension_schema` - (Required) This is the schema for this extension.
   * `extension_objects` - (Required) This is the objects for which the extension applies (An array of service ids).
   * `config` - (Optional) The configuration of the service extension as string containing plain JSON-encoded data.

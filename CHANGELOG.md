@@ -1,4 +1,20 @@
 ## 1.4.1 (Unreleased)
+
+BUG FIXES:
+
+* resource/pagerduty_team_membership: Handle missing user referenced by team membership ([#153](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/153))
+
+* resource/pagerduty_event_rule: Fix perpetual diff issue with advanced conditions ([#157](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/157)). Labeled advanced condition field as optional in documentation  ([#160](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/160))
+
+* resource/pagerduty_user: Documentation fixed list of valid colors ([#154](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/154))
+
+IMPROVEMENTS:
+* Switch to standalone Terraform Plugin SDK: ([#158](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/158))
+
+* Add html_url read-only attribute to resource_pagerduty_service, resource_pagerduty_extension, resource_pagerduty_team ([#162](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/162))  
+
+* resource/pagerduty_event_rule: Documentation for `depends_on` field ([#152](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/152)).
+
 ## 1.4.0 (August 23, 2019)
 
 NOTES:

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -79,7 +79,7 @@ func resourcePagerDutyEventRuleCreate(d *schema.ResourceData, meta interface{}) 
 
 	eventRule := buildEventRuleStruct(d)
 
-	log.Printf("[INFO] Creating PagerDuty event rule: %s", "eventRule")
+	log.Printf("[INFO] Creating PagerDuty event rule: %s", eventRule.Condition)
 
 	eventRule, _, err := client.EventRules.Create(eventRule)
 	if err != nil {
@@ -117,9 +117,10 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 	// if event rule is found set to ResourceData
 	d.Set("action_json", flattenSlice(foundRule.Actions))
 	d.Set("condition_json", flattenSlice(foundRule.Condition))
-	d.Set("advanced_condition_json", flattenSlice(foundRule.AdvancedCondition))
+	if foundRule.AdvancedCondition != nil {
+		d.Set("advanced_condition_json", flattenSlice(foundRule.AdvancedCondition))
+	}
 	d.Set("catch_all", foundRule.CatchAll)
-
 	return nil
 }
 func resourcePagerDutyEventRuleUpdate(d *schema.ResourceData, meta interface{}) error {

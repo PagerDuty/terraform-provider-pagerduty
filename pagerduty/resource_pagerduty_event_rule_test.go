@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -62,14 +62,15 @@ func TestAccPagerDutyEventRule_Basic(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyEventRuleConfig(eventRule),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventRuleExists("pagerduty_event_rule.first"),
+					testAccCheckPagerDutyEventRuleExists("pagerduty_event_rule.foo"),
 				),
 			},
 
 			{
 				Config: testAccCheckPagerDutyEventRuleConfigUpdated(eventRuleUpdated),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventRuleExists("pagerduty_event_rule.foo_resource_updated"),
+					testAccCheckPagerDutyEventRuleExists("pagerduty_event_rule.foo-update"),
+					resource.TestCheckNoResourceAttr("pagerduty_event_rule.foo-update", "advanced_condition_json"),
 				),
 			},
 		},
@@ -103,7 +104,7 @@ func testAccCheckPagerDutyEventRuleExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("Not found: %s", n)
 		}
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Escalation Policy ID is set")
+			return fmt.Errorf("No Event Rule ID is set")
 		}
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
@@ -123,7 +124,7 @@ func testAccCheckPagerDutyEventRuleExists(n string) resource.TestCheckFunc {
 		}
 
 		if found.ID != rs.Primary.ID {
-			return fmt.Errorf("Escalation policy not found: %v - %v", rs.Primary.ID, found)
+			return fmt.Errorf("Event rule not found: %v - %v", rs.Primary.ID, found)
 		}
 
 		return nil
@@ -132,64 +133,32 @@ func testAccCheckPagerDutyEventRuleExists(n string) resource.TestCheckFunc {
 
 func testAccCheckPagerDutyEventRuleConfig(eventRule string) string {
 	return fmt.Sprintf(`
-variable "action_list" {
-	default = [["route","P5DTL0K"],["severity","warning"],["annotate","%s"],["priority","PL451DT"]]
-}
-variable "condition_list" {
-	default = ["and",["contains",["path","payload","source"],"website"]]
-}
-variable "advanced_condition_list" {
-    default = [
-                [
-                    "scheduled-weekly",
-                    1565392127032,
-                    3600000,
-                    "America/Los_Angeles",
-                    [
-                        1,
-                        3,
-                        5,
-                        7
-                    ]
-                ]
-	]
-}
-resource "pagerduty_event_rule" "first" {
-	action_json = jsonencode(var.action_list)
-	condition_json = jsonencode(var.condition_list)
-	advanced_condition_json = jsonencode(var.advanced_condition_list)
+resource "pagerduty_event_rule" "foo" {
+	action_json = jsonencode([["route","P5DTL0K"],["severity","warning"],["annotate","%s"],["priority","PL451DT"]])
+	condition_json = jsonencode(["and",["contains",["path","payload","source"],"website"]])
+	advanced_condition_json = jsonencode([
+		[
+			"scheduled-weekly",
+			1565392127032,
+			3600000,
+			"America/Los_Angeles",
+			[
+				1,
+				3,
+				5,
+				7
+			]
+		]
+	])
 }
 `, eventRule)
 }
 
 func testAccCheckPagerDutyEventRuleConfigUpdated(eventRule string) string {
 	return fmt.Sprintf(`
-variable "action_list" {
-	default = [["route","P5DTL0K"],["severity","warning"],["annotate","%s"],["priority","PL451DT"]]
-}
-variable "condition_list" {
-	default = ["and",["contains",["path","payload","source"],"website"],["contains",["path","headers","from","0","address"],"homer"]]
-}
-variable "advanced_condition_list" {
-    default = [
-                [
-                    "scheduled-weekly",
-                    1565392127032,
-                    3600000,
-                    "America/Los_Angeles",
-                    [
-                        1,
-                        3,
-                        5,
-                        7
-                    ]
-                ]
-	]
-}
-resource "pagerduty_event_rule" "foo_resource_updated" {
-	action_json = jsonencode(var.action_list)
-	condition_json = jsonencode(var.condition_list)
-	advanced_condition_json = jsonencode(var.advanced_condition_list)
+resource "pagerduty_event_rule" "foo-update" {
+	action_json = jsonencode([["route","P5DTL0K"],["severity","warning"],["annotate","%s"],["priority","PL451DT"]])
+	condition_json = jsonencode(["and",["contains",["path","payload","source"],"website"]])
 }
 `, eventRule)
 }

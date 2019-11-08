@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -145,6 +145,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", user.Name)
 	d.Set("email", user.Email)
 	d.Set("time_zone", user.TimeZone)
+	d.Set("html_url", user.HTMLURL)
 	d.Set("color", user.Color)
 	d.Set("role", user.Role)
 	d.Set("avatar_url", user.AvatarURL)
@@ -211,7 +212,7 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
-	return nil
+	return resourcePagerDutyUserRead(d, meta)
 }
 
 func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error {

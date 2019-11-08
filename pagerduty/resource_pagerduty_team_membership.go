@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -82,7 +82,7 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 
 	resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 	if err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	for _, member := range resp.Members {

@@ -42,6 +42,24 @@ func TestAccDataSourcePagerDutyVendor_ExactMatch(t *testing.T) {
 	})
 }
 
+func TestAccDataSourcePagerDutyVendor_SpecialChars(t *testing.T) {
+	dataSourceName := "data.pagerduty_vendor.foo"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDataSourcePagerDutySpecialCharsConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(dataSourceName, "id", "PRYWPH4"),
+					resource.TestCheckResourceAttr(dataSourceName, "name", "Slack to PagerDuty (Legacy)"),
+				),
+			},
+		},
+	})
+}
+
 const testAccDataSourcePagerDutyVendorConfig = `
 data "pagerduty_vendor" "foo" {
   name = "cloudwatch"
@@ -51,5 +69,11 @@ data "pagerduty_vendor" "foo" {
 const testAccDataSourcePagerDutyExactMatchConfig = `
 data "pagerduty_vendor" "foo" {
   name = "sentry"
+}
+`
+
+const testAccDataSourcePagerDutySpecialCharsConfig = `
+data "pagerduty_vendor" "foo" {
+  name = "Slack to PagerDuty (Legacy)"
 }
 `

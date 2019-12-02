@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -69,6 +69,8 @@ func TestAccPagerDutyTeam_Basic(t *testing.T) {
 						"pagerduty_team.foo", "name", team),
 					resource.TestCheckResourceAttr(
 						"pagerduty_team.foo", "description", "foo"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_team.foo", "html_url"),
 				),
 			},
 			{

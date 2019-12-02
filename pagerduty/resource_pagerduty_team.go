@@ -3,7 +3,7 @@ package pagerduty
 import (
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -25,6 +25,10 @@ func resourcePagerDutyTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "Managed by Terraform",
+			},
+			"html_url": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -56,7 +60,7 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 
 	d.SetId(team.ID)
 
-	return nil
+	return resourcePagerDutyTeamRead(d, meta)
 
 }
 
@@ -72,6 +76,7 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("name", team.Name)
 	d.Set("description", team.Description)
+	d.Set("html_url", team.HTMLURL)
 
 	return nil
 }
@@ -87,7 +92,7 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	return nil
+	return resourcePagerDutyTeamRead(d, meta)
 }
 
 func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error {

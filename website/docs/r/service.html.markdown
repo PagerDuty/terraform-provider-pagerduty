@@ -140,6 +140,7 @@ The following attributes are exported:
   * `last_incident_timestamp`- Last incident timestamp of the service
   * `created_at`- Creation timestamp of the service
   * `status`- The status of the service
+  * `html_url`- URL at which the entity is uniquely displayed in the Web app
 
 ## Import
 

@@ -21,7 +21,7 @@ func TestAccPagerDutyEventRule_import(t *testing.T) {
 			},
 
 			{
-				ResourceName:      "pagerduty_event_rule.first",
+				ResourceName:      "pagerduty_event_rule.foo",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},

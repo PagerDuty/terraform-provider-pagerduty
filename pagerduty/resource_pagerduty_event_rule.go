@@ -32,7 +32,7 @@ func resourcePagerDutyEventRule() *schema.Resource {
 			},
 			"catch_all": {
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
 			},
 		},
 	}

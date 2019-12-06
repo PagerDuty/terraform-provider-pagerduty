@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -49,10 +50,8 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 
 	var found *pagerduty.Vendor
 
-	er := regexp.MustCompile(fmt.Sprintf("^(?i)%s$", searchName))
-
 	for _, vendor := range resp.Vendors {
-		if er.MatchString(vendor.Name) {
+		if strings.EqualFold(vendor.Name, searchName) {
 			found = vendor
 			break
 		}

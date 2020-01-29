@@ -1,4 +1,10 @@
-## 1.5.0 (Unreleased)
+## 1.4.2 (Unreleased)
+
+BUG FIXES:
+
+* resource/resource_pagerduty_event_rule: Changing pagerduty_event_rule.catch_all field to Computed [GH-169]
+* data-source/pagerduty_vendor: Fix the exact matching of vendor name when it contains special chars [GH-166]
+
 ## 1.4.1 (October 24, 2019)
 
 BUG FIXES:

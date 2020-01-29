@@ -317,6 +317,14 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 	}
 	d.Set("alert_creation", service.AlertCreation)
+	if service.AlertGrouping != "" {
+		d.Set("alert_grouping", service.AlertGrouping)
+	}
+	if service.AlertGroupingTimeout == nil {
+		d.Set("alert_grouping_timeout", "null")
+	} else {
+		d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
+	}
 
 	if service.IncidentUrgencyRule != nil {
 		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {

@@ -2,6 +2,7 @@
 
 BUG FIXES:
 
+* resource/resource_pagerduty_service: Fix service to populate the `alert_grouping` and `alert_grouping_timeout` fields when reading resource
 * resource/resource_pagerduty_event_rule: Changing pagerduty_event_rule.catch_all field to Computed [GH-169]
 * data-source/pagerduty_vendor: Fix the exact matching of vendor name when it contains special chars [GH-166]
 

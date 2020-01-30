@@ -8,6 +8,7 @@ BUG FIXES:
 
 IMPROVEMENTS:
 * resource/resource_pagerduty_service: improve formatting in document to better highlight `intelligent`([#172](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/172))
+* resource/resource_pagerduty_extension: clarified `endpoint_url` with a note that sometimes it is required ([#164](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/164))
 
 ## 1.4.1 (October 24, 2019)
 

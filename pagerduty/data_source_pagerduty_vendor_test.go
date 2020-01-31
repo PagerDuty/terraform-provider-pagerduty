@@ -34,7 +34,7 @@ func TestAccDataSourcePagerDutyVendor_ExactMatch(t *testing.T) {
 			{
 				Config: testAccDataSourcePagerDutyExactMatchConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceName, "id", "PKG4M95"),
+					resource.TestCheckResourceAttr(dataSourceName, "id", "PKAPG94"),
 					resource.TestCheckResourceAttr(dataSourceName, "name", "Sentry"),
 				),
 			},

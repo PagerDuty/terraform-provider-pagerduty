@@ -1,10 +1,15 @@
-## 1.4.2 (Unreleased)
+## 1.5.0 (Unreleased)
+## 1.4.2 (January 30, 2020)
 
 BUG FIXES:
 
-* resource/resource_pagerduty_service: Fix service to populate the `alert_grouping` and `alert_grouping_timeout` fields when reading resource
-* resource/resource_pagerduty_event_rule: Changing pagerduty_event_rule.catch_all field to Computed [GH-169]
-* data-source/pagerduty_vendor: Fix the exact matching of vendor name when it contains special chars [GH-166]
+* resource/resource_pagerduty_service: Fix service to populate the `alert_grouping` and `alert_grouping_timeout` fields when reading resource ([#177](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/177))
+* resource/resource_pagerduty_event_rule: Changing pagerduty_event_rule.catch_all field to Computed ([#169](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/169))
+* data-source/pagerduty_vendor: Fix the exact matching of vendor name when it contains special chars ([#166](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/166))
+
+IMPROVEMENTS:
+* resource/resource_pagerduty_service: improve formatting in document to better highlight `intelligent`([#172](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/172))
+* resource/resource_pagerduty_extension: clarified `endpoint_url` with a note that sometimes it is required ([#164](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/164))
 
 ## 1.4.1 (October 24, 2019)
 

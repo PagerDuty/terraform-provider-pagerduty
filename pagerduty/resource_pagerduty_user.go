@@ -1,9 +1,10 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -37,14 +38,6 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "user",
-				ValidateFunc: validateValueFunc([]string{
-					"admin",
-					"limited_user",
-					"owner",
-					"read_only_user",
-					"team_responder",
-					"user",
-				}),
 			},
 
 			"job_title": {
@@ -58,8 +51,10 @@ func resourcePagerDutyUser() *schema.Resource {
 			},
 
 			"teams": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:       schema.TypeSet,
+				Deprecated: "Use the 'pagerduty_team_membership' resource instead.",
+				Computed:   true,
+				Optional:   true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -106,12 +101,7 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	}
 
 	if attr, ok := d.GetOk("role"); ok {
-		role := attr.(string)
-		// Skip setting the role if the user is the owner of the account.
-		// Can't change this through the API.
-		if role != "owner" {
-			user.Role = role
-		}
+		user.Role = attr.(string)
 	}
 
 	if attr, ok := d.GetOk("job_title"); ok {
@@ -155,12 +145,18 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", user.Name)
 	d.Set("email", user.Email)
 	d.Set("time_zone", user.TimeZone)
+	d.Set("html_url", user.HTMLURL)
 	d.Set("color", user.Color)
 	d.Set("role", user.Role)
 	d.Set("avatar_url", user.AvatarURL)
 	d.Set("description", user.Description)
 	d.Set("job_title", user.JobTitle)
-	d.Set("teams", user.Teams)
+
+	if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
+		return fmt.Errorf("error setting teams: %s", err)
+	}
+
+	d.Set("invitation_sent", user.InvitationSent)
 
 	return nil
 }
@@ -216,7 +212,7 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
-	return nil
+	return resourcePagerDutyUserRead(d, meta)
 }
 
 func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error {

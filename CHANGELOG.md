@@ -1,9 +1,71 @@
-## 1.3.0 (Unreleased)
+## 1.5.0 (Unreleased)
+## 1.4.2 (January 30, 2020)
 
 BUG FIXES:
 
-* data-source/pagerduty_team: Fix team search issue [GH-110] 
-* resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` [GH-116]
+* resource/resource_pagerduty_service: Fix service to populate the `alert_grouping` and `alert_grouping_timeout` fields when reading resource ([#177](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/177))
+* resource/resource_pagerduty_event_rule: Changing pagerduty_event_rule.catch_all field to Computed ([#169](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/169))
+* data-source/pagerduty_vendor: Fix the exact matching of vendor name when it contains special chars ([#166](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/166))
+
+IMPROVEMENTS:
+* resource/resource_pagerduty_service: improve formatting in document to better highlight `intelligent`([#172](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/172))
+* resource/resource_pagerduty_extension: clarified `endpoint_url` with a note that sometimes it is required ([#164](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/164))
+
+## 1.4.1 (October 24, 2019)
+
+BUG FIXES:
+
+* resource/pagerduty_team_membership: Handle missing user referenced by team membership ([#153](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/153))
+
+* resource/pagerduty_event_rule: Fix perpetual diff issue with advanced conditions ([#157](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/157)). Labeled advanced condition field as optional in documentation  ([#160](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/160))
+
+* resource/pagerduty_user: Documentation fixed list of valid colors ([#154](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/154))
+
+IMPROVEMENTS:
+* Switch to standalone Terraform Plugin SDK: ([#158](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/158))
+
+* Add html_url read-only attribute to resource_pagerduty_service, resource_pagerduty_extension, resource_pagerduty_team ([#162](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/162))  
+
+* resource/pagerduty_event_rule: Documentation for `depends_on` field ([#152](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/152)).
+
+## 1.4.0 (August 23, 2019)
+
+NOTES:
+
+* resource/pagerduty_user: The `teams` attribute has been deprecated in favor of the `pagerduty_team_membership` resource ([#146](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/146))
+
+FEATURES:
+
+* **New Data Source:** `pagerduty_service` ([#141](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/141))
+* **New Resource:** `pagerduty_event_rule` ([#150](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/150))
+
+BUG FIXES:
+
+* resource/pagerduty_maintenance_window: Allow services to be unordered ([#142](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/142))
+
+IMPROVEMENTS:
+
+* resource/pagerduty_service: Add support for alert_grouping and alert_grouping_timeout ([#143](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/143))
+
+## 1.3.1 (July 29, 2019)
+
+BUG FIXES:
+
+* resource/pagerduty_user: Remove invalid role types ([#135](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/135))
+* resource/pagerduty_service: Remove status from payload ([#133](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/133))
+
+## 1.3.0 (May 29, 2019)
+
+BUG FIXES:
+
+* data-source/pagerduty_team: Fix team search issue [[#110](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/110)] 
+* resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` ([#116](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/116))
+* resource/pagerduty_service: Set invitation_sent [[#127](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/127)] 
+* resource/pagerduty_escalation_policy: Correctly set teams ([#129](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/129))
+
+IMPROVEMENTS:
+
+* Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. This is the first release to use the 0.12 SDK required for Terraform 0.12 support. Some provider behaviour may have changed as a result of changes made by the new SDK version ([#126](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/126))
 
 ## 1.2.1 (November 21, 2018)
 

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 var testAccProviders map[string]terraform.ResourceProvider
@@ -63,4 +63,23 @@ func timeNowInAccLoc() time.Time {
 	}
 
 	return timeNowInLoc(name)
+}
+
+func testAccPreCheckPagerDutyAbility(t *testing.T, ability string) {
+	if v := os.Getenv("PAGERDUTY_TOKEN"); v == "" {
+		t.Fatal("PAGERDUTY_TOKEN must be set for acceptance tests")
+	}
+
+	config := &Config{
+		Token: os.Getenv("PAGERDUTY_TOKEN"),
+	}
+
+	client, err := config.Client()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Abilities.Test(ability); err != nil {
+		t.Skipf("Missing ability: %s. Skipping test", ability)
+	}
 }

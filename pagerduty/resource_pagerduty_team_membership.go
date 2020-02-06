@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -39,8 +41,19 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Adding user: %s to team: %s", userID, teamID)
 
-	if _, err := client.Teams.AddUser(teamID, userID); err != nil {
-		return err
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, err := client.Teams.AddUser(teamID, userID); err != nil {
+			if isErrCode(err, 500) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		}
+
+		return nil
+	})
+	if retryErr != nil {
+		return retryErr
 	}
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
@@ -57,7 +70,7 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 
 	user, _, err := client.Users.Get(userID, &pagerduty.GetUserOptions{})
 	if err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	if !isTeamMember(user, teamID) {

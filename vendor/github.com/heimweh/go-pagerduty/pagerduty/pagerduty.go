@@ -45,6 +45,7 @@ type Client struct {
 	ExtensionSchemas   *ExtensionSchemaService
 	Users              *UserService
 	Vendors            *VendorService
+	EventRules         *EventRuleService
 }
 
 // Response is a wrapper around http.Response
@@ -61,6 +62,8 @@ func NewClient(config *Config) (*Client, error) {
 	if config.BaseURL == "" {
 		config.BaseURL = defaultBaseURL
 	}
+
+	config.UserAgent = "heimweh/go-pagerduty(terraform)"
 
 	baseURL, err := url.Parse(config.BaseURL)
 	if err != nil {
@@ -84,6 +87,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.Vendors = &VendorService{c}
 	c.Extensions = &ExtensionService{c}
 	c.ExtensionSchemas = &ExtensionSchemaService{c}
+	c.EventRules = &EventRuleService{c}
 
 	return c, nil
 }

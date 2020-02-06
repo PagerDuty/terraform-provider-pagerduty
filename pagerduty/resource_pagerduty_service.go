@@ -4,7 +4,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -22,6 +22,10 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"html_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -35,6 +39,18 @@ func resourcePagerDutyService() *schema.Resource {
 					"create_alerts_and_incidents",
 					"create_incidents",
 				}),
+			},
+			"alert_grouping": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validateValueFunc([]string{
+					"time",
+					"intelligent",
+				}),
+			},
+			"alert_grouping_timeout": {
+				Type:     schema.TypeInt,
+				Optional: true,
 			},
 			"auto_resolve_timeout": {
 				Type:     schema.TypeString,
@@ -188,8 +204,7 @@ func resourcePagerDutyService() *schema.Resource {
 
 func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	service := pagerduty.Service{
-		Name:   d.Get("name").(string),
-		Status: d.Get("status").(string),
+		Name: d.Get("name").(string),
 	}
 
 	if attr, ok := d.GetOk("description"); ok {
@@ -218,6 +233,15 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("alert_creation"); ok {
 		service.AlertCreation = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("alert_grouping"); ok {
+		service.AlertGrouping = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
+		val := attr.(int)
+		service.AlertGroupingTimeout = &val
 	}
 
 	if attr, ok := d.GetOk("escalation_policy"); ok {
@@ -276,6 +300,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("name", service.Name)
+	d.Set("html_url", service.HTMLURL)
 	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
@@ -292,6 +317,14 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 	}
 	d.Set("alert_creation", service.AlertCreation)
+	if service.AlertGrouping != "" {
+		d.Set("alert_grouping", service.AlertGrouping)
+	}
+	if service.AlertGroupingTimeout == nil {
+		d.Set("alert_grouping_timeout", "null")
+	} else {
+		d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
+	}
 
 	if service.IncidentUrgencyRule != nil {
 		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {

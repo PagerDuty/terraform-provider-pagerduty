@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -79,6 +79,8 @@ func TestAccPagerDutyUser_Basic(t *testing.T) {
 						"pagerduty_user.foo", "job_title", "foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "description", "foo"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_user.foo", "html_url"),
 				),
 			},
 			{
@@ -92,7 +94,7 @@ func TestAccPagerDutyUser_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "color", "red"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_user.foo", "role", "team_responder"),
+						"pagerduty_user.foo", "role", "observer"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "job_title", "bar"),
 					resource.TestCheckResourceAttr(
@@ -122,8 +124,6 @@ func TestAccPagerDutyUserWithTeams_Basic(t *testing.T) {
 						"pagerduty_user.foo", "name", username),
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "email", email),
-					resource.TestCheckResourceAttr(
-						"pagerduty_user.foo", "teams.#", "1"),
 				),
 			},
 			{
@@ -134,8 +134,6 @@ func TestAccPagerDutyUserWithTeams_Basic(t *testing.T) {
 						"pagerduty_user.foo", "name", username),
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "email", email),
-					resource.TestCheckResourceAttr(
-						"pagerduty_user.foo", "teams.#", "2"),
 				),
 			},
 			{
@@ -146,8 +144,6 @@ func TestAccPagerDutyUserWithTeams_Basic(t *testing.T) {
 						"pagerduty_user.foo", "name", username),
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "email", email),
-					resource.TestCheckResourceAttr(
-						"pagerduty_user.foo", "teams.#", "0"),
 				),
 			},
 		},
@@ -213,7 +209,7 @@ resource "pagerduty_user" "foo" {
   name        = "%s"
   email       = "%s"
   color       = "red"
-  role        = "team_responder"
+  role        = "observer"
   job_title   = "bar"
   description = "bar"
   time_zone   = "Europe/Dublin"
@@ -229,7 +225,11 @@ resource "pagerduty_team" "foo" {
 resource "pagerduty_user" "foo" {
   name  = "%s"
   email = "%s"
-  teams = ["${pagerduty_team.foo.id}"]
+}
+
+resource "pagerduty_team_membership" "foo" {
+  user_id = "${pagerduty_user.foo.id}"
+  team_id = "${pagerduty_team.foo.id}"
 }
 `, team, username, email)
 }
@@ -247,7 +247,16 @@ resource "pagerduty_team" "bar" {
 resource "pagerduty_user" "foo" {
   name  = "%s"
   email = "%s"
-  teams = ["${pagerduty_team.foo.id}", "${pagerduty_team.bar.id}"]
+}
+
+resource "pagerduty_team_membership" "foo" {
+  user_id = "${pagerduty_user.foo.id}"
+  team_id = "${pagerduty_team.foo.id}"
+}
+
+resource "pagerduty_team_membership" "bar" {
+  user_id = "${pagerduty_user.foo.id}"
+  team_id = "${pagerduty_team.bar.id}"
 }
 `, team1, team2, username, email)
 }

@@ -89,7 +89,7 @@ resource "pagerduty_user_notification_rule" "foo" {
   start_delay_in_minutes = 1
   urgency                = "high"
 
-  contact_method {
+  contact_method = {
     type = "%[1]v"
     id   = "${pagerduty_user_contact_method.%[1]v.id}"
   }

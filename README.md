@@ -1,4 +1,4 @@
-Terraform Provider for Pagerduty
+Terraform Provider for PagerDuty
 ================================
 
 - Website: https://www.terraform.io

@@ -1,5 +1,5 @@
-Terraform Provider
-==================
+Terraform Provider for Pagerduty
+================================
 
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)

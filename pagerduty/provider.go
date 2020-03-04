@@ -50,6 +50,8 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_user_contact_method": resourcePagerDutyUserContactMethod(),
 			"pagerduty_extension":           resourcePagerDutyExtension(),
 			"pagerduty_event_rule":          resourcePagerDutyEventRule(),
+			"pagerduty_ruleset":             resourcePagerDutyRuleset(),
+			"pagerduty_ruleset_rule":        resourcePagerDutyRulesetRule(),
 		},
 	}
 

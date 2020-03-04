@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -36,6 +37,13 @@ func resourcePagerDutyRuleset() *schema.Resource {
 					},
 				},
 			},
+			"routing_keys": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -49,7 +57,21 @@ func buildRulesetStruct(d *schema.ResourceData) *pagerduty.Ruleset {
 		ruleset.Team = expandTeam(attr)
 	}
 
+	if attr, ok := d.GetOk("routing_keys"); ok {
+		ruleset.RoutingKeys = expandKeys(attr.([]interface{}))
+	}
+
 	return ruleset
+}
+
+func expandKeys(v []interface{}) []string {
+	keys := make([]string, len(v))
+
+	for i, k := range v {
+		keys[i] = fmt.Sprintf("%v", k)
+	}
+
+	return keys
 }
 
 func expandTeam(v interface{}) *pagerduty.RulesetObject {
@@ -109,7 +131,7 @@ func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) erro
 	if ruleset.Team != nil {
 		d.Set("team", flattenTeam(ruleset.Team))
 	}
-
+	d.Set("routing_keys", ruleset.RoutingKeys)
 	return nil
 }
 func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {

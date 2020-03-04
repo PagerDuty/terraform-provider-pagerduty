@@ -2,7 +2,9 @@ package pagerduty
 
 import (
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -167,30 +169,39 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
 
-	schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		if schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{}); err != nil {
+			if isErrCode(err, 500) || isErrCode(err, 503) {
+				return resource.RetryableError(err)
+			}
 
-	d.Set("name", schedule.Name)
-	d.Set("time_zone", schedule.TimeZone)
-	d.Set("description", schedule.Description)
+			return resource.NonRetryableError(err)
+		} else if schedule != nil {
+			d.Set("name", schedule.Name)
+			d.Set("time_zone", schedule.TimeZone)
+			d.Set("description", schedule.Description)
+			// Here we override whatever `start` value we get back from the API
+			// and use what's in the configuration. This is to prevent a diff issue
+			// because we always get back a new `start` value from the PagerDuty API.
+			for _, sl := range schedule.ScheduleLayers {
+				for _, rsl := range d.Get("layer").([]interface{}) {
+					ssl := rsl.(map[string]interface{})
 
-	// Here we override whatever `start` value we get back from the API
-	// and use what's in the configuration. This is to prevent a diff issue
-	// because we always get back a new `start` value from the PagerDuty API.
-	for _, sl := range schedule.ScheduleLayers {
-		for _, rsl := range d.Get("layer").([]interface{}) {
-			ssl := rsl.(map[string]interface{})
+					if sl.ID == ssl["id"].(string) {
+						sl.Start = ssl["start"].(string)
+					}
+				}
+			}
 
-			if sl.ID == ssl["id"].(string) {
-				sl.Start = ssl["start"].(string)
+			if err := d.Set("layer", flattenScheduleLayers(schedule.ScheduleLayers)); err != nil {
+				return resource.NonRetryableError(err)
 			}
 		}
-	}
+		return nil
+	})
 
-	if err := d.Set("layer", flattenScheduleLayers(schedule.ScheduleLayers)); err != nil {
-		return err
+	if retryErr != nil {
+		return retryErr
 	}
 
 	return nil

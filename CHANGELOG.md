@@ -1,4 +1,14 @@
 ## 1.5.0 (Unreleased)
+
+BUG FIXES:
+
+* data_source_pagerduty_vendor: Update vendor id to fix test failures ([#178](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/178))
+
+IMPROVEMENTS:
+* Add retry to team read and schedule read ([#186](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/186))
+
+* Update description to match other official providers ([#183](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/183))
+
 ## 1.4.2 (January 30, 2020)
 
 BUG FIXES:

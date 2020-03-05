@@ -2,11 +2,13 @@
 
 BUG FIXES:
 
+* data_source_pagerduty_user: Docs: update `team_responder` role thath as been renamed to `observer` ([#179](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/179))
 * data_source_pagerduty_vendor: Update vendor id to fix test failures ([#178](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/178))
 
 IMPROVEMENTS:
-* Add retry to team read and schedule read ([#186](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/186))
 
+* resource/resource_pagerduty_user: Remove deprecated teams field from example in doc ([#185](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/185))
+* Add retry to team read and schedule read ([#186](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/186))
 * Update description to match other official providers ([#183](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/183))
 
 ## 1.4.2 (January 30, 2020)

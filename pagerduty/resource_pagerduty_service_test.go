@@ -127,6 +127,37 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyService_Teams(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithTeams(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "teams.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.com", username)
@@ -635,6 +666,51 @@ resource "pagerduty_service" "foo" {
 	acknowledgement_timeout = 1800
 	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
 	alert_creation          = "create_incidents"
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithTeams(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_team_membership" "foo" {
+  user_id = "${pagerduty_user.foo.id}"
+  team_id = "${pagerduty_team.foo.id}"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = "${pagerduty_user.foo.id}"
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	teams 					= ["${pagerduty_team.foo.id}"]
 }
 `, username, email, escalationPolicy, service)
 }

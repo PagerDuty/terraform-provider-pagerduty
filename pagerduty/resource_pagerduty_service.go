@@ -198,6 +198,11 @@ func resourcePagerDutyService() *schema.Resource {
 					},
 				},
 			},
+			"teams": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
 }
@@ -264,6 +269,10 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("support_hours"); ok {
 		service.SupportHours = expandSupportHours(attr)
+	}
+
+	if attr, ok := d.GetOk("teams"); ok {
+		service.Teams = expandTeams(attr)
 	}
 
 	return &service, nil
@@ -340,6 +349,12 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 
 	if service.ScheduledActions != nil {
 		if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
+			return err
+		}
+	}
+
+	if service.Teams != nil {
+		if err := d.Set("teams", flattenTeams(service.Teams)); err != nil {
 			return err
 		}
 	}

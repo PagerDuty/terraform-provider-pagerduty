@@ -2,7 +2,9 @@ package pagerduty
 
 import (
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -69,14 +71,25 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty team %s", d.Id())
 
-	team, _, err := client.Teams.Get(d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if team, _, err := client.Teams.Get(d.Id()); err != nil {
+			if isErrCode(err, 500) || isErrCode(err, 403) {
+				return resource.RetryableError(err)
+			}
 
-	d.Set("name", team.Name)
-	d.Set("description", team.Description)
-	d.Set("html_url", team.HTMLURL)
+			return resource.NonRetryableError(err)
+		} else if team != nil {
+			d.Set("name", team.Name)
+			d.Set("description", team.Description)
+			d.Set("html_url", team.HTMLURL)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
+	}
 
 	return nil
 }

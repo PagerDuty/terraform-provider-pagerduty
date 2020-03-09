@@ -1,4 +1,29 @@
-## 1.5.0 (Unreleased)
+## 1.6.0 (Unreleased)
+## 1.5.0 (March 05, 2020)
+
+BUG FIXES:
+
+* data_source_pagerduty_user: Docs: update `team_responder` role thath as been renamed to `observer` ([#179](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/179))
+* data_source_pagerduty_vendor: Update vendor id to fix test failures ([#178](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/178))
+
+IMPROVEMENTS:
+
+* resource/resource_pagerduty_user: Remove deprecated teams field from example in doc ([#185](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/185))
+* Add retry to team read and schedule read ([#186](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/186))
+* Update description to match other official providers ([#183](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/183))
+
+## 1.4.2 (January 30, 2020)
+
+BUG FIXES:
+
+* resource/resource_pagerduty_service: Fix service to populate the `alert_grouping` and `alert_grouping_timeout` fields when reading resource ([#177](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/177))
+* resource/resource_pagerduty_event_rule: Changing pagerduty_event_rule.catch_all field to Computed ([#169](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/169))
+* data-source/pagerduty_vendor: Fix the exact matching of vendor name when it contains special chars ([#166](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/166))
+
+IMPROVEMENTS:
+* resource/resource_pagerduty_service: improve formatting in document to better highlight `intelligent`([#172](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/172))
+* resource/resource_pagerduty_extension: clarified `endpoint_url` with a note that sometimes it is required ([#164](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/164))
+
 ## 1.4.1 (October 24, 2019)
 
 BUG FIXES:

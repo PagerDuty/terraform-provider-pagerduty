@@ -10,6 +10,40 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+func init() {
+	resource.AddTestSweepers("pagerduty_ruleset_rule", &resource.Sweeper{
+		Name: "pagerduty_ruleset_rule",
+		F:    testSweepRuleset,
+	})
+}
+
+func testSweepRulesetRule(region string) error {
+	config, err := sharedConfigForRegion(region)
+	if err != nil {
+		return err
+	}
+
+	client, err := config.Client()
+	if err != nil {
+		return err
+	}
+	// todo: need to fix this before pushing
+
+	// resp, _, err := client.Rulesets.ListRules()
+	// if err != nil {
+	// 	return err
+	// }
+	// for _, ruleset := range resp.Rules {
+	// 	if strings.HasPrefix(ruleset.Name, "test") || strings.HasPrefix(ruleset.Name, "tf-") {
+	// 		log.Printf("Destroying ruleset %s (%s)", ruleset.Name, ruleset.ID)
+	// 		if _, err := client.Rulesets.Delete(ruleset.ID); err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
+
+	return nil
+}
 func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 	ruleset := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))

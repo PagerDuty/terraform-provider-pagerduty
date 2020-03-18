@@ -100,7 +100,7 @@ The following attributes are exported:
 
 ## Import
 
-Escalation policies can be imported using the `id`, e.g.
+Event rules can be imported using the `id`, e.g.
 
 ```
 $ terraform import pagerduty_event_rule.main 19acac92-027a-4ea0-b06c-bbf516519601

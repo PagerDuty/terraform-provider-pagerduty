@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -68,4 +69,23 @@ func expandStringList(configured []interface{}) []string {
 		vs = append(vs, string(v.(string)))
 	}
 	return vs
+}
+
+func expandString(v string) []interface{} {
+	var obj []interface{}
+	if err := json.Unmarshal([]byte(v), &obj); err != nil {
+		log.Printf("[ERROR] Could not unmarshal field %s: %v", v, err)
+		return nil
+	}
+
+	return obj
+}
+
+func flattenSlice(v []interface{}) interface{} {
+	b, err := json.Marshal(v)
+	if err != nil {
+		log.Printf("[ERROR] Could not marshal field %s: %v", v, err)
+		return nil
+	}
+	return string(b)
 }

@@ -16,7 +16,8 @@ func TestAccPagerDutyBusinessServiceDependency_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.com", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	// serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	businessServiceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -27,26 +28,26 @@ func TestAccPagerDutyBusinessServiceDependency_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyBusinessServiceDependencyConfig(service, businessService, username, email, escalationPolicy),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyBusinessServiceExists("pagerduty_business_service_dependency.foo"),
-					resource.TestCheckResourceAttrSet(
-						"pagerduty_business_service_dependency.foo.relationship.0.supported_service.0", "id"),
-					resource.TestCheckResourceAttrSet(
-						"pagerduty_business_service_dependency.foo.relationship.0.dependent_service.0", "id"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service_dependency.foo", "relationship.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service_dependency.foo", "relationship.0.supporting_service.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service_dependency.foo", "relationship.0.dependent_service.#", "1"),
 				),
 			},
-			// {
-			// 	Config: testAccCheckPagerDutyBusinessServiceConfigUpdated(nameUpdated, descriptionUpdated, pointOfContactUpdated),
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		testAccCheckPagerDutyBusinessServiceExists("pagerduty_business_service.foo"),
-			// 		resource.TestCheckResourceAttr(
-			// 			"pagerduty_business_service.foo", "name", nameUpdated),
-			// 		resource.TestCheckResourceAttr(
-			// 			"pagerduty_business_service.foo", "description", descriptionUpdated),
-			// 		resource.TestCheckResourceAttr(
-			// 			"pagerduty_business_service.foo", "point_of_contact", pointOfContactUpdated),
-			// 		resource.TestCheckResourceAttrSet(
-			// 			"pagerduty_business_service.foo", "html_url"),
-			// 	),
-			// },
+			{
+				Config: testAccCheckPagerDutyBusinessServiceDependencyConfigUpdated(service, businessServiceUpdated, username, email, escalationPolicy, service2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyBusinessServiceExists("pagerduty_business_service_dependency.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service_dependency.foo", "relationship.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service_dependency.foo", "relationship.0.supporting_service.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service_dependency.foo", "relationship.0.dependent_service.#", "1"),
+				),
+			},
 		},
 	})
 }
@@ -63,7 +64,7 @@ func testAccCheckPagerDutyBusinessServiceDependencyExists(n string) resource.Tes
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, _, err := client.BusinessServices.Get(rs.Primary.ID)
+		found, _, err := client.BusinessServices.GetDependencies()
 		if err != nil {
 			return err
 		}
@@ -138,4 +139,72 @@ resource "pagerduty_business_service_dependency" "foo" {
 	}
 }
 `, businessService, username, email, escalationPolicy, service)
+}
+func testAccCheckPagerDutyBusinessServiceDependencyConfigUpdated(service, businessService, username, email, escalationPolicy, service2 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_business_service" "foo" {
+	name = "%s"
+}
+
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+resource "pagerduty_service" "foo" {
+	name = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+
+resource "pagerduty_service" "two" {
+	name = "%s"
+	description             = "two"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+resource "pagerduty_business_service_dependency" "foo" {
+	relationship {
+		supporting_service {
+			id = pagerduty_business_service.foo.id
+			type = "business_service"
+		}
+		dependent_service {
+			id = pagerduty_service.foo.id
+			type = "service"
+		}
+	}
+	relationship {
+		supporting_service {
+			id = pagerduty_business_service.foo.id
+			type = "business_service"
+		}
+		dependent_service {
+			id = pagerduty_service.two.id
+			type = "service"
+		}
+	}
+}
+`, businessService, username, email, escalationPolicy, service, service2)
 }

@@ -1,7 +1,9 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -65,6 +67,7 @@ func buildBusinessServiceDependencyStruct(d *schema.ResourceData) (*pagerduty.Se
 	var rel *pagerduty.ServiceRelationship
 
 	rel = new(pagerduty.ServiceRelationship)
+	log.Printf("[DEBUG] BUILDING STRUCT: %s", d.Get("relationship"))
 
 	for _, r := range d.Get("relationship").([]interface{}) {
 		relmap := r.(map[string]interface{})
@@ -108,6 +111,8 @@ func resourcePagerDutyBusinessServiceDependencyAssociate(d *schema.ResourceData,
 		return err
 	}
 
+	d.SetId(fmt.Sprintf("%s%s", serviceDependency.SupportingService.ID, serviceDependency.DependentService.ID))
+
 	return resourcePagerDutyBusinessServiceDependencyRead(d, meta)
 }
 
@@ -138,9 +143,11 @@ func resourcePagerDutyBusinessServiceDependencyRead(d *schema.ResourceData, meta
 	client := meta.(*pagerduty.Client)
 
 	serviceDependency, err := buildBusinessServiceDependencyStruct(d)
-	// log.Printf("[INFO] Reading PagerDuty dependency between business service %s and service %s", serviceDependency.SupportingService.ID, serviceDependency.DependentService.ID)
-
+	log.Printf("[INFO] Reading PagerDuty dependency between business service %s and service %s", serviceDependency.SupportingService.ID, serviceDependency.DependentService.ID)
+	// Pausing to let the PD API sync. This feels really dirty.
+	time.Sleep(2 * time.Second)
 	dependencies, _, err := client.BusinessServices.GetDependencies(serviceDependency.SupportingService.ID)
+
 	var foundDep *pagerduty.ServiceRelationship
 
 	if err != nil {
@@ -148,8 +155,11 @@ func resourcePagerDutyBusinessServiceDependencyRead(d *schema.ResourceData, meta
 	}
 	for _, rel := range dependencies.Relationships {
 		if rel.DependentService.ID == serviceDependency.DependentService.ID {
-			// log.Printf("[DEBUG] FoundDep.SupportingService: %s", rel.SupportingService.ID)
+			log.Printf("[DEBUG] rel.SupportingService: %s", rel.SupportingService.ID)
+			log.Printf("[DEBUG] rel.DependentService: %s", rel.DependentService.ID)
 			foundDep = rel
+			log.Printf("[DEBUG] FoundDep.SupportingService: %s", foundDep.SupportingService.ID)
+			log.Printf("[DEBUG] FoundDep.DependentService: %s", foundDep.DependentService.ID)
 			break
 		}
 	}
@@ -157,6 +167,8 @@ func resourcePagerDutyBusinessServiceDependencyRead(d *schema.ResourceData, meta
 		d.Set("supporting_service", flattenService(foundDep.SupportingService))
 		d.Set("dependent_service", flattenService(foundDep.DependentService))
 	}
+	log.Printf("[DEBUG] Dump the d.Relationship: %s", d.Get("relationship"))
+
 	return nil
 }
 
@@ -165,5 +177,7 @@ func flattenService(s *pagerduty.ServiceObj) map[string]interface{} {
 		"id":   s.ID,
 		"type": s.Type,
 	}
+	log.Printf("[DEBUG] flattenService.service: %s", service)
+
 	return service
 }

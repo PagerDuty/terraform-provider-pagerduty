@@ -1,4 +1,4 @@
-## 1.5.1 (Unreleased)
+## 1.5.1 (March 19, 2020)
 
 BUG FIXES:
 * resource/resource_pagerduty_service: Fixed alert_grouping_timeout to be able to accept values of 0 ([#190](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/190))

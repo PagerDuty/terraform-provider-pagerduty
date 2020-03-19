@@ -1,4 +1,12 @@
-## 1.6.0 (Unreleased)
+## 1.5.1 (Unreleased)
+
+BUG FIXES:
+* resource/resource_pagerduty_service: Fixed alert_grouping_timeout to be able to accept values of 0 ([#190](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/190))
+
+IMPROVEMENTS:
+
+* Update terraform plugin SDK from 1.0.0 to 1.7.0 ([#188](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/188))
+
 ## 1.5.0 (March 05, 2020)
 
 BUG FIXES:

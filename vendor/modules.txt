@@ -182,7 +182,7 @@ github.com/hashicorp/terraform-svchost/auth
 github.com/hashicorp/terraform-svchost/disco
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 github.com/hashicorp/yamux
-# github.com/heimweh/go-pagerduty v0.0.0-20190807171021-2a6540956dc5
+# github.com/heimweh/go-pagerduty v0.0.0-20190903123207-5a16d0d0290f
 github.com/heimweh/go-pagerduty/pagerduty
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath

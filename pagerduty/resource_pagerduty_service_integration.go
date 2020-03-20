@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -131,35 +133,42 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 
 	o := &pagerduty.GetIntegrationOptions{}
 
-	serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
+		if err != nil {
+			log.Printf("[WARN] Service integration read error")
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				log.Printf("[WARN] Returning retryable error")
+				return resource.RetryableError(errResp)
+			}
+		}
 
-	d.Set("name", serviceIntegration.Name)
-	d.Set("type", serviceIntegration.Type)
+		d.Set("name", serviceIntegration.Name)
+		d.Set("type", serviceIntegration.Type)
 
-	if serviceIntegration.Service != nil {
-		d.Set("service", serviceIntegration.Service.ID)
-	}
+		if serviceIntegration.Service != nil {
+			d.Set("service", serviceIntegration.Service.ID)
+		}
 
-	if serviceIntegration.Vendor != nil {
-		d.Set("vendor", serviceIntegration.Vendor.ID)
-	}
+		if serviceIntegration.Vendor != nil {
+			d.Set("vendor", serviceIntegration.Vendor.ID)
+		}
 
-	if serviceIntegration.IntegrationKey != "" {
-		d.Set("integration_key", serviceIntegration.IntegrationKey)
-	}
+		if serviceIntegration.IntegrationKey != "" {
+			d.Set("integration_key", serviceIntegration.IntegrationKey)
+		}
 
-	if serviceIntegration.IntegrationEmail != "" {
-		d.Set("integration_email", serviceIntegration.IntegrationEmail)
-	}
+		if serviceIntegration.IntegrationEmail != "" {
+			d.Set("integration_email", serviceIntegration.IntegrationEmail)
+		}
 
-	if serviceIntegration.HTMLURL != "" {
-		d.Set("html_url", serviceIntegration.HTMLURL)
-	}
+		if serviceIntegration.HTMLURL != "" {
+			d.Set("html_url", serviceIntegration.HTMLURL)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta interface{}) error {

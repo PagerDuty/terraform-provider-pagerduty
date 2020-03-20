@@ -1,4 +1,4 @@
-module github.com/mLupine/terraform-provider-pagerduty
+module github.com/terraform-providers/terraform-provider-pagerduty
 
 require (
 	github.com/google/go-querystring v1.0.0 // indirect

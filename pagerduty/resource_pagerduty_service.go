@@ -239,7 +239,8 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 		service.AlertGrouping = attr.(string)
 	}
 
-	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
+	// Using GetOkExists to allow for alert_grouping_timeout to be set to 0 if needed.
+	if attr, ok := d.GetOkExists("alert_grouping_timeout"); ok {
 		val := attr.(int)
 		service.AlertGroupingTimeout = &val
 	}

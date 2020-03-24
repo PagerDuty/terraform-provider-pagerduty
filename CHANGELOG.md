@@ -1,4 +1,16 @@
 ## 1.6.0 (Unreleased)
+## 1.5.1 (March 19, 2020)
+
+FEATURES:
+* **New Resource:** `pagerduty_user_notification_rule` ([#180](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/180))
+
+BUG FIXES:
+* resource/resource_pagerduty_service: Fixed alert_grouping_timeout to be able to accept values of 0 ([#190](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/190))
+
+IMPROVEMENTS:
+* resource/pagerduty_team_membership: add `role` to the resource ([#151](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/151))
+
+* Update terraform plugin SDK from 1.0.0 to 1.7.0 ([#188](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/188))
 ## 1.5.0 (March 05, 2020)
 
 BUG FIXES:

@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
@@ -59,8 +60,9 @@ func testAccCheckPagerDutyBusinessServiceDependencyExists(n string) resource.Tes
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Business Service ID is set")
+			return fmt.Errorf("No Service Relationship ID is set")
 		}
+		businessID := rs.Primary.ID[:strings.IndexByte(rs.Primary.ID, '|')]
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 

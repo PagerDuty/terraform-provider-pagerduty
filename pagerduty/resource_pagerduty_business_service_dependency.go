@@ -104,14 +104,14 @@ func resourcePagerDutyBusinessServiceDependencyAssociate(d *schema.ResourceData,
 	dependencies := *&pagerduty.ListServiceRelationships{
 		Relationships: r,
 	}
-	log.Printf("[INFO] Associating PagerDuty dependency between business service %s and service %s", serviceDependency.SupportingService.ID, serviceDependency.DependentService.ID)
+	log.Printf("[INFO] Associating PagerDuty dependency between business service %s and service %s", serviceDependency.DependentService.ID, serviceDependency.SupportingService.ID)
 
 	_, err = client.BusinessServices.AssociateServiceDependencies(&dependencies)
 	if err != nil {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("%s%s", serviceDependency.SupportingService.ID, serviceDependency.DependentService.ID))
+	d.SetId(fmt.Sprintf("%s|%s", serviceDependency.DependentService.ID, serviceDependency.SupportingService.ID))
 
 	return resourcePagerDutyBusinessServiceDependencyRead(d, meta)
 }

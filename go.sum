@@ -122,8 +122,6 @@ github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb h1:b5rjCoWHc7eqmAS
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d h1:kJCB4vdITiW1eC1vq2e6IsrXKrZit1bv/TDYFGMp4BQ=
 github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
-github.com/heimweh/go-pagerduty v0.0.0-20190807171021-2a6540956dc5 h1:UZQ03lpxS/AUrMTlh1yQ/MJEJ+2he5bCItZ4W9Lgs1c=
-github.com/heimweh/go-pagerduty v0.0.0-20190807171021-2a6540956dc5/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/heimweh/go-pagerduty v0.0.0-20200303231559-1936667f26f9 h1:C3Wdm8ZIXNM9oP2lWdAjtP3b1J41lb4IJ9ib71QzzZ8=
 github.com/heimweh/go-pagerduty v0.0.0-20200303231559-1936667f26f9/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=

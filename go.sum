@@ -132,6 +132,12 @@ github.com/heimweh/go-pagerduty v0.0.0-20200303184902-4692eb5794bf h1:+8SRbPbSN6
 github.com/heimweh/go-pagerduty v0.0.0-20200303184902-4692eb5794bf/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/heimweh/go-pagerduty v0.0.0-20200303231559-1936667f26f9 h1:C3Wdm8ZIXNM9oP2lWdAjtP3b1J41lb4IJ9ib71QzzZ8=
 github.com/heimweh/go-pagerduty v0.0.0-20200303231559-1936667f26f9/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20200331225917-7fbbcd73f188 h1:oh+QxBGkrMPDUJ2R0u4ik6anVybX2byrACqdbeLveLc=
+github.com/heimweh/go-pagerduty v0.0.0-20200331225917-7fbbcd73f188/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20200402235138-d0c1080900c6 h1:dXou0ExlaLRGOlmgOTek1Et8NjPb4IPlrPjCF9MHvPo=
+github.com/heimweh/go-pagerduty v0.0.0-20200402235138-d0c1080900c6/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20200403175011-aa0df2b03565 h1:9GEmT44tcHOX3yOjVxzsQz4+Ug8LOP8FA+mD7Wp54Tk=
+github.com/heimweh/go-pagerduty v0.0.0-20200403175011-aa0df2b03565/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=

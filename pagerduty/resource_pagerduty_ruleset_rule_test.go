@@ -10,40 +10,6 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-func init() {
-	resource.AddTestSweepers("pagerduty_ruleset_rule", &resource.Sweeper{
-		Name: "pagerduty_ruleset_rule",
-		F:    testSweepRuleset,
-	})
-}
-
-func testSweepRulesetRule(region string) error {
-	config, err := sharedConfigForRegion(region)
-	if err != nil {
-		return err
-	}
-
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-	// todo: need to fix this before pushing
-
-	// resp, _, err := client.Rulesets.ListRules()
-	// if err != nil {
-	// 	return err
-	// }
-	// for _, ruleset := range resp.Rules {
-	// 	if strings.HasPrefix(ruleset.Name, "test") || strings.HasPrefix(ruleset.Name, "tf-") {
-	// 		log.Printf("Destroying ruleset %s (%s)", ruleset.Name, ruleset.ID)
-	// 		if _, err := client.Rulesets.Delete(ruleset.ID); err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
-
-	return nil
-}
 func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 	ruleset := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -72,9 +38,7 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.value", "disk space"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_ruleset_rule.foo", "action.#", "3"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_ruleset_rule.foo", "action.1.parameters.0.value", rule),
+						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", rule),
 				),
 			},
 			{
@@ -94,9 +58,7 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.path", "payload.summary"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_ruleset_rule.foo", "action.#", "4"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_ruleset_rule.foo", "action.2.parameters.0.value", ruleUpdated),
+						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", ruleUpdated),
 				),
 			},
 		},
@@ -170,21 +132,14 @@ resource "pagerduty_ruleset_rule" "foo" {
 			}
 		}
 	}
-	action {
-		action = "route"
-		parameters {
+	actions {
+		route {
 			value = "P5DTL0K"
 		}
-	}
-	action {
-		action = "annotate"
-		parameters {
+		annotate {
 			value = "%s"
 		}
-	}
-	action {
-		action = "extract"
-		parameters {
+		extractions {
 			target = "dedup_key"
 			source = "details.host"
 			regex = "(.*)"
@@ -210,6 +165,15 @@ resource "pagerduty_ruleset_rule" "foo" {
 	ruleset = pagerduty_ruleset.foo.id
 	position = 0
 	disabled = "false"
+	time_frame {
+		scheduled_weekly {
+			weekdays = [3,7]
+			timezone = "America/Los_Angeles"
+			start_time = "1000000"
+			duration = "3600000"
+
+		}
+	}
 	conditions {
 		operator = "and"
 		subconditions {
@@ -224,27 +188,17 @@ resource "pagerduty_ruleset_rule" "foo" {
 			}
 		}
 	}
-	action {
-		action = "route"
-		parameters {
+	actions {
+		route {
 			value = "P5DTL0K"
 		}
-	}
-	action {
-		action = "severity"
-		parameters {
+		severity  {
 			value = "warning"
 		}
-	}
-	action {
-		action = "annotate"
-		parameters {
+		annotate {
 			value = "%s"
 		}
-	}
-	action {
-		action = "extract"
-		parameters {
+		extractions {
 			target = "dedup_key"
 			source = "details.host"
 			regex = "(.*)"

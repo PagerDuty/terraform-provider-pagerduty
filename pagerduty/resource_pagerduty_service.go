@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"log"
 	"strconv"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -295,57 +297,63 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 
 	log.Printf("[INFO] Reading PagerDuty service %s", d.Id())
 
-	service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
-
-	d.Set("name", service.Name)
-	d.Set("html_url", service.HTMLURL)
-	d.Set("status", service.Status)
-	d.Set("created_at", service.CreatedAt)
-	d.Set("escalation_policy", service.EscalationPolicy.ID)
-	d.Set("description", service.Description)
-	if service.AutoResolveTimeout == nil {
-		d.Set("auto_resolve_timeout", "null")
-	} else {
-		d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
-	}
-	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
-	if service.AcknowledgementTimeout == nil {
-		d.Set("acknowledgement_timeout", "null")
-	} else {
-		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
-	}
-	d.Set("alert_creation", service.AlertCreation)
-	if service.AlertGrouping != "" {
-		d.Set("alert_grouping", service.AlertGrouping)
-	}
-	if service.AlertGroupingTimeout == nil {
-		d.Set("alert_grouping_timeout", "null")
-	} else {
-		d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
-	}
-
-	if service.IncidentUrgencyRule != nil {
-		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
-			return err
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
+		if err != nil {
+			log.Printf("[WARN] Service read error")
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				log.Printf("[WARN] Returning retryable error")
+				return resource.RetryableError(errResp)
+			}
 		}
-	}
 
-	if service.SupportHours != nil {
-		if err := d.Set("support_hours", flattenSupportHours(service.SupportHours)); err != nil {
-			return err
+		d.Set("name", service.Name)
+		d.Set("html_url", service.HTMLURL)
+		d.Set("status", service.Status)
+		d.Set("created_at", service.CreatedAt)
+		d.Set("escalation_policy", service.EscalationPolicy.ID)
+		d.Set("description", service.Description)
+		if service.AutoResolveTimeout == nil {
+			d.Set("auto_resolve_timeout", "null")
+		} else {
+			d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
 		}
-	}
-
-	if service.ScheduledActions != nil {
-		if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
-			return err
+		d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
+		if service.AcknowledgementTimeout == nil {
+			d.Set("acknowledgement_timeout", "null")
+		} else {
+			d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 		}
-	}
+		d.Set("alert_creation", service.AlertCreation)
+		if service.AlertGrouping != "" {
+			d.Set("alert_grouping", service.AlertGrouping)
+		}
+		if service.AlertGroupingTimeout == nil {
+			d.Set("alert_grouping_timeout", "null")
+		} else {
+			d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
+		}
 
-	return nil
+		if service.IncidentUrgencyRule != nil {
+			if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
+				return resource.NonRetryableError(err)
+			}
+		}
+
+		if service.SupportHours != nil {
+			if err := d.Set("support_hours", flattenSupportHours(service.SupportHours)); err != nil {
+				return resource.NonRetryableError(err)
+			}
+		}
+
+		if service.ScheduledActions != nil {
+			if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
+				return resource.NonRetryableError(err)
+			}
+		}
+		return nil
+	})
 }
 
 func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {

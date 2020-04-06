@@ -171,7 +171,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{}); err != nil {
-			if isErrCode(err, 500) || isErrCode(err, 503) {
+			if isErrCode(err, 500) || isErrCode(err, 503) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
 			}
 

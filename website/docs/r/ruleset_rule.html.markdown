@@ -58,7 +58,7 @@ resource "pagerduty_ruleset_rule" "foo" {
 			value = "warning"
 		}
 		annotate {
-			value = "%s"
+			value = "From Terraform"
 		}
 		extractions {
 			target = "dedup_key"
@@ -92,10 +92,12 @@ The following arguments are supported:
 * `route` (Optional) - The ID of the service where the event will be routed.
 * `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
-* `extractions` (Optional) - Field extraction allows you to copy important data from one event field to another. Extraction rules must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax). Extraction objects consist of the following fields:
+* `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction rules must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax). Extraction objects consist of the following fields:
 	* `source` - Field where the data is being copied from.
 	* `target` - Field where the data is being copied to.
 	* `regex` - The conditions that need to be met for the extraction to happen.
+	* *NOTE: A rule can have multiple `extraction` objects attributed to it.*
+
 * `suppress` (Optional) - Controls whether an alert is [suppressed](https://support.pagerduty.com/docs/rulesets#section-suppress-but-create-triggering-thresholds-with-event-rules) (does not create an incident).
 	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
 	* `threshold_value` - The number of alerts that should be suppressed.
@@ -106,11 +108,11 @@ The following arguments are supported:
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.
 	* `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.
 	* `timezone` - Timezone for the given schedule.
-	* `start_time` - Time when the schedule will start.
-	* `duration` - Length of time the schedule will be active.
+	* `start_time` - Time when the schedule will start. Unix timestamp in milliseconds.
+	* `duration` - Length of time the schedule will be active.  Unix timestamp in milliseconds.
 * `active_between` (Optional) - Values for executing the rule during a specific time period.
-	* `start_time` - Beginning of the scheduled time when the rule should execute.
-	* `end_time` - Ending of the scheduled time when the rule should execute.
+	* `start_time` - Beginning of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
+	* `end_time` - Ending of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
 
 ## Attributes Reference
 

@@ -14,58 +14,57 @@ An [event rule](https://support.pagerduty.com/docs/rulesets#section-create-event
 
 ```hcl
 resource "pagerduty_team" "foo" {
-    name = "Engineering (Seattle)"
+  name = "Engineering (Seattle)"
 }
 
 resource "pagerduty_ruleset" "foo" {
-	name = "Primary Ruleset"
-	team { 
-		id = pagerduty_team.foo.id
-	}
+  name = "Primary Ruleset"
+  team { 
+    id = pagerduty_team.foo.id
+  }
 }
 resource "pagerduty_ruleset_rule" "foo" {
-	ruleset = pagerduty_ruleset.foo.id
-	position = 0
-	disabled = "false"
-	time_frame {
-		scheduled_weekly {
-			weekdays = [3,7]
-			timezone = "America/Los_Angeles"
-			start_time = "1000000"
-			duration = "3600000"
-
-		}
+  ruleset = pagerduty_ruleset.foo.id
+  position = 0
+  disabled = "false"
+  time_frame {
+    scheduled_weekly {
+	  weekdays = [3,7]
+	  timezone = "America/Los_Angeles"
+	  start_time = "1000000"
+	  duration = "3600000"
 	}
-	conditions {
-		operator = "and"
-		subconditions {
-			operator = "contains"
-			parameter {
-				value = "disk space"
-				path = "payload.summary"
-			}
-			parameter {
-				value = "db"
-				path = "payload.source"
-			}
-		}
+  }
+  conditions {
+    operator = "and"
+	subconditions {
+	  operator = "contains"
+	  parameter {
+	    value = "disk space"
+		path = "payload.summary"
+	  }
+	  parameter {
+	    value = "db"
+	    path = "payload.source"
+	  }
 	}
-	actions {
-		route {
-			value = "P5DTL0K"
-		}
-		severity  {
-			value = "warning"
-		}
-		annotate {
-			value = "From Terraform"
-		}
-		extractions {
-			target = "dedup_key"
-			source = "details.host"
-			regex = "(.*)"
-		}
+  }
+  actions {
+    route {
+	  value = "P5DTL0K"
 	}
+	severity  {
+	  value = "warning"
+	}
+	annotate {
+	  value = "From Terraform"
+	}
+	extractions {
+	  target = "dedup_key"
+	  source = "details.host"
+	  regex = "(.*)"
+	}
+  }
 }
 ```
 
@@ -108,7 +107,7 @@ The following arguments are supported:
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.
 	* `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.
 	* `timezone` - Timezone for the given schedule.
-	* `start_time` - Time when the schedule will start. Unix timestamp in milliseconds.
+	* `start_time` - Time when the schedule will start. Unix timestamp in milliseconds. For example, if you have a rule with a `start_time` of `0` and a `duration` of `60,000` then that rule would be active from `00:00` to `00:01`. If the `start_time` was `3,600,000` the it would be active starting at `01:00`.
 	* `duration` - Length of time the schedule will be active.  Unix timestamp in milliseconds.
 * `active_between` (Optional) - Values for executing the rule during a specific time period.
 	* `start_time` - Beginning of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.

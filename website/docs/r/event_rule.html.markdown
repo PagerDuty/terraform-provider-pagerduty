@@ -8,6 +8,9 @@ description: |-
 
 # pagerduty\_event_rule
 
+*NOTE: The `pagerduty_event_rule` resource has been deprecated in favor the the [pagerduty_ruleset](ruleset.html) and [pagerduty_ruleset_rule](ruleset_rule.html) resources. Please use the `ruleset` based resources for working with Event Rules.*
+
+
 An [event rule](https://v2.developer.pagerduty.com/docs/global-event-rules-api) determines what happens to an event that is sent to PagerDuty by monitoring tools and other integrations.
 
 

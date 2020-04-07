@@ -1,4 +1,14 @@
 ## 1.6.0 (Unreleased)
+
+FEATURES:
+* **New Resources:** `pagerduty_ruleset` and `pagerduty_ruleset_rule` ([#195](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/195))
+
+BUG FIXES:
+* resource/resource_pagerduty_team_membership: Docs: Fixed Team membership role defaults to manager ([#194](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/194))
+
+IMPROVEMENTS:
+* `resource/resource_pagerduty_service` and `resource/resource_pagerduty_service_integration`:mplement retry logic on read([#191](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/191))
+
 ## 1.5.1 (March 19, 2020)
 
 FEATURES:

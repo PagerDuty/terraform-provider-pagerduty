@@ -1,4 +1,4 @@
-## 1.6.0 (Unreleased)
+## 1.6.0 (April 07, 2020)
 
 FEATURES:
 * **New Resources:** `pagerduty_ruleset` and `pagerduty_ruleset_rule` ([#195](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/195))

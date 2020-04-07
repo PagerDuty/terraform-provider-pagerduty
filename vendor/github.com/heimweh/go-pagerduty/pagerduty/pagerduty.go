@@ -39,6 +39,7 @@ type Client struct {
 	EscalationPolicies *EscalationPolicyService
 	Extensions         *ExtensionService
 	MaintenanceWindows *MaintenanceWindowService
+	Rulesets           *RulesetService
 	Schedules          *ScheduleService
 	Services           *ServicesService
 	Teams              *TeamService
@@ -46,6 +47,7 @@ type Client struct {
 	Users              *UserService
 	Vendors            *VendorService
 	EventRules         *EventRuleService
+	BusinessServices   *BusinessServiceService
 }
 
 // Response is a wrapper around http.Response
@@ -80,6 +82,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.Addons = &AddonService{c}
 	c.EscalationPolicies = &EscalationPolicyService{c}
 	c.MaintenanceWindows = &MaintenanceWindowService{c}
+	c.Rulesets = &RulesetService{c}
 	c.Schedules = &ScheduleService{c}
 	c.Services = &ServicesService{c}
 	c.Teams = &TeamService{c}
@@ -88,6 +91,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.Extensions = &ExtensionService{c}
 	c.ExtensionSchemas = &ExtensionSchemaService{c}
 	c.EventRules = &EventRuleService{c}
+	c.BusinessServices = &BusinessServiceService{c}
 
 	return c, nil
 }

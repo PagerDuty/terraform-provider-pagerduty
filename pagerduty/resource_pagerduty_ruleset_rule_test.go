@@ -54,7 +54,7 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.operator", "contains"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.#", "2"),
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.#", "1"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.path", "payload.summary"),
 					resource.TestCheckResourceAttr(
@@ -181,10 +181,6 @@ resource "pagerduty_ruleset_rule" "foo" {
 			parameter {
 				value = "disk space"
 				path = "payload.summary"
-			}
-			parameter {
-				value = "db"
-				path = "payload.source"
 			}
 		}
 	}

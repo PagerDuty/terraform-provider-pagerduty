@@ -43,6 +43,9 @@ resource "pagerduty_ruleset_rule" "foo" {
 	    value = "disk space"
 		path = "payload.summary"
 	  }
+	}
+	subconditions {
+	  operator = "contains"
 	  parameter {
 	    value = "db"
 	    path = "payload.source"
@@ -122,8 +125,8 @@ The following attributes are exported:
 
 ## Import
 
-Ruleset rules can be imported using the `id`, e.g.
+Ruleset rules can be imported using using the related `ruleset` id and the `ruleset_rule` id separated by a dot, e.g.
 
 ```
-$ terraform import pagerduty_ruleset_rule.main 19acac92-027a-4ea0-b06c-bbf516519601
+$ terraform import pagerduty_ruleset_rule.main a19cdca1-3d5e-4b52-bfea-8c8de04da243.19acac92-027a-4ea0-b06c-bbf516519601
 ```

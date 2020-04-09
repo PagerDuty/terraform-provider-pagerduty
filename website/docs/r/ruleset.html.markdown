@@ -36,9 +36,10 @@ The following arguments are supported:
 ## Attributes Reference
 
 The following attributes are exported:
+
 * `id` - The ID of the ruleset.
 * `routing_keys` - Routing keys routed to this ruleset.
-
+* `type` - Type of ruleset. Currently only sets to `global`.
 
 ## Import
 

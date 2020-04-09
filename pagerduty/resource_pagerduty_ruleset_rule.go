@@ -1,8 +1,9 @@
 package pagerduty
 
 import (
-	"encoding/json"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -17,7 +18,7 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 		Update: resourcePagerDutyRulesetRuleUpdate,
 		Delete: resourcePagerDutyRulesetRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourcePagerDutyRulesetRuleImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"ruleset": {
@@ -358,7 +359,6 @@ func expandActions(v interface{}) *pagerduty.RuleActions {
 
 	for _, ai := range v.([]interface{}) {
 		am := ai.(map[string]interface{})
-		log.Printf("[DEBUG] Severity: %v", am)
 
 		if am["suppress"] != nil {
 			actions.Suppress = expandSuppress(am["suppress"].(interface{}))
@@ -459,31 +459,138 @@ func expandExtractions(v interface{}) []*pagerduty.RuleActionExtraction {
 	return rae
 }
 
-func flattenConditions(conditions *pagerduty.RuleConditions) interface{} {
-	b, err := json.Marshal(conditions)
-	if err != nil {
-		log.Printf("[ERROR] Could not conditions field: %v", err)
-		return nil
+func flattenConditions(conditions *pagerduty.RuleConditions) []map[string]interface{} {
+	var cons []map[string]interface{}
+
+	con := map[string]interface{}{
+		"operator":      conditions.Operator,
+		"subconditions": flattenSubconditions(conditions.RuleSubconditions),
 	}
-	return string(b)
+	cons = append(cons, con)
+
+	return cons
 }
 
-func flattenActions(actions *pagerduty.RuleActions) interface{} {
-	b, err := json.Marshal(actions)
-	if err != nil {
-		log.Printf("[ERROR] Could not flatten actions field: %v", err)
-		return nil
+func flattenSubconditions(subconditions []*pagerduty.RuleSubcondition) []interface{} {
+	var flattenedSubConditions []interface{}
+
+	for _, sc := range subconditions {
+		flattenedSubCon := map[string]interface{}{
+			"operator":  sc.Operator,
+			"parameter": flattenSubconditionParameters(sc.Parameters),
+		}
+		flattenedSubConditions = append(flattenedSubConditions, flattenedSubCon)
 	}
-	return string(b)
+	return flattenedSubConditions
 }
 
-func flattenTimeFrame(timeframe *pagerduty.RuleTimeFrame) interface{} {
-	b, err := json.Marshal(timeframe)
-	if err != nil {
-		log.Printf("[ERROR] Could not flatten ruleset rule time frame field: %v", err)
-		return nil
+func flattenSubconditionParameters(p *pagerduty.ConditionParameter) []interface{} {
+
+	flattenedParams := map[string]interface{}{
+		"path":  p.Path,
+		"value": p.Value,
 	}
-	return string(b)
+
+	return []interface{}{flattenedParams}
+}
+
+func flattenActions(actions *pagerduty.RuleActions) []map[string]interface{} {
+	var actionsMap []map[string]interface{}
+
+	am := make(map[string]interface{})
+
+	if actions.Suppress != nil {
+		am["suppress"] = flattenSuppress(actions.Suppress)
+	}
+	if actions.Severity != nil {
+		am["severity"] = flattenActionParameter(actions.Severity)
+	}
+	if actions.Route != nil {
+		am["route"] = flattenActionParameter(actions.Route)
+	}
+	if actions.Priority != nil {
+		am["priority"] = flattenActionParameter(actions.Priority)
+	}
+	if actions.Annotate != nil {
+		am["annotate"] = flattenActionParameter(actions.Annotate)
+	}
+	if actions.EventAction != nil {
+		am["event_action"] = flattenActionParameter(actions.EventAction)
+	}
+	if actions.Extractions != nil {
+		am["extractions"] = flattenExtractions(actions.Extractions)
+	}
+	actionsMap = append(actionsMap, am)
+
+	return actionsMap
+}
+
+func flattenSuppress(s *pagerduty.RuleActionSuppress) []interface{} {
+
+	sup := map[string]interface{}{
+		"value":                 s.Value,
+		"threshold_value":       s.ThresholdValue,
+		"threshold_time_unit":   s.ThresholdTimeUnit,
+		"threshold_time_amount": s.ThresholdTimeAmount,
+	}
+	return []interface{}{sup}
+}
+func flattenActionParameter(ap *pagerduty.RuleActionParameter) []interface{} {
+
+	param := map[string]interface{}{
+		"value": ap.Value,
+	}
+	return []interface{}{param}
+}
+
+func flattenExtractions(rae []*pagerduty.RuleActionExtraction) []interface{} {
+	var flatExtractList []interface{}
+
+	for _, ex := range rae {
+		flatExtract := map[string]interface{}{
+			"target": ex.Target,
+			"source": ex.Source,
+			"regex":  ex.Regex,
+		}
+		flatExtractList = append(flatExtractList, flatExtract)
+	}
+	return flatExtractList
+}
+
+func flattenTimeFrame(timeframe *pagerduty.RuleTimeFrame) []map[string]interface{} {
+	var tfMap []map[string]interface{}
+
+	tm := make(map[string]interface{})
+
+	if timeframe.ScheduledWeekly != nil {
+		tm["scheduled_weekly"] = flattenScheduledWeekly(timeframe.ScheduledWeekly)
+	}
+	if timeframe.ActiveBetween != nil {
+		tm["active_between"] = flattenActiveBetween(timeframe.ActiveBetween)
+	}
+	tfMap = append(tfMap, tm)
+
+	return tfMap
+}
+
+func flattenScheduledWeekly(s *pagerduty.ScheduledWeekly) []interface{} {
+
+	fsw := map[string]interface{}{
+		"timezone":   s.Timezone,
+		"start_time": s.StartTime,
+		"duration":   s.Duration,
+		"weekdays":   s.Weekdays,
+	}
+	return []interface{}{fsw}
+}
+
+func flattenActiveBetween(ab *pagerduty.ActiveBetween) []interface{} {
+
+	fab := map[string]interface{}{
+		"start_time": ab.StartTime,
+		"end_time":   ab.EndTime,
+	}
+	return []interface{}{fab}
 }
 
 func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}) error {
@@ -526,6 +633,7 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 			}
 			d.Set("position", rule.Position)
 			d.Set("disabled", rule.Disabled)
+			d.Set("ruleset", rulesetID)
 		}
 		return nil
 	})
@@ -564,4 +672,25 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 	d.SetId("")
 
 	return nil
+}
+
+func resourcePagerDutyRulesetRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*pagerduty.Client)
+
+	ids := strings.Split(d.Id(), ".")
+
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_ruleset_rule. Expecting an importation ID formed as '<ruleset_id>.<ruleset_rule_id>'")
+	}
+	rulesetID, ruleID := ids[0], ids[1]
+
+	_, _, err := client.Rulesets.GetRule(rulesetID, ruleID)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(ruleID)
+	d.Set("ruleset", rulesetID)
+
+	return []*schema.ResourceData{d}, nil
 }

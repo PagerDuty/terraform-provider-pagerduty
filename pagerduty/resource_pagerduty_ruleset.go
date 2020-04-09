@@ -44,6 +44,10 @@ func resourcePagerDutyRuleset() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -59,6 +63,10 @@ func buildRulesetStruct(d *schema.ResourceData) *pagerduty.Ruleset {
 
 	if attr, ok := d.GetOk("routing_keys"); ok {
 		ruleset.RoutingKeys = expandKeys(attr.([]interface{}))
+	}
+
+	if attr, ok := d.GetOk("type"); ok {
+		ruleset.Type = attr.(string)
 	}
 
 	return ruleset
@@ -84,11 +92,12 @@ func expandTeam(v interface{}) *pagerduty.RulesetObject {
 	return team
 }
 
-func flattenTeam(v *pagerduty.RulesetObject) map[string]interface{} {
+func flattenTeam(v *pagerduty.RulesetObject) []interface{} {
 	team := map[string]interface{}{
 		"id": v.ID,
 	}
-	return team
+
+	return []interface{}{team}
 }
 func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
@@ -126,12 +135,15 @@ func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) erro
 	if err != nil {
 		return handleNotFoundError(err, d)
 	}
+	d.Set("name", ruleset.Name)
+	d.Set("type", ruleset.Type)
 
 	// if ruleset is found set to ResourceData
 	if ruleset.Team != nil {
 		d.Set("team", flattenTeam(ruleset.Team))
 	}
 	d.Set("routing_keys", ruleset.RoutingKeys)
+
 	return nil
 }
 func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {

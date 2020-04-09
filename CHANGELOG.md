@@ -1,3 +1,4 @@
+## 1.7.0 (Unreleased)
 ## 1.6.1 (April 09, 2020)
 BUG FIXES:
 * Added links to `pagerduty_ruleset` and `pagerduty_ruleset_rule` to side nav([#198](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/198))

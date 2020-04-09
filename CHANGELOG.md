@@ -2,6 +2,8 @@
 BUG FIXES:
 * Added links to `pagerduty_ruleset` and `pagerduty_ruleset_rule` to side nav([#198](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/198))
 
+* Fixed importing on `pagerduty_ruleset` and `pagerduty_ruleset_rule` also added import testing. ([#199](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/199))
+
 ## 1.6.0 (April 07, 2020)
 
 FEATURES:

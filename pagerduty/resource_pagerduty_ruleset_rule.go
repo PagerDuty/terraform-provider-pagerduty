@@ -616,12 +616,9 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[INFO] Reading PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id()); err != nil {
-			if isErrCode(err, 500) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
-			}
-			return resource.NonRetryableError(err)
+			return resource.RetryableError(err)
 		} else if rule != nil {
 			d.Set("conditions", flattenConditions(rule.Conditions))
 
@@ -637,11 +634,6 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 		}
 		return nil
 	})
-	if retryErr != nil {
-		time.Sleep(2 * time.Second)
-		return retryErr
-	}
-	return nil
 }
 
 func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}) error {

@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -137,28 +139,35 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty user %s", d.Id())
 
-	user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				return resource.RetryableError(errResp)
+			}
+		}
 
-	d.Set("name", user.Name)
-	d.Set("email", user.Email)
-	d.Set("time_zone", user.TimeZone)
-	d.Set("html_url", user.HTMLURL)
-	d.Set("color", user.Color)
-	d.Set("role", user.Role)
-	d.Set("avatar_url", user.AvatarURL)
-	d.Set("description", user.Description)
-	d.Set("job_title", user.JobTitle)
+		d.Set("name", user.Name)
+		d.Set("email", user.Email)
+		d.Set("time_zone", user.TimeZone)
+		d.Set("html_url", user.HTMLURL)
+		d.Set("color", user.Color)
+		d.Set("role", user.Role)
+		d.Set("avatar_url", user.AvatarURL)
+		d.Set("description", user.Description)
+		d.Set("job_title", user.JobTitle)
 
-	if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
-		return fmt.Errorf("error setting teams: %s", err)
-	}
+		if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("error setting teams: %s", err),
+			)
+		}
 
-	d.Set("invitation_sent", user.InvitationSent)
+		d.Set("invitation_sent", user.InvitationSent)
 
-	return nil
+		return nil
+	})
 }
 
 func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error {

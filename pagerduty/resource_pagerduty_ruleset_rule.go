@@ -623,8 +623,9 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 			}
 			return resource.NonRetryableError(err)
 		} else if rule != nil {
-			d.Set("conditions", flattenConditions(rule.Conditions))
-
+			if rule.Conditions != nil {
+				d.Set("conditions", flattenConditions(rule.Conditions))
+			}
 			if rule.Actions != nil {
 				d.Set("actions", flattenActions(rule.Actions))
 			}

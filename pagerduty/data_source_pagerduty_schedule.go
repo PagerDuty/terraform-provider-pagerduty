@@ -37,7 +37,7 @@ func dataSourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) e
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Schedules.List(o)
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return resource.RetryableError(err)
 		}
 
 		var found *pagerduty.Schedule

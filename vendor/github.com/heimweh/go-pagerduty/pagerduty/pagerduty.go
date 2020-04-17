@@ -31,23 +31,24 @@ type Config struct {
 
 // Client manages the communication with the PagerDuty API
 type Client struct {
-	baseURL            *url.URL
-	client             *http.Client
-	Config             *Config
-	Abilities          *AbilityService
-	Addons             *AddonService
-	EscalationPolicies *EscalationPolicyService
-	Extensions         *ExtensionService
-	MaintenanceWindows *MaintenanceWindowService
-	Rulesets           *RulesetService
-	Schedules          *ScheduleService
-	Services           *ServicesService
-	Teams              *TeamService
-	ExtensionSchemas   *ExtensionSchemaService
-	Users              *UserService
-	Vendors            *VendorService
-	EventRules         *EventRuleService
-	BusinessServices   *BusinessServiceService
+	baseURL             *url.URL
+	client              *http.Client
+	Config              *Config
+	Abilities           *AbilityService
+	Addons              *AddonService
+	EscalationPolicies  *EscalationPolicyService
+	Extensions          *ExtensionService
+	MaintenanceWindows  *MaintenanceWindowService
+	Rulesets            *RulesetService
+	Schedules           *ScheduleService
+	Services            *ServicesService
+	Teams               *TeamService
+	ExtensionSchemas    *ExtensionSchemaService
+	Users               *UserService
+	Vendors             *VendorService
+	EventRules          *EventRuleService
+	BusinessServices    *BusinessServiceService
+	ServiceDependencies *ServiceDependencyService
 }
 
 // Response is a wrapper around http.Response
@@ -92,6 +93,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.ExtensionSchemas = &ExtensionSchemaService{c}
 	c.EventRules = &EventRuleService{c}
 	c.BusinessServices = &BusinessServiceService{c}
+	c.ServiceDependencies = &ServiceDependencyService{c}
 
 	return c, nil
 }
@@ -139,7 +141,6 @@ func (c *Client) newRequestDo(method, url string, options, body, v interface{}) 
 			url = fmt.Sprintf("%s?%s", url, v)
 		}
 	}
-
 	req, err := c.newRequest(method, url, body)
 	if err != nil {
 		return nil, err

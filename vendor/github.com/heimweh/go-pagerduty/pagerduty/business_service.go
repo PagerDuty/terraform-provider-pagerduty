@@ -32,25 +32,6 @@ type ListBusinessServicesResponse struct {
 	Limit            int                `json:"limit,omitempty"`
 }
 
-// ServiceRelationship represents a relationship between a business and technical service
-type ServiceRelationship struct {
-	ID                string      `json:"id,omitempty"`
-	Type              string      `json:"type,omitempty"`
-	SupportingService *ServiceObj `json:"supporting_service,omitempty"`
-	DependentService  *ServiceObj `json:"dependent_service,omitempty"`
-}
-
-// ServiceObj represents a service object in service relationship
-type ServiceObj struct {
-	ID   string `json:"id,omitempty"`
-	Type string `json:"type,omitempty"`
-}
-
-// ListServiceRelationships represents a list of relationships for a business service
-type ListServiceRelationships struct {
-	Relationships []*ServiceRelationship `json:"relationships,omitempty"`
-}
-
 // List lists existing business services.
 func (s *BusinessServiceService) List() (*ListBusinessServicesResponse, *Response, error) {
 	u := "/business_services"
@@ -110,31 +91,4 @@ func (s *BusinessServiceService) Update(ID string, ruleset *BusinessService) (*B
 	}
 
 	return v.BusinessService, resp, nil
-}
-
-// AssociateServiceDependencies Create new dependencies between two services
-func (s *BusinessServiceService) AssociateServiceDependencies(relationships *ListServiceRelationships) (*Response, error) {
-	u := "/service_dependencies/associate"
-
-	return s.client.newRequestDo("POST", u, nil, relationships, nil)
-}
-
-// DisassociateServiceDependencies Disassociate dependencies between two services.
-func (s *BusinessServiceService) DisassociateServiceDependencies(relationships *ListServiceRelationships) (*Response, error) {
-	u := "/service_dependencies/disassociate"
-
-	return s.client.newRequestDo("POST", u, nil, relationships, nil)
-}
-
-// GetDependencies gets all immediate dependencies of a business service.
-func (s *BusinessServiceService) GetDependencies(businessServiceID string) (*ListServiceRelationships, *Response, error) {
-	u := fmt.Sprintf("/service_dependencies/business_services/%s", businessServiceID)
-	v := new(ListServiceRelationships)
-
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v, resp, nil
 }

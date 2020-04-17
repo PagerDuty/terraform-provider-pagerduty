@@ -61,7 +61,6 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 						"type": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Default:  "service_dependency",
 						},
 					},
 				},
@@ -74,7 +73,6 @@ func buildServiceDependencyStruct(d *schema.ResourceData) (*pagerduty.ServiceDep
 	var rel *pagerduty.ServiceDependency
 	rel = new(pagerduty.ServiceDependency)
 
-	log.Printf("[BUGIN] buildServiceDepStruct-dependency: %v", d.Get("dependency"))
 	for _, r := range d.Get("dependency").([]interface{}) {
 		relmap := r.(map[string]interface{})
 		rel.SupportingService = expandService(relmap["supporting_service"].(interface{}))
@@ -194,27 +192,30 @@ func resourcePagerDutyServiceDependencyRead(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	log.Printf("[DEBUGGIN] %s", d.Get("dependency"))
-
 	return nil
 }
 
-func flattenRelationship(r *pagerduty.ServiceDependency) map[string]interface{} {
+func flattenRelationship(r *pagerduty.ServiceDependency) []map[string]interface{} {
+	var rels []map[string]interface{}
+
 	relationship := map[string]interface{}{
 		"supporting_service": flattenService(r.SupportingService),
 		"dependent_service":  flattenService(r.DependentService),
 	}
-	log.Printf("[flattenRelationship] relationship: %v", relationship)
+	rels = append(rels, relationship)
 
-	return relationship
+	return rels
 }
 
-func flattenService(s *pagerduty.ServiceObj) map[string]interface{} {
+func flattenService(s *pagerduty.ServiceObj) []map[string]interface{} {
+	var servs []map[string]interface{}
+
 	service := map[string]interface{}{
 		"id":   s.ID,
 		"type": convertType(s.Type),
 	}
-	return service
+	servs = append(servs, service)
+	return servs
 }
 
 // convertType is needed because the PagerDuty API returns the 'reference' values in responses but wants the other
@@ -233,19 +234,29 @@ func findDependencySetState(depID, busServiceID string, d *schema.ResourceData, 
 	client := meta.(*pagerduty.Client)
 
 	// Pausing to let the PD API sync.
-	time.Sleep(2 * time.Second)
-	dependencies, _, err := client.ServiceDependencies.GetBusinessServiceDependencies(busServiceID)
-
-	if err != nil {
-		return err
-	}
-	for _, rel := range dependencies.Relationships {
-		if rel.ID == depID {
-			d.SetId(rel.ID)
-			d.Set("dependency", flattenRelationship(rel))
-			log.Printf("[findDependencySetState] dependency: %v", d.Get("dependency"))
-			break
+	time.Sleep(1 * time.Second)
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if dependencies, _, err := client.ServiceDependencies.GetBusinessServiceDependencies(busServiceID); err != nil {
+			if isErrCode(err, 404) || isErrCode(err, 500) || isErrCode(err, 429) {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		} else if dependencies != nil {
+			for _, rel := range dependencies.Relationships {
+				if rel.ID == depID {
+					d.SetId(rel.ID)
+					if err := d.Set("dependency", flattenRelationship(rel)); err != nil {
+						return resource.NonRetryableError(err)
+					}
+					break
+				}
+			}
 		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	return nil

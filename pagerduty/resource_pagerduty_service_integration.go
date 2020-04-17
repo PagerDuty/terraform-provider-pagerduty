@@ -28,6 +28,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			"service": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"type": {
 				Type:          schema.TypeString,
@@ -142,6 +143,8 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 				log.Printf("[WARN] Returning retryable error")
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("name", serviceIntegration.Name)

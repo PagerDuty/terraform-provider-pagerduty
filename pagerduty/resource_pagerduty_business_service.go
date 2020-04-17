@@ -72,9 +72,8 @@ func buildBusinessServiceStruct(d *schema.ResourceData) (*pagerduty.BusinessServ
 	if attr, ok := d.GetOk("self"); ok {
 		businessService.Self = attr.(string)
 	}
-	if attr, ok := d.GetOk("point_of_contact"); ok {
-		businessService.PointOfContact = attr.(string)
-	}
+	businessService.PointOfContact = d.Get("point_of_contact").(string)
+
 	if attr, ok := d.GetOk("html_url"); ok {
 		businessService.HTMLUrl = attr.(string)
 	}
@@ -130,6 +129,8 @@ func resourcePagerDutyBusinessServiceUpdate(d *schema.ResourceData, meta interfa
 	if err != nil {
 		return err
 	}
+	log.Printf("[DEBUG] poc: %v", businessService.PointOfContact)
+	log.Printf("[DEBUG] point_of_contact: %v", d.Get("point_of_contact"))
 
 	log.Printf("[INFO] Updating PagerDuty business service %s", d.Id())
 

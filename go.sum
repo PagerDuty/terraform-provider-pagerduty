@@ -190,6 +190,8 @@ github.com/heimweh/go-pagerduty v0.0.0-20200314051819-4b75e8d46b79 h1:pFvZwIP/uR
 github.com/heimweh/go-pagerduty v0.0.0-20200314051819-4b75e8d46b79/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/heimweh/go-pagerduty v0.0.0-20200331225917-7fbbcd73f188 h1:oh+QxBGkrMPDUJ2R0u4ik6anVybX2byrACqdbeLveLc=
 github.com/heimweh/go-pagerduty v0.0.0-20200331225917-7fbbcd73f188/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20200415004831-bc2b3224a572 h1:UPbUDXwtlgbBldY7kaQKI28dsZmUxmtzhsZA0db0lUI=
+github.com/heimweh/go-pagerduty v0.0.0-20200415004831-bc2b3224a572/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=

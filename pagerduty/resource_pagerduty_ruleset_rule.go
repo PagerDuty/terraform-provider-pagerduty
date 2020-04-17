@@ -138,7 +138,7 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"value": {
-										Type:     schema.TypeString,
+										Type:     schema.TypeBool,
 										Optional: true,
 									},
 									"threshold_value": {

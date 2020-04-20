@@ -1,3 +1,4 @@
+## 1.8.0 (Unreleased)
 ## 1.7.0 (April 20, 2020)
 FEATURES:
 * **New Resources:** `pagerduty_business_service` and `pagerduty_service_dependency` ([#213](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/213))

@@ -1,4 +1,13 @@
-## 1.7.0 (Unreleased)
+## 1.8.0 (Unreleased)
+## 1.7.0 (April 20, 2020)
+FEATURES:
+* **New Resources:** `pagerduty_business_service` and `pagerduty_service_dependency` ([#213](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/213))
+
+BUG FIXES:
+* resource_pagerduty_service_integration: Fix panic when reading ([#214](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/214))
+* resource_pagerduty_ruleset_rule: Fix Import of catch_all rules ([#205](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/205))
+* resource_pagerduty_ruleset_rule: Fixing mulit-rule creation bug and suppress rule panic ([#211](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/211))
+
 ## 1.6.1 (April 09, 2020)
 BUG FIXES:
 * Added links to `pagerduty_ruleset` and `pagerduty_ruleset_rule` to side nav([#198](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/198))

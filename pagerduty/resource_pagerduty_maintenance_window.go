@@ -91,6 +91,8 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 			if errResp != nil {
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("description", window.Description)

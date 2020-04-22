@@ -130,6 +130,8 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 				log.Printf("[WARN] Returning retryable error")
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("name", escalationPolicy.Name)

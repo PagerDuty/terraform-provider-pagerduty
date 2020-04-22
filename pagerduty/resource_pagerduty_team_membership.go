@@ -87,6 +87,8 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 			if errResp != nil {
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		for _, member := range resp.Members {

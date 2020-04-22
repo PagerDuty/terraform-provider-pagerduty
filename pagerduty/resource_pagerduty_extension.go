@@ -110,6 +110,8 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 			if errResp != nil {
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("summary", extension.Summary)

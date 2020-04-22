@@ -138,6 +138,8 @@ func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) erro
 			if errResp != nil {
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 		d.Set("name", ruleset.Name)
 		d.Set("type", ruleset.Type)

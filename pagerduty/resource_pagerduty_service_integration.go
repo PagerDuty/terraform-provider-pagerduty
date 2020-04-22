@@ -142,6 +142,8 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 				log.Printf("[WARN] Returning retryable error")
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("name", serviceIntegration.Name)

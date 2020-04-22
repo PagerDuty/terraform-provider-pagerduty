@@ -50,7 +50,7 @@ func dataSourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) e
 		}
 
 		if found == nil {
-			return resource.RetryableError(
+			return resource.NonRetryableError(
 				fmt.Errorf("Unable to locate any schedule with the name: %s", searchName),
 			)
 		}

@@ -146,6 +146,8 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 			if errResp != nil {
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("name", user.Name)

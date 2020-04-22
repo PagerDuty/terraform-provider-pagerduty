@@ -105,6 +105,8 @@ func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta inte
 			if errResp != nil {
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("type", resp.Type)

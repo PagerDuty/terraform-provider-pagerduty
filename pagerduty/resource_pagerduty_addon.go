@@ -70,6 +70,8 @@ func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error 
 			if errResp != nil {
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("name", addon.Name)

@@ -1,4 +1,4 @@
-## 1.7.1 (Unreleased)
+## 1.7.1 (April 29, 2020)
 FEATURES:
 * **New Data Source:** `pagerduty_priority`  ([#219](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/219))
 

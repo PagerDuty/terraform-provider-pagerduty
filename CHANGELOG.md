@@ -1,4 +1,10 @@
-## 1.8.0 (Unreleased)
+## 1.7.1 (Unreleased)
+FEATURES:
+* **New Data Source:** `pagerduty_priority`  ([#219](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/219))
+
+BUG FIXES:
+* resource_pagerduty_service: Fix panic  ([#218](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/218))
+
 ## 1.7.0 (April 20, 2020)
 FEATURES:
 * **New Resources:** `pagerduty_business_service` and `pagerduty_service_dependency` ([#213](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/213))

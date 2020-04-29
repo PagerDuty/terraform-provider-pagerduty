@@ -40,7 +40,7 @@ func testSweepEventRule(region string) error {
 	for _, rule := range resp.EventRules {
 		log.Printf("Destroying event rule %s", rule.ID)
 		if _, err := client.EventRules.Delete(rule.ID); err != nil {
-			return err
+			log.Printf("[ERROR] Failed to delete event rule: %s", err)
 		}
 	}
 

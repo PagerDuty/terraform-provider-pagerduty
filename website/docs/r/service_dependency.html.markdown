@@ -57,7 +57,7 @@ The following attributes are exported:
 
 ## Import
 
-Service dependencies can be imported using the related business service id and the ruleset_rule id separated by a dot, e.g.
+Service dependencies can be imported using the related business service id and the dependency id separated by a dot, e.g.
 
 ```
 $ terraform import pagerduty_service_dependency.main P4B2Z7G.D5RTHKRNGU4PYE90PJ

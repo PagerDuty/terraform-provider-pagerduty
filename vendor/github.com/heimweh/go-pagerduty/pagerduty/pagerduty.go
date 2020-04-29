@@ -49,6 +49,7 @@ type Client struct {
 	EventRules          *EventRuleService
 	BusinessServices    *BusinessServiceService
 	ServiceDependencies *ServiceDependencyService
+	Priorities          *PriorityService
 }
 
 // Response is a wrapper around http.Response
@@ -94,6 +95,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.EventRules = &EventRuleService{c}
 	c.BusinessServices = &BusinessServiceService{c}
 	c.ServiceDependencies = &ServiceDependencyService{c}
+	c.Priorities = &PriorityService{c}
 
 	return c, nil
 }

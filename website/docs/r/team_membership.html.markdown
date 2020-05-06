@@ -24,8 +24,8 @@ resource "pagerduty_team" "foo" {
 }
 
 resource "pagerduty_team_membership" "foo" {
-  user_id = "${pagerduty_user.foo.id}"
-  team_id = "${pagerduty_team.foo.id}"
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.foo.id
   role    = "manager"
 }
 ```

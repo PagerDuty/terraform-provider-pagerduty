@@ -17,18 +17,18 @@ A [contact method](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Us
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = ["${pagerduty_team.example.id}"]
+  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_user_contact_method" "email" {
-  user_id = "${pagerduty_user.example.id}"
+  user_id = pagerduty_user.example.id
   type    = "email_contact_method"
   address = "foo@bar.com"
   label   = "Work"
 }
 
 resource "pagerduty_user_contact_method" "phone" {
-  user_id      = "${pagerduty_user.example.id}"
+  user_id      = pagerduty_user.example.id
   type         = "phone_contact_method"
   country_code = "+1"
   address      = "2025550199"
@@ -36,7 +36,7 @@ resource "pagerduty_user_contact_method" "phone" {
 }
 
 resource "pagerduty_user_contact_method" "sms" {
-  user_id      = "${pagerduty_user.example.id}"
+  user_id      = pagerduty_user.example.id
   type         = "sms_contact_method"
   country_code = "+1"
   address      = "2025550199"

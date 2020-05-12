@@ -41,7 +41,7 @@ func testSweepUser(region string) error {
 	}
 
 	for _, user := range resp.Users {
-		if strings.HasPrefix(user.Name, "test") || strings.HasPrefix(user.Name, "tf-") {
+		if strings.HasPrefix(user.Name, "test") || strings.HasPrefix(user.Name, "tf") {
 			log.Printf("Destroying user %s (%s)", user.Name, user.ID)
 			if _, err := client.Users.Delete(user.ID); err != nil {
 				return err

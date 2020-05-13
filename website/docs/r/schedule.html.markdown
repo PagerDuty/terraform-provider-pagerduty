@@ -17,7 +17,7 @@ A [schedule](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Schedule
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = ["${pagerduty_team.example.id}"]
+  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_schedule" "foo" {
@@ -29,7 +29,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "2015-11-06T20:00:00-05:00"
     rotation_virtual_start       = "2015-11-06T20:00:00-05:00"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"

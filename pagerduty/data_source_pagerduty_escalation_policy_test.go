@@ -69,13 +69,13 @@ resource "pagerduty_escalation_policy" "test" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.test.id}"
+      id   = pagerduty_user.test.id
     }
   }
 }
 
 data "pagerduty_escalation_policy" "by_name" {
-  name = "${pagerduty_escalation_policy.test.name}"
+  name = pagerduty_escalation_policy.test.name
 }
 `, username, email, escalationPolicy)
 }

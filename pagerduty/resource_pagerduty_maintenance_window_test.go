@@ -132,7 +132,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -142,7 +142,7 @@ resource "pagerduty_service" "foo" {
   description             = "foo"
   auto_resolve_timeout    = 1800
   acknowledgement_timeout = 1800
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type    = "constant"
@@ -154,7 +154,7 @@ resource "pagerduty_maintenance_window" "foo" {
   description = "%[1]v"
   start_time  = "%[2]v"
   end_time    = "%[3]v"
-  services    = ["${pagerduty_service.foo.id}"]
+  services    = [pagerduty_service.foo.id]
 }
 `, desc, start, end)
 }
@@ -180,7 +180,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -190,7 +190,7 @@ resource "pagerduty_service" "foo" {
   description             = "foo"
   auto_resolve_timeout    = 1800
   acknowledgement_timeout = 1800
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type    = "constant"
@@ -203,7 +203,7 @@ resource "pagerduty_service" "foo2" {
   description             = "foo2"
   auto_resolve_timeout    = 1800
   acknowledgement_timeout = 1800
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type    = "constant"
@@ -215,7 +215,7 @@ resource "pagerduty_maintenance_window" "foo" {
   description = "%[1]v"
   start_time  = "%[2]v"
   end_time    = "%[3]v"
-  services    = ["${pagerduty_service.foo.id}", "${pagerduty_service.foo2.id}"]
+  services    = [pagerduty_service.foo.id, pagerduty_service.foo2.id]
 }
 `, desc, start, end)
 }

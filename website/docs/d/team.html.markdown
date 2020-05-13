@@ -25,14 +25,14 @@ resource "pagerduty_escalation_policy" "foo" {
   name      = "DevOps Escalation Policy"
   num_loops = 2
 
-  teams = ["${data.pagerduty_team.devops.id}"]
+  teams = [data.pagerduty_team.devops.id]
 
   rule {
     escalation_delay_in_minutes = 10
 
     target {
       type = "user"
-      id   = "${data.pagerduty_user.me.id}"
+      id   = data.pagerduty_user.me.id
     }
   }
 }

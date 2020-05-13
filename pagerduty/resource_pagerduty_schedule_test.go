@@ -342,7 +342,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -371,7 +371,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -400,7 +400,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -429,7 +429,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -459,7 +459,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "weekly_restriction"
@@ -489,7 +489,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
 		restriction {
       type              = "weekly_restriction"
@@ -520,7 +520,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%[5]v"
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -534,7 +534,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%[5]v"
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "weekly_restriction"
@@ -549,7 +549,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%[5]v"
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "weekly_restriction"

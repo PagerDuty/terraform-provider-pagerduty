@@ -152,7 +152,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -162,7 +162,7 @@ resource "pagerduty_service" "foo" {
   description             = "foo"
   auto_resolve_timeout    = 1800
   acknowledgement_timeout = 1800
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type = "constant"
@@ -176,8 +176,8 @@ data "pagerduty_vendor" "datadog" {
 
 resource "pagerduty_service_integration" "foo" {
   name    = "%s"
-  service = "${pagerduty_service.foo.id}"
-  vendor  = "${data.pagerduty_vendor.datadog.id}"
+  service = pagerduty_service.foo.id
+  vendor  = data.pagerduty_vendor.datadog.id
 }
 `, username, email, escalationPolicy, service, serviceIntegration)
 }
@@ -203,7 +203,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -213,7 +213,7 @@ resource "pagerduty_service" "foo" {
   description             = "bar"
   auto_resolve_timeout    = 3600
   acknowledgement_timeout = 3600
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type    = "constant"
@@ -227,8 +227,8 @@ data "pagerduty_vendor" "datadog" {
 
 resource "pagerduty_service_integration" "foo" {
   name    = "%s"
-  service = "${pagerduty_service.foo.id}"
-  vendor  = "${data.pagerduty_vendor.datadog.id}"
+  service = pagerduty_service.foo.id
+  vendor  = data.pagerduty_vendor.datadog.id
 }
 `, username, email, escalationPolicy, service, serviceIntegration)
 }
@@ -250,7 +250,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -260,7 +260,7 @@ resource "pagerduty_service" "foo" {
   description             = "foo"
   auto_resolve_timeout    = 1800
   acknowledgement_timeout = 1800
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type = "constant"
@@ -270,7 +270,7 @@ resource "pagerduty_service" "foo" {
 
 resource "pagerduty_service_integration" "foo" {
   name    = "%s"
-  service = "${pagerduty_service.foo.id}"
+  service = pagerduty_service.foo.id
   type    = "generic_events_api_inbound_integration"
 }
 `, username, email, escalationPolicy, service, serviceIntegration)
@@ -297,7 +297,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -307,7 +307,7 @@ resource "pagerduty_service" "foo" {
   description             = "bar"
   auto_resolve_timeout    = 3600
   acknowledgement_timeout = 3600
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type    = "constant"
@@ -317,7 +317,7 @@ resource "pagerduty_service" "foo" {
 
 resource "pagerduty_service_integration" "foo" {
   name    = "%s"
-  service = "${pagerduty_service.foo.id}"
+  service = pagerduty_service.foo.id
   type    = "generic_events_api_inbound_integration"
 }
 `, username, email, escalationPolicy, service, serviceIntegration)

@@ -20,7 +20,7 @@ data "pagerduty_vendor" "datadog" {
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = ["${pagerduty_team.example.id}"]
+  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_escalation_policy" "foo" {
@@ -32,7 +32,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user"
-      id   = "${pagerduty_user.example.id}"
+      id   = pagerduty_user.example.id
     }
   }
 }
@@ -41,13 +41,13 @@ resource "pagerduty_service" "example" {
   name                    = "My Web App"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
-  escalation_policy       = "${pagerduty_escalation_policy.example.id}"
+  escalation_policy       = pagerduty_escalation_policy.example.id
 }
 
 resource "pagerduty_service_integration" "example" {
   name    = "Datadog Integration"
-  vendor  = "${data.pagerduty_vendor.datadog.id}"
-  service = "${pagerduty_service.example.id}"
+  vendor  = data.pagerduty_vendor.datadog.id
+  service = pagerduty_service.example.id
   type    = "generic_events_api_inbound_integration"
 }
 ```

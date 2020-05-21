@@ -68,7 +68,7 @@ resource "pagerduty_escalation_policy" "test" {
     escalation_delay_in_minutes = 10
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.test.id}"
+      id   = pagerduty_user.test.id
     }
   }
 }
@@ -77,12 +77,12 @@ resource "pagerduty_service" "test" {
   name                    = "%s"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
-  escalation_policy       = "${pagerduty_escalation_policy.test.id}"
+  escalation_policy       = pagerduty_escalation_policy.test.id
   alert_creation          = "create_incidents"
 }
 
 data "pagerduty_service" "by_name" {
-  name = "${pagerduty_service.test.name}"
+  name = pagerduty_service.test.name
 }
 `, username, email, service, escalationPolicy)
 }

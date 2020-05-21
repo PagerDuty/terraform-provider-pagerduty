@@ -17,7 +17,7 @@ A [service](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Services/
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = ["${pagerduty_team.example.id}"]
+  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_escalation_policy" "foo" {
@@ -29,7 +29,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user"
-      id   = "${pagerduty_user.example.id}"
+      id   = pagerduty_user.example.id
     }
   }
 }
@@ -38,7 +38,7 @@ resource "pagerduty_service" "example" {
   name                    = "My Web App"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
-  escalation_policy       = "${pagerduty_escalation_policy.example.id}"
+  escalation_policy       = pagerduty_escalation_policy.example.id
   alert_creation          = "create_incidents"
 }
 ```
@@ -96,7 +96,7 @@ resource "pagerduty_service" "foo" {
   description             = "bar bar bar"
   auto_resolve_timeout    = 3600
   acknowledgement_timeout = 3600
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type = "use_support_hours"

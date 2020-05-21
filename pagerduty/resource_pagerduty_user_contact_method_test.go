@@ -144,7 +144,7 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_user_contact_method" "foo" {
-  user_id = "${pagerduty_user.foo.id}"
+  user_id = pagerduty_user.foo.id
   type    = "email_contact_method"
   address = "%[1]v%[2]v"
   label   = "%[1]v"
@@ -164,7 +164,7 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_user_contact_method" "foo" {
-  user_id = "${pagerduty_user.foo.id}"
+  user_id = pagerduty_user.foo.id
   type    = "email_contact_method"
   address = "%[1]v%[2]v"
   label   = "%[1]v"
@@ -184,7 +184,7 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_user_contact_method" "foo" {
-  user_id      = "${pagerduty_user.foo.id}"
+  user_id      = pagerduty_user.foo.id
   type         = "phone_contact_method"
   country_code = "+1"
   address      = "%[3]s"
@@ -205,7 +205,7 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_user_contact_method" "foo" {
-  user_id      = "${pagerduty_user.foo.id}"
+  user_id      = pagerduty_user.foo.id
   type         = "sms_contact_method"
   country_code = "+1"
   address      = "8448003889"
@@ -226,7 +226,7 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_user_contact_method" "foo" {
-  user_id      = "${pagerduty_user.foo.id}"
+  user_id      = pagerduty_user.foo.id
   type         = "sms_contact_method"
   country_code = "+1"
   address      = "6509892965"

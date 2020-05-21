@@ -306,6 +306,8 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 				log.Printf("[WARN] Returning retryable error")
 				return resource.RetryableError(errResp)
 			}
+
+			return nil
 		}
 
 		d.Set("name", service.Name)

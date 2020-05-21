@@ -46,7 +46,7 @@ resource "pagerduty_ruleset_rule" "foo" {
 	  value = "P5DTL0K"
 	}
 	priority {
-      value = pagerduty_priority.p1.id
+      value = data.pagerduty_priority.p1.id
     }
   }
 }

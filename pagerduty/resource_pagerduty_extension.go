@@ -54,6 +54,7 @@ func resourcePagerDutyExtension() *schema.Resource {
 			"config": {
 				Type:             schema.TypeString,
 				Optional:         true,
+				Default:          "{}",
 				ValidateFunc:     validation.ValidateJsonString,
 				DiffSuppressFunc: structure.SuppressJsonDiff,
 			},

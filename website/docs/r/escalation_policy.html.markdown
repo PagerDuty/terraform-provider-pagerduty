@@ -22,20 +22,20 @@ resource "pagerduty_team" "example" {
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = ["${pagerduty_team.example.id}"]
+  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_escalation_policy" "example" {
   name      = "Engineering Escalation Policy"
   num_loops = 2
-  teams     = ["${pagerduty_team.example.id}"]
+  teams     = [pagerduty_team.example.id]
 
   rule {
     escalation_delay_in_minutes = 10
 
     target {
       type = "user"
-      id   = "${pagerduty_user.example.id}"
+      id   = pagerduty_user.example.id
     }
   }
 }

@@ -154,7 +154,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -164,7 +164,7 @@ resource "pagerduty_service" "foo" {
   description             = "foo"
   auto_resolve_timeout    = 1800
   acknowledgement_timeout = 1800
-  escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+  escalation_policy       = pagerduty_escalation_policy.foo.id
 
   incident_urgency_rule {
     type    = "constant"
@@ -179,8 +179,8 @@ data "pagerduty_extension_schema" "foo" {
 resource "pagerduty_extension" "foo"{
   name = "%s"
   endpoint_url = "%s"
-  extension_schema = "${data.pagerduty_extension_schema.foo.id}"
-  extension_objects = ["${pagerduty_service.foo.id}"]
+  extension_schema = data.pagerduty_extension_schema.foo.id
+  extension_objects = [pagerduty_service.foo.id]
   config = <<EOF
 {
 	"restrict": "%[4]v",

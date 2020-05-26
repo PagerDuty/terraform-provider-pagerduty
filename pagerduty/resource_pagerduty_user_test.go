@@ -41,7 +41,7 @@ func testSweepUser(region string) error {
 	}
 
 	for _, user := range resp.Users {
-		if strings.HasPrefix(user.Name, "test") || strings.HasPrefix(user.Name, "tf-") {
+		if strings.HasPrefix(user.Name, "test") || strings.HasPrefix(user.Name, "tf") {
 			log.Printf("Destroying user %s (%s)", user.Name, user.ID)
 			if _, err := client.Users.Delete(user.ID); err != nil {
 				return err
@@ -228,8 +228,8 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_team_membership" "foo" {
-  user_id = "${pagerduty_user.foo.id}"
-  team_id = "${pagerduty_team.foo.id}"
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.foo.id
 }
 `, team, username, email)
 }
@@ -250,13 +250,13 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_team_membership" "foo" {
-  user_id = "${pagerduty_user.foo.id}"
-  team_id = "${pagerduty_team.foo.id}"
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.foo.id
 }
 
 resource "pagerduty_team_membership" "bar" {
-  user_id = "${pagerduty_user.foo.id}"
-  team_id = "${pagerduty_team.bar.id}"
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.bar.id
 }
 `, team1, team2, username, email)
 }

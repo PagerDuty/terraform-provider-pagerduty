@@ -20,7 +20,7 @@ data "pagerduty_extension_schema" "webhook" {
 resource "pagerduty_user" "example" {
   name  = "Howard James"
   email = "howard.james@example.domain"
-  teams = ["${pagerduty_team.example.id}"]
+  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_escalation_policy" "foo" {
@@ -32,7 +32,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user"
-      id   = "${pagerduty_user.example.id}"
+      id   = pagerduty_user.example.id
     }
   }
 }
@@ -41,15 +41,15 @@ resource "pagerduty_service" "example" {
   name                    = "My Web App"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
-  escalation_policy       = "${pagerduty_escalation_policy.example.id}"
+  escalation_policy       = pagerduty_escalation_policy.example.id
 }
 
 
 resource "pagerduty_extension" "slack"{
   name = "My Web App Extension"
   endpoint_url = "https://generic_webhook_url/XXXXXX/BBBBBB"
-  extension_schema = "${data.pagerduty_extension_schema.webhook.id}"
-  extension_objects    = ["${pagerduty_service.example.id}"]
+  extension_schema = data.pagerduty_extension_schema.webhook.id
+  extension_objects    = [pagerduty_service.example.id]
 }
 ```
 

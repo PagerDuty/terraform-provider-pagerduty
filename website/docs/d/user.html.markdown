@@ -26,7 +26,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user"
-      id   = "${data.pagerduty_user.me.id}"
+      id   = data.pagerduty_user.me.id
     }
   }
 }

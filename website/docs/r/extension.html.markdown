@@ -20,7 +20,7 @@ data "pagerduty_extension_schema" "webhook" {
 resource "pagerduty_user" "example" {
   name  = "Howard James"
   email = "howard.james@example.domain"
-  teams = ["${pagerduty_team.example.id}"]
+  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_escalation_policy" "foo" {
@@ -32,7 +32,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user"
-      id   = "${pagerduty_user.example.id}"
+      id   = pagerduty_user.example.id
     }
   }
 }
@@ -41,15 +41,15 @@ resource "pagerduty_service" "example" {
   name                    = "My Web App"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
-  escalation_policy       = "${pagerduty_escalation_policy.example.id}"
+  escalation_policy       = pagerduty_escalation_policy.example.id
 }
 
 
 resource "pagerduty_extension" "slack"{
   name = "My Web App Extension"
   endpoint_url = "https://generic_webhook_url/XXXXXX/BBBBBB"
-  extension_schema = "${data.pagerduty_extension_schema.webhook.id}"
-  extension_objects    = ["${pagerduty_service.example.id}"]
+  extension_schema = data.pagerduty_extension_schema.webhook.id
+  extension_objects    = [pagerduty_service.example.id]
 
   config = <<EOF
 {
@@ -71,7 +71,7 @@ EOF
 The following arguments are supported:
 
   * `name` - (Optional) The name of the service extension.
-  * `endpoint_url` - (Required|Optional) The url of the extension.  
+  * `endpoint_url` - (Required|Optional) The url of the extension.
   **Note:** The [endpoint URL is Optional API wise](https://api-reference.pagerduty.com/#!/Extensions/post_extensions) in most cases. But in some cases it is a _Required_ parameter. For example, `pagerduty_extension_schema` named `Generic V2 Webhook` doesn't accept `pagerduty_extension` with no `endpoint_url`, but one with named `Slack` accepts.
   * `extension_schema` - (Required) This is the schema for this extension.
   * `extension_objects` - (Required) This is the objects for which the extension applies (An array of service ids).
@@ -92,4 +92,3 @@ Extensions can be imported using the id.e.g.
 ```
 $ terraform import pagerduty_extension.main PLBP09X
 ```
-

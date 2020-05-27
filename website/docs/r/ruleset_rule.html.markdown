@@ -92,6 +92,7 @@ The following arguments are supported:
 
 ### Action (`actions`) supports the following:
 * `route` (Optional) - The ID of the service where the event will be routed.
+* `priority` (Optional) - The ID of the priority applied to the event.
 * `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
 * `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction rules must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax). Extraction objects consist of the following fields:

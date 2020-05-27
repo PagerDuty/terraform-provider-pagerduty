@@ -108,6 +108,7 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 		if err != nil {
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
+				time.Sleep(10 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 

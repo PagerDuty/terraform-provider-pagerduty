@@ -171,6 +171,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{}); err != nil {
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		} else if schedule != nil {
 			d.Set("name", schedule.Name)

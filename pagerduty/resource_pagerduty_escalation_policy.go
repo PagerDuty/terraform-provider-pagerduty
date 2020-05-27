@@ -127,7 +127,7 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 		if err != nil {
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
-				log.Printf("[WARN] Returning retryable error")
+				time.Sleep(10 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 

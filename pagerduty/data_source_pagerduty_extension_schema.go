@@ -38,6 +38,7 @@ func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interfa
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.ExtensionSchemas.List(&pagerduty.ListExtensionSchemasOptions{Query: searchName})
 		if err != nil {
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		}
 

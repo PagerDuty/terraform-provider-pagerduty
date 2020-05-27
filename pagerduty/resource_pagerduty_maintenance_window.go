@@ -89,6 +89,7 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 		if err != nil {
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
+				time.Sleep(10 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 

@@ -37,6 +37,7 @@ func dataSourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interf
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EscalationPolicies.List(o)
 		if err != nil {
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		}
 

@@ -623,6 +623,7 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id()); err != nil {
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		} else if rule != nil {
 			if rule.Conditions != nil {

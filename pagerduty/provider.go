@@ -37,6 +37,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_service":           dataSourcePagerDutyService(),
 			"pagerduty_business_service":  dataSourcePagerDutyBusinessService(),
 			"pagerduty_priority":          dataSourcePagerDutyPriority(),
+			"pagerduty_ruleset":           dataSourcePagerDutyRuleset(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{

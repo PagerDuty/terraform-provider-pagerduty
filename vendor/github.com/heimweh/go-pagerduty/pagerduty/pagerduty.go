@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -54,7 +55,8 @@ type Client struct {
 
 // Response is a wrapper around http.Response
 type Response struct {
-	*http.Response
+	Response  *http.Response
+	BodyBytes []byte
 }
 
 // NewClient returns a new PagerDuty API client.
@@ -156,21 +158,69 @@ func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	response := &Response{
+		Response:  resp,
+		BodyBytes: bodyBytes,
+	}
 
-	response := &Response{resp}
-
-	if err := checkResponse(response); err != nil {
+	if err := c.checkResponse(response); err != nil {
 		return response, err
 	}
 
 	if v != nil {
-		if err := decodeJSON(response, v); err != nil {
+		if err := c.DecodeJSON(response, v); err != nil {
 			return response, err
 		}
 	}
 
 	return response, nil
+}
+
+// ListResp represents a list response from the PagerDuty API
+type ListResp struct {
+	Offset int  `json:"offset,omitempty"`
+	Limit  int  `json:"limit,omitempty"`
+	More   bool `json:"more,omitempty"`
+	Total  int  `json:"total,omitempty"`
+}
+
+// responseHandler is capable of parsing a response. At a minimum it must
+// extract the page information for the current page. It can also execute
+// additional necessary handling; for example, if a closure, it has access
+// to the scope in which it was defined, and can be used to append data to
+// a specific slice. The responseHandler is responsible for closing the response.
+type responseHandler func(response *Response) (ListResp, *Response, error)
+
+func (c *Client) newRequestPagedGetDo(basePath string, handler responseHandler) error {
+	// Indicates whether there are still additional pages associated with request.
+	var stillMore bool
+
+	// Offset to set for the next page request.
+	var nextOffset int
+
+	// While there are more pages, keep adjusting the offset to get all results.
+	for stillMore, nextOffset = true, 0; stillMore; {
+		response, err := c.newRequestDo("GET", fmt.Sprintf("%s?offset=%d", basePath, nextOffset), nil, nil, nil)
+		if err != nil {
+			return err
+		}
+
+		// Call handler to extract page information and execute additional necessary handling.
+		pageInfo, _, err := handler(response)
+		if err != nil {
+			return err
+		}
+
+		// Bump the offset as necessary and set whether more results exist.
+		nextOffset = pageInfo.Offset + pageInfo.Limit
+		stillMore = pageInfo.More
+	}
+
+	return nil
 }
 
 // ValidateAuth validates a token against the PagerDuty API
@@ -179,23 +229,24 @@ func (c *Client) ValidateAuth() error {
 	return err
 }
 
-func decodeJSON(res *Response, v interface{}) error {
-	return json.NewDecoder(res.Body).Decode(v)
+// DecodeJSON decodes json body to given interface
+func (c *Client) DecodeJSON(res *Response, v interface{}) error {
+	return json.Unmarshal(res.BodyBytes, v)
 }
 
-func checkResponse(res *Response) error {
-	if res.StatusCode >= 200 && res.StatusCode <= 299 {
+func (c *Client) checkResponse(res *Response) error {
+	if res.Response.StatusCode >= 200 && res.Response.StatusCode <= 299 {
 		return nil
 	}
 
-	return decodeErrorResponse(res)
+	return c.decodeErrorResponse(res)
 }
 
-func decodeErrorResponse(res *Response) error {
+func (c *Client) decodeErrorResponse(res *Response) error {
 	// Try to decode error response or fallback with standard error
 	v := &errorResponse{Error: &Error{ErrorResponse: res}}
-	if err := decodeJSON(res, v); err != nil {
-		return fmt.Errorf("%s API call to %s failed: %v", res.Request.Method, res.Request.URL.String(), res.Status)
+	if err := c.DecodeJSON(res, v); err != nil {
+		return fmt.Errorf("%s API call to %s failed: %v", res.Response.Request.Method, res.Response.Request.URL.String(), res.Response.Status)
 	}
 
 	return v.Error

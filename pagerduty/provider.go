@@ -75,7 +75,7 @@ func Provider() terraform.ResourceProvider {
 }
 
 func isErrCode(err error, code int) bool {
-	if e, ok := err.(*pagerduty.Error); ok && e.ErrorResponse.StatusCode == code {
+	if e, ok := err.(*pagerduty.Error); ok && e.ErrorResponse.Response.StatusCode == code {
 		return true
 	}
 

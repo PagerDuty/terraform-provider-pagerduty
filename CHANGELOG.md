@@ -1,4 +1,12 @@
-## 1.8.0 (Unreleased)
+## 1.7.2 (Unreleased)
+FEATURES
+* **New Data Source:** `pagerduty_ruleset`  ([#237](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/237))
+* Update docs/tests to TF 0.12 syntax ([#223](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/223))
+
+BUG FIXES: 
+* testing: udate sweepers ([#220](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/220))
+* data_source_priority: adding doc to sidebar nav ([#221](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/221))
+
 ## 1.7.1 (April 29, 2020)
 FEATURES:
 * **New Data Source:** `pagerduty_priority`  ([#219](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/219))

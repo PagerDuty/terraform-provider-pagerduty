@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_priority
 
-Use this data source to get information about a specific [priority][1] that you can use for other PagerDuty resources.
+Use this data source to get information about a specific [priority][1] that you can use for other PagerDuty resources. A priority is a label representing the importance and impact of an incident. This feature is only available on Standard and Enterprise plans.
 
 ## Example Usage
 

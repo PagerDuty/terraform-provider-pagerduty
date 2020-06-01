@@ -1,3 +1,4 @@
+## 1.8.0 (Unreleased)
 ## 1.7.2 (June 01, 2020)
 FEATURES
 * **New Data Source:** `pagerduty_ruleset`  ([#237](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/237))

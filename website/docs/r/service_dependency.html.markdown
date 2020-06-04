@@ -55,6 +55,8 @@ The following attributes are exported:
 
   * `id` - The ID of the service dependency.
 
+***NOTE: Due to the API supporting this resource, it does not support updating. To make changes to a `service_dependency` you'll need to destroy and then create a new one.***
+
 ## Import
 
 Service dependencies can be imported using the related supporting service id, supporting service type (`business_service` or `service`) and the dependency id separated by a dot, e.g.

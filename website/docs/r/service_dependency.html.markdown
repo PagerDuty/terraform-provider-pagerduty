@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_service\_dependency
 
-A [service dependency](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1service_dependencies~1associate/post) is a relationship between a business service and technical and business services that this service uses, or that are used by this service, and are critical for successful operation.
+A [service dependency](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1service_dependencies~1associate/post) is a relationship between two services that this service uses, or that are used by this service, and are critical for successful operation.
 
 
 ## Example Usage
@@ -57,8 +57,8 @@ The following attributes are exported:
 
 ## Import
 
-Service dependencies can be imported using the related business service id and the dependency id separated by a dot, e.g.
+Service dependencies can be imported using the related supporting service id, supporting service type (`business_service` or `service`) and the dependency id separated by a dot, e.g.
 
 ```
-$ terraform import pagerduty_service_dependency.main P4B2Z7G.D5RTHKRNGU4PYE90PJ
+$ terraform import pagerduty_service_dependency.main P4B2Z7G.business_service.D5RTHKRNGU4PYE90PJ
 ```

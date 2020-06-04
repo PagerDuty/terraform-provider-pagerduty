@@ -19,10 +19,10 @@ func TestAccPagerDutyServiceDependency_import(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDependencyDestroy,
+		CheckDestroy: testAccCheckPagerDutyBusinessServiceDependencyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyServiceDependencyConfig(service, businessService, username, email, escalationPolicy),
+				Config: testAccCheckPagerDutyBusinessServiceDependencyConfig(service, businessService, username, email, escalationPolicy),
 			},
 
 			{

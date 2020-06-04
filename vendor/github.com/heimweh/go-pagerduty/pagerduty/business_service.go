@@ -8,14 +8,22 @@ type BusinessServiceService service
 
 // BusinessService represents a business service.
 type BusinessService struct {
-	ID             string `json:"id,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Type           string `json:"type,omitempty"`
-	Summary        string `json:"summary,omitempty"`
-	Self           string `json:"self,omitempty"`
-	PointOfContact string `json:"point_of_contact,omitempty"`
-	HTMLUrl        string `json:"html_url,omitempty"`
-	Description    string `json:"description,omitempty"`
+	ID             string               `json:"id,omitempty"`
+	Name           string               `json:"name,omitempty"`
+	Type           string               `json:"type,omitempty"`
+	Summary        string               `json:"summary,omitempty"`
+	Self           string               `json:"self,omitempty"`
+	PointOfContact string               `json:"point_of_contact,omitempty"`
+	HTMLUrl        string               `json:"html_url,omitempty"`
+	Description    string               `json:"description,omitempty"`
+	Team           *BusinessServiceTeam `json:"team,omitempty"`
+}
+
+// BusinessServiceTeam represents a team object in a business service
+type BusinessServiceTeam struct {
+	ID   string `json:"id,omitempty"`
+	Type string `json:"type,omitempty"`
+	Self string `json:"self,omitempty"`
 }
 
 // BusinessServicePayload represents payload with a business service object

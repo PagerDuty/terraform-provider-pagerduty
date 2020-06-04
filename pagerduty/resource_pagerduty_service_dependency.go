@@ -144,7 +144,7 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	log.Printf("[INFO] Disassociating PagerDuty dependency %s", dependency.DependentService.ID)
 
 	// listServiceRelationships by calling get dependencies using the serviceDependency.DependentService.ID
-	depResp, _, err := client.ServiceDependencies.GetBusinessServiceDependencies(dependency.DependentService.ID)
+	depResp, _, err := client.ServiceDependencies.GetServiceDependenciesForType(dependency.DependentService.ID, dependency.DependentService.Type)
 	if err != nil {
 		return err
 	}
@@ -188,7 +188,7 @@ func resourcePagerDutyServiceDependencyRead(d *schema.ResourceData, meta interfa
 	serviceDependency, err := buildServiceDependencyStruct(d)
 	log.Printf("[INFO] Reading PagerDuty dependency %s", serviceDependency.ID)
 
-	if err = findDependencySetState(d.Id(), serviceDependency.DependentService.ID, d, meta); err != nil {
+	if err = findDependencySetState(d.Id(), serviceDependency.DependentService.ID, serviceDependency.DependentService.Type, d, meta); err != nil {
 		return err
 	}
 
@@ -230,13 +230,13 @@ func convertType(s string) string {
 	return s
 }
 
-func findDependencySetState(depID, busServiceID string, d *schema.ResourceData, meta interface{}) error {
+func findDependencySetState(depID, serviceID, serviceType string, d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
 	// Pausing to let the PD API sync.
 	time.Sleep(1 * time.Second)
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if dependencies, _, err := client.ServiceDependencies.GetBusinessServiceDependencies(busServiceID); err != nil {
+		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(serviceID, serviceType); err != nil {
 			if isErrCode(err, 404) || isErrCode(err, 500) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
 			}
@@ -266,11 +266,11 @@ func resourcePagerDutyServiceDependencyImport(d *schema.ResourceData, meta inter
 	ids := strings.Split(d.Id(), ".")
 
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_service_dependency. Expecting an importation ID formed as '<business_service_id>.<service_dependency_id>'")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_service_dependency. Expecting an importation ID formed as '<supporting_service_id>.<supporting_service_type>.<service_dependency_id>'")
 	}
-	sid, id := ids[0], ids[1]
+	sid, st, id := ids[0], ids[1], ids[2]
 
-	if err := findDependencySetState(id, sid, d, meta); err != nil {
+	if err := findDependencySetState(id, sid, st, d, meta); err != nil {
 		return []*schema.ResourceData{}, err
 	}
 

@@ -46,6 +46,14 @@ resource "pagerduty_ruleset_rule" "foo" {
 }
 ```
 
+### Default Global Ruleset
+
+```hcl
+data "pagerduty_ruleset" "default_global" {
+  name = "Default Global"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:

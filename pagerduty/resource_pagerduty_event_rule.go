@@ -2,7 +2,9 @@ package pagerduty
 
 import (
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -76,32 +78,35 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Reading PagerDuty event rule: %s", d.Id())
 
-	resp, _, err := client.EventRules.List()
-	if err != nil {
-		return err
-	}
-	var foundRule *pagerduty.EventRule
-
-	for _, rule := range resp.EventRules {
-		log.Printf("[DEBUG] Resp rule.ID: %s", rule.ID)
-		if rule.ID == d.Id() {
-			foundRule = rule
-			break
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.EventRules.List()
+		if err != nil {
+			time.Sleep(10 * time.Second)
+			return resource.RetryableError(err)
 		}
-	}
-	// check if eventRule  not  found
-	if foundRule == nil {
-		d.SetId("")
+		var foundRule *pagerduty.EventRule
+
+		for _, rule := range resp.EventRules {
+			log.Printf("[DEBUG] Resp rule.ID: %s", rule.ID)
+			if rule.ID == d.Id() {
+				foundRule = rule
+				break
+			}
+		}
+		// check if eventRule  not  found
+		if foundRule == nil {
+			d.SetId("")
+			return nil
+		}
+		// if event rule is found set to ResourceData
+		d.Set("action_json", flattenSlice(foundRule.Actions))
+		d.Set("condition_json", flattenSlice(foundRule.Condition))
+		if foundRule.AdvancedCondition != nil {
+			d.Set("advanced_condition_json", flattenSlice(foundRule.AdvancedCondition))
+		}
+		d.Set("catch_all", foundRule.CatchAll)
 		return nil
-	}
-	// if event rule is found set to ResourceData
-	d.Set("action_json", flattenSlice(foundRule.Actions))
-	d.Set("condition_json", flattenSlice(foundRule.Condition))
-	if foundRule.AdvancedCondition != nil {
-		d.Set("advanced_condition_json", flattenSlice(foundRule.AdvancedCondition))
-	}
-	d.Set("catch_all", foundRule.CatchAll)
-	return nil
+	})
 }
 func resourcePagerDutyEventRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)

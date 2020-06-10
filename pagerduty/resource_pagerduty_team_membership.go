@@ -80,25 +80,33 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 
-	resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
-
-	for _, member := range resp.Members {
-		if member.User.ID == userID {
-			d.Set("user_id", userID)
-			d.Set("team_id", teamID)
-			d.Set("role", member.Role)
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
 			return nil
 		}
-	}
 
-	log.Printf("[WARN] Removing %s since the user: %s is not a member of: %s", d.Id(), userID, teamID)
-	d.SetId("")
+		for _, member := range resp.Members {
+			if member.User.ID == userID {
+				d.Set("user_id", userID)
+				d.Set("team_id", teamID)
+				d.Set("role", member.Role)
 
-	return nil
+				return nil
+			}
+		}
+
+		log.Printf("[WARN] Removing %s since the user: %s is not a member of: %s", d.Id(), userID, teamID)
+		d.SetId("")
+
+		return nil
+	})
 }
 
 func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interface{}) error {

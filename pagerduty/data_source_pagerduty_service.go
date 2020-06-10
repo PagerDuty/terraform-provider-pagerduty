@@ -2,9 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
+	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
-	"log"
 )
 
 func dataSourcePagerDutyService() *schema.Resource {
@@ -31,26 +34,31 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 		Query: searchName,
 	}
 
-	resp, _, err := client.Services.List(o)
-	if err != nil {
-		return err
-	}
-
-	var found *pagerduty.Service
-
-	for _, service := range resp.Services {
-		if service.Name == searchName {
-			found = service
-			break
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Services.List(o)
+		if err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
 		}
-	}
 
-	if found == nil {
-		return fmt.Errorf("Unable to locate any service with the name: %s", searchName)
-	}
+		var found *pagerduty.Service
 
-	d.SetId(found.ID)
-	d.Set("name", found.Name)
+		for _, service := range resp.Services {
+			if service.Name == searchName {
+				found = service
+				break
+			}
+		}
 
-	return nil
+		if found == nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("Unable to locate any service with the name: %s", searchName),
+			)
+		}
+
+		d.SetId(found.ID)
+		d.Set("name", found.Name)
+
+		return nil
+	})
 }

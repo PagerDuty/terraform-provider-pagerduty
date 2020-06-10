@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -32,26 +34,31 @@ func dataSourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) e
 		Query: searchName,
 	}
 
-	resp, _, err := client.Schedules.List(o)
-	if err != nil {
-		return err
-	}
-
-	var found *pagerduty.Schedule
-
-	for _, schedule := range resp.Schedules {
-		if schedule.Name == searchName {
-			found = schedule
-			break
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Schedules.List(o)
+		if err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
 		}
-	}
 
-	if found == nil {
-		return fmt.Errorf("Unable to locate any schedule with the name: %s", searchName)
-	}
+		var found *pagerduty.Schedule
 
-	d.SetId(found.ID)
-	d.Set("name", found.Name)
+		for _, schedule := range resp.Schedules {
+			if schedule.Name == searchName {
+				found = schedule
+				break
+			}
+		}
 
-	return nil
+		if found == nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("Unable to locate any schedule with the name: %s", searchName),
+			)
+		}
+
+		d.SetId(found.ID)
+		d.Set("name", found.Name)
+
+		return nil
+	})
 }

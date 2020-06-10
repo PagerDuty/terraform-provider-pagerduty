@@ -27,7 +27,7 @@ func TestAccPagerDutyServiceDependency_import(t *testing.T) {
 
 			{
 				ResourceName:      "pagerduty_service_dependency.foo",
-				ImportStateIdFunc: testAccCheckPagerDutyServiceDependencyId,
+				ImportStateIdFunc: testAccCheckPagerDutyServiceDependencyID,
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -35,6 +35,6 @@ func TestAccPagerDutyServiceDependency_import(t *testing.T) {
 	})
 }
 
-func testAccCheckPagerDutyServiceDependencyId(s *terraform.State) (string, error) {
-	return fmt.Sprintf("%v.%v", s.RootModule().Resources["pagerduty_business_service.foo"].Primary.ID, s.RootModule().Resources["pagerduty_service_dependency.foo"].Primary.ID), nil
+func testAccCheckPagerDutyServiceDependencyID(s *terraform.State) (string, error) {
+	return fmt.Sprintf("%v.%v.%v", s.RootModule().Resources["pagerduty_business_service.foo"].Primary.ID, "business_service", s.RootModule().Resources["pagerduty_service_dependency.foo"].Primary.ID), nil
 }

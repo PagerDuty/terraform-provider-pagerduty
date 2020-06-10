@@ -2,7 +2,9 @@ package pagerduty
 
 import (
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -82,20 +84,28 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 
 	log.Printf("[INFO] Reading PagerDuty maintenance window %s", d.Id())
 
-	window, _, err := client.MaintenanceWindows.Get(d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		window, _, err := client.MaintenanceWindows.Get(d.Id())
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	d.Set("description", window.Description)
-	d.Set("start_time", window.StartTime)
-	d.Set("end_time", window.EndTime)
+			return nil
+		}
 
-	if err := d.Set("services", flattenServices(window.Services)); err != nil {
-		return err
-	}
+		d.Set("description", window.Description)
+		d.Set("start_time", window.StartTime)
+		d.Set("end_time", window.EndTime)
 
-	return nil
+		if err := d.Set("services", flattenServices(window.Services)); err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		return nil
+	})
 }
 
 func resourcePagerDutyMaintenanceWindowUpdate(d *schema.ResourceData, meta interface{}) error {

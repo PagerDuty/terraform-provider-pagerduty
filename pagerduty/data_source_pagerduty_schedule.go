@@ -37,7 +37,7 @@ func dataSourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) e
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Schedules.List(o)
 		if err != nil {
-			time.Sleep(10 * time.Second)
+			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
 

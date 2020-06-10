@@ -140,7 +140,7 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 			log.Printf("[WARN] Service integration read error")
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
-				time.Sleep(10 * time.Second)
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 

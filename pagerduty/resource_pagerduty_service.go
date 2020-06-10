@@ -303,7 +303,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 			log.Printf("[WARN] Service read error")
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
-				time.Sleep(10 * time.Second)
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 

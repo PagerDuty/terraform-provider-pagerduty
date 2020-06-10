@@ -63,13 +63,18 @@ func resourcePagerDutyEventRuleCreate(d *schema.ResourceData, meta interface{}) 
 
 	log.Printf("[INFO] Creating PagerDuty event rule: %s", eventRule.Condition)
 
-	eventRule, _, err := client.EventRules.Create(eventRule)
-	if err != nil {
-		return err
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+		if eventRule, _, err := client.EventRules.Create(eventRule); err != nil {
+			return resource.RetryableError(err)
+		} else if eventRule != nil {
+			d.SetId(eventRule.ID)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
-	d.SetId(eventRule.ID)
-
 	return resourcePagerDutyEventRuleRead(d, meta)
 }
 
@@ -81,7 +86,7 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EventRules.List()
 		if err != nil {
-			time.Sleep(10 * time.Second)
+			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
 		var foundRule *pagerduty.EventRule

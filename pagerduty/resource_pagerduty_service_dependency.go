@@ -265,7 +265,7 @@ func findDependencySetState(depID, serviceID, serviceType string, d *schema.Reso
 func resourcePagerDutyServiceDependencyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	ids := strings.Split(d.Id(), ".")
 
-	if len(ids) != 2 {
+	if len(ids) != 3 {
 		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_service_dependency. Expecting an importation ID formed as '<supporting_service_id>.<supporting_service_type>.<service_dependency_id>'")
 	}
 	sid, st, id := ids[0], ids[1], ids[2]

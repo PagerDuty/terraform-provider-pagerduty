@@ -1,4 +1,13 @@
-## 1.8.0 (Unreleased)
+## 1.7.3 (Unreleased)
+FEATURES
+
+* Update service_dependency to support technical service dependencies ([#238](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/238))
+* Implement retry logic on all reads ([#208](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/208))
+* Bump golang to v1.14.1 ([#193](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/193))
+
+BUG FIXES: 
+* data_source_ruleset: add example of Default Global Ruleset in Docs ([#239](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/239))
+
 ## 1.7.2 (June 01, 2020)
 FEATURES
 * **New Data Source:** `pagerduty_ruleset`  ([#237](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/237))

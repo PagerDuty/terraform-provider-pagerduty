@@ -1,4 +1,4 @@
-## 1.7.3 (Unreleased)
+## 1.7.3 (June 12, 2020)
 FEATURES
 
 * Update service_dependency to support technical service dependencies ([#238](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/238))

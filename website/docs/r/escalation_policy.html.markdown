@@ -32,10 +32,13 @@ resource "pagerduty_escalation_policy" "example" {
 
   rule {
     escalation_delay_in_minutes = 10
-
     target {
       type = "user"
       id   = pagerduty_user.example.id
+    }
+    target {
+      type = "user"
+      id   = pagerduty_user.example2.id
     }
   }
 }
@@ -61,7 +64,7 @@ Escalation rules (`rule`) supports the following:
 
 Targets (`target`) supports the following:
 
-  * `type` - (Optional) Can be `user`, `schedule`, `user_reference` or `schedule_reference`. Defaults to `user_reference`
+  * `type` - (Optional) Can be `user`, `schedule`, `user_reference` or `schedule_reference`. Defaults to `user_reference`. For multiple users as example, repeat the target.
   * `id` - (Required) A target ID
 
 ## Attributes Reference

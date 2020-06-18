@@ -2,7 +2,9 @@ package pagerduty
 
 import (
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -51,6 +53,10 @@ func resourcePagerDutyBusinessService() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"team": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -77,6 +83,11 @@ func buildBusinessServiceStruct(d *schema.ResourceData) (*pagerduty.BusinessServ
 	if attr, ok := d.GetOk("html_url"); ok {
 		businessService.HTMLUrl = attr.(string)
 	}
+	if attr, ok := d.GetOk("team"); ok {
+		businessService.Team = &pagerduty.BusinessServiceTeam{
+			ID: attr.(string),
+		}
+	}
 
 	return &businessService, nil
 }
@@ -84,19 +95,24 @@ func buildBusinessServiceStruct(d *schema.ResourceData) (*pagerduty.BusinessServ
 func resourcePagerDutyBusinessServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	businessService, err := buildBusinessServiceStruct(d)
-	if err != nil {
-		return err
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+
+		businessService, err := buildBusinessServiceStruct(d)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		log.Printf("[INFO] Creating PagerDuty business service %s", businessService.Name)
+		if businessService, _, err = client.BusinessServices.Create(businessService); err != nil {
+			return resource.RetryableError(err)
+		} else if businessService != nil {
+			d.SetId(businessService.ID)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
-	log.Printf("[INFO] Creating PagerDuty business service %s", businessService.Name)
-
-	businessService, _, err = client.BusinessServices.Create(businessService)
-	if err != nil {
-		return err
-	}
-
-	d.SetId(businessService.ID)
 
 	return resourcePagerDutyBusinessServiceRead(d, meta)
 }
@@ -106,18 +122,28 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 
 	log.Printf("[INFO] Reading PagerDuty business service %s", d.Id())
 
-	businessService, _, err := client.BusinessServices.Get(d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if businessService, _, err := client.BusinessServices.Get(d.Id()); err != nil {
+			return resource.RetryableError(err)
+		} else if businessService != nil {
+			d.Set("name", businessService.Name)
+			d.Set("html_url", businessService.HTMLUrl)
+			d.Set("description", businessService.Description)
+			d.Set("type", businessService.Type)
+			d.Set("point_of_contact", businessService.PointOfContact)
+			d.Set("summary", businessService.Summary)
+			d.Set("self", businessService.Self)
+			if businessService.Team != nil {
+				d.Set("team", businessService.Team.ID)
+			}
+		}
+		return nil
+	})
 
-	d.Set("name", businessService.Name)
-	d.Set("html_url", businessService.HTMLUrl)
-	d.Set("description", businessService.Description)
-	d.Set("type", businessService.Type)
-	d.Set("point_of_contact", businessService.PointOfContact)
-	d.Set("summary", businessService.Summary)
-	d.Set("self", businessService.Self)
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
+	}
 
 	return nil
 }

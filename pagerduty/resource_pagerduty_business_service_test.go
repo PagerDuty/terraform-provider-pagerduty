@@ -91,6 +91,36 @@ func TestAccPagerDutyBusinessService_Basic(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPagerDutyBusinessService_WithTeam(t *testing.T) {
+	businessService := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	description := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	pointOfContact := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyBusinessServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyBusinessServiceWithTeamConfig(businessService, teamName, description, pointOfContact),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyBusinessServiceExists("pagerduty_business_service.bar"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service.bar", "name", businessService),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service.bar", "description", description),
+					resource.TestCheckResourceAttr(
+						"pagerduty_business_service.bar", "point_of_contact", pointOfContact),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_business_service.bar", "self"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyBusinessServiceExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -149,4 +179,20 @@ resource "pagerduty_business_service" "foo" {
 	point_of_contact = "%s"
 }
 `, name, description, poc)
+}
+
+func testAccCheckPagerDutyBusinessServiceWithTeamConfig(businessServiceName, teamName, description, poc string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_team" "bar" {
+	name = "%s"
+}
+	
+resource "pagerduty_business_service" "bar" {
+	name = "%s"
+	description = "%s"
+	point_of_contact = "%s"
+	team = pagerduty_team.bar.id
+}
+`, teamName, businessServiceName, description, poc)
 }

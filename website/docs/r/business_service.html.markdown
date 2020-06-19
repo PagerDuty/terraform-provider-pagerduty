@@ -18,6 +18,7 @@ resource "pagerduty_business_service" "example" {
   name             = "My Web App"
   description      = "A very descriptive description of this business service"
   point_of_contact = "PagerDuty Admin"
+  team = "P37RSRS"
 }
 ```
 
@@ -30,7 +31,8 @@ The following arguments are supported:
     If not set, a placeholder of "Managed by Terraform" will be set.
   * `point_of_contact` - (Optional) The owner of the business service. 
   * `type` - (Optional) Default value is `business_service`. Can also be set as `business_service_reference`.
-
+  * `team` - (Optional) ID of the team that owns the business service.
+  
 ## Attributes Reference
 
 The following attributes are exported:

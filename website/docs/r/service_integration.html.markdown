@@ -50,14 +50,14 @@ resource "pagerduty_service_integration" "apiv2" {
   name = "API V2"
   type = "events_api_v2_inbound_integration"
   integration_key = "12345678910testtesttesttesttes"
-  service = pagerduty_service.eCommerce_Search.id
+  service = pagerduty_service.example.id
 }
 
 resource "pagerduty_service_integration" "email_x" {
   name = "Email X"
   type = "generic_email_inbound_integration"
   integration_email = "ecommerce"
-  service = pagerduty_service.eCommerce_Search.id
+  service = pagerduty_service.example.id
 }
 
 data "pagerduty_vendor" "datadog" {

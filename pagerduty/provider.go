@@ -28,16 +28,17 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"pagerduty_escalation_policy": dataSourcePagerDutyEscalationPolicy(),
-			"pagerduty_schedule":          dataSourcePagerDutySchedule(),
-			"pagerduty_user":              dataSourcePagerDutyUser(),
-			"pagerduty_team":              dataSourcePagerDutyTeam(),
-			"pagerduty_vendor":            dataSourcePagerDutyVendor(),
-			"pagerduty_extension_schema":  dataSourcePagerDutyExtensionSchema(),
-			"pagerduty_service":           dataSourcePagerDutyService(),
-			"pagerduty_business_service":  dataSourcePagerDutyBusinessService(),
-			"pagerduty_priority":          dataSourcePagerDutyPriority(),
-			"pagerduty_ruleset":           dataSourcePagerDutyRuleset(),
+			"pagerduty_escalation_policy":   dataSourcePagerDutyEscalationPolicy(),
+			"pagerduty_schedule":            dataSourcePagerDutySchedule(),
+			"pagerduty_user":                dataSourcePagerDutyUser(),
+			"pagerduty_user_contact_method": dataSourcePagerDutyUserContactMethod(),
+			"pagerduty_team":                dataSourcePagerDutyTeam(),
+			"pagerduty_vendor":              dataSourcePagerDutyVendor(),
+			"pagerduty_extension_schema":    dataSourcePagerDutyExtensionSchema(),
+			"pagerduty_service":             dataSourcePagerDutyService(),
+			"pagerduty_business_service":    dataSourcePagerDutyBusinessService(),
+			"pagerduty_priority":            dataSourcePagerDutyPriority(),
+			"pagerduty_ruleset":             dataSourcePagerDutyRuleset(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{

@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -120,24 +122,32 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 
 	o := &pagerduty.GetEscalationPolicyOptions{}
 
-	escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	d.Set("name", escalationPolicy.Name)
-	d.Set("description", escalationPolicy.Description)
-	d.Set("num_loops", escalationPolicy.NumLoops)
+			return nil
+		}
 
-	if err := d.Set("teams", flattenTeams(escalationPolicy.Teams)); err != nil {
-		return fmt.Errorf("error setting teams: %s", err)
-	}
+		d.Set("name", escalationPolicy.Name)
+		d.Set("description", escalationPolicy.Description)
+		d.Set("num_loops", escalationPolicy.NumLoops)
 
-	if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules)); err != nil {
-		return err
-	}
+		if err := d.Set("teams", flattenTeams(escalationPolicy.Teams)); err != nil {
+			return resource.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
+		}
 
-	return nil
+		if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules)); err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		return nil
+	})
 }
 
 func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {

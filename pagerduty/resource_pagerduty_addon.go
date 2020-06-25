@@ -2,7 +2,9 @@ package pagerduty
 
 import (
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -61,15 +63,23 @@ func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error 
 
 	log.Printf("[INFO] Reading PagerDuty add-on %s", d.Id())
 
-	addon, _, err := client.Addons.Get(d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		addon, _, err := client.Addons.Get(d.Id())
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	d.Set("name", addon.Name)
-	d.Set("src", addon.Src)
+			return nil
+		}
 
-	return nil
+		d.Set("name", addon.Name)
+		d.Set("src", addon.Src)
+
+		return nil
+	})
 }
 
 func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) error {

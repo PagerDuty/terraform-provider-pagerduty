@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -32,26 +34,31 @@ func dataSourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interf
 		Query: searchName,
 	}
 
-	resp, _, err := client.EscalationPolicies.List(o)
-	if err != nil {
-		return err
-	}
-
-	var found *pagerduty.EscalationPolicy
-
-	for _, policy := range resp.EscalationPolicies {
-		if policy.Name == searchName {
-			found = policy
-			break
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.EscalationPolicies.List(o)
+		if err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
 		}
-	}
 
-	if found == nil {
-		return fmt.Errorf("Unable to locate any escalation policy with the name: %s", searchName)
-	}
+		var found *pagerduty.EscalationPolicy
 
-	d.SetId(found.ID)
-	d.Set("name", found.Name)
+		for _, policy := range resp.EscalationPolicies {
+			if policy.Name == searchName {
+				found = policy
+				break
+			}
+		}
 
-	return nil
+		if found == nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("Unable to locate any escalation policy with the name: %s", searchName),
+			)
+		}
+
+		d.SetId(found.ID)
+		d.Set("name", found.Name)
+
+		return nil
+	})
 }

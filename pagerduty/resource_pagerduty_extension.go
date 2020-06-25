@@ -2,10 +2,11 @@ package pagerduty
 
 import (
 	"encoding/json"
-	"log"
-
 	"fmt"
+	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -102,25 +103,33 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Reading PagerDuty extension %s", d.Id())
 
-	extension, _, err := client.Extensions.Get(d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		extension, _, err := client.Extensions.Get(d.Id())
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	d.Set("summary", extension.Summary)
-	d.Set("name", extension.Name)
-	d.Set("endpoint_url", extension.EndpointURL)
-	d.Set("html_url", extension.HTMLURL)
-	if err := d.Set("extension_objects", flattenExtensionObjects(extension.ExtensionObjects)); err != nil {
-		log.Printf("[WARN] error setting extension_objects: %s", err)
-	}
-	d.Set("extension_schema", extension.ExtensionSchema)
+			return nil
+		}
 
-	if err := d.Set("config", flattenExtensionConfig(extension.Config)); err != nil {
-		log.Printf("[WARN] error setting extension config: %s", err)
-	}
+		d.Set("summary", extension.Summary)
+		d.Set("name", extension.Name)
+		d.Set("endpoint_url", extension.EndpointURL)
+		d.Set("html_url", extension.HTMLURL)
+		if err := d.Set("extension_objects", flattenExtensionObjects(extension.ExtensionObjects)); err != nil {
+			log.Printf("[WARN] error setting extension_objects: %s", err)
+		}
+		d.Set("extension_schema", extension.ExtensionSchema)
 
-	return nil
+		if err := d.Set("config", flattenExtensionConfig(extension.Config)); err != nil {
+			log.Printf("[WARN] error setting extension config: %s", err)
+		}
+
+		return nil
+	})
 }
 
 func resourcePagerDutyExtensionUpdate(d *schema.ResourceData, meta interface{}) error {

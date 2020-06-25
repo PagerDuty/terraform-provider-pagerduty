@@ -131,20 +131,28 @@ func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) erro
 
 	log.Printf("[INFO] Reading PagerDuty ruleset: %s", d.Id())
 
-	ruleset, _, err := client.Rulesets.Get(d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
-	d.Set("name", ruleset.Name)
-	d.Set("type", ruleset.Type)
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		ruleset, _, err := client.Rulesets.Get(d.Id())
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	// if ruleset is found set to ResourceData
-	if ruleset.Team != nil {
-		d.Set("team", flattenTeam(ruleset.Team))
-	}
-	d.Set("routing_keys", ruleset.RoutingKeys)
+			return nil
+		}
+		d.Set("name", ruleset.Name)
+		d.Set("type", ruleset.Type)
 
-	return nil
+		// if ruleset is found set to ResourceData
+		if ruleset.Team != nil {
+			d.Set("team", flattenTeam(ruleset.Team))
+		}
+		d.Set("routing_keys", ruleset.RoutingKeys)
+
+		return nil
+	})
 }
 func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)

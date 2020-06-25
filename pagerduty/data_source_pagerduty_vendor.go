@@ -5,7 +5,9 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -42,39 +44,43 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 	o := &pagerduty.ListVendorsOptions{
 		Query: searchName,
 	}
-
-	resp, _, err := client.Vendors.List(o)
-	if err != nil {
-		return err
-	}
-
-	var found *pagerduty.Vendor
-
-	for _, vendor := range resp.Vendors {
-		if strings.EqualFold(vendor.Name, searchName) {
-			found = vendor
-			break
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Vendors.List(o)
+		if err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
 		}
-	}
 
-	// We didn't find an exact match, so let's fallback to partial matching.
-	if found == nil {
-		pr := regexp.MustCompile("(?i)" + searchName)
+		var found *pagerduty.Vendor
+
 		for _, vendor := range resp.Vendors {
-			if pr.MatchString(vendor.Name) {
+			if strings.EqualFold(vendor.Name, searchName) {
 				found = vendor
 				break
 			}
 		}
-	}
 
-	if found == nil {
-		return fmt.Errorf("Unable to locate any vendor with the name: %s", searchName)
-	}
+		// We didn't find an exact match, so let's fallback to partial matching.
+		if found == nil {
+			pr := regexp.MustCompile("(?i)" + searchName)
+			for _, vendor := range resp.Vendors {
+				if pr.MatchString(vendor.Name) {
+					found = vendor
+					break
+				}
+			}
+		}
 
-	d.SetId(found.ID)
-	d.Set("name", found.Name)
-	d.Set("type", found.GenericServiceType)
+		if found == nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("Unable to locate any vendor with the name: %s", searchName),
+			)
+		}
 
-	return nil
+		d.SetId(found.ID)
+		d.Set("name", found.Name)
+		d.Set("type", found.GenericServiceType)
+
+		return nil
+	})
 }

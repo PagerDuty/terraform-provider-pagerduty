@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -96,17 +98,25 @@ func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta inte
 
 	userID := d.Get("user_id").(string)
 
-	resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	d.Set("type", resp.Type)
-	d.Set("urgency", resp.Urgency)
-	d.Set("start_delay_in_minutes", resp.StartDelayInMinutes)
-	d.Set("contact_method", flattenContactMethod(resp.ContactMethod))
+			return nil
+		}
 
-	return nil
+		d.Set("type", resp.Type)
+		d.Set("urgency", resp.Urgency)
+		d.Set("start_delay_in_minutes", resp.StartDelayInMinutes)
+		d.Set("contact_method", flattenContactMethod(resp.ContactMethod))
+
+		return nil
+	})
 }
 
 func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta interface{}) error {

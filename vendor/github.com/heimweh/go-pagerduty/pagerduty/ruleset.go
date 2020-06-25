@@ -1,6 +1,8 @@
 package pagerduty
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // RulesetService handles the communication with rulesets
 // related methods of the PagerDuty API.
@@ -138,12 +140,34 @@ func (s *RulesetService) List() (*ListRulesetsResponse, *Response, error) {
 	u := "/rulesets"
 	v := new(ListRulesetsResponse)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	rulesets := make([]*Ruleset, 0)
+
+	// Create a handler closure capable of parsing data from the rulesets endpoint
+	// and appending resultant rulesets to the return slice.
+	responseHandler := func(response *Response) (ListResp, *Response, error) {
+		var result ListRulesetsResponse
+
+		if err := s.client.DecodeJSON(response, &result); err != nil {
+			return ListResp{}, response, err
+		}
+
+		rulesets = append(rulesets, result.Rulesets...)
+
+		// Return stats on the current page. Caller can use this information to
+		// adjust for requesting additional pages.
+		return ListResp{
+			More:   result.More,
+			Offset: result.Offset,
+			Limit:  result.Limit,
+		}, response, nil
+	}
+	err := s.client.newRequestPagedGetDo(u, responseHandler)
 	if err != nil {
 		return nil, nil, err
 	}
+	v.Rulesets = rulesets
 
-	return v, resp, nil
+	return v, nil, nil
 }
 
 // Create creates a new ruleset.

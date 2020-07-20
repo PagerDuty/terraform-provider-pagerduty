@@ -115,7 +115,7 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 
 	service := d.Get("service").(string)
 
-	retryErr := resource.Retry(15*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
 			if isErrCode(err, 400) {
 				time.Sleep(2 * time.Second)

@@ -238,7 +238,8 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	}
 
 	if attr, ok := d.GetOk("alert_grouping"); ok {
-		service.AlertGrouping = attr.(string)
+		ag := attr.(string)
+		service.AlertGrouping = &ag
 	}
 
 	// Using GetOkExists to allow for alert_grouping_timeout to be set to 0 if needed.
@@ -328,7 +329,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 			d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 		}
 		d.Set("alert_creation", service.AlertCreation)
-		if service.AlertGrouping != "" {
+		if service.AlertGrouping != nil && *service.AlertGrouping != "" {
 			d.Set("alert_grouping", service.AlertGrouping)
 		}
 		if service.AlertGroupingTimeout == nil {

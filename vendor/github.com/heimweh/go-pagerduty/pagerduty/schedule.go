@@ -59,7 +59,7 @@ type ScheduleLayerEntry struct {
 
 // ScheduleLayer represents a schedule layer in a schedule
 type ScheduleLayer struct {
-	End                        string                  `json:"end,omitempty"`
+	End                        string                  `json:"end"`
 	ID                         string                  `json:"id,omitempty"`
 	Name                       string                  `json:"name,omitempty"`
 	RenderedCoveragePercentage float64                 `json:"rendered_coverage_percentage,omitempty"`

@@ -51,6 +51,7 @@ type Client struct {
 	BusinessServices    *BusinessServiceService
 	ServiceDependencies *ServiceDependencyService
 	Priorities          *PriorityService
+	ResponsePlays       *ResponsePlayService
 }
 
 // Response is a wrapper around http.Response
@@ -98,6 +99,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.BusinessServices = &BusinessServiceService{c}
 	c.ServiceDependencies = &ServiceDependencyService{c}
 	c.Priorities = &PriorityService{c}
+	c.ResponsePlays = &ResponsePlayService{c}
 
 	return c, nil
 }

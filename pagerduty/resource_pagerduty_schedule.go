@@ -188,10 +188,6 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 					}
 				}
 			}
-
-			// if err := d.Set("layer", flattenScheduleLayers(schedule.ScheduleLayers)); err != nil {
-			// 	return resource.NonRetryableError(err)
-			// }
 			layers, err := flattenScheduleLayers(schedule.ScheduleLayers)
 			if err != nil {
 				return resource.NonRetryableError(err)
@@ -230,13 +226,6 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 	// Here we determine which layer has been removed from the configuration
 	// and we mark it as ended. This is to avoid diff issues.
 
-	/*
-		TODO: this logic only accounts for layers that are no longer
-		found in the configuration. It does not seem to add new layers
-		(layers in nsl but not in osl), nor does it account for layers
-		in config but have had end added in, e.g. a user specifically
-		ending a layer but not removing it from config
-	*/
 	if d.HasChange("layer") {
 		oraw, nraw := d.GetChange("layer")
 
@@ -250,7 +239,7 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
-		// checks to see if new schedule layers (nsl) include all old schedule layers (osl)
+		// Checks to see if new schedule layers (nsl) include all old schedule layers (osl)
 		for _, o := range osl {
 			found := false
 			for _, n := range nsl {
@@ -260,7 +249,7 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 				}
 			}
 
-			// if layer is not found in new schedule layers (nsl) set end value for layer
+			// If layer is not found in new schedule layers (nsl) set end value for layer
 			if !found {
 				end, err := timeToUTC(time.Now().Format(time.RFC3339))
 				if err != nil {
@@ -357,13 +346,6 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		// A schedule layer can never be removed but it can be ended.
 		// Here we check each layer and if it has been ended we don't read it back
 		// because it's not relevant anymore.
-
-		/*
-			TODO: The schema exposes an end attribute that users can set. This
-				logic seems to exclude any items in a users config if that end time
-				has passed, which would result in a diff as the layer is found in the
-				config but not saved to state from the API.
-		*/
 		if sl.End != "" {
 			end, err := timeToUTC(sl.End)
 			if err != nil {

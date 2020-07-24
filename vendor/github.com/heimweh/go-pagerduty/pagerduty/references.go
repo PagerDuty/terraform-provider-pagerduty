@@ -48,3 +48,6 @@ type ExtensionSchemaReference resourceReference
 
 // RulesetReference represents a reference to a ruleset schema
 type RulesetReference resourceReference
+
+// SubscriberReference represents a reference to a subscriber schema
+type SubscriberReference resourceReference

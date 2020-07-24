@@ -534,7 +534,8 @@ resource "pagerduty_schedule" "foo" {
 
   layer {
     name                         = "foo"
-    start                        = "%[5]v"
+	start                        = "%[5]v"
+	end = null
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
     users                        = [pagerduty_user.foo.id]
@@ -564,7 +565,8 @@ resource "pagerduty_schedule" "foo" {
 
   layer {
     name                         = "foobar"
-    start                        = "%[5]v"
+	start                        = "%[5]v"
+	end = null
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
     users                        = [pagerduty_user.foo.id]
@@ -595,7 +597,8 @@ resource "pagerduty_schedule" "foo" {
 
   layer {
     name                         = "foo"
-    start                        = "%[5]v"
+	start                        = "%[5]v"
+	end = null
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
     users                        = [pagerduty_user.foo.id]

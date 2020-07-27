@@ -4,7 +4,9 @@ FEATURES:
 * `resource/resource_pagerduty_business_service` Add team to business_service resource ([#246](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/246))
 
 BUG FIXES:
-* `resource/resource_pagerduty_user` Docs -- fixed typo in user_roles info [#248](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/248))
+* `resource/resource_pagerduty_user` Docs -- fixed typo in user_roles info ([#248](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/248))
+* `resource/resource_pagerduty_user` Docs -- added time_zone field ([#256](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/256))
+
 
 
 IMPROVEMENTS:

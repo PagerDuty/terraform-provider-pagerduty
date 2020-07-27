@@ -9,13 +9,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func timeToUTC(v string) (string, error) {
+func timeToUTC(v string) (time.Time, error) {
 	t, err := time.Parse(time.RFC3339, v)
 	if err != nil {
-		return "", err
+		return time.Time{}, err
 	}
 
-	return t.UTC().String(), nil
+	return t.UTC(), nil
 }
 
 // validateRFC3339 validates that a date string has the correct RFC3339 layout

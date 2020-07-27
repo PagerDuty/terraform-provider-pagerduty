@@ -146,8 +146,20 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 
-	if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
-		return err
+	// Retrying to give other resources (such as escalation policies) to delete
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
+			if isErrCode(err, 400) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	d.SetId("")

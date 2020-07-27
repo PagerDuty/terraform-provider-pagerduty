@@ -1,3 +1,4 @@
+## 1.8.0 (Unreleased)
 ## 1.7.4 (July 27, 2020)
 
 FEATURES:

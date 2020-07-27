@@ -30,6 +30,7 @@ The following arguments are supported:
   * `role` - (Optional) The user role. Account must have the `read_only_users` ability to set a user as a `read_only_user` or a `read_only_limited_user`, and must have advanced permissions abilities to set a user as `observer` or `restricted_access`.  Can be `admin`, `limited_user`, `observer`, `owner`, `read_only_user`, `read_only_limited_user`, `restricted_access`, or `user`.
   * `job_title` - (Optional) The user's title.
   * `teams` - (Optional, **DEPRECATED**) A list of teams the user should belong to. Please use `pagerduty_team_membership` instead.
+  * `time_zone` - (Optional) The time zone of the user. Default is account default timezone.
   * `description` - (Optional) A human-friendly description of the user.
     If not set, a placeholder of "Managed by Terraform" will be set.
 

@@ -1,4 +1,4 @@
-## 1.7.4 (Unreleased)
+## 1.7.4 (July 27, 2020)
 
 FEATURES:
 * `resource/resource_pagerduty_business_service` Add team to business_service resource ([#246](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/246))

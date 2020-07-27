@@ -1,4 +1,20 @@
-## 1.8.0 (Unreleased)
+## 1.7.4 (Unreleased)
+
+FEATURES:
+* `resource/resource_pagerduty_business_service` Add team to business_service resource ([#246](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/246))
+
+BUG FIXES:
+* `resource/resource_pagerduty_user` Docs -- fixed typo in user_roles info [#248](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/248))
+
+
+IMPROVEMENTS:
+* `resource/resource_pagerduty_ruleset` Docs -- added example of Default Global Ruleset ([#239](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/239))
+* `resource/resource_pagerduty_escalation_policy` Docs -- extending example of multiple targets([#242](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/242))
+* `resource/resource_pagerduty_service` Docs -- extending example of alert creation on service([#243](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/243))
+* `resource/resource_pagerduty_service_integration` Docs -- extending example of events v2 and email integrations on service_integration([#244](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/244))
+* `resource/resource_pagerduty_scheduule` Allowing "Removal of Schedule Layers ([#257](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/257))
+
+
 ## 1.7.3 (June 12, 2020)
 FEATURES
 

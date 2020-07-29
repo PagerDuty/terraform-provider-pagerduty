@@ -41,6 +41,7 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Schema{
+					ID: schema.TypeString,
 					Type: schema.TypeString,
 				},
 			},
@@ -52,6 +53,7 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Schema{
+					ID: schema.TypeString,
 					Type: schema.TypeString,
 				},
 			},
@@ -91,8 +93,9 @@ func buildResponsePlayStruct(d *schema.ResourceData) *pagerduty.ResponsePlay {
 			Type: "team",
 		}
 	}
-	// todo: subscribers
-
+	if attr, ok := d.GetOk("subscribers"); ok {
+		responsePlay.Subscribers = expandSubscribers(attr.([]interface{}))
+	}
 	if attr, ok := d.GetOk("subscribers_message"); ok {
 		responsePlay.SubscribersMessage = attr.(string)
 	}
@@ -118,11 +121,15 @@ func buildResponsePlayStruct(d *schema.ResourceData) *pagerduty.ResponsePlay {
 	return responsePlay
 }
 
-func expandConditions(v interface{}) *pagerduty.RuleConditions {
-	var conditions *pagerduty.RuleConditions
+func expandSubscribers(v interface{}) []*pagerduty.SubscriberReference {
+	var subscribers []*pagerduty.RuleConditions
 
-	for _, vi := range v.([]interface{}) {
-		vm := vi.(map[string]interface{})
+	for _, si := range v.([]interface{}) {
+		sm := &pagerduty.SubscriberReference{
+			ID: si.(string),
+			Type: ""
+			
+			(map[string]interface{})
 		conditions = &pagerduty.RuleConditions{
 			Operator:          vm["operator"].(string),
 			RuleSubconditions: expandSubConditions(vm["subconditions"].([]interface{})),

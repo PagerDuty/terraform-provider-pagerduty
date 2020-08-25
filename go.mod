@@ -11,5 +11,5 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.7.0
-	github.com/heimweh/go-pagerduty v0.0.0-20200724060021-1df9f265c5b7
+	github.com/heimweh/go-pagerduty v0.0.0-20200805002644-5b442d10bb6d
 )

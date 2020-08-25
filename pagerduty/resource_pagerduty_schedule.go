@@ -263,8 +263,15 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Updating PagerDuty schedule: %s", d.Id())
 
-	if _, _, err := client.Schedules.Update(d.Id(), schedule, opts); err != nil {
-		return err
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, _, err := client.Schedules.Update(d.Id(), schedule, opts); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	return nil

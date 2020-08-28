@@ -1,4 +1,7 @@
-## 1.8.0 (Unreleased)
+## 1.7.10 (August 27, 2020)
+IMPROVEMENTS:
+* `resource/resource_pagerduty_schedule`, `resource/resource_pagerduty_escalation_policy` added retry logic to updating schedule and escalation_policy ([#264](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/264)))
+
 ## 1.7.4 (July 27, 2020)
 
 FEATURES:
@@ -15,8 +18,8 @@ IMPROVEMENTS:
 * `resource/resource_pagerduty_escalation_policy` Docs -- extending example of multiple targets([#242](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/242))
 * `resource/resource_pagerduty_service` Docs -- extending example of alert creation on service([#243](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/243))
 * `resource/resource_pagerduty_service_integration` Docs -- extending example of events v2 and email integrations on service_integration([#244](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/244))
-* `resource/resource_pagerduty_scheduule` Allowing "Removal of Schedule Layers ([#257](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/257))
-* `resource/resource_pagerduty_scheduule`,`resource/resource_pagerduty_team_membership`, `resource/resource_pagerduty_team_user` adding retry logic to deleting schedule,team_membership and user ([#258](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/258))
+* `resource/resource_pagerduty_schedule` Allowing "Removal of Schedule Layers ([#257](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/257))
+* `resource/resource_pagerduty_schedule`,`resource/resource_pagerduty_team_membership`, `resource/resource_pagerduty_team_user` adding retry logic to deleting schedule,team_membership and user ([#258](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/258))
 
 ## 1.7.3 (June 12, 2020)
 FEATURES

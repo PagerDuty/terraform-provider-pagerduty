@@ -32,7 +32,9 @@ $ make build
 
 Using the provider
 ----------------------
-## Fill in for each provider
+Please refer to https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs for
+examples on how to use the provider and detailed documentation about the
+Resources and Data Sources the provider has.
 
 Developing the Provider
 ---------------------------

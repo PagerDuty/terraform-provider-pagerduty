@@ -124,7 +124,7 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		attempts = attempts + 1
 		
-		log.Printf("[INFO] Reading PagerDuty Escalation Policy %s. Attempt %i", d.Id(), attempts)
+		log.Printf("[INFO] Reading PagerDuty Escalation Policy %s. Attempt %s", d.Id(), attempts)
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 		if err != nil {
 			log.Printf("[WARN] Escalation Policy read error")

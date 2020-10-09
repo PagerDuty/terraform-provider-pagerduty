@@ -92,6 +92,10 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
 }
 
+func handleError(err error, d *schema.ResourceData) error {
+	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
+}
+
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	config := Config{
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),

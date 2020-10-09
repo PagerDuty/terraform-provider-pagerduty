@@ -296,13 +296,19 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	log.Printf("[INFO] Reading PagerDuty service %s", d.Id())
-
+	attempts := 0
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		attempts = attempts + 1
+
+		log.Printf("[INFO] Reading PagerDuty Service %s. Attempt %i", d.Id(), attempts)
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
 		if err != nil {
 			log.Printf("[WARN] Service read error")
-			errResp := handleNotFoundError(err, d)
+			errResp := handleError(err, d)
+			if attempts > 6 {
+				errResp = handleNotFoundError(err, d)
+			}
+			
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)

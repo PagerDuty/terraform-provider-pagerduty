@@ -39,7 +39,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"alert_creation": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "create_alerts_and_incidents",
+				Default:  "create_incidents",
 				ValidateFunc: validateValueFunc([]string{
 					"create_alerts_and_incidents",
 					"create_incidents",

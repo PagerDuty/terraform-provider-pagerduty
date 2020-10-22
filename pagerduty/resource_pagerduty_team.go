@@ -103,11 +103,19 @@ func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Deleting PagerDuty team %s", d.Id())
 
-	if _, err := client.Teams.Delete(d.Id()); err != nil {
-		return err
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, err := client.Teams.Delete(d.Id()); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
 	d.SetId("")
 
+	// giving the API time to catchup
+	time.Sleep(time.Second)
 	return nil
 }

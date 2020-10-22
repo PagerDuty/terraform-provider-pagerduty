@@ -250,5 +250,7 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 
 	d.SetId("")
 
+	// giving the API time to catchup
+	time.Sleep(time.Second)
 	return nil
 }

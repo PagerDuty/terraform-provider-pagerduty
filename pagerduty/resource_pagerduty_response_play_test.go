@@ -2,8 +2,6 @@ package pagerduty
 
 import (
 	"fmt"
-	"log"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
@@ -12,52 +10,38 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-func testSweepResponsePlay(region string) error {
-	config, err := sharedConfigForRegion(region)
-	if err != nil {
-		return err
-	}
-
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-
-	resp, _, err := client.ResponsePlays.List()
-	if err != nil {
-		return err
-	}
-
-	for _, rplay := range resp.ResponsePlays {
-		if strings.HasPrefix(rplay.Name, "test") || strings.HasPrefix(rplay.Name, "tf-") {
-			log.Printf("Destroying response play %s (%s)", rplay.Name, rplay.ID)
-			if _, err := client.ResponsePlays.Delete(rplay.ID); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 func TestAccPagerDutyResponsePlay_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyResponsePlayDestroy, // really?
+		CheckDestroy: testAccCheckPagerDutyResponsePlayDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyResponsePlayConfig(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyResponsePlayExists("pagerduty_response_play.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_response_play.foo", "name", name),
+					resource.TestCheckResourceAttr(
+						"pagerduty_response_play.foo", "from", name+"@foo.com"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_response_play.foo", "responder.#", "2"),
 				),
 			},
 			{
 				Config: testAccCheckPagerDutyResponsePlayConfigUpdated(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyResponsePlayExists("pagerduty_response_play.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_response_play.foo", "name", name),
+					resource.TestCheckResourceAttr(
+						"pagerduty_response_play.foo", "from", name+"@foo.com"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_response_play.foo", "responder.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_response_play.foo", "subscriber.#", "1"),
 				),
 			},
 		},
@@ -70,8 +54,9 @@ func testAccCheckPagerDutyResponsePlayDestroy(s *terraform.State) error {
 		if r.Type != "pagerduty_response_play" {
 			continue
 		}
+		ra := r.Primary.Attributes
 
-		if _, _, err := client.ResponsePlays.Get(r.Primary.ID); err == nil {
+		if _, _, err := client.ResponsePlays.Get(r.Primary.ID, ra["from"]); err == nil {
 			return fmt.Errorf("response play still exists")
 		}
 
@@ -89,10 +74,11 @@ func testAccCheckPagerDutyResponsePlayExists(n string) resource.TestCheckFunc {
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No response play ID is set")
 		}
+		ra := rs.Primary.Attributes
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, _, err := client.ResponsePlays.Get(rs.Primary.ID)
+		found, _, err := client.ResponsePlays.Get(rs.Primary.ID, ra["from"])
 		if err != nil {
 			return err
 		}
@@ -133,6 +119,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
 resource "pagerduty_response_play" "foo" {
   name = "%[1]v"
+  from = pagerduty_user.foo.email
   responder {
 	  type = "user_reference"
 	  id = pagerduty_user.foo.id
@@ -175,6 +162,7 @@ resource "pagerduty_escalation_policy" "foo" {
 	
 resource "pagerduty_response_play" "foo" {
 	name = "%[1]v"
+	from = pagerduty_user.foo.email
 	responder {
 		type = "escalation_policy_reference"
 		id = pagerduty_escalation_policy.foo.id

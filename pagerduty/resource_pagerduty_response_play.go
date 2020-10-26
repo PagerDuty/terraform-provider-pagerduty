@@ -33,6 +33,10 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 				Optional: true,
 				Default:  "Managed by Terraform",
 			},
+			"from": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"team": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -175,7 +179,8 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 
 func buildResponsePlayStruct(d *schema.ResourceData) *pagerduty.ResponsePlay {
 	responsePlay := &pagerduty.ResponsePlay{
-		Name: d.Get("name").(string),
+		Name:      d.Get("name").(string),
+		FromEmail: d.Get("from").(string),
 	}
 	if attr, ok := d.GetOk("type"); ok {
 		responsePlay.Type = attr.(string)
@@ -231,6 +236,9 @@ func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{
 			return resource.RetryableError(err)
 		} else if responsePlay != nil {
 			d.SetId(responsePlay.ID)
+			d.Set("from", responsePlay.FromEmail)
+			log.Printf("[INFO] Created PagerDuty response play: %s (from: %s)", d.Id(), responsePlay.FromEmail)
+
 		}
 		return nil
 	})
@@ -244,10 +252,11 @@ func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{
 func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	log.Printf("[INFO] Reading PagerDuty response play: %s", d.Id())
+	from := d.Get("from").(string)
+	log.Printf("[INFO] Reading PagerDuty response play: %s (from: %s)", d.Id(), from)
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		if responsePlay, _, err := client.ResponsePlays.Get(d.Id()); err != nil {
+		if responsePlay, _, err := client.ResponsePlays.Get(d.Id(), from); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if responsePlay != nil {
@@ -260,6 +269,8 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 			if responsePlay.Responders != nil {
 				d.Set("responders", flattenResponders(responsePlay.Responders))
 			}
+			d.Set("from", from)
+			d.Set("name", responsePlay.Name)
 			d.Set("type", responsePlay.Type)
 			d.Set("description", responsePlay.Description)
 			d.Set("subscribers_message", responsePlay.SubscribersMessage)
@@ -296,9 +307,10 @@ func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{
 	client := meta.(*pagerduty.Client)
 
 	log.Printf("[INFO] Deleting PagerDuty response play: %s", d.Id())
+	from := d.Get("from").(string)
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if _, err := client.ResponsePlays.Delete(d.Id()); err != nil {
+		if _, err := client.ResponsePlays.Delete(d.Id(), from); err != nil {
 			return resource.RetryableError(err)
 		}
 		return nil

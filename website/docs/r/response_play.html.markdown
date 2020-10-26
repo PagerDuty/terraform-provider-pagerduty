@@ -20,7 +20,7 @@ resource "pagerduty_user" "example" {
   teams = [pagerduty_team.example.id]
 }
 
-resource "pagerduty_escalation_policy" "foo" {
+resource "pagerduty_escalation_policy" "example" {
   name      = "Engineering Escalation Policy"
   num_loops = 2
 
@@ -35,9 +35,18 @@ resource "pagerduty_escalation_policy" "foo" {
 }
 
 resource "pagerduty_response_play" "example" {
-  name                    = "My Response Play"
-  subscriber = {}
+  name = "My Response Play"
+  from = pagerduty_user.example.email
 
+  responder {
+    type = "escalation_policy_reference"
+    id   = pagerduty_escalation_policy.example.id
+  }
+  subscriber {
+    type = "user_reference"
+    id   = pagerduty_user.example.id
+  }
+  runnability = "services"
 }
 ```
 
@@ -46,6 +55,7 @@ resource "pagerduty_response_play" "example" {
 The following arguments are supported:
 
   * `name` - (Required) The name of the response play.
+  * `from` - (Required) The email of the user attributed to the request. Needs to be a valid email address of a user in the PagerDuty account.
   * `description` - (Optional) A human-friendly description of the response play.
     If not set, a placeholder of "Managed by Terraform" will be set.
   * `type` - (Optional)  A string that determines the schema of the object. If not set, the default value is "response_play". 

@@ -1,3 +1,13 @@
+## 1.7.11 (November 3, 2020)
+IMPROVEMENTS:
+* `resource/resource_pagerduty_service` Added validation to Service Name field. ([#275](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/275))
+
+BUG FIXES:
+* `resource/resource_pagerduty_escalation_policy` Fixed retry logic on Escalation Policy Read function. ([#275](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/275))
+
+* README -- fixed typos ([#270](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/270))
+* `resource/resource_pagerduty_event_rule` Docs -- fixed typo in NOTE ([#267](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/267))
+
 ## 1.7.10 (August 27, 2020)
 IMPROVEMENTS:
 * `resource/resource_pagerduty_schedule`, `resource/resource_pagerduty_escalation_policy` added retry logic to updating schedule and escalation_policy ([#264](https://github.com/terraform-providers/terraform-provider-pagerduty/pull/264)))

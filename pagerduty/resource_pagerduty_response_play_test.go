@@ -54,9 +54,10 @@ func testAccCheckPagerDutyResponsePlayDestroy(s *terraform.State) error {
 		if r.Type != "pagerduty_response_play" {
 			continue
 		}
-		ra := r.Primary.Attributes
+		u, _ := s.RootModule().Resources["pagerduty_user.foo"]
+		ua := u.Primary.Attributes
 
-		if _, _, err := client.ResponsePlays.Get(r.Primary.ID, ra["from"]); err == nil {
+		if _, _, err := client.ResponsePlays.Get(r.Primary.ID, ua["email"]); err == nil {
 			return fmt.Errorf("response play still exists")
 		}
 
@@ -74,11 +75,12 @@ func testAccCheckPagerDutyResponsePlayExists(n string) resource.TestCheckFunc {
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No response play ID is set")
 		}
-		ra := rs.Primary.Attributes
+		u, _ := s.RootModule().Resources["pagerduty_user.foo"]
+		ua := u.Primary.Attributes
 
 		client := testAccProvider.Meta().(*pagerduty.Client)
 
-		found, _, err := client.ResponsePlays.Get(rs.Primary.ID, ra["from"])
+		found, _, err := client.ResponsePlays.Get(rs.Primary.ID, ua["email"])
 		if err != nil {
 			return err
 		}
@@ -128,8 +130,11 @@ resource "pagerduty_response_play" "foo" {
 	  type = "escalation_policy_reference"
 	  id = pagerduty_escalation_policy.foo.id
   }
-  runnability = "services"
-
+  subscriber {
+	type = "user_reference"
+	id = pagerduty_user.foo.id
+  }
+runnability = "services"	
 }
 `, name)
 }

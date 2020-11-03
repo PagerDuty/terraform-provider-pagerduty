@@ -102,8 +102,8 @@ The following attributes are exported:
 
 ## Import
 
-Response Plays can be imported using the `id`, e.g.
+Response Plays can be imported using the `id.from(email)`, e.g.
 
 ```
-$ terraform import pagerduty_response_play.main 16208303-022b-f745-f2f5-560e537a2a74
+$ terraform import pagerduty_response_play.main 16208303-022b-f745-f2f5-560e537a2a74.user@email.com
 ```

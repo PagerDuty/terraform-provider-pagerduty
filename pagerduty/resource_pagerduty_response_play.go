@@ -1,7 +1,9 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -16,7 +18,7 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 		Update: resourcePagerDutyResponsePlayUpdate,
 		Delete: resourcePagerDutyResponsePlayDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourcePagerDutyResponsePlayImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -194,14 +196,14 @@ func buildResponsePlayStruct(d *schema.ResourceData) *pagerduty.ResponsePlay {
 			Type: "team",
 		}
 	}
-	if attr, ok := d.GetOk("subscribers"); ok {
+	if attr, ok := d.GetOk("subscriber"); ok {
 		responsePlay.Subscribers = expandSubscribers(attr.([]interface{}))
 	}
 	if attr, ok := d.GetOk("subscribers_message"); ok {
 		responsePlay.SubscribersMessage = attr.(string)
 	}
 
-	if attr, ok := d.GetOk("responders"); ok {
+	if attr, ok := d.GetOk("responder"); ok {
 		responsePlay.Responders = expandResponders(attr.([]interface{}))
 	}
 
@@ -263,11 +265,15 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 			if responsePlay.Team != nil {
 				d.Set("team", []interface{}{responsePlay.Team})
 			}
-			if responsePlay.Subscribers != nil {
-				d.Set("subscribers", flattenSubscribers(responsePlay.Subscribers))
+			log.Printf("[INFO] Read PagerDuty response play initial subscribers: %s", d.Get("subscriber"))
+			for _, s := range responsePlay.Subscribers {
+				d.Set("subscriber", flattenSubscriber(s))
+				log.Printf("[INFO] Read PagerDuty response play subscriber: %s", d.Get("subscriber"))
 			}
-			if responsePlay.Responders != nil {
-				d.Set("responders", flattenResponders(responsePlay.Responders))
+			log.Printf("[INFO] Read PagerDuty response play initial responders: %s", d.Get("responder"))
+			for _, r := range responsePlay.Responders {
+				d.Set("responder", flattenResponder(r))
+				log.Printf("[INFO] Read PagerDuty response play responder: %s", d.Get("responder"))
 			}
 			d.Set("from", from)
 			d.Set("name", responsePlay.Name)
@@ -348,14 +354,22 @@ func expandResponders(v interface{}) []*pagerduty.Responder {
 			ID:                         rm["id"].(string),
 			Type:                       rm["type"].(string),
 			Description:                rm["description"].(string),
+			Name:                       rm["name"].(string),
 			NumLoops:                   rm["num_loops"].(int),
 			OnCallHandoffNotifications: rm["on_call_handoff_notifications"].(string),
-			// calling expandEscalationRules in resource_pagerduty_escalation_policy
-			EscalationRules: expandEscalationRules(rm["escalation_rules"].([]interface{})),
-			Services:        expandRSServices(rm["service"].([]interface{})),
-			// calling expandTeams in resource_pagerduty_escalation_policy
-			Teams: expandTeams(rm["teams"].([]interface{})),
 		}
+		if rm["escalation_rules"] != nil {
+			// calling expandEscalationRules in resource_pagerduty_escalation_policy
+			resp.EscalationRules = expandEscalationRules(rm["escalation_rules"].([]interface{}))
+		}
+		if rm["service"] != nil {
+			resp.Services = expandRSServices(rm["service"].([]interface{}))
+		}
+		if rm["teams"] != nil {
+			// calling expandTeams in resource_pagerduty_escalation_policy
+			resp.Teams = expandTeams(rm["teams"].([]interface{}))
+		}
+		log.Printf("[INFO] PagerDuty response play expandResponders: %v", resp.ID)
 		responders = append(responders, resp)
 	}
 
@@ -377,47 +391,41 @@ func expandRSServices(v interface{}) []*pagerduty.ServiceReference {
 	return services
 }
 
-func flattenSubscribers(s []*pagerduty.SubscriberReference) []interface{} {
-	var subs []interface{}
-
-	for _, sc := range s {
-		flattenedSub := map[string]interface{}{
-			"id":   sc.ID,
-			"type": sc.Type,
-		}
-		subs = append(subs, flattenedSub)
+func flattenSubscriber(s *pagerduty.SubscriberReference) map[string]interface{} {
+	flattenedSub := map[string]interface{}{
+		"id":   s.ID,
+		"type": s.Type,
 	}
-	return subs
+	log.Printf("[INFO] PagerDuty response play flattenSubscriber: %s", flattenedSub)
+
+	return flattenedSub
 }
 
-func flattenResponders(responders []*pagerduty.Responder) []map[string]interface{} {
-	var respondersMap []map[string]interface{}
-
-	for _, r := range responders {
-		flattenedR := map[string]interface{}{
-			"type":                          r.Type,
-			"name":                          r.Name,
-			"num_loops":                     r.NumLoops,
-			"description":                   r.Description,
-			"on_call_handoff_notifications": r.OnCallHandoffNotifications,
-		}
-		// EscalationRules
-		if r.EscalationRules != nil {
-			// flattenEscalationRules in resource_pagerduty_escalation_policy
-			flattenedR["escalation_rules"] = flattenEscalationRules(r.EscalationRules)
-		}
-		// Services
-		if r.Services != nil {
-			flattenedR["services"] = flattenRSServices(r.Services)
-		}
-		// Teams
-		if r.Teams != nil {
-			flattenedR["teams"] = flattenRSTeams(r.Teams)
-		}
-
-		respondersMap = append(respondersMap, flattenedR)
+func flattenResponder(r *pagerduty.Responder) map[string]interface{} {
+	flattenedR := map[string]interface{}{
+		"type":                          r.Type,
+		"name":                          r.Name,
+		"num_loops":                     r.NumLoops,
+		"description":                   r.Description,
+		"on_call_handoff_notifications": r.OnCallHandoffNotifications,
 	}
-	return respondersMap
+	// EscalationRules
+	if r.EscalationRules != nil {
+		// flattenEscalationRules in resource_pagerduty_escalation_policy
+		flattenedR["escalation_rules"] = flattenEscalationRules(r.EscalationRules)
+	}
+	// Services
+	if r.Services != nil {
+		flattenedR["services"] = flattenRSServices(r.Services)
+	}
+	// Teams
+	if r.Teams != nil {
+		flattenedR["teams"] = flattenRSTeams(r.Teams)
+	}
+
+	log.Printf("[INFO] PagerDuty response play flattenedR: %s", flattenedR)
+
+	return flattenedR
 }
 
 func flattenRSServices(services []*pagerduty.ServiceReference) []interface{} {
@@ -444,4 +452,26 @@ func flattenRSTeams(teams []*pagerduty.TeamReference) []interface{} {
 		flatTeamList = append(flatTeamList, flatTeam)
 	}
 	return flatTeamList
+}
+
+func resourcePagerDutyResponsePlayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*pagerduty.Client)
+
+	ids := strings.SplitN(d.Id(), ".", 2)
+
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_response_play. Expecting an importation ID formed as '<response_play_id>.<from_email>'")
+	}
+	rid, from := ids[0], ids[1]
+	log.Printf("[INFO] Importing PagerDuty response play: %s (From: %s)", rid, from)
+
+	_, _, err := client.ResponsePlays.Get(rid, from)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+	// These are set because an import also calls Read behind the scenes
+	d.SetId(rid)
+	d.Set("from", from)
+
+	return []*schema.ResourceData{d}, nil
 }

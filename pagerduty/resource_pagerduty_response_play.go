@@ -266,14 +266,12 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 				d.Set("team", []interface{}{responsePlay.Team})
 			}
 			log.Printf("[INFO] Read PagerDuty response play initial subscribers: %s", d.Get("subscriber"))
-			for _, s := range responsePlay.Subscribers {
-				d.Set("subscriber", flattenSubscriber(s))
-				log.Printf("[INFO] Read PagerDuty response play subscriber: %s", d.Get("subscriber"))
+			if err := d.Set("subscriber", flattenSubscribers(responsePlay.Subscribers)); err != nil {
+				panic(err)
 			}
 			log.Printf("[INFO] Read PagerDuty response play initial responders: %s", d.Get("responder"))
-			for _, r := range responsePlay.Responders {
-				d.Set("responder", flattenResponder(r))
-				log.Printf("[INFO] Read PagerDuty response play responder: %s", d.Get("responder"))
+			if err := d.Set("responder", flattenResponders(responsePlay.Responders)); err != nil {
+				panic(err)
 			}
 			d.Set("from", from)
 			d.Set("name", responsePlay.Name)
@@ -284,6 +282,7 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 			d.Set("runnability", responsePlay.Runnability)
 			d.Set("conference_number", responsePlay.ConferenceNumber)
 			d.Set("conference_url", responsePlay.ConferenceURL)
+
 		}
 		return nil
 	})
@@ -391,41 +390,49 @@ func expandRSServices(v interface{}) []*pagerduty.ServiceReference {
 	return services
 }
 
-func flattenSubscriber(s *pagerduty.SubscriberReference) map[string]interface{} {
-	flattenedSub := map[string]interface{}{
-		"id":   s.ID,
-		"type": s.Type,
-	}
-	log.Printf("[INFO] PagerDuty response play flattenSubscriber: %s", flattenedSub)
+func flattenSubscribers(sref []*pagerduty.SubscriberReference) []interface{} {
+	var subs []interface{}
 
-	return flattenedSub
+	for _, s := range sref {
+		flattenedSub := map[string]interface{}{
+			"id":   s.ID,
+			"type": s.Type,
+		}
+		subs = append(subs, flattenedSub)
+	}
+	return subs
 }
 
-func flattenResponder(r *pagerduty.Responder) map[string]interface{} {
-	flattenedR := map[string]interface{}{
-		"type":                          r.Type,
-		"name":                          r.Name,
-		"num_loops":                     r.NumLoops,
-		"description":                   r.Description,
-		"on_call_handoff_notifications": r.OnCallHandoffNotifications,
-	}
-	// EscalationRules
-	if r.EscalationRules != nil {
-		// flattenEscalationRules in resource_pagerduty_escalation_policy
-		flattenedR["escalation_rules"] = flattenEscalationRules(r.EscalationRules)
-	}
-	// Services
-	if r.Services != nil {
-		flattenedR["services"] = flattenRSServices(r.Services)
-	}
-	// Teams
-	if r.Teams != nil {
-		flattenedR["teams"] = flattenRSTeams(r.Teams)
+func flattenResponders(rlist []*pagerduty.Responder) []interface{} {
+	var resps []interface{}
+
+	for _, r := range rlist {
+		flattenedR := map[string]interface{}{
+			"id":                            r.ID,
+			"type":                          r.Type,
+			"name":                          r.Name,
+			"num_loops":                     r.NumLoops,
+			"description":                   r.Description,
+			"on_call_handoff_notifications": r.OnCallHandoffNotifications,
+		}
+		// EscalationRules
+		if r.EscalationRules != nil {
+			// flattenEscalationRules in resource_pagerduty_escalation_policy
+			flattenedR["escalation_rules"] = flattenEscalationRules(r.EscalationRules)
+		}
+		// Services
+		if r.Services != nil {
+			flattenedR["services"] = flattenRSServices(r.Services)
+		}
+		// Teams
+		if r.Teams != nil {
+			flattenedR["teams"] = flattenRSTeams(r.Teams)
+		}
+		log.Printf("[INFO] PagerDuty response play flattenedR: %s", flattenedR)
+		resps = append(resps, flattenedR)
 	}
 
-	log.Printf("[INFO] PagerDuty response play flattenedR: %s", flattenedR)
-
-	return flattenedR
+	return resps
 }
 
 func flattenRSServices(services []*pagerduty.ServiceReference) []interface{} {

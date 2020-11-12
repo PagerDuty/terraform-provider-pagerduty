@@ -9,6 +9,9 @@ cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
 # cloud.google.com/go/storage v1.10.0
 cloud.google.com/go/storage
+# cloud.google.com/go/pubsub v1.8.3
+## explicit
+cloud.google.com/go/pubsub
 # github.com/agext/levenshtein v1.2.2
 github.com/agext/levenshtein
 # github.com/apparentlymart/go-cidr v1.0.1

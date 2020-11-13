@@ -1,6 +1,4 @@
 # cloud.google.com/go v0.71.0
-## explicit
-cloud.google.com/go
 cloud.google.com/go/compute/metadata
 cloud.google.com/go/iam
 cloud.google.com/go/internal

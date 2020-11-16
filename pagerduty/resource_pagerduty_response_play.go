@@ -267,11 +267,11 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 			}
 			log.Printf("[INFO] Read PagerDuty response play initial subscribers: %s", d.Get("subscriber"))
 			if err := d.Set("subscriber", flattenSubscribers(responsePlay.Subscribers)); err != nil {
-				panic(err)
+				return resource.NonRetryableError(err)
 			}
 			log.Printf("[INFO] Read PagerDuty response play initial responders: %s", d.Get("responder"))
 			if err := d.Set("responder", flattenResponders(responsePlay.Responders)); err != nil {
-				panic(err)
+				return resource.NonRetryableError(err)
 			}
 			d.Set("from", from)
 			d.Set("name", responsePlay.Name)

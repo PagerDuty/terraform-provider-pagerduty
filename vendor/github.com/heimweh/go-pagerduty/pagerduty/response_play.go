@@ -15,19 +15,27 @@ type ResponsePlay struct {
 	Type               string                 `json:"type,omitempty"`
 	Description        string                 `json:"description,omitempty"`
 	Team               *TeamReference         `json:"team,omitempty"`
-	Subscribers        *[]SubscriberReference `json:"subscribers,omitempty"`
+	Subscribers        []*SubscriberReference `json:"subscribers,omitempty"`
 	SubscribersMessage string                 `json:"subscribers_message"`
-	Responders         *[]Responder           `json:"responders,omitempty"`
+	Responders         []*Responder           `json:"responders,omitempty"`
 	RespondersMessage  string                 `json:"responders_message"`
 	Runnability        string                 `json:"runnability,omitempty"`
 	ConferenceNumber   string                 `json:"conference_number,omitempty"`
 	ConferenceURL      string                 `json:"conference_url,omitempty"`
+	FromEmail          string                 `json:"from_email,omitempty"`
 }
 
-// Responder represents a responder within a response play object
+// Responder represents a responder within a response play object (keeps linter happy)
 type Responder struct {
-	Type string `json:"type,omitempty"`
-	ID   string `json:"id,omitempty"`
+	Type                       string              `json:"type,omitempty"`
+	ID                         string              `json:"id,omitempty"`
+	Name                       string              `json:"name,omitempty"`
+	Description                string              `json:"description,omitempty"`
+	NumLoops                   int                 `json:"num_loops,omitempty"`
+	OnCallHandoffNotifications string              `json:"on_call_handoff_notifications,omitempty"`
+	EscalationRules            []*EscalationRule   `json:"escalation_rules,omitempty"`
+	Services                   []*ServiceReference `json:"services,omitempty"`
+	Teams                      []*TeamReference    `json:"teams,omitempty"`
 }
 
 // ResponsePlayPayload represents payload with a response play object
@@ -44,10 +52,21 @@ type ListResponsePlaysResponse struct {
 	Limit         int             `json:"limit,omitempty"`
 }
 
+// ListResponsePlayOptions represents options when listing response plays
+type ListResponsePlayOptions struct {
+	From string `json:"from,omitempty"`
+}
+
 // List lists existing response_plays.
-func (s *ResponsePlayService) List() (*ListResponsePlaysResponse, *Response, error) {
+func (s *ResponsePlayService) List(o *ListResponsePlayOptions) (*ListResponsePlaysResponse, *Response, error) {
 	u := "/response_plays"
 	v := new(ListResponsePlaysResponse)
+
+	ro := RequestOptions{
+		Type:  "header",
+		Label: "from",
+		Value: o.From,
+	}
 
 	responsePlays := make([]*ResponsePlay, 0)
 
@@ -70,7 +89,7 @@ func (s *ResponsePlayService) List() (*ListResponsePlaysResponse, *Response, err
 			Limit:  result.Limit,
 		}, response, nil
 	}
-	err := s.client.newRequestPagedGetDo(u, responseHandler)
+	err := s.client.newRequestPagedGetDo(u, responseHandler, ro)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -84,33 +103,52 @@ func (s *ResponsePlayService) Create(responsePlay *ResponsePlay) (*ResponsePlay,
 	u := "/response_plays"
 	v := new(ResponsePlayPayload)
 	p := &ResponsePlayPayload{ResponsePlay: responsePlay}
-
-	resp, err := s.client.newRequestDo("POST", u, nil, p, v)
+	o := RequestOptions{
+		Type:  "header",
+		Label: "from",
+		Value: responsePlay.FromEmail,
+	}
+	resp, err := s.client.newRequestDoOptions("POST", u, nil, p, v, o)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// set fromEmail
+	v.ResponsePlay.FromEmail = responsePlay.FromEmail
 
 	return v.ResponsePlay, resp, nil
 }
 
 // Get gets a new response play.
-func (s *ResponsePlayService) Get(ID string) (*ResponsePlay, *Response, error) {
+func (s *ResponsePlayService) Get(ID, From string) (*ResponsePlay, *Response, error) {
 	u := fmt.Sprintf("/response_plays/%s", ID)
 	v := new(ResponsePlayPayload)
 	p := &ResponsePlayPayload{}
-
-	resp, err := s.client.newRequestDo("GET", u, nil, p, v)
+	o := RequestOptions{
+		Type:  "header",
+		Label: "from",
+		Value: From,
+	}
+	resp, err := s.client.newRequestDoOptions("GET", u, nil, p, v, o)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// set fromEmail
+	v.ResponsePlay.FromEmail = From
 
 	return v.ResponsePlay, resp, nil
 }
 
 // Delete deletes an existing response_play.
-func (s *ResponsePlayService) Delete(ID string) (*Response, error) {
+func (s *ResponsePlayService) Delete(ID, From string) (*Response, error) {
 	u := fmt.Sprintf("/response_plays/%s", ID)
-	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+	o := RequestOptions{
+		Type:  "header",
+		Label: "from",
+		Value: From,
+	}
+	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil, o)
 }
 
 // Update updates an existing response_play.
@@ -118,11 +156,18 @@ func (s *ResponsePlayService) Update(ID string, responsePlay *ResponsePlay) (*Re
 	u := fmt.Sprintf("/response_plays/%s", ID)
 	v := new(ResponsePlayPayload)
 	p := ResponsePlayPayload{ResponsePlay: responsePlay}
-
-	resp, err := s.client.newRequestDo("PUT", u, nil, p, v)
+	o := RequestOptions{
+		Type:  "header",
+		Label: "from",
+		Value: responsePlay.FromEmail,
+	}
+	resp, err := s.client.newRequestDoOptions("PUT", u, nil, p, v, o)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// set fromEmail
+	v.ResponsePlay.FromEmail = responsePlay.FromEmail
 
 	return v.ResponsePlay, resp, nil
 }

@@ -1,11 +1,12 @@
 Terraform Provider for PagerDuty
 ================================
 
-- Website: https://www.terraform.io
-- [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
-- Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
+- Website: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest
+- Documentation: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs
+- Terraform Gitter: [![Terraform Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
+- Mailing list: [Terraform Google Groups](http://groups.google.com/group/terraform-tool)
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
+[PagerDuty](https://www.pagerduty.com/) is an alarm aggregation and dispatching service for system administrators and support teams. It collects alerts from your monitoring tools, gives you an overall view of all of your monitoring alarms, and alerts an on duty engineer if there’s a problem. The Terraform Pagerduty provider is a plugin for Terraform that allows for the management of PagerDuty resources using HCL (HashiCorp Configuration Language).
 
 Requirements
 ------------
@@ -32,7 +33,9 @@ $ make build
 
 Using the provider
 ----------------------
-## Fill in for each provider
+Please refer to https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs for
+examples on how to use the provider and detailed documentation about the
+Resources and Data Sources the provider has.
 
 Developing the Provider
 ---------------------------

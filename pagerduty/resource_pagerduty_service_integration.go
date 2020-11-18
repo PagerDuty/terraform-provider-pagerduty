@@ -232,6 +232,7 @@ func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta inte
 		return []*schema.ResourceData{}, err
 	}
 
+	// These are set because an import also calls Read behind the scenes
 	d.SetId(id)
 	d.Set("service", sid)
 

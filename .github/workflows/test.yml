@@ -1,29 +1,23 @@
+name: Test
 on:
-  push:
-    branches:
-      - master
   pull_request:
-    branches:
-      - master
+    types: [opened, synchronize, reopened]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Test
+    runs-on: ubuntu-20.04
+
     steps:
-    -
-      name: Checkout code
-      uses: actions/checkout@v2
-    -
-      name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
-    -
-      name: Install cookie
-      run: scripts/gogetcookie.sh
-    -
-      name: Run tests
-      env:
-        GOFLAGS: "-mod=vendor"
-      run: |
-        make test
-        make vet
+      - name: Checkout repo
+        uses: actions/checkout@master
+
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17'
+
+      - name: Install dependencies
+        run: go mod vendor
+
+      - name: Run tests
+        run: make ci-test

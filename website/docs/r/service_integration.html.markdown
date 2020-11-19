@@ -56,7 +56,7 @@ resource "pagerduty_service_integration" "apiv2" {
 resource "pagerduty_service_integration" "email_x" {
   name = "Email X"
   type = "generic_email_inbound_integration"
-  integration_email = "ecommerce"
+  integration_email = "ecommerce@subdomain.pagerduty.com"
   service = pagerduty_service.example.id
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -187,7 +187,7 @@ func testAccCheckPagerDutyBusinessServiceWithTeamConfig(businessServiceName, tea
 resource "pagerduty_team" "bar" {
 	name = "%s"
 }
-	
+
 resource "pagerduty_business_service" "bar" {
 	name = "%s"
 	description = "%s"

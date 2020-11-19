@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyResponsePlay_Basic(t *testing.T) {
@@ -134,7 +134,7 @@ resource "pagerduty_response_play" "foo" {
 	type = "user_reference"
 	id = pagerduty_user.foo.id
   }
-runnability = "services"	
+runnability = "services"
 }
 `, name)
 }
@@ -149,22 +149,22 @@ resource "pagerduty_user" "foo" {
 	job_title   = "foo"
 	description = "foo"
 }
-	
+
 resource "pagerduty_escalation_policy" "foo" {
 	name        = "%[1]v"
 	description = "bar"
 	num_loops   = 2
-	
+
 	rule {
 		escalation_delay_in_minutes = 10
-	
+
 		target {
 			type = "user_reference"
 			id   = pagerduty_user.foo.id
 		}
 	}
 }
-	
+
 resource "pagerduty_response_play" "foo" {
 	name = "%[1]v"
 	from = pagerduty_user.foo.email

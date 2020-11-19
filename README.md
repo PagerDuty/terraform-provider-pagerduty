@@ -1,12 +1,12 @@
 Terraform Provider for PagerDuty
 ================================
 
-- Website: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest
-- Documentation: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs
-- Terraform Gitter: [![Terraform Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
-- Mailing list: [Terraform Google Groups](http://groups.google.com/group/terraform-tool)
+- Website: https://registry.terraform.io/providers/nordcloud/pagerduty/latest
+- Documentation: https://registry.terraform.io/providers/nordcloud/pagerduty/latest/docs
 
 [PagerDuty](https://www.pagerduty.com/) is an alarm aggregation and dispatching service for system administrators and support teams. It collects alerts from your monitoring tools, gives you an overall view of all of your monitoring alarms, and alerts an on duty engineer if there’s a problem. The Terraform Pagerduty provider is a plugin for Terraform that allows for the management of PagerDuty resources using HCL (HashiCorp Configuration Language).
+
+This project is a fork of [Pagerduty/terraform-provider-pagerduty](https://github.com/PagerDuty/terraform-provider-pagerduty)
 
 Requirements
 ------------
@@ -17,23 +17,23 @@ Requirements
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-pagerduty`
+Clone repository to: `$GOPATH/src/github.com/nordcloud/terraform-provider-pagerduty`
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-pagerduty
+$ mkdir -p $GOPATH/src/github.com/nordcloud; cd $GOPATH/src/github.com/nordcloud
+$ git clone git@github.com:nordcloud/terraform-provider-pagerduty
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-pagerduty
+$ cd $GOPATH/src/github.com/nordcloud/terraform-provider-pagerduty
 $ make build
 ```
 
 Using the provider
 ----------------------
-Please refer to https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs for
+Please refer to https://registry.terraform.io/providers/nordcloud/pagerduty/latest/docs for
 examples on how to use the provider and detailed documentation about the
 Resources and Data Sources the provider has.
 

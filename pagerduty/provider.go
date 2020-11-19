@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
 
 // Provider represents a resource provider in Terraform
@@ -59,6 +59,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_ruleset_rule":           resourcePagerDutyRulesetRule(),
 			"pagerduty_business_service":       resourcePagerDutyBusinessService(),
 			"pagerduty_service_dependency":     resourcePagerDutyServiceDependency(),
+			"pagerduty_response_play":          resourcePagerDutyResponsePlay(),
 		},
 	}
 

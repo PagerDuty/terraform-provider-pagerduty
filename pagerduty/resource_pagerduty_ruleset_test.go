@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -130,7 +130,7 @@ resource "pagerduty_team" "foo" {
 
 resource "pagerduty_ruleset" "foo" {
 	name = "%s"
-	team { 
+	team {
 		id = pagerduty_team.foo.id
 	}
 }

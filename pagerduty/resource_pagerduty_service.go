@@ -2,12 +2,14 @@ package pagerduty
 
 import (
 	"log"
+	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
 
 func resourcePagerDutyService() *schema.Resource {
@@ -21,8 +23,9 @@ func resourcePagerDutyService() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringDoesNotMatch(regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]`), "Service name can't be blank or contain '\\', '/', '&', '<', '>' or non-printable characters. "),
 			},
 			"html_url": {
 				Type:     schema.TypeString,
@@ -238,7 +241,8 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	}
 
 	if attr, ok := d.GetOk("alert_grouping"); ok {
-		service.AlertGrouping = attr.(string)
+		ag := attr.(string)
+		service.AlertGrouping = &ag
 	}
 
 	// Using GetOkExists to allow for alert_grouping_timeout to be set to 0 if needed.
@@ -328,7 +332,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 			d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 		}
 		d.Set("alert_creation", service.AlertCreation)
-		if service.AlertGrouping != "" {
+		if service.AlertGrouping != nil && *service.AlertGrouping != "" {
 			d.Set("alert_grouping", service.AlertGrouping)
 		}
 		if service.AlertGroupingTimeout == nil {
@@ -386,6 +390,8 @@ func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) er
 
 	d.SetId("")
 
+	// giving the API time to catchup
+	time.Sleep(time.Second)
 	return nil
 }
 

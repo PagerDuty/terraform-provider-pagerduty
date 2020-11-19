@@ -5,6 +5,7 @@ example.tf
 terraform.tfplan
 terraform.tfstate
 bin/
+dist/
 modules-dev/
 /pkg/
 website/.vagrant
@@ -24,6 +25,8 @@ website/node_modules
 *.iml
 *.test
 *.iml
+
+vendor/
 
 website/vendor
 

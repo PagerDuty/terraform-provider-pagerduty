@@ -15,7 +15,7 @@ type NotificationRule struct {
 	HTMLURL             string                  `json:"html_url,omitempty"`
 	ID                  string                  `json:"id,omitempty"`
 	Self                string                  `json:"self,omitempty"`
-	StartDelayInMinutes int                     `json:"start_delay_in_minutes,omitempty"`
+	StartDelayInMinutes int                     `json:"start_delay_in_minutes"`
 	Summary             string                  `json:"summary,omitempty"`
 	Type                string                  `json:"type,omitempty"`
 	Urgency             string                  `json:"urgency,omitempty"`

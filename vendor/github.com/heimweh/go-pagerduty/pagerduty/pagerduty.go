@@ -52,6 +52,7 @@ type Client struct {
 	ServiceDependencies *ServiceDependencyService
 	Priorities          *PriorityService
 	ResponsePlays       *ResponsePlayService
+	Tags                *TagService
 }
 
 // Response is a wrapper around http.Response
@@ -107,6 +108,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.ServiceDependencies = &ServiceDependencyService{c}
 	c.Priorities = &PriorityService{c}
 	c.ResponsePlays = &ResponsePlayService{c}
+	c.Tags = &TagService{c}
 
 	return c, nil
 }
@@ -146,7 +148,6 @@ func (c *Client) newRequest(method, url string, body interface{}, options ...Req
 	if c.Config.UserAgent != "" {
 		req.Header.Add("User-Agent", c.Config.UserAgent)
 	}
-
 	return req, nil
 }
 

@@ -59,6 +59,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_business_service":       resourcePagerDutyBusinessService(),
 			"pagerduty_service_dependency":     resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":          resourcePagerDutyResponsePlay(),
+			"pagerduty_tag":                    resourcePagerDutyTag(),
 		},
 	}
 

@@ -34,6 +34,7 @@ func dataSourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) er
 		resp, _, err := client.Rulesets.List()
 		if err != nil {
 			if (isErrCode(err, 429)) {
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 			

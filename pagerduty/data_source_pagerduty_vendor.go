@@ -47,8 +47,14 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Vendors.List(o)
 		if err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			if (isErrCode(err, 429)) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
+				return resource.RetryableError(err)
+			}
+			
+			return resource.NonRetryableError(err)
 		}
 
 		var found *pagerduty.Vendor

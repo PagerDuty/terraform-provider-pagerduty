@@ -34,6 +34,8 @@ func dataSourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) er
 		resp, _, err := client.Rulesets.List()
 		if err != nil {
 			if (isErrCode(err, 429)) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}

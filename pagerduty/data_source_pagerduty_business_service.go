@@ -33,13 +33,13 @@ func dataSourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interfa
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.BusinessServices.List()
 		if err != nil {
-			if (isErrCode(err, 429)) {
+			if isErrCode(err, 429) {
 				// Delaying retry by 30s as recommended by PagerDuty
 				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
-			
+
 			return resource.NonRetryableError(err)
 		}
 
@@ -57,11 +57,11 @@ func dataSourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interfa
 				fmt.Errorf("Unable to locate any business service with the name: %s", searchName),
 			)
 		}
-	
+
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
 
 		return nil
 	})
-	
+
 }

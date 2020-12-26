@@ -57,8 +57,8 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	config := &pagerduty.Config{
+		Debug:      true, // Temporarily forcefully enabled : logging.IsDebugOrHigher(),
 		BaseURL:    apiUrl,
-		Debug:      logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
 		Token:      c.Token,
 		UserAgent:  c.UserAgent,

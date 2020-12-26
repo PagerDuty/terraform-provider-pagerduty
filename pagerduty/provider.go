@@ -52,6 +52,7 @@ func Provider() *schema.Provider {
 			"pagerduty_user_contact_method": dataSourcePagerDutyUserContactMethod(),
 			"pagerduty_team":                dataSourcePagerDutyTeam(),
 			"pagerduty_vendor":              dataSourcePagerDutyVendor(),
+			"pagerduty_vendors":             dataSourcePagerDutyVendors(),
 			"pagerduty_extension_schema":    dataSourcePagerDutyExtensionSchema(),
 			"pagerduty_service":             dataSourcePagerDutyService(),
 			"pagerduty_service_integration": dataSourcePagerDutyServiceIntegration(),
@@ -93,9 +94,7 @@ func Provider() *schema.Provider {
 	p.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
 		terraformVersion := p.TerraformVersion
 		if terraformVersion == "" {
-			// Terraform 0.12 introduced this field to the protocol
-			// We can therefore assume that if it's missing it's 0.10 or 0.11
-			terraformVersion = "0.11+compatible"
+			terraformVersion = "0.12+compatible"
 		}
 		return providerConfigure(d, terraformVersion)
 	}

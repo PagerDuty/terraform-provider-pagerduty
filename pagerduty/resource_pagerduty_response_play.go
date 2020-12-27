@@ -233,7 +233,7 @@ func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{
 
 	log.Printf("[INFO] Creating PagerDuty response play: %s", responsePlay.ID)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if responsePlay, _, err := client.ResponsePlays.Create(responsePlay); err != nil {
 			return resource.RetryableError(err)
 		} else if responsePlay != nil {
@@ -256,7 +256,7 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 	from := d.Get("from").(string)
 	log.Printf("[INFO] Reading PagerDuty response play: %s (from: %s)", d.Id(), from)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if responsePlay, _, err := client.ResponsePlays.Get(d.Id(), from); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
@@ -294,7 +294,7 @@ func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{
 
 	log.Printf("[INFO] Updating PagerDuty response play: %s", d.Id())
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.ResponsePlays.Update(d.Id(), responsePlay); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -313,7 +313,7 @@ func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{
 	log.Printf("[INFO] Deleting PagerDuty response play: %s", d.Id())
 	from := d.Get("from").(string)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if _, err := client.ResponsePlays.Delete(d.Id(), from); err != nil {
 			return resource.RetryableError(err)
 		}

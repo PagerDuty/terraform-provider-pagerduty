@@ -153,7 +153,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
 		if err != nil {
 			errResp := handleNotFoundError(err, d)
@@ -259,7 +259,7 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[INFO] Deleting PagerDuty user %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if _, err := client.Users.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)

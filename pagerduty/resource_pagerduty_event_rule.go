@@ -83,7 +83,7 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Reading PagerDuty event rule: %s", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EventRules.List()
 		if err != nil {
 			time.Sleep(2 * time.Second)

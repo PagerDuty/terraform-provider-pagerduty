@@ -47,6 +47,7 @@ func Provider() *schema.Provider {
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"pagerduty_escalation_policy":   dataSourcePagerDutyEscalationPolicy(),
+			"pagerduty_escalation_policies": dataSourcePagerDutyEscalationPolicies(),
 			"pagerduty_schedule":            dataSourcePagerDutySchedule(),
 			"pagerduty_user":                dataSourcePagerDutyUser(),
 			"pagerduty_user_contact_method": dataSourcePagerDutyUserContactMethod(),

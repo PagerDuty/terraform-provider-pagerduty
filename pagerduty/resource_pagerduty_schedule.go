@@ -215,7 +215,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{}); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
@@ -303,7 +303,7 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Updating PagerDuty schedule: %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Schedules.Update(d.Id(), schedule, opts); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -323,7 +323,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if _, err := client.Schedules.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)

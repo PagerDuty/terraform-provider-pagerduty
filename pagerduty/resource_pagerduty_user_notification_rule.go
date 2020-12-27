@@ -86,7 +86,7 @@ func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}
 	client, _ := meta.(*Config).Client()
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
 		if err != nil {
 			errResp := errCallback(err, d)

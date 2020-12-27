@@ -10,16 +10,11 @@ import (
 	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
 
-func dataSourcePagerDutyVendors() *schema.Resource {
+func dataSourcePagerDutyEscalationPolicies() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyVendorsRead,
+		Read: dataSourcePagerDutyEscalationPoliciesRead,
 
 		Schema: map[string]*schema.Schema{
-			"types": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
 			"names": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -34,14 +29,15 @@ func dataSourcePagerDutyVendors() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyVendorsRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyEscalationPoliciesRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	log.Printf("[INFO] Reading all PagerDuty vendors")
+	log.Printf("[INFO] Reading all PagerDuty escalation policies")
 
-	o := &pagerduty.ListVendorsOptions{}
+	o := &pagerduty.ListEscalationPoliciesOptions{}
+
 	return resource.Retry(1*time.Minute, func() *resource.RetryError {
-		resp, _, err := client.Vendors.List(o)
+		resp, _, err := client.EscalationPolicies.List(o)
 		if err != nil {
 			time.Sleep(15 * time.Second)
 			return resource.RetryableError(err)
@@ -49,18 +45,15 @@ func dataSourcePagerDutyVendorsRead(d *schema.ResourceData, meta interface{}) er
 
 		var ids []string
 		var names []string
-		var types []string
 
-		for _, vendor := range resp.Vendors {
-			ids = append(ids, vendor.ID)
-			names = append(names, vendor.Name)
-			types = append(types, vendor.GenericServiceType)
+		for _, ep := range resp.EscalationPolicies {
+			ids = append(ids, ep.ID)
+			names = append(names, ep.Name)
 		}
 
-		d.SetId(fmt.Sprintf("%d", len(resp.Vendors)))
+		d.SetId(fmt.Sprintf("%d", len(resp.EscalationPolicies)))
 		d.Set("ids", ids)
 		d.Set("names", names)
-		d.Set("types", types)
 
 		return nil
 	})

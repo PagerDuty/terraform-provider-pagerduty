@@ -129,7 +129,7 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 
 	o := &pagerduty.GetIntegrationOptions{}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
 		if err != nil {
 			log.Printf("[WARN] Service integration read error")

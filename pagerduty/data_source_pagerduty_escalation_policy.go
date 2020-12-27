@@ -34,7 +34,7 @@ func dataSourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interf
 		Query: searchName,
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EscalationPolicies.List(o)
 		if err != nil {
 			if isErrCode(err, 429) {

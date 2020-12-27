@@ -97,7 +97,7 @@ func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, e
 	client, _ := meta.(*Config).Client()
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetContactMethod(userID, d.Id())
 		if err != nil {
 			errResp := handleNotFoundError(err, d)

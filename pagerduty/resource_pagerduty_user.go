@@ -180,8 +180,20 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Updating PagerDuty user %s", d.Id())
 
-	if _, _, err := client.Users.Update(d.Id(), user); err != nil {
-		return err
+	// Retrying to give other resources (such as escalation policies) to delete
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, _, err := client.Users.Update(d.Id(), user); err != nil {
+			if isErrCode(err, 400) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	if d.HasChange("teams") {

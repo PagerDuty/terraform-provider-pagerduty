@@ -50,6 +50,7 @@ type RulesetRule struct {
 	Self       string            `json:"self,omitempty"`
 	CatchAll   bool              `json:"catch_all,omitempty"`
 	TimeFrame  *RuleTimeFrame    `json:"time_frame,omitempty"`
+	Variables  []*RuleVariable   `json:"variables,omitempty"`
 }
 
 // RulesetRulePayload represents a payload for ruleset rules
@@ -79,6 +80,19 @@ type ConditionParameter struct {
 type RuleTimeFrame struct {
 	ScheduledWeekly *ScheduledWeekly `json:"scheduled_weekly,omitempty"`
 	ActiveBetween   *ActiveBetween   `json:"active_between,omitempty"`
+}
+
+// RuleVariable represents a rule variable
+type RuleVariable struct {
+	Name       string                 `json:"name,omitempty"`
+	Type       string                 `json:"type,omitempty"`
+	Parameters *RuleVariableParameter `json:"parameters,omitempty"`
+}
+
+// RuleVariableParameter represents a rule variable parameter
+type RuleVariableParameter struct {
+	Value string `json:"value"`
+	Path  string `json:"path"`
 }
 
 // ScheduledWeekly represents a time_frame object for scheduling rules weekly
@@ -113,11 +127,17 @@ type RuleActions struct {
 	Route       *RuleActionParameter    `json:"route,omitempty"`
 	EventAction *RuleActionParameter    `json:"event_action,omitempty"`
 	Extractions []*RuleActionExtraction `json:"extractions,omitempty"`
+	Suspend     *RuleActionIntParameter `json:"suspend,omitempty"`
 }
 
-// RuleActionParameter represents a generic parameter object on a rule action
+// RuleActionParameter represents a string parameter object on a rule action
 type RuleActionParameter struct {
 	Value string `json:"value,omitempty"`
+}
+
+// RuleActionIntParameter represents an integer parameter object on a rule action
+type RuleActionIntParameter struct {
+	Value int `json:"value,omitempty"`
 }
 
 // RuleActionSuppress represents a rule suppress action object

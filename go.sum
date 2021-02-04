@@ -216,6 +216,16 @@ github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d h1:kJCB4vdITiW1eC1
 github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/heimweh/go-pagerduty v0.0.0-20201117215405-a6732cefadcf h1:LxqxBHxFyrzzr/5nDl0q0I5Od/QszSFdvU49G3GPU14=
 github.com/heimweh/go-pagerduty v0.0.0-20201117215405-a6732cefadcf/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20210125195440-6e5230110990 h1:aWOTDYIoL0fSCKd5mwubPSNCs1jQfGwXPLS3IPWoaVg=
+github.com/heimweh/go-pagerduty v0.0.0-20210125195440-6e5230110990/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20210126011806-89f49aa254e3 h1:AkqU0/TeF0NqFs7Sf9qFB4W3DkOZTJFNP51eGUalUiY=
+github.com/heimweh/go-pagerduty v0.0.0-20210126011806-89f49aa254e3/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20210127012110-aec93fdc3d39 h1:7m7Ob+wC7ffoom43ab55Q1aR/5y139UC/aefT44ECIU=
+github.com/heimweh/go-pagerduty v0.0.0-20210127012110-aec93fdc3d39/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20210203202421-ab3607f16263 h1:cZPBDqRL/RkavnG3S9GAuV6lyvHml+rOomvy74T9MC4=
+github.com/heimweh/go-pagerduty v0.0.0-20210203202421-ab3607f16263/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20210203225514-0acb5580da5a h1:kELGrbAnI0LCD6dB1DFtky9mkkG5AjmLtYIncOMMtxo=
+github.com/heimweh/go-pagerduty v0.0.0-20210203225514-0acb5580da5a/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=

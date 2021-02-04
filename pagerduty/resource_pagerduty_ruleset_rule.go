@@ -251,6 +251,50 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 								},
 							},
 						},
+						"suspend": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"value": {
+										Type:     schema.TypeInt,
+										Optional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"variable": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"parameters": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"value": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+									"path": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -279,7 +323,9 @@ func buildRulesetRuleStruct(d *schema.ResourceData) *pagerduty.RulesetRule {
 	if attr, ok := d.GetOk("disabled"); ok {
 		rule.Disabled = attr.(bool)
 	}
-
+	if attr, ok := d.GetOk("variable"); ok {
+		rule.Variables = expandRuleVariables(attr.([]interface{}))
+	}
 	return rule
 }
 
@@ -384,6 +430,9 @@ func expandActions(v interface{}) *pagerduty.RuleActions {
 		if am["event_actions"] != nil {
 			actions.Annotate = expandActionParameters(am["event_actions"].(interface{}))
 		}
+		if am["suspend"] != nil {
+			actions.Suspend = expandActionIntParameters(am["suspend"].(interface{}))
+		}
 	}
 	return actions
 }
@@ -428,6 +477,19 @@ func expandActionParameters(v interface{}) *pagerduty.RuleActionParameter {
 	}
 	return rap
 }
+func expandActionIntParameters(v interface{}) *pagerduty.RuleActionIntParameter {
+	var rap *pagerduty.RuleActionIntParameter
+
+	for _, pi := range v.([]interface{}) {
+		pm := pi.(map[string]interface{})
+		if pm["value"] != nil {
+			rap = &pagerduty.RuleActionIntParameter{
+				Value: pm["value"].(int),
+			}
+		}
+	}
+	return rap
+}
 
 func expandSuppress(v interface{}) *pagerduty.RuleActionSuppress {
 	var ras *pagerduty.RuleActionSuppress
@@ -457,6 +519,62 @@ func expandExtractions(v interface{}) []*pagerduty.RuleActionExtraction {
 		rae = append(rae, ext)
 	}
 	return rae
+}
+func expandRuleVariables(v interface{}) []*pagerduty.RuleVariable {
+	var ruleVariables []*pagerduty.RuleVariable
+
+	for _, er := range v.([]interface{}) {
+		rer := er.(map[string]interface{})
+
+		ruleVar := &pagerduty.RuleVariable{
+			Name:       rer["name"].(string),
+			Type:       rer["type"].(string),
+			Parameters: expandVariableParameters(rer["parameters"].(interface{})),
+		}
+
+		ruleVariables = append(ruleVariables, ruleVar)
+	}
+
+	return ruleVariables
+}
+
+func expandVariableParameters(v interface{}) *pagerduty.RuleVariableParameter {
+	var parm *pagerduty.RuleVariableParameter
+
+	for _, parms := range v.([]interface{}) {
+		pMap := parms.(map[string]interface{})
+
+		parm = &pagerduty.RuleVariableParameter{
+			Value: pMap["value"].(string),
+			Path:  pMap["path"].(string),
+		}
+	}
+	return parm
+}
+func flattenRuleVariables(v []*pagerduty.RuleVariable) []map[string]interface{} {
+	var ruleVariables []map[string]interface{}
+
+	for _, rv := range v {
+		ruleVariable := map[string]interface{}{
+			"name":       rv.Name,
+			"type":       rv.Type,
+			"parameters": flattenVariableParamters(rv.Parameters),
+		}
+
+		ruleVariables = append(ruleVariables, ruleVariable)
+	}
+
+	return ruleVariables
+}
+
+func flattenVariableParamters(p *pagerduty.RuleVariableParameter) []interface{} {
+
+	flattenedParams := map[string]interface{}{
+		"path":  p.Path,
+		"value": p.Value,
+	}
+
+	return []interface{}{flattenedParams}
 }
 
 func flattenConditions(conditions *pagerduty.RuleConditions) []map[string]interface{} {
@@ -520,6 +638,9 @@ func flattenActions(actions *pagerduty.RuleActions) []map[string]interface{} {
 	if actions.Extractions != nil {
 		am["extractions"] = flattenExtractions(actions.Extractions)
 	}
+	if actions.Suspend != nil {
+		am["suspend"] = flattenActionIntParameter(actions.Suspend)
+	}
 	actionsMap = append(actionsMap, am)
 
 	return actionsMap
@@ -536,6 +657,13 @@ func flattenSuppress(s *pagerduty.RuleActionSuppress) []interface{} {
 	return []interface{}{sup}
 }
 func flattenActionParameter(ap *pagerduty.RuleActionParameter) []interface{} {
+
+	param := map[string]interface{}{
+		"value": ap.Value,
+	}
+	return []interface{}{param}
+}
+func flattenActionIntParameter(ap *pagerduty.RuleActionIntParameter) []interface{} {
 
 	param := map[string]interface{}{
 		"value": ap.Value,
@@ -605,6 +733,11 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 			return resource.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
+			if rule.Position != d.Get("position").(int) {
+				if err := resourcePagerDutyRulesetRuleUpdate(d, meta); err != nil {
+					return resource.NonRetryableError(err)
+				}
+			}
 		}
 		return nil
 	})
@@ -635,6 +768,9 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 			if rule.TimeFrame != nil {
 				d.Set("time_frame", flattenTimeFrame(rule.TimeFrame))
 			}
+			if rule.Variables != nil {
+				d.Set("variable", flattenRuleVariables(rule.Variables))
+			}
 			d.Set("position", rule.Position)
 			d.Set("disabled", rule.Disabled)
 			d.Set("ruleset", rulesetID)
@@ -652,8 +788,11 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 	rulesetID := d.Get("ruleset").(string)
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if _, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
+		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
 			return resource.RetryableError(err)
+		} else if updatedRule.Position != rule.Position {
+			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, updatedRule.Position, rule.Position)
+			return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, updatedRule.Position, rule.Position))
 		}
 		return nil
 	})

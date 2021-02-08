@@ -109,6 +109,7 @@ The following arguments are supported:
 	* `threshold_time_unit` - The `minutes`,`hours`, or `days` that the `threshold_time_amount` should be measured. 
 * `event_action` (Optional) - An object with a single `value` field. The value sets whether the resulting alert status is `trigger` or `resolve`.
 * `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering.
+
 ### Time Frame (`time_frame`) supports the following:
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.
 	* `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.

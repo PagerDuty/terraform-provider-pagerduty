@@ -75,7 +75,7 @@ The following arguments are supported:
 
 * `service` - (Required) The ID of the service that the rule belongs to.
 * `conditions` - (Required) Conditions evaluated to check if an event matches this event rule.
-* `position` - (Optional) Position/index of the rule within the service .
+* `position` - (Optional) Position/index of the rule within the service.
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
 * `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules). 
 * `actions` - (Optional) Actions to apply to an event if the conditions match.

@@ -1,10 +1,10 @@
-## 1.9.0 (February 8, 2021)
+## 1.9.1 (February 8, 2021)
 FEATURES:
 * `resource/pagerduty_service_event_rule`: Add service event rule resource ([#296](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/296))
 
 IMPROVEMENTS:
 * `resource/resource_pagerduty_user`: Add retry logic to user update error ([#286](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/286))
-* `data_source_pagerduty_busines_service, data_source_pagerduty_escalation_policy, data_source_pagerduty_extension_schema, data_source_pagerduty_priority, data_source_pagerduty_ruleset, data_source_pagerduty_schedule, data_source_pagerduty_service, data_source_pagerduty_team, data_source_pagerduty_user, data_source_pagerduty_vendor`: Add retry logic on error ([#287](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/287))
+* `data_source_pagerduty_busines_service`, `data_source_pagerduty_escalation_policy`, `data_source_pagerduty_extension_schema`, `data_source_pagerduty_priority`, `data_source_pagerduty_ruleset`, `data_source_pagerduty_schedule`, `data_source_pagerduty_service`, `data_source_pagerduty_team`, `data_source_pagerduty_user`, `data_source_pagerduty_vendor`: Add retry logic on error ([#287](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/287))
 * `resource/pagerduty_ruleset_rule`: Add `suspend` and `variables` fields ([#296](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/296))
 
 BUG FIXES:

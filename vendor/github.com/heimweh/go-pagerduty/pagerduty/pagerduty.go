@@ -146,7 +146,6 @@ func (c *Client) newRequest(method, url string, body interface{}, options ...Req
 	if c.Config.UserAgent != "" {
 		req.Header.Add("User-Agent", c.Config.UserAgent)
 	}
-
 	return req, nil
 }
 

@@ -308,9 +308,10 @@ func buildServiceEventRuleStruct(d *schema.ResourceData) *pagerduty.ServiceEvent
 	if attr, ok := d.GetOk("variable"); ok {
 		rule.Variables = expandRuleVariables(attr.([]interface{}))
 	}
-	if attr, ok := d.GetOk("position"); ok {
-		rule.Position = attr.(int)
-	}
+
+	pos := d.Get("position").(int)
+	rule.Position = &pos
+
 	if attr, ok := d.GetOk("disabled"); ok {
 		rule.Disabled = attr.(bool)
 	}
@@ -329,7 +330,9 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 			return resource.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
-			if rule.Position != d.Get("position").(int) {
+			// Verifying the position that was defined in terraform is the same position set in PagerDuty
+			pos := d.Get("position").(int)
+			if *rule.Position != pos {
 				if err := resourcePagerDutyServiceEventRuleUpdate(d, meta); err != nil {
 					return resource.NonRetryableError(err)
 				}
@@ -386,10 +389,11 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if updatedRule, _, err := client.Services.UpdateEventRule(serviceID, d.Id(), rule); err != nil {
 			return resource.RetryableError(err)
-		} else if updatedRule.Position != rule.Position {
-			log.Printf("[INFO] Service Event Rule %s position %d needs to be %d", updatedRule.ID, updatedRule.Position, rule.Position)
-			return resource.RetryableError(fmt.Errorf("Error updating service event rule %s position %d needs to be %d", updatedRule.ID, updatedRule.Position, rule.Position))
+		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
+			log.Printf("[INFO] Service Event Rule %s position %v needs to be %v", updatedRule.ID, *updatedRule.Position, *rule.Position)
+			return resource.RetryableError(fmt.Errorf("Error updating service event rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}
+
 		return nil
 	})
 	if retryErr != nil {

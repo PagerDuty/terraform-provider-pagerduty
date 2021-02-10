@@ -89,11 +89,11 @@ type Service struct {
 type ServiceEventRule struct {
 	ID         string            `json:"id,omitempty"`
 	Self       string            `json:"self,omitempty"`
-	Disabled   bool              `json:"disabled,omitempty"`
+	Disabled   bool              `json:"disabled"`
 	Conditions *RuleConditions   `json:"conditions,omitempty"`
 	TimeFrame  *RuleTimeFrame    `json:"time_frame,omitempty"`
 	Variables  []*RuleVariable   `json:"variables,omitempty"`
-	Position   int               `json:"position,omitempty"`
+	Position   *int              `json:"position,omitempty"`
 	Actions    *RuleActions      `json:"actions,omitempty"`
 	Service    *ServiceReference `json:"service_id,omitempty"`
 }

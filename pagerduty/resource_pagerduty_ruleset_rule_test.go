@@ -76,6 +76,7 @@ func TestAccPagerDutyRulesetRule_MultipleRules(t *testing.T) {
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	rule1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	rule2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	rule3 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -83,7 +84,7 @@ func TestAccPagerDutyRulesetRule_MultipleRules(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyRulesetRuleDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyRulesetRuleConfigMultipleRules(team, ruleset, rule1, rule2),
+				Config: testAccCheckPagerDutyRulesetRuleConfigMultipleRules(team, ruleset, rule1, rule2, rule3),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.foo"),
 					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.bar"),
@@ -91,6 +92,8 @@ func TestAccPagerDutyRulesetRule_MultipleRules(t *testing.T) {
 						"pagerduty_ruleset_rule.foo", "position", "0"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.bar", "position", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.baz", "position", "2"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "disabled", "false"),
 					resource.TestCheckResourceAttr(
@@ -107,6 +110,8 @@ func TestAccPagerDutyRulesetRule_MultipleRules(t *testing.T) {
 						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", rule1),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.bar", "actions.0.annotate.0.value", rule2),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.baz", "actions.0.annotate.0.value", rule3),
 				),
 			},
 		},
@@ -283,7 +288,7 @@ resource "pagerduty_ruleset_rule" "foo" {
 `, team, ruleset, rule)
 }
 
-func testAccCheckPagerDutyRulesetRuleConfigMultipleRules(team, ruleset, rule1, rule2 string) string {
+func testAccCheckPagerDutyRulesetRuleConfigMultipleRules(team, ruleset, rule1, rule2, rule3 string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_team" "foo" {
 	name = "%s"
@@ -355,5 +360,25 @@ resource "pagerduty_ruleset_rule" "bar" {
 		}
 	}
 }
-`, team, ruleset, rule1, rule2)
+resource "pagerduty_ruleset_rule" "baz" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 2
+	disabled = true
+	conditions {
+		operator = "and"
+		subconditions {
+			operator = "contains"
+			parameter {
+				value = "slow database connection"
+				path = "summary"
+			}
+		}
+	}
+	actions {
+		annotate {
+			value = "%s"
+		}
+	}
+}
+`, team, ruleset, rule1, rule2, rule3)
 }

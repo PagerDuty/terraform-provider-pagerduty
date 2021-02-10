@@ -1,3 +1,7 @@
+## 1.9.2 (February 10, 2021)
+BUG FIXES: 
+* `resource/pagerduty_service_event_rule`,`resource/pagerduty_ruleset_rule`: Fixed Bug with Event Rule Positioning ([#301](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/301))
+
 ## 1.9.1 (February 8, 2021)
 FEATURES:
 * `resource/pagerduty_service_event_rule`: Add service event rule resource ([#296](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/296))

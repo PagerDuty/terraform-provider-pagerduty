@@ -78,6 +78,7 @@ func TestAccPagerDutyServiceEventRule_MultipleRules(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	rule1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	rule2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	rule3 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -85,7 +86,7 @@ func TestAccPagerDutyServiceEventRule_MultipleRules(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyServiceEventRuleDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyServiceEventRuleConfigMultipleRules(username, email, escalationPolicy, service, rule1, rule2),
+				Config: testAccCheckPagerDutyServiceEventRuleConfigMultipleRules(username, email, escalationPolicy, service, rule1, rule2, rule3),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyServiceEventRuleExists("pagerduty_service_event_rule.foo"),
 					testAccCheckPagerDutyServiceEventRuleExists("pagerduty_service_event_rule.bar"),
@@ -93,6 +94,8 @@ func TestAccPagerDutyServiceEventRule_MultipleRules(t *testing.T) {
 						"pagerduty_service_event_rule.foo", "position", "0"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_event_rule.bar", "position", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_event_rule.baz", "position", "2"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_event_rule.foo", "disabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -109,6 +112,8 @@ func TestAccPagerDutyServiceEventRule_MultipleRules(t *testing.T) {
 						"pagerduty_service_event_rule.foo", "actions.0.annotate.0.value", rule1),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_event_rule.bar", "actions.0.annotate.0.value", rule2),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_event_rule.baz", "actions.0.annotate.0.value", rule3),
 				),
 			},
 		},
@@ -290,7 +295,7 @@ resource "pagerduty_service_event_rule" "foo" {
 `, username, email, escalationPolicy, service, ruleUpdated)
 }
 
-func testAccCheckPagerDutyServiceEventRuleConfigMultipleRules(username, email, escalationPolicy, service, rule1, rule2 string) string {
+func testAccCheckPagerDutyServiceEventRuleConfigMultipleRules(username, email, escalationPolicy, service, rule1, rule2, rule3 string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
 	name        = "%s"
@@ -325,7 +330,6 @@ resource "pagerduty_service" "foo" {
 
 resource "pagerduty_service_event_rule" "foo" {
 	service = pagerduty_service.foo.id
-	position = 0
 	disabled = true
 	conditions {
 		operator = "and"
@@ -369,5 +373,25 @@ resource "pagerduty_service_event_rule" "bar" {
 		}
 	}
 }
-`, username, email, escalationPolicy, service, rule1, rule2)
+resource "pagerduty_service_event_rule" "baz" {
+	service = pagerduty_service.foo.id
+	position = 2
+	disabled = true
+	conditions {
+		operator = "and"
+		subconditions {
+			operator = "contains"
+			parameter {
+				value = "slow ping"
+				path = "summary"
+			}
+		}
+	}
+	actions {
+		annotate {
+			value = "%s"
+		}
+	}
+}
+`, username, email, escalationPolicy, service, rule1, rule2, rule3)
 }

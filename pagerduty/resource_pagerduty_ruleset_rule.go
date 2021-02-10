@@ -317,9 +317,10 @@ func buildRulesetRuleStruct(d *schema.ResourceData) *pagerduty.RulesetRule {
 	if attr, ok := d.GetOk("time_frame"); ok {
 		rule.TimeFrame = expandTimeFrame(attr.([]interface{}))
 	}
-	if attr, ok := d.GetOk("position"); ok {
-		rule.Position = attr.(int)
-	}
+
+	pos := d.Get("position").(int)
+	rule.Position = &pos
+
 	if attr, ok := d.GetOk("disabled"); ok {
 		rule.Disabled = attr.(bool)
 	}
@@ -733,7 +734,9 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 			return resource.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
-			if rule.Position != d.Get("position").(int) {
+			// Verifying the position that was defined in terraform is the same position set in PagerDuty
+			pos := d.Get("position").(int)
+			if *rule.Position != pos {
 				if err := resourcePagerDutyRulesetRuleUpdate(d, meta); err != nil {
 					return resource.NonRetryableError(err)
 				}
@@ -790,9 +793,9 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
 			return resource.RetryableError(err)
-		} else if updatedRule.Position != rule.Position {
-			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, updatedRule.Position, rule.Position)
-			return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, updatedRule.Position, rule.Position))
+		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
+			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position)
+			return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}
 		return nil
 	})

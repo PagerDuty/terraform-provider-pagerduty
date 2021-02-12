@@ -191,6 +191,9 @@ resource "pagerduty_ruleset_rule" "foo" {
 		annotate {
 			value = "%s"
 		}
+		suppress {
+			value = true
+		}
 		extractions {
 			target = "dedup_key"
 			source = "details.host"
@@ -261,6 +264,9 @@ resource "pagerduty_ruleset_rule" "foo" {
 		}
 		annotate {
 			value = "%s"
+		}
+		suppress {
+			value = false
 		}
 		extractions {
 			target = "dedup_key"

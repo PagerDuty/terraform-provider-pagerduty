@@ -92,7 +92,7 @@ func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return resource.RetryableError(fmt.Errorf("error while reading notification rule %s: %w", d.Id(), err))
 			}
 
 			return nil
@@ -118,7 +118,7 @@ func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta in
 
 	resp, _, err := client.Users.CreateNotificationRule(userID, notificationRule)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while creating notification rule %s: %w", notificationRule.ID, err)
 	}
 
 	d.SetId(resp.ID)
@@ -143,7 +143,7 @@ func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta in
 	userID := d.Get("user_id").(string)
 
 	if _, _, err := client.Users.UpdateNotificationRule(userID, d.Id(), notificationRule); err != nil {
-		return err
+		return fmt.Errorf("error while updating notification rule %s: %w", d.Id(), err)
 	}
 
 	return resourcePagerDutyUserNotificationRuleRead(d, meta)

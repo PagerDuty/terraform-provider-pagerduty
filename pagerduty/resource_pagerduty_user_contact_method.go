@@ -103,7 +103,7 @@ func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, e
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return resource.RetryableError(fmt.Errorf("error while reading contact method %s: %w", d.Id(), err))
 			}
 
 			return nil
@@ -130,7 +130,7 @@ func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta inter
 
 	resp, _, err := client.Users.CreateContactMethod(userID, contactMethod)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while creating contact method %s: %w", contactMethod.ID, err)
 	}
 
 	d.SetId(resp.ID)
@@ -152,7 +152,7 @@ func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta inter
 	userID := d.Get("user_id").(string)
 
 	if _, _, err := client.Users.UpdateContactMethod(userID, d.Id(), contactMethod); err != nil {
-		return err
+		return fmt.Errorf("error while updating contact method %s: %w", contactMethod.ID, err)
 	}
 
 	return resourcePagerDutyUserContactMethodRead(d, meta)

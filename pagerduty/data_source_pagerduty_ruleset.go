@@ -60,6 +60,7 @@ func dataSourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) er
 
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
+		d.Set("routing_keys", found.RoutingKeys)
 
 		return nil
 	})

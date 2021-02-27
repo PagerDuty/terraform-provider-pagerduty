@@ -1,3 +1,10 @@
+## 1.9.4 (February 26, 2021)
+BUG FIXES:
+* `resource/pagerduty_team_membership`: Fixed issue with importing team members to teams with more than 100 users ([#305](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/305))
+
+IMPROVEMENTS:
+* `data_source_pagerduty_ruleset`: Added `routing_keys` field to the `ruleset` object ([#305](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/305))
+
 ## 1.9.3 (February 11, 2021)
 BUG FIXES: 
 * `resource/pagerduty_service_event_rule`,`resource/pagerduty_ruleset_rule`: Fixed Bug with Event Rule Suppress Action ([#302](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/302))

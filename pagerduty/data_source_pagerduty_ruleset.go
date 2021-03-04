@@ -19,6 +19,13 @@ func dataSourcePagerDutyRuleset() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"routing_keys": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }

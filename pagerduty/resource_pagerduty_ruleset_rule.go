@@ -248,6 +248,10 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
+									"template": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
 								},
 							},
 						},
@@ -513,9 +517,10 @@ func expandExtractions(v interface{}) []*pagerduty.RuleActionExtraction {
 	for _, eai := range v.([]interface{}) {
 		ea := eai.(map[string]interface{})
 		ext := &pagerduty.RuleActionExtraction{
-			Target: ea["target"].(string),
-			Source: ea["source"].(string),
-			Regex:  ea["regex"].(string),
+			Target:   ea["target"].(string),
+			Source:   ea["source"].(string),
+			Regex:    ea["regex"].(string),
+			Template: ea["template"].(string),
 		}
 		rae = append(rae, ext)
 	}
@@ -677,9 +682,10 @@ func flattenExtractions(rae []*pagerduty.RuleActionExtraction) []interface{} {
 
 	for _, ex := range rae {
 		flatExtract := map[string]interface{}{
-			"target": ex.Target,
-			"source": ex.Source,
-			"regex":  ex.Regex,
+			"target":   ex.Target,
+			"source":   ex.Source,
+			"regex":    ex.Regex,
+			"template": ex.Template,
 		}
 		flatExtractList = append(flatExtractList, flatExtract)
 	}

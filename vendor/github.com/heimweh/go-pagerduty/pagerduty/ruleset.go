@@ -150,9 +150,10 @@ type RuleActionSuppress struct {
 
 // RuleActionExtraction represents a rule extraction action object
 type RuleActionExtraction struct {
-	Target string `json:"target,omitempty"`
-	Source string `json:"source,omitempty"`
-	Regex  string `json:"regex,omitempty"`
+	Target   string `json:"target,omitempty"`
+	Source   string `json:"source,omitempty"`
+	Regex    string `json:"regex,omitempty"`
+	Template string `json:"template,omitempty"`
 }
 
 // List lists existing rulesets.

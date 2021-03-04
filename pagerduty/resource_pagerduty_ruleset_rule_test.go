@@ -43,6 +43,8 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.value", "disk space"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", rule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "actions.0.extractions.1.template", "{{VAR1}} | {{VAR2}}"),
 				),
 			},
 			{
@@ -198,6 +200,10 @@ resource "pagerduty_ruleset_rule" "foo" {
 			target = "dedup_key"
 			source = "details.host"
 			regex = "(.*)"
+		}
+		extractions {
+			target   = "summary"
+			template = "{{VAR1}} | {{VAR2}}"
 		}
 	}
 	variable {

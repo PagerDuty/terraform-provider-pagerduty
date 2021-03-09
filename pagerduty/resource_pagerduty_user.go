@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -23,6 +24,13 @@ func resourcePagerDutyUser() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				// Suppress the diff shown if there are leading or trailing spaces
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if old == strings.TrimSpace(new) {
+						return true
+					}
+					return false
+				},
 			},
 
 			"email": {
@@ -90,7 +98,7 @@ func resourcePagerDutyUser() *schema.Resource {
 
 func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	user := &pagerduty.User{
-		Name:  d.Get("name").(string),
+		Name:  strings.TrimSpace(d.Get("name").(string)),
 		Email: d.Get("email").(string),
 	}
 
@@ -113,7 +121,7 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	if attr, ok := d.GetOk("description"); ok {
 		user.Description = attr.(string)
 	}
-
+	log.Printf("[DEBUG] buildUserStruct-- d: .%v. user:%v.", d.Get("name").(string), user.Name)
 	return user
 }
 
@@ -137,7 +145,7 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	log.Printf("[INFO] Reading PagerDuty user %s", d.Id())
+	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
@@ -150,7 +158,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 
 			return nil
 		}
-
+		// Trimming whitespace on names in case of mistyped spaces
 		d.Set("name", user.Name)
 		d.Set("email", user.Email)
 		d.Set("time_zone", user.TimeZone)

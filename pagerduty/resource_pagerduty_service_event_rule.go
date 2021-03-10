@@ -236,6 +236,10 @@ func resourcePagerDutyServiceEventRule() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
+									"template": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
 								},
 							},
 						},

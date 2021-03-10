@@ -43,6 +43,8 @@ func TestAccPagerDutyServiceEventRule_Basic(t *testing.T) {
 						"pagerduty_service_event_rule.foo", "conditions.0.subconditions.0.parameter.0.value", "disk space"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_event_rule.foo", "actions.0.annotate.0.value", rule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_event_rule.foo", "actions.0.extractions.1.template", "Overriding Summary"),
 				),
 			},
 			{
@@ -216,6 +218,10 @@ resource "pagerduty_service_event_rule" "foo" {
 			target = "dedup_key"
 			source = "source"
 			regex = "(.*)"
+		}
+		extractions {
+			target   = "summary"
+			template = "Overriding Summary"
 		}
 	}
 }

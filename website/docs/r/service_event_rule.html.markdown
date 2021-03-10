@@ -35,6 +35,14 @@ resource "pagerduty_service_event_rule" "foo" {
 			}
 		}
 	}
+	variable {
+		type = "regex"
+		name = "Src"
+		parameters {
+			value = "(.*)"
+			path = "source"
+		}
+	}
 	actions {
 		annotate {
 			value = "From Terraform"
@@ -43,6 +51,10 @@ resource "pagerduty_service_event_rule" "foo" {
 			target = "dedup_key"
 			source = "source"
 			regex = "(.*)"
+		}
+		extractions {
+			target = "summary"
+			template = "Warning: Disk Space Low on {{Src}}"
 		}
 	}
 }
@@ -93,11 +105,17 @@ The following arguments are supported:
 * `priority` (Optional) - The ID of the priority applied to the event.
 * `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
-* `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction rules must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax). Extraction objects consist of the following fields:
-	* `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field
-	* `target` - Field where the data is being copied to. must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field
-	* `regex` - The conditions that need to be met for the extraction to happen.
-	* *NOTE: A rule can have multiple `extraction` objects attributed to it.*
+* `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction objects may use *either* of the following field structures:
+	* `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+	* `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
+
+	*- **OR** -*  
+	
+	* `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
+	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+
+	*NOTE: A rule can have multiple `extraction` objects attributed to it.*
 
 * `suppress` (Optional) - Controls whether an alert is [suppressed](https://support.pagerduty.com/docs/rulesets#section-suppress-but-create-triggering-thresholds-with-event-rules) (does not create an incident).
 	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.

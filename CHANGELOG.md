@@ -1,4 +1,4 @@
-## 1.9.5 (unreleased)
+## 1.9.5 (March 11, 2021)
 BUG FIXES:
 * `data_source_pagerduty_ruleset`: Fixed bug by adding `routing_keys` to data source schema ([#312](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/312))
 

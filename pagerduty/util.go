@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -40,6 +41,20 @@ func suppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) boo
 		return false
 	}
 	return oldT.Equal(newT)
+}
+
+func suppressLeadTrailSpaceDiff(k, old, new string, d *schema.ResourceData) bool {
+	if old == strings.TrimSpace(new) {
+		return true
+	}
+	return false
+}
+
+func suppressCaseDiff(k, old, new string, d *schema.ResourceData) bool {
+	if old == strings.ToLower(new) {
+		return true
+	}
+	return false
 }
 
 // Validate a value against a set of possible values

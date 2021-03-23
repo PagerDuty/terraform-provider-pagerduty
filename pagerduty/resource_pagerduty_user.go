@@ -29,8 +29,8 @@ func resourcePagerDutyUser() *schema.Resource {
 			},
 
 			"email": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
 				DiffSuppressFunc: suppressCaseDiff,
 			},
 

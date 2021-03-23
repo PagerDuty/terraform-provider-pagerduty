@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )

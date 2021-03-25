@@ -19,7 +19,7 @@ resource "pagerduty_team" "foo" {
 
 resource "pagerduty_ruleset" "foo" {
   name = "Primary Ruleset"
-  team { 
+  team {
     id = pagerduty_team.foo.id
   }
 }
@@ -91,13 +91,13 @@ The following arguments are supported:
 * `conditions` - (Required) Conditions evaluated to check if an event matches this event rule. Is always empty for the catch all rule, though.
 * `position` - (Optional) Position/index of the rule within the ruleset.
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
-* `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules). 
+* `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules).
 * `actions` - (Optional) Actions to apply to an event if the conditions match.
 * `variable` - (Optional) Populate variables from event payloads and use those variables in other event actions. *NOTE: A rule can have multiple `variable` objects.*
 
 ### Conditions (`conditions`) supports the following:
 * `operator` - Operator to combine sub-conditions. Can be `and` or `or`.
-* `subconditions` - List of sub-conditions that define the the condition. 
+* `subconditions` - List of sub-conditions that define the the condition.
 
 ### Sub-Conditions (`subconditions`) supports the following:
 * `operator` - Type of operator to apply to the sub-condition. Can be `exists`,`nexists`,`equals`,`nequals`,`contains`,`ncontains`,`matches`, or `nmatches`.
@@ -111,22 +111,22 @@ The following arguments are supported:
 * `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction objects may use *either* of the following field structures:
 	* `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
-	* `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax). 
+	* `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
 
-	*- **OR** -*  
-	
+	*- **OR** -*
+
 	* `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
 	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 
 	*NOTE: A rule can have multiple `extraction` objects attributed to it.*
 
-* `suppress` (Optional) - Controls whether an alert is [suppressed](https://support.pagerduty.com/docs/rulesets#section-suppress-but-create-triggering-thresholds-with-event-rules) (does not create an incident).
+* `suppress` (Optional) - Controls whether an alert is [suppressed](https://support.pagerduty.com/docs/rulesets#section-suppress-but-create-triggering-thresholds-with-event-rules) (does not create an incident). Note: If a threshold is set, the rule must also have a `route` action.
 	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
-	* `threshold_value` - The number of alerts that should be suppressed.
-	* `threshold_time_amount` - The number value of the `threshold_time_unit` before an incident is created.
-	* `threshold_time_unit` - The `minutes`,`hours`, or `days` that the `threshold_time_amount` should be measured. 
+	* `threshold_value` (Optional) - The number of alerts that should be suppressed. Must be greater than 0.
+	* `threshold_time_amount` (Optional) - The number value of the `threshold_time_unit` before an incident is created. Must be greater than 0.
+	* `threshold_time_unit` (Optional)  - The `minutes`,`hours`, or `days` that the `threshold_time_amount` should be measured.
 * `event_action` (Optional) - An object with a single `value` field. The value sets whether the resulting alert status is `trigger` or `resolve`.
-* `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering.
+* `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering. Note: A rule with a `suspend` action must also have a `route` action.
 
 ### Time Frame (`time_frame`) supports the following:
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.

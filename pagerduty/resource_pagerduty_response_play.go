@@ -65,7 +65,7 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 			},
 			"responder": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {

@@ -25,17 +25,13 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				// Suppress the diff shown if there are leading or trailing spaces
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					if old == strings.TrimSpace(new) {
-						return true
-					}
-					return false
-				},
+				DiffSuppressFunc: suppressLeadTrailSpaceDiff,
 			},
 
 			"email": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: suppressCaseDiff,
 			},
 
 			"color": {

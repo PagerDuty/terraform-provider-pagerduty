@@ -54,6 +54,7 @@ func testSweepUser(region string) error {
 
 func TestAccPagerDutyUser_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	usernameSpaces := " " + username + " "
 	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@Foo.com", username)
 	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
@@ -64,7 +65,7 @@ func TestAccPagerDutyUser_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyUserConfig(username, email),
+				Config: testAccCheckPagerDutyUserConfig(usernameSpaces, email),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyUserExists("pagerduty_user.foo"),
 					resource.TestCheckResourceAttr(

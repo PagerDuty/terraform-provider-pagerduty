@@ -44,17 +44,11 @@ func suppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) boo
 }
 
 func suppressLeadTrailSpaceDiff(k, old, new string, d *schema.ResourceData) bool {
-	if old == strings.TrimSpace(new) {
-		return true
-	}
-	return false
+	return old == strings.TrimSpace(new)
 }
 
 func suppressCaseDiff(k, old, new string, d *schema.ResourceData) bool {
-	if old == strings.ToLower(new) {
-		return true
-	}
-	return false
+	return old == strings.ToLower(new)
 }
 
 // Validate a value against a set of possible values

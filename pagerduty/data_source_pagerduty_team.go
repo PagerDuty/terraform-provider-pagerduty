@@ -25,7 +25,7 @@ func dataSourcePagerDutyTeam() *schema.Resource {
 				Computed: true,
 			},
 			"parent": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 		},

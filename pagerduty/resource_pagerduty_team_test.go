@@ -108,7 +108,7 @@ func TestAccPagerDutyTeam_Parent(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"pagerduty_team.foo", "html_url"),
 					resource.TestCheckResourceAttrSet(
-						"pagerduty_team.foo", "parent"),			
+						"pagerduty_team.foo", "parent"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_team.parent", "name", parent),
 				),
@@ -162,7 +162,7 @@ resource "pagerduty_team" "foo" {
 }
 
 func testAccCheckPagerDutyTeamWithParentConfig(team, parent string) string {
-		return fmt.Sprintf(`
+	return fmt.Sprintf(`
 resource "pagerduty_team" "parent" {
 	name        = "%s"
 	description = "parent"

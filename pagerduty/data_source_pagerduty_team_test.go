@@ -11,6 +11,7 @@ import (
 
 func TestAccDataSourcePagerDutyTeam_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	parent := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	description := "team description"
 
 	resource.Test(t, resource.TestCase{
@@ -18,7 +19,7 @@ func TestAccDataSourcePagerDutyTeam_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyTeamConfig(name, description),
+				Config: testAccDataSourcePagerDutyTeamConfig(name, parent, description),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyTeam("pagerduty_team.test", "data.pagerduty_team.by_name"),
 				),
@@ -40,7 +41,7 @@ func testAccDataSourcePagerDutyTeam(src, n string) resource.TestCheckFunc {
 			return fmt.Errorf("Expected to get a user ID from PagerDuty")
 		}
 
-		testAtts := []string{"id", "name", "description"}
+		testAtts := []string{"id", "name", "description", "parent"}
 
 		for _, att := range testAtts {
 			if a[att] != srcA[att] {
@@ -52,8 +53,13 @@ func testAccDataSourcePagerDutyTeam(src, n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyTeamConfig(name, description string) string {
+func testAccDataSourcePagerDutyTeamConfig(name, parent, description string) string {
 	return fmt.Sprintf(`
+resource "pagerduty_team" "parent" {
+  name        = "%s"
+  description = "parent team"
+}
+
 resource "pagerduty_team" "test" {
   name        = "%s"
   description = "%s"
@@ -62,5 +68,5 @@ resource "pagerduty_team" "test" {
 data "pagerduty_team" "by_name" {
 	name = pagerduty_team.test.name
 }
-`, name, description)
+`, parent, name, description)
 }

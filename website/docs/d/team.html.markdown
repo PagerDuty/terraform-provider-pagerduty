@@ -48,5 +48,6 @@ The following arguments are supported:
 * `id` - The ID of the found team.
 * `name` - The name of the found team.
 * `description` - A description of the found team.
+* `parent` - ID of the parent team. This is available to accounts with the Team Hierarchy feature enabled. Please contact your account manager for more information.
 
 [1]: https://v1.developer.pagerduty.com/documentation/rest/teams/list

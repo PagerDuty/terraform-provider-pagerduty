@@ -143,6 +143,14 @@ IMPROVEMENTS:
 FEATURES:
 * `resource/pagerduty_team`: Added `parent` field to resource to support team hierarchy ([#319](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/319))
 
+
+## 1.9.5 (March 11, 2021) (fork: 1.1.5; April 2, 2021)
+IMPROVEMENTS:
+* Bump Go to 1.16.2
+* Update `go-pagerduty` to keep dependencies in `go.mod`
+* Add support for `darwin/arm64` builds for those shiny new M1 Macs
+
+
 ## 1.9.5 (March 11, 2021) (fork: 1.1.4; April 2, 2021)
 BUG FIXES:
 * `data_source_pagerduty_ruleset`: Fixed bug by adding `routing_keys` to data source schema ([#312](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/312))

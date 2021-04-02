@@ -57,18 +57,24 @@ func resourcePagerDutySchedule() *schema.Resource {
 						},
 
 						"start": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"end": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"rotation_virtual_start": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"rotation_turn_length_seconds": {

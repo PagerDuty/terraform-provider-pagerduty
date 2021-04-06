@@ -57,18 +57,24 @@ func resourcePagerDutySchedule() *schema.Resource {
 						},
 
 						"start": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"end": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"rotation_virtual_start": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"rotation_turn_length_seconds": {
@@ -176,18 +182,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 			d.Set("name", schedule.Name)
 			d.Set("time_zone", schedule.TimeZone)
 			d.Set("description", schedule.Description)
-			// Here we override whatever `start` value we get back from the API
-			// and use what's in the configuration. This is to prevent a diff issue
-			// because we always get back a new `start` value from the PagerDuty API.
-			for _, sl := range schedule.ScheduleLayers {
-				for _, rsl := range d.Get("layer").([]interface{}) {
-					ssl := rsl.(map[string]interface{})
 
-					if sl.ID == ssl["id"].(string) {
-						sl.Start = ssl["start"].(string)
-					}
-				}
-			}
 			layers, err := flattenScheduleLayers(schedule.ScheduleLayers)
 			if err != nil {
 				return resource.NonRetryableError(err)

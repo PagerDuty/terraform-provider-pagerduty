@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -26,6 +28,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			"service": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"type": {
 				Type:          schema.TypeString,
@@ -443,12 +446,23 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 
 	service := d.Get("service").(string)
 
-	serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration)
-	if err != nil {
-		return err
-	}
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
+			if isErrCode(err, 400) {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(err)
+			}
 
-	d.SetId(serviceIntegration.ID)
+			return resource.NonRetryableError(err)
+		} else if serviceIntegration != nil {
+			d.SetId(serviceIntegration.ID)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return retryErr
+	}
 
 	return resourcePagerDutyServiceIntegrationRead(d, meta)
 }
@@ -462,80 +476,89 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 
 	o := &pagerduty.GetIntegrationOptions{}
 
-	serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
+		if err != nil {
+			log.Printf("[WARN] Service integration read error")
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	if err := d.Set("name", serviceIntegration.Name); err != nil {
-		return err
-	}
+			return nil
+		}
 
-	if err := d.Set("type", serviceIntegration.Type); err != nil {
-		return err
-	}
-
-	if serviceIntegration.Service != nil {
-		if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
+		if err := d.Set("name", serviceIntegration.Name); err != nil {
 			return err
 		}
-	}
 
-	if serviceIntegration.Vendor != nil {
-		if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
+		if err := d.Set("type", serviceIntegration.Type); err != nil {
 			return err
 		}
-	}
 
-	if serviceIntegration.IntegrationKey != "" {
-		if err := d.Set("integration_key", serviceIntegration.IntegrationKey); err != nil {
-			return err
+		if serviceIntegration.Service != nil {
+			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
+				return err
+			}
 		}
-	}
 
-	if serviceIntegration.IntegrationEmail != "" {
-		if err := d.Set("integration_email", serviceIntegration.IntegrationEmail); err != nil {
-			return err
+		if serviceIntegration.Vendor != nil {
+			if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
+				return err
+			}
 		}
-	}
 
-	if serviceIntegration.EmailIncidentCreation != "" {
-		if err := d.Set("email_incident_creation", serviceIntegration.EmailIncidentCreation); err != nil {
-			return err
+		if serviceIntegration.IntegrationKey != "" {
+			if err := d.Set("integration_key", serviceIntegration.IntegrationKey); err != nil {
+				return err
+			}
 		}
-	}
 
-	if serviceIntegration.EmailFilterMode != "" {
-		if err := d.Set("email_filter_mode", serviceIntegration.EmailFilterMode); err != nil {
-			return err
+		if serviceIntegration.IntegrationEmail != "" {
+			if err := d.Set("integration_email", serviceIntegration.IntegrationEmail); err != nil {
+				return err
+			}
 		}
-	}
 
-	if serviceIntegration.EmailParsingFallback != "" {
-		if err := d.Set("email_parsing_fallback", serviceIntegration.EmailParsingFallback); err != nil {
-			return err
+		if serviceIntegration.EmailIncidentCreation != "" {
+			if err := d.Set("email_incident_creation", serviceIntegration.EmailIncidentCreation); err != nil {
+				return err
+			}
 		}
-	}
 
-	if serviceIntegration.HTMLURL != "" {
-		if err := d.Set("html_url", serviceIntegration.HTMLURL); err != nil {
-			return err
+		if serviceIntegration.EmailFilterMode != "" {
+			if err := d.Set("email_filter_mode", serviceIntegration.EmailFilterMode); err != nil {
+				return err
+			}
 		}
-	}
 
-	if serviceIntegration.EmailFilters != nil {
-		if err := d.Set("email_filter", flattenEmailFilters(serviceIntegration.EmailFilters)); err != nil {
-			return err
+		if serviceIntegration.EmailParsingFallback != "" {
+			if err := d.Set("email_parsing_fallback", serviceIntegration.EmailParsingFallback); err != nil {
+				return err
+			}
 		}
-	}
 
-	if serviceIntegration.EmailParsers != nil {
-		if err := d.Set("email_parser", flattenEmailParsers(serviceIntegration.EmailParsers)); err != nil {
-			return err
+		if serviceIntegration.HTMLURL != "" {
+			if err := d.Set("html_url", serviceIntegration.HTMLURL); err != nil {
+				return err
+			}
 		}
-	}
 
-	return nil
+		if serviceIntegration.EmailFilters != nil {
+			if err := d.Set("email_filter", flattenEmailFilters(serviceIntegration.EmailFilters)); err != nil {
+				return err
+			}
+		}
+
+		if serviceIntegration.EmailParsers != nil {
+			if err := d.Set("email_parser", flattenEmailParsers(serviceIntegration.EmailParsers)); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func flattenEmailFilters(v []*pagerduty.EmailFilter) []map[string]interface{} {

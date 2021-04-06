@@ -623,7 +623,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -633,7 +633,7 @@ resource "pagerduty_service" "foo" {
 	description             = "foo"
 	auto_resolve_timeout    = 1800
 	acknowledgement_timeout = 1800
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, service)
@@ -658,7 +658,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -668,7 +668,7 @@ resource "pagerduty_service" "foo" {
 	description             = "foo"
 	auto_resolve_timeout    = 1800
 	acknowledgement_timeout = 1800
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	alert_grouping          = "time"
 	alert_grouping_timeout  = 1800
@@ -695,7 +695,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -705,7 +705,7 @@ resource "pagerduty_service" "foo" {
 	description             = "foo"
 	auto_resolve_timeout    = 1800
 	acknowledgement_timeout = 1800
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	alert_grouping          = "intelligent"
 	alert_grouping_timeout  = 1900
@@ -733,7 +733,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -744,7 +744,7 @@ resource "pagerduty_service" "foo" {
 	auto_resolve_timeout    = 3600
 	acknowledgement_timeout = 3600
 
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 	incident_urgency_rule {
 		type    = "constant"
 		urgency = "high"
@@ -773,7 +773,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -784,7 +784,7 @@ resource "pagerduty_service" "foo" {
 	auto_resolve_timeout    = "null"
 	acknowledgement_timeout = "null"
 
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 	incident_urgency_rule {
 		type    = "constant"
 		urgency = "high"
@@ -813,7 +813,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -823,7 +823,7 @@ resource "pagerduty_service" "foo" {
 	description             = "foo"
 	auto_resolve_timeout    = 1800
 	acknowledgement_timeout = 1800
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 
 	incident_urgency_rule {
 		type = "use_support_hours"
@@ -878,7 +878,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -888,7 +888,7 @@ resource "pagerduty_service" "foo" {
 	description             = "foo"
 	auto_resolve_timeout    = 1800
 	acknowledgement_timeout = 1800
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 
 	incident_urgency_rule {
 		type = "use_support_hours"
@@ -934,7 +934,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -944,7 +944,7 @@ resource "pagerduty_service" "foo" {
 	description             = "bar bar bar"
 	auto_resolve_timeout    = 3600
 	acknowledgement_timeout = 3600
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 
 	incident_urgency_rule {
 		type = "use_support_hours"
@@ -998,7 +998,7 @@ resource "pagerduty_escalation_policy" "foo" {
 		escalation_delay_in_minutes = 10
 		target {
 			type = "user_reference"
-			id   = "${pagerduty_user.foo.id}"
+			id   = pagerduty_user.foo.id
 		}
 	}
 }
@@ -1008,7 +1008,7 @@ resource "pagerduty_service" "foo" {
 	description             = "foo"
 	auto_resolve_timeout    = 1800
 	acknowledgement_timeout = 1800
-	escalation_policy       = "${pagerduty_escalation_policy.foo.id}"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
 
 	incident_urgency_rule {
 		type = "constant"

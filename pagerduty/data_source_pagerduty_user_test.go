@@ -60,7 +60,7 @@ resource "pagerduty_user" "test" {
 }
 
 data "pagerduty_user" "by_email" {
-	email = "${pagerduty_user.test.email}"
+	email = pagerduty_user.test.email
 }
 `, username, email)
 }

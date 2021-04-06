@@ -35,21 +35,29 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_vendor":            dataSourcePagerDutyVendor(),
 			"pagerduty_extension_schema":  dataSourcePagerDutyExtensionSchema(),
 			"pagerduty_service":           dataSourcePagerDutyService(),
+			"pagerduty_business_service":  dataSourcePagerDutyBusinessService(),
+			"pagerduty_priority":          dataSourcePagerDutyPriority(),
+			"pagerduty_ruleset":           dataSourcePagerDutyRuleset(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"pagerduty_addon":               resourcePagerDutyAddon(),
-			"pagerduty_escalation_policy":   resourcePagerDutyEscalationPolicy(),
-			"pagerduty_maintenance_window":  resourcePagerDutyMaintenanceWindow(),
-			"pagerduty_schedule":            resourcePagerDutySchedule(),
-			"pagerduty_service":             resourcePagerDutyService(),
-			"pagerduty_service_integration": resourcePagerDutyServiceIntegration(),
-			"pagerduty_team":                resourcePagerDutyTeam(),
-			"pagerduty_team_membership":     resourcePagerDutyTeamMembership(),
-			"pagerduty_user":                resourcePagerDutyUser(),
-			"pagerduty_user_contact_method": resourcePagerDutyUserContactMethod(),
-			"pagerduty_extension":           resourcePagerDutyExtension(),
-			"pagerduty_event_rule":          resourcePagerDutyEventRule(),
+			"pagerduty_addon":                  resourcePagerDutyAddon(),
+			"pagerduty_escalation_policy":      resourcePagerDutyEscalationPolicy(),
+			"pagerduty_maintenance_window":     resourcePagerDutyMaintenanceWindow(),
+			"pagerduty_schedule":               resourcePagerDutySchedule(),
+			"pagerduty_service":                resourcePagerDutyService(),
+			"pagerduty_service_integration":    resourcePagerDutyServiceIntegration(),
+			"pagerduty_team":                   resourcePagerDutyTeam(),
+			"pagerduty_team_membership":        resourcePagerDutyTeamMembership(),
+			"pagerduty_user":                   resourcePagerDutyUser(),
+			"pagerduty_user_contact_method":    resourcePagerDutyUserContactMethod(),
+			"pagerduty_user_notification_rule": resourcePagerDutyUserNotificationRule(),
+			"pagerduty_extension":              resourcePagerDutyExtension(),
+			"pagerduty_event_rule":             resourcePagerDutyEventRule(),
+			"pagerduty_ruleset":                resourcePagerDutyRuleset(),
+			"pagerduty_ruleset_rule":           resourcePagerDutyRulesetRule(),
+			"pagerduty_business_service":       resourcePagerDutyBusinessService(),
+			"pagerduty_service_dependency":     resourcePagerDutyServiceDependency(),
 		},
 	}
 
@@ -67,7 +75,7 @@ func Provider() terraform.ResourceProvider {
 }
 
 func isErrCode(err error, code int) bool {
-	if e, ok := err.(*pagerduty.Error); ok && e.ErrorResponse.StatusCode == code {
+	if e, ok := err.(*pagerduty.Error); ok && e.ErrorResponse.Response.StatusCode == code {
 		return true
 	}
 

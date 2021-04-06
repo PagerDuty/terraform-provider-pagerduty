@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -112,20 +114,28 @@ func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interfa
 
 	userID := d.Get("user_id").(string)
 
-	resp, _, err := client.Users.GetContactMethod(userID, d.Id())
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Users.GetContactMethod(userID, d.Id())
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	d.Set("address", resp.Address)
-	d.Set("blacklisted", resp.BlackListed)
-	d.Set("country_code", resp.CountryCode)
-	d.Set("enabled", resp.Enabled)
-	d.Set("label", resp.Label)
-	d.Set("send_short_email", resp.SendShortEmail)
-	d.Set("type", resp.Type)
+			return nil
+		}
 
-	return nil
+		d.Set("address", resp.Address)
+		d.Set("blacklisted", resp.BlackListed)
+		d.Set("country_code", resp.CountryCode)
+		d.Set("enabled", resp.Enabled)
+		d.Set("label", resp.Label)
+		d.Set("send_short_email", resp.SendShortEmail)
+		d.Set("type", resp.Type)
+
+		return nil
+	})
 }
 
 func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {

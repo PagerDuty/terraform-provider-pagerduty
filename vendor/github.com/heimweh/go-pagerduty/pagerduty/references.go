@@ -45,3 +45,9 @@ type VendorReference resourceReference
 
 // ExtensionSchemaReference represents a reference to an extension schema
 type ExtensionSchemaReference resourceReference
+
+// RulesetReference represents a reference to a ruleset schema
+type RulesetReference resourceReference
+
+// SubscriberReference represents a reference to a subscriber schema
+type SubscriberReference resourceReference

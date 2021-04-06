@@ -24,8 +24,9 @@ resource "pagerduty_team" "foo" {
 }
 
 resource "pagerduty_team_membership" "foo" {
-  user_id = "${pagerduty_user.foo.id}"
-  team_id = "${pagerduty_team.foo.id}"
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.foo.id
+  role    = "manager"
 }
 ```
 
@@ -35,6 +36,9 @@ The following arguments are supported:
 
   * `user_id` - (Required) The ID of the user to add to the team.
   * `team_id` - (Required) The ID of the team in which the user will belong.
+  * `role`    - (Optional) The role of the user in the team. One of `observer`, `responder`, or `manager`. Defaults to `manager`. These roles match up to user roles in the following ways:
+    * User role of `user` is a Team role of `manager`
+    * User role of `limited_user` is a Team role of `responder`
 
 ## Attributes Reference
 
@@ -42,6 +46,7 @@ The following attributes are exported:
 
   * `user_id` - The ID of the user belonging to the team.
   * `team_id` - The team ID the user belongs to.
+  * `role`    - The role of the user in the team.
 
 
 ## Import

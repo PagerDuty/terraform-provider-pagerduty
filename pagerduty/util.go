@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -8,13 +9,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func timeToUTC(v string) (string, error) {
+func timeToUTC(v string) (time.Time, error) {
 	t, err := time.Parse(time.RFC3339, v)
 	if err != nil {
-		return "", err
+		return time.Time{}, err
 	}
 
-	return t.UTC().String(), nil
+	return t.UTC(), nil
 }
 
 // validateRFC3339 validates that a date string has the correct RFC3339 layout
@@ -68,4 +69,23 @@ func expandStringList(configured []interface{}) []string {
 		vs = append(vs, string(v.(string)))
 	}
 	return vs
+}
+
+func expandString(v string) []interface{} {
+	var obj []interface{}
+	if err := json.Unmarshal([]byte(v), &obj); err != nil {
+		log.Printf("[ERROR] Could not unmarshal field %s: %v", v, err)
+		return nil
+	}
+
+	return obj
+}
+
+func flattenSlice(v []interface{}) interface{} {
+	b, err := json.Marshal(v)
+	if err != nil {
+		log.Printf("[ERROR] Could not marshal field %s: %v", v, err)
+		return nil
+	}
+	return string(b)
 }

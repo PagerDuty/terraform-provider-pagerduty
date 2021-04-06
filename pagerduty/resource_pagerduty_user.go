@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -137,28 +139,38 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty user %s", d.Id())
 
-	user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
-	if err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 
-	d.Set("name", user.Name)
-	d.Set("email", user.Email)
-	d.Set("time_zone", user.TimeZone)
-	d.Set("html_url", user.HTMLURL)
-	d.Set("color", user.Color)
-	d.Set("role", user.Role)
-	d.Set("avatar_url", user.AvatarURL)
-	d.Set("description", user.Description)
-	d.Set("job_title", user.JobTitle)
+			return nil
+		}
 
-	if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
-		return fmt.Errorf("error setting teams: %s", err)
-	}
+		d.Set("name", user.Name)
+		d.Set("email", user.Email)
+		d.Set("time_zone", user.TimeZone)
+		d.Set("html_url", user.HTMLURL)
+		d.Set("color", user.Color)
+		d.Set("role", user.Role)
+		d.Set("avatar_url", user.AvatarURL)
+		d.Set("description", user.Description)
+		d.Set("job_title", user.JobTitle)
 
-	d.Set("invitation_sent", user.InvitationSent)
+		if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("error setting teams: %s", err),
+			)
+		}
 
-	return nil
+		d.Set("invitation_sent", user.InvitationSent)
+
+		return nil
+	})
 }
 
 func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -220,8 +232,20 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Deleting PagerDuty user %s", d.Id())
 
-	if _, err := client.Users.Delete(d.Id()); err != nil {
-		return err
+	// Retrying to give other resources (such as escalation policies) to delete
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, err := client.Users.Delete(d.Id()); err != nil {
+			if isErrCode(err, 400) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	d.SetId("")

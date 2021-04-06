@@ -60,7 +60,7 @@ resource "pagerduty_team" "test" {
 }
 
 data "pagerduty_team" "by_name" {
-	name = "${pagerduty_team.test.name}"
+	name = pagerduty_team.test.name
 }
 `, name, description)
 }

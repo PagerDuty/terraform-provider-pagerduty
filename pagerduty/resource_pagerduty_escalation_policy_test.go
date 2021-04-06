@@ -215,7 +215,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -243,7 +243,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 
@@ -252,7 +252,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -279,14 +279,14 @@ resource "pagerduty_escalation_policy" "foo" {
   name        = "%s"
   description = "foo"
   num_loops   = 1
-	teams       = ["${pagerduty_team.foo.id}"]
+	teams       = [pagerduty_team.foo.id]
 
   rule {
     escalation_delay_in_minutes = 10
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -319,7 +319,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 
@@ -328,7 +328,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "user_reference"
-      id   = "${pagerduty_user.foo.id}"
+      id   = pagerduty_user.foo.id
     }
   }
 }

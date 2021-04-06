@@ -3,7 +3,6 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
@@ -39,11 +38,9 @@ func testSweepEventRule(region string) error {
 	}
 
 	for _, rule := range resp.EventRules {
-		if strings.HasPrefix(rule.ID, "test") || strings.HasPrefix(rule.ID, "tf-") {
-			log.Printf("Destroying event rule %s", rule.ID)
-			if _, err := client.EventRules.Delete(rule.ID); err != nil {
-				return err
-			}
+		log.Printf("Destroying event rule %s", rule.ID)
+		if _, err := client.EventRules.Delete(rule.ID); err != nil {
+			log.Printf("[ERROR] Failed to delete event rule: %s", err)
 		}
 	}
 

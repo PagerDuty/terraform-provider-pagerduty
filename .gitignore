@@ -12,6 +12,7 @@ website/.bundle
 website/build
 website/node_modules
 .vagrant/
+.vscode/
 *.backup
 ./*.tfstate
 .terraform/

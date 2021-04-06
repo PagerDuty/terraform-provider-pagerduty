@@ -28,7 +28,7 @@ resource "pagerduty_escalation_policy" "foo" {
 
     target {
       type = "schedule"
-      id   = "${data.pagerduty_schedule.test.id}"
+      id   = data.pagerduty_schedule.test.id
     }
   }
 }

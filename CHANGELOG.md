@@ -1,14 +1,26 @@
+## 1.9.6 (April 6, 2021)
+BUG FIXES:
+* `resource/pagerduty_response_play`: Fixed `responder` field to be optional to match API behavior ([#316](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/316))
+* `resource/pagerduty_schedule`: Suppressing the equal diff on schedule layer timestamps ([#321](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/321))
+
+IMPROVEMENTS:
+* `resource/ruleset_rule`: Added clarification to documentation on event rule actions ([#317](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/317))
+
+FEATURES:
+* `resource/pagerduty_team`: Added `parent` field to resource to support team hierarchy ([#319](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/319))
+
+
+
 ## 1.9.5 (March 11, 2021)
 BUG FIXES:
 * `data_source_pagerduty_ruleset`: Fixed bug by adding `routing_keys` to data source schema ([#312](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/312))
 
 IMPROVEMENTS:
-* `resource/pagerduty_escalation_policy`: Add retry logic to escalation policy delete ([#309](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/309))
+* `resource/pagerduty_escalation_policy`: Added retry logic to escalation policy delete ([#309](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/309))
 * `resource/pagerduty_user`: Trimmed leading and trailing spaces on the value for `name` field to match behavior of PagerDuty API ([#312](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/312))
 
 FEATURES:
 * `resource/pagerduty_ruleset_rule` and `resource/pagerduty_service_event_rule`: Add `template` field to the rule object([#314](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/314))
-
 
 ## 1.9.4 (February 26, 2021)
 BUG FIXES:

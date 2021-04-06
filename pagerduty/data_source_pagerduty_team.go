@@ -24,6 +24,10 @@ func dataSourcePagerDutyTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"parent": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -70,6 +74,7 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
 		d.Set("description", found.Description)
+		d.Set("parent", found.Parent)
 
 		return nil
 	})

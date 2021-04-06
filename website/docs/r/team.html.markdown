@@ -15,9 +15,15 @@ The account must have the `teams` ability to use the following resource.
 ## Example Usage
 
 ```hcl
+resource "pagerduty_team" "parent" {
+  name        = "Product Development"
+  description = "Product and Engineering
+}
+
 resource "pagerduty_team" "example" {
   name        = "Engineering"
   description = "All engineering"
+  parent      = pagerduty.team.id
 }
 ```
 
@@ -28,6 +34,7 @@ The following arguments are supported:
   * `name` - (Required) The name of the group.
   * `description` - (Optional) A human-friendly description of the team.
     If not set, a placeholder of "Managed by Terraform" will be set.
+  * `parent` - (Optional) ID of the parent team. This is available to accounts with the Team Hierarchy feature enabled. Please contact your account manager for more information.
 
 ## Attributes Reference
 

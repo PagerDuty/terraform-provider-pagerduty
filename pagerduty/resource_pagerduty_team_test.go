@@ -87,6 +87,36 @@ func TestAccPagerDutyTeam_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyTeam_Parent(t *testing.T) {
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	parent := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamWithParentConfig(team, parent),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamExists("pagerduty_team.foo"),
+					testAccCheckPagerDutyTeamExists("pagerduty_team.parent"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team.foo", "name", team),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team.foo", "description", "foo"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_team.foo", "html_url"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_team.foo", "parent"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team.parent", "name", parent),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*pagerduty.Client)
 	for _, r := range s.RootModule().Resources {
@@ -116,6 +146,7 @@ func testAccCheckPagerDutyTeamExists(n string) resource.TestCheckFunc {
 
 func testAccCheckPagerDutyTeamConfig(team string) string {
 	return fmt.Sprintf(`
+
 resource "pagerduty_team" "foo" {
   name        = "%s"
   description = "foo"
@@ -125,7 +156,20 @@ resource "pagerduty_team" "foo" {
 func testAccCheckPagerDutyTeamConfigUpdated(team string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_team" "foo" {
-  name        = "%s"
-  description = "bar"
+	name        = "%s"
+	description = "bar"
 }`, team)
+}
+
+func testAccCheckPagerDutyTeamWithParentConfig(team, parent string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_team" "parent" {
+	name        = "%s"
+	description = "parent"
+}	
+resource "pagerduty_team" "foo" {
+	name        = "%s"
+	description = "foo"
+	parent = pagerduty_team.parent.id
+}`, parent, team)
 }

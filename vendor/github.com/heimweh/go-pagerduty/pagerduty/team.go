@@ -8,14 +8,15 @@ type TeamService service
 
 // Team represents a team.
 type Team struct {
-	Description string `json:"description,omitempty"`
-	HTMLURL     string `json:"html_url,omitempty"`
-	ID          string `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Self        string `json:"self,omitempty"`
-	Summary     string `json:"summary,omitempty"`
-	Team        *Team  `json:"team,omitempty"`
-	Type        string `json:"type,omitempty"`
+	Description string         `json:"description,omitempty"`
+	HTMLURL     string         `json:"html_url,omitempty"`
+	ID          string         `json:"id,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	Self        string         `json:"self,omitempty"`
+	Summary     string         `json:"summary,omitempty"`
+	Team        *Team          `json:"team,omitempty"`
+	Type        string         `json:"type,omitempty"`
+	Parent      *TeamReference `json:"parent,omitempty"`
 }
 
 // Member represents a team member.

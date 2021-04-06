@@ -6,7 +6,7 @@ description: |-
   Get information about a business service that you have created.
 ---
 
-# pagerduty\_\business\_service
+# pagerduty\_business\_service
 
 Use this data source to get information about a specific [business service][1].
 

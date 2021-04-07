@@ -124,7 +124,7 @@ The following arguments are supported:
 	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
 	* `threshold_value` (Optional) - The number of alerts that should be suppressed. Must be greater than 0.
 	* `threshold_time_amount` (Optional) - The number value of the `threshold_time_unit` before an incident is created. Must be greater than 0.
-	* `threshold_time_unit` (Optional)  - The `minutes`,`hours`, or `days` that the `threshold_time_amount` should be measured.
+	* `threshold_time_unit` (Optional)  - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured.
 * `event_action` (Optional) - An object with a single `value` field. The value sets whether the resulting alert status is `trigger` or `resolve`.
 * `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering. Note: A rule with a `suspend` action must also have a `route` action.
 

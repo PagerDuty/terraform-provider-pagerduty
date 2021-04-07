@@ -17,7 +17,7 @@ The account must have the `teams` ability to use the following resource.
 ```hcl
 resource "pagerduty_team" "parent" {
   name        = "Product Development"
-  description = "Product and Engineering
+  description = "Product and Engineering"
 }
 
 resource "pagerduty_team" "example" {

@@ -87,9 +87,8 @@ func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPo
 		escalationPolicy.Description = attr.(string)
 	}
 
-	if attr, ok := d.GetOk("num_loops"); ok {
-		escalationPolicy.NumLoops = attr.(int)
-	}
+	loops := d.Get("num_loops").(int)
+	escalationPolicy.NumLoops = &loops
 
 	if attr, ok := d.GetOk("teams"); ok {
 		escalationPolicy.Teams = expandTeams(attr.([]interface{}))

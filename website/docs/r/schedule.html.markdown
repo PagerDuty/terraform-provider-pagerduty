@@ -56,7 +56,7 @@ If you do pass the `overflow` parameter, you will get one schedule entry returne
 Schedule layers (`layer`) supports the following:
 
 * `name` - (Optional) The name of the schedule layer.
-* `start` - (Required) The start time of the schedule layer. This value will not be read back from the PagerDuty API because the API will always return a new `start` time, which represents the last updated time of the schedule layer.
+* `start` - (Required) The start time of the schedule layer. 
 * `end` - (Optional) The end time of the schedule layer. If not specified, the layer does not end.
 * `rotation_virtual_start` - (Required) The effective start time of the schedule layer. This can be before the start time of the schedule.
 * `rotation_turn_length_seconds` - (Required) The duration of each on-call shift in `seconds`.

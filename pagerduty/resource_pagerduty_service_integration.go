@@ -490,70 +490,70 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 		}
 
 		if err := d.Set("name", serviceIntegration.Name); err != nil {
-			return err
+			return resource.RetryableError(err)
 		}
 
 		if err := d.Set("type", serviceIntegration.Type); err != nil {
-			return err
+			return resource.RetryableError(err)
 		}
 
 		if serviceIntegration.Service != nil {
 			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.Vendor != nil {
 			if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.IntegrationKey != "" {
 			if err := d.Set("integration_key", serviceIntegration.IntegrationKey); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.IntegrationEmail != "" {
 			if err := d.Set("integration_email", serviceIntegration.IntegrationEmail); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailIncidentCreation != "" {
 			if err := d.Set("email_incident_creation", serviceIntegration.EmailIncidentCreation); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailFilterMode != "" {
 			if err := d.Set("email_filter_mode", serviceIntegration.EmailFilterMode); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailParsingFallback != "" {
 			if err := d.Set("email_parsing_fallback", serviceIntegration.EmailParsingFallback); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.HTMLURL != "" {
 			if err := d.Set("html_url", serviceIntegration.HTMLURL); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailFilters != nil {
 			if err := d.Set("email_filter", flattenEmailFilters(serviceIntegration.EmailFilters)); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailParsers != nil {
 			if err := d.Set("email_parser", flattenEmailParsers(serviceIntegration.EmailParsers)); err != nil {
-				return err
+				return resource.RetryableError(err)
 			}
 		}
 

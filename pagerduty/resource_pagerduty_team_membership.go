@@ -3,6 +3,8 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,18 +82,36 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 
-	resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
-	if err != nil {
-		return handleNotFoundError(err, d)
+	offset := 0
+	limit := 100
+	if v := os.Getenv("PAGERDUTY_DEFAULT_LIMIT"); v != "" {
+		defaultLimit, err := strconv.Atoi(v)
+		if err != nil {
+			log.Printf("[DEBUG] Badly configured PagerDuty default limit: %s", v)
+		} else {
+			limit = defaultLimit
+		}
 	}
 
-	for _, member := range resp.Members {
-		if member.User.ID == userID {
-			d.Set("user_id", userID)
-			d.Set("team_id", teamID)
-			d.Set("role", member.Role)
+	for {
+		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{Limit: limit, Offset: offset})
+		if err != nil {
+			return handleNotFoundError(err, d)
+		}
 
-			return nil
+		for _, member := range resp.Members {
+			if member.User.ID == userID {
+				d.Set("user_id", userID)
+				d.Set("team_id", teamID)
+				d.Set("role", member.Role)
+
+				return nil
+			}
+		}
+
+		offset = resp.Offset + limit
+		if !resp.More {
+			break
 		}
 	}
 

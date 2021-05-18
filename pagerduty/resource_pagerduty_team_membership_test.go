@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
@@ -11,6 +12,8 @@ import (
 )
 
 func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
+	os.Setenv("PAGERDUTY_DEFAULT_LIMIT", "1")
+
 	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -30,6 +33,8 @@ func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
 }
 
 func TestAccPagerDutyTeamMembership_WithRole(t *testing.T) {
+	os.Setenv("PAGERDUTY_DEFAULT_LIMIT", "2")
+
 	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	role := "manager"
@@ -136,6 +141,17 @@ resource "pagerduty_user" "foo" {
   email = "%[1]v@foo.com"
 }
 
+resource "pagerduty_user" "foo2" {
+  name = "%[1]v2"
+  email = "%[1]v2@foo.com"
+}
+
+resource "pagerduty_user" "foo3" {
+  name = "%[1]v3"
+  email = "%[1]v3@foo.com"
+}
+
+
 resource "pagerduty_team" "foo" {
   name        = "%[2]v"
   description = "foo"
@@ -143,6 +159,18 @@ resource "pagerduty_team" "foo" {
 
 resource "pagerduty_team_membership" "foo" {
   user_id = "${pagerduty_user.foo.id}"
+  team_id = "${pagerduty_team.foo.id}"
+  role    = "%[3]v"
+}
+
+resource "pagerduty_team_membership" "foo2" {
+  user_id = "${pagerduty_user.foo2.id}"
+  team_id = "${pagerduty_team.foo.id}"
+  role    = "%[3]v"
+}
+
+resource "pagerduty_team_membership" "foo3" {
+  user_id = "${pagerduty_user.foo3.id}"
   team_id = "${pagerduty_team.foo.id}"
   role    = "%[3]v"
 }

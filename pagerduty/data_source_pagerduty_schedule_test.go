@@ -74,7 +74,7 @@ resource "pagerduty_schedule" "test" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.test.id}"]
+    users                        = [pagerduty_user.test.id]
 
     restriction {
       type              = "weekly_restriction"
@@ -86,7 +86,7 @@ resource "pagerduty_schedule" "test" {
 }
 
 data "pagerduty_schedule" "by_name" {
-  name = "${pagerduty_schedule.test.name}"
+  name = pagerduty_schedule.test.name
 }
 `, username, email, schedule, location, start, rotationVirtualStart)
 }

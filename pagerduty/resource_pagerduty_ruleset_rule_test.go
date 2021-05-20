@@ -28,6 +28,8 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "position", "0"),
 					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "disabled", "true"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.#", "1"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.0.operator", "and"),
@@ -47,6 +49,8 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "position", "0"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "disabled", "false"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -121,7 +125,7 @@ resource "pagerduty_ruleset" "foo" {
 resource "pagerduty_ruleset_rule" "foo" {
 	ruleset = pagerduty_ruleset.foo.id
 	position = 0
-	disabled = "false"
+	disabled = true
 	conditions {
 		operator = "and"
 		subconditions {
@@ -164,7 +168,7 @@ resource "pagerduty_ruleset" "foo" {
 resource "pagerduty_ruleset_rule" "foo" {
 	ruleset = pagerduty_ruleset.foo.id
 	position = 0
-	disabled = "false"
+	disabled = false
 	time_frame {
 		scheduled_weekly {
 			weekdays = [3,7]

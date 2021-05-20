@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -37,27 +39,32 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 		Query: searchTeam,
 	}
 
-	resp, _, err := client.Teams.List(o)
-	if err != nil {
-		return err
-	}
-
-	var found *pagerduty.Team
-
-	for _, team := range resp.Teams {
-		if team.Name == searchTeam {
-			found = team
-			break
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Teams.List(o)
+		if err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
 		}
-	}
 
-	if found == nil {
-		return fmt.Errorf("Unable to locate any team with name: %s", searchTeam)
-	}
+		var found *pagerduty.Team
 
-	d.SetId(found.ID)
-	d.Set("name", found.Name)
-	d.Set("description", found.Description)
+		for _, team := range resp.Teams {
+			if team.Name == searchTeam {
+				found = team
+				break
+			}
+		}
 
-	return nil
+		if found == nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("Unable to locate any team with name: %s", searchTeam),
+			)
+		}
+
+		d.SetId(found.ID)
+		d.Set("name", found.Name)
+		d.Set("description", found.Description)
+
+		return nil
+	})
 }

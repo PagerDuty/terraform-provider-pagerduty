@@ -8,14 +8,22 @@ type BusinessServiceService service
 
 // BusinessService represents a business service.
 type BusinessService struct {
-	ID             string `json:"id,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Type           string `json:"type,omitempty"`
-	Summary        string `json:"summary,omitempty"`
-	Self           string `json:"self,omitempty"`
-	PointOfContact string `json:"point_of_contact,omitempty"`
-	HTMLUrl        string `json:"html_url,omitempty"`
-	Description    string `json:"description,omitempty"`
+	ID             string               `json:"id,omitempty"`
+	Name           string               `json:"name,omitempty"`
+	Type           string               `json:"type,omitempty"`
+	Summary        string               `json:"summary,omitempty"`
+	Self           string               `json:"self,omitempty"`
+	PointOfContact string               `json:"point_of_contact,omitempty"`
+	HTMLUrl        string               `json:"html_url,omitempty"`
+	Description    string               `json:"description,omitempty"`
+	Team           *BusinessServiceTeam `json:"team,omitempty"`
+}
+
+// BusinessServiceTeam represents a team object in a business service
+type BusinessServiceTeam struct {
+	ID   string `json:"id,omitempty"`
+	Type string `json:"type,omitempty"`
+	Self string `json:"self,omitempty"`
 }
 
 // BusinessServicePayload represents payload with a business service object
@@ -30,25 +38,6 @@ type ListBusinessServicesResponse struct {
 	Offset           int                `json:"offset,omitempty"`
 	More             bool               `json:"more,omitempty"`
 	Limit            int                `json:"limit,omitempty"`
-}
-
-// ServiceRelationship represents a relationship between a business and technical service
-type ServiceRelationship struct {
-	ID                string      `json:"id,omitempty"`
-	Type              string      `json:"type,omitempty"`
-	SupportingService *ServiceObj `json:"supporting_service,omitempty"`
-	DependentService  *ServiceObj `json:"dependent_service,omitempty"`
-}
-
-// ServiceObj represents a service object in service relationship
-type ServiceObj struct {
-	ID   string `json:"id,omitempty"`
-	Type string `json:"type,omitempty"`
-}
-
-// ListServiceRelationships represents a list of relationships for a business service
-type ListServiceRelationships struct {
-	Relationships []*ServiceRelationship `json:"relationships,omitempty"`
 }
 
 // List lists existing business services.
@@ -110,31 +99,4 @@ func (s *BusinessServiceService) Update(ID string, ruleset *BusinessService) (*B
 	}
 
 	return v.BusinessService, resp, nil
-}
-
-// AssociateServiceDependencies Create new dependencies between two services
-func (s *BusinessServiceService) AssociateServiceDependencies(relationships *ListServiceRelationships) (*Response, error) {
-	u := "/service_dependencies/associate"
-
-	return s.client.newRequestDo("POST", u, nil, relationships, nil)
-}
-
-// DisassociateServiceDependencies Disassociate dependencies between two services.
-func (s *BusinessServiceService) DisassociateServiceDependencies(relationships *ListServiceRelationships) (*Response, error) {
-	u := "/service_dependencies/disassociate"
-
-	return s.client.newRequestDo("POST", u, nil, relationships, nil)
-}
-
-// GetDependencies gets all immediate dependencies of a business service.
-func (s *BusinessServiceService) GetDependencies(businessServiceID string) (*ListServiceRelationships, *Response, error) {
-	u := fmt.Sprintf("/service_dependencies/business_services/%s", businessServiceID)
-	v := new(ListServiceRelationships)
-
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v, resp, nil
 }

@@ -94,9 +94,22 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 	}
 
 	for {
-		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{Limit: limit, Offset: offset})
-		if err != nil {
-			return handleNotFoundError(err, d)
+		var resp *pagerduty.GetMembersResponse
+		var err error
+
+		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+			resp, _, err = client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{Limit: limit, Offset: offset})
+			if err != nil {
+				errResp := handleNotFoundError(err, d)
+				if errResp != nil {
+					time.Sleep(2 * time.Second)
+					return resource.RetryableError(errResp)
+				}
+			}
+			return nil
+		})
+		if retryErr != nil {
+			return retryErr
 		}
 
 		for _, member := range resp.Members {
@@ -158,8 +171,20 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 
-	if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
-		return err
+	// Retrying to give other resources (such as escalation policies) to delete
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
+			if isErrCode(err, 400) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	d.SetId("")

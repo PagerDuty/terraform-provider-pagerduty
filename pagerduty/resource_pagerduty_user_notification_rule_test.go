@@ -85,13 +85,13 @@ func testAccCheckPagerDutyUserNotificationRuleExists(n string) resource.TestChec
 func testAccCheckPagerDutyUserNotificationRuleContactMethodConfig(methodType string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user_notification_rule" "foo" {
-  user_id                = "${pagerduty_user.foo.id}"
+  user_id                = pagerduty_user.foo.id
   start_delay_in_minutes = 1
   urgency                = "high"
 
   contact_method = {
     type = "%[1]v"
-    id   = "${pagerduty_user_contact_method.%[1]v.id}"
+    id   = pagerduty_user_contact_method.%[1]v.id
   }
 }
 
@@ -105,14 +105,14 @@ resource "pagerduty_user" "foo" {
 }
 
 resource "pagerduty_user_contact_method" "email_contact_method" {
-  user_id = "${pagerduty_user.foo.id}"
+  user_id = pagerduty_user.foo.id
   type    = "email_contact_method"
   address = "foo-1@bar.com"
   label   = "Work"
 }
 
 resource "pagerduty_user_contact_method" "sms_contact_method" {
-  user_id      = "${pagerduty_user.foo.id}"
+  user_id      = pagerduty_user.foo.id
   type         = "sms_contact_method"
   address      = "8005551234"
   country_code = "+1"
@@ -120,7 +120,7 @@ resource "pagerduty_user_contact_method" "sms_contact_method" {
 }
 
 resource "pagerduty_user_contact_method" "phone_contact_method" {
-  user_id      = "${pagerduty_user.foo.id}"
+  user_id      = pagerduty_user.foo.id
   type         = "phone_contact_method"
   country_code = "+1"
   address      = "8005551234"

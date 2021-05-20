@@ -204,6 +204,7 @@ func TestAccPagerDutySchedule_Multi(t *testing.T) {
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "Europe/Berlin"
 	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	end := timeNowInLoc(location).Add(72 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
 	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
 
 	resource.Test(t, resource.TestCase{
@@ -212,7 +213,7 @@ func TestAccPagerDutySchedule_Multi(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyScheduleConfigMulti(username, email, schedule, location, start, rotationVirtualStart),
+				Config: testAccCheckPagerDutyScheduleConfigMulti(username, email, schedule, location, start, rotationVirtualStart, end),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
 					resource.TestCheckResourceAttr(
@@ -258,6 +259,8 @@ func TestAccPagerDutySchedule_Multi(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.1.start", start),
 					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.1.end", end),
+					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.1.rotation_virtual_start", rotationVirtualStart),
 
 					resource.TestCheckResourceAttr(
@@ -278,6 +281,20 @@ func TestAccPagerDutySchedule_Multi(t *testing.T) {
 						"pagerduty_schedule.foo", "layer.2.start", start),
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.2.rotation_virtual_start", rotationVirtualStart),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleConfigMultiUpdated(username, email, schedule, location, start, rotationVirtualStart, end),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "time_zone", location),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.#", "2"),
 				),
 			},
 		},
@@ -342,7 +359,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -371,7 +388,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -400,7 +417,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -429,7 +446,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -459,7 +476,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "weekly_restriction"
@@ -489,7 +506,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "%s"
     rotation_virtual_start       = "%s"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
 		restriction {
       type              = "weekly_restriction"
@@ -502,7 +519,7 @@ resource "pagerduty_schedule" "foo" {
 `, username, email, schedule, location, start, rotationVirtualStart)
 }
 
-func testAccCheckPagerDutyScheduleConfigMulti(username, email, schedule, location, start, rotationVirtualStart string) string {
+func testAccCheckPagerDutyScheduleConfigMulti(username, email, schedule, location, start, rotationVirtualStart, end string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%s"
@@ -517,10 +534,11 @@ resource "pagerduty_schedule" "foo" {
 
   layer {
     name                         = "foo"
-    start                        = "%[5]v"
+	start                        = "%[5]v"
+	end = null
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "daily_restriction"
@@ -531,10 +549,11 @@ resource "pagerduty_schedule" "foo" {
 
   layer {
     name                         = "bar"
-    start                        = "%[5]v"
+	start                        = "%[5]v"
+	end							 = "%[7]v"
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "weekly_restriction"
@@ -546,10 +565,11 @@ resource "pagerduty_schedule" "foo" {
 
   layer {
     name                         = "foobar"
-    start                        = "%[5]v"
+	start                        = "%[5]v"
+	end = null
     rotation_virtual_start       = "%[6]v"
     rotation_turn_length_seconds = 86400
-    users                        = ["${pagerduty_user.foo.id}"]
+    users                        = [pagerduty_user.foo.id]
 
     restriction {
       type              = "weekly_restriction"
@@ -559,5 +579,52 @@ resource "pagerduty_schedule" "foo" {
     }
   }
 }
-`, username, email, schedule, location, start, rotationVirtualStart)
+`, username, email, schedule, location, start, rotationVirtualStart, end)
+}
+
+func testAccCheckPagerDutyScheduleConfigMultiUpdated(username, email, schedule, location, start, rotationVirtualStart, end string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  layer {
+    name                         = "foo"
+	start                        = "%[5]v"
+	end = null
+    rotation_virtual_start       = "%[6]v"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+
+  layer {
+    name                         = "bar"
+	start                        = "%[5]v"
+	end							 = "%[7]v"
+    rotation_virtual_start       = "%[6]v"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "weekly_restriction"
+      start_time_of_day = "08:00:00"
+			start_day_of_week = 5
+      duration_seconds  = 32101
+    }
+  }
+}
+`, username, email, schedule, location, start, rotationVirtualStart, end)
 }

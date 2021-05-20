@@ -138,7 +138,7 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"value": {
-										Type:     schema.TypeString,
+										Type:     schema.TypeBool,
 										Optional: true,
 									},
 									"threshold_value": {
@@ -600,13 +600,18 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 
 	log.Printf("[INFO] Creating PagerDuty ruleset rule for ruleset: %s", rule.Ruleset.ID)
 
-	rule, _, err := client.Rulesets.CreateRule(rule.Ruleset.ID, rule)
-	if err != nil {
-		return err
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if rule, _, err := client.Rulesets.CreateRule(rule.Ruleset.ID, rule); err != nil {
+			return resource.RetryableError(err)
+		} else if rule != nil {
+			d.SetId(rule.ID)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
-	d.SetId(rule.ID)
-
 	return resourcePagerDutyRulesetRuleRead(d, meta)
 }
 
@@ -616,12 +621,10 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[INFO] Reading PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id()); err != nil {
-			if isErrCode(err, 500) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
-			}
-			return resource.NonRetryableError(err)
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
 		} else if rule != nil {
 			if rule.Conditions != nil {
 				d.Set("conditions", flattenConditions(rule.Conditions))
@@ -638,11 +641,6 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 		}
 		return nil
 	})
-	if retryErr != nil {
-		time.Sleep(2 * time.Second)
-		return retryErr
-	}
-	return nil
 }
 
 func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -653,10 +651,16 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 	log.Printf("[INFO] Updating PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	if _, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
-		return err
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
 	return nil
 }
 
@@ -666,10 +670,16 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {
-		return err
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
 	d.SetId("")
 
 	return nil

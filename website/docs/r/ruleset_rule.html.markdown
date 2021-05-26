@@ -24,10 +24,10 @@ resource "pagerduty_ruleset" "foo" {
   }
 }
 
-# We want our pagerduty_ruleset_rule.foo rule, defined below,
-# to repeat daily from 9:30am - 11:30am using the America/New_York timezone
-# so we need a time_static instance to represent 9:30am on an arbitrary date in that timezone.
-# April 4th, 2019 was EDT (UTC-4) https://www.timeanddate.com/worldclock/converter.html?iso=20190411T133000&p1=179
+# The pagerduty_ruleset_rule.foo rule defined below
+# repeats daily from 9:30am - 11:30am using the America/New_York timezone.
+# Thus it requires a time_static instance to represent 9:30am on an arbitrary date in that timezone.
+# April 11th, 2019 was EDT (UTC-4) https://www.timeanddate.com/worldclock/converter.html?iso=20190411T133000&p1=179
 resource "time_static" "eastern_time_at_0930" {
   rfc3339 = "2019-04-11T09:30:00-04:00"
 }

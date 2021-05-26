@@ -37,20 +37,20 @@ resource "pagerduty_ruleset_rule" "foo" {
   }
   conditions {
     operator = "and"
-	subconditions {
-	  operator = "contains"
-	  parameter {
-	    value = "disk space"
-		path = "payload.summary"
-	  }
-	}
-	subconditions {
-	  operator = "contains"
-	  parameter {
-	    value = "db"
-	    path = "payload.source"
-	  }
-	}
+    subconditions {
+      operator = "contains"
+      parameter {
+        value = "disk space"
+        path = "payload.summary"
+      }
+    }
+    subconditions {
+      operator = "contains"
+      parameter {
+        value = "db"
+        path = "payload.source"
+      }
+    }
   }
   variable {
     type = "regex"
@@ -62,19 +62,19 @@ resource "pagerduty_ruleset_rule" "foo" {
   }
   actions {
     route {
-	  value = "P5DTL0K"
-	}
-	severity  {
-	  value = "warning"
-	}
-	annotate {
-	  value = "From Terraform"
-	}
-	extractions {
-	  target = "dedup_key"
-	  source = "details.host"
-	  regex = "(.*)"
-	}
+			value = "P5DTL0K"
+		}
+		severity  {
+			value = "warning"
+		}
+		annotate {
+			value = "From Terraform"
+		}
+		extractions {
+			target = "dedup_key"
+			source = "details.host"
+			regex = "(.*)"
+		}
     extractions {
       target = "summary"
       template = "Warning: Disk Space Low on {{Src}}"
@@ -109,22 +109,22 @@ The following arguments are supported:
 * `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
 * `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction objects may use *either* of the following field structures:
-	* `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
-	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
-	* `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
+  * `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+  * `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+  * `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
 
-	*- **OR** -*
+  *- **OR** -*
 
-	* `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
-	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+  * `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
+  * `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 
-	*NOTE: A rule can have multiple `extraction` objects attributed to it.*
+  *NOTE: A rule can have multiple `extraction` objects attributed to it.*
 
 * `suppress` (Optional) - Controls whether an alert is [suppressed](https://support.pagerduty.com/docs/rulesets#section-suppress-but-create-triggering-thresholds-with-event-rules) (does not create an incident). Note: If a threshold is set, the rule must also have a `route` action.
-	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
-	* `threshold_value` (Optional) - The number of alerts that should be suppressed. Must be greater than 0.
-	* `threshold_time_amount` (Optional) - The number value of the `threshold_time_unit` before an incident is created. Must be greater than 0.
-	* `threshold_time_unit` (Optional)  - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured.
+  * `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
+  * `threshold_value` (Optional) - The number of alerts that should be suppressed. Must be greater than 0.
+  * `threshold_time_amount` (Optional) - The number value of the `threshold_time_unit` before an incident is created. Must be greater than 0.
+  * `threshold_time_unit` (Optional)  - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured.
 * `event_action` (Optional) - An object with a single `value` field. The value sets whether the resulting alert status is `trigger` or `resolve`.
 * `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering. Note: A rule with a `suspend` action must also have a `route` action.
 
@@ -135,8 +135,8 @@ The following arguments are supported:
 	* `start_time` - Time when the schedule will start. Unix timestamp in milliseconds. For example, if you have a rule with a `start_time` of `0` and a `duration` of `60,000` then that rule would be active from `00:00` to `00:01`. If the `start_time` was `3,600,000` the it would be active starting at `01:00`.
 	* `duration` - Length of time the schedule will be active.  Unix timestamp in milliseconds.
 * `active_between` (Optional) - Values for executing the rule during a specific time period.
-	* `start_time` - Beginning of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
-	* `end_time` - Ending of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
+  * `start_time` - Beginning of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
+  * `end_time` - Ending of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
 
 ## Attributes Reference
 

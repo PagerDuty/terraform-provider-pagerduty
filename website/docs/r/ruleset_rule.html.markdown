@@ -23,34 +23,48 @@ resource "pagerduty_ruleset" "foo" {
     id = pagerduty_team.foo.id
   }
 }
+
+# The pagerduty_ruleset_rule.foo rule defined below
+# repeats daily from 9:30am - 11:30am using the America/New_York timezone.
+# Thus it requires a time_static instance to represent 9:30am on an arbitrary date in that timezone.
+# April 11th, 2019 was EDT (UTC-4) https://www.timeanddate.com/worldclock/converter.html?iso=20190411T133000&p1=179
+resource "time_static" "eastern_time_at_0930" {
+  rfc3339 = "2019-04-11T09:30:00-04:00"
+}
+
 resource "pagerduty_ruleset_rule" "foo" {
   ruleset = pagerduty_ruleset.foo.id
   position = 0
   disabled = "false"
   time_frame {
     scheduled_weekly {
-	  weekdays = [3,7]
-	  timezone = "America/Los_Angeles"
-	  start_time = "1000000"
-	  duration = "3600000"
-	}
+      # Every Tuesday, Thursday, & Saturday
+      weekdays = [2, 4, 6]
+      # Starting at 9:30am
+      start_time = time_static.eastern_time_at_0930.unix * 1000
+      # Until 11:30am (2 hours later)
+      duration = 2 * 60 * 60 * 1000
+      # in this timezone
+      # (either EST or EDT depending on when your event arrives)
+      timezone = "America/New_York"
+    }
   }
   conditions {
     operator = "and"
-	subconditions {
-	  operator = "contains"
-	  parameter {
-	    value = "disk space"
-		path = "payload.summary"
-	  }
-	}
-	subconditions {
-	  operator = "contains"
-	  parameter {
-	    value = "db"
-	    path = "payload.source"
-	  }
-	}
+    subconditions {
+      operator = "contains"
+      parameter {
+        value = "disk space"
+        path = "payload.summary"
+      }
+    }
+    subconditions {
+      operator = "contains"
+      parameter {
+        value = "db"
+        path = "payload.source"
+      }
+    }
   }
   variable {
     type = "regex"
@@ -62,19 +76,19 @@ resource "pagerduty_ruleset_rule" "foo" {
   }
   actions {
     route {
-	  value = "P5DTL0K"
-	}
-	severity  {
-	  value = "warning"
-	}
-	annotate {
-	  value = "From Terraform"
-	}
-	extractions {
-	  target = "dedup_key"
-	  source = "details.host"
-	  regex = "(.*)"
-	}
+			value = "P5DTL0K"
+		}
+		severity  {
+			value = "warning"
+		}
+		annotate {
+			value = "From Terraform"
+		}
+		extractions {
+			target = "dedup_key"
+			source = "details.host"
+			regex = "(.*)"
+		}
     extractions {
       target = "summary"
       template = "Warning: Disk Space Low on {{Src}}"
@@ -109,34 +123,34 @@ The following arguments are supported:
 * `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
 * `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction objects may use *either* of the following field structures:
-	* `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
-	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
-	* `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
+  * `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+  * `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+  * `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
 
-	*- **OR** -*
+  *- **OR** -*
 
-	* `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
-	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
+  * `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
+  * `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 
-	*NOTE: A rule can have multiple `extraction` objects attributed to it.*
+  *NOTE: A rule can have multiple `extraction` objects attributed to it.*
 
 * `suppress` (Optional) - Controls whether an alert is [suppressed](https://support.pagerduty.com/docs/rulesets#section-suppress-but-create-triggering-thresholds-with-event-rules) (does not create an incident). Note: If a threshold is set, the rule must also have a `route` action.
-	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
-	* `threshold_value` (Optional) - The number of alerts that should be suppressed. Must be greater than 0.
-	* `threshold_time_amount` (Optional) - The number value of the `threshold_time_unit` before an incident is created. Must be greater than 0.
-	* `threshold_time_unit` (Optional)  - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured.
+  * `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
+  * `threshold_value` (Optional) - The number of alerts that should be suppressed. Must be greater than 0.
+  * `threshold_time_amount` (Optional) - The number value of the `threshold_time_unit` before an incident is created. Must be greater than 0.
+  * `threshold_time_unit` (Optional)  - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured.
 * `event_action` (Optional) - An object with a single `value` field. The value sets whether the resulting alert status is `trigger` or `resolve`.
 * `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering. Note: A rule with a `suspend` action must also have a `route` action.
 
 ### Time Frame (`time_frame`) supports the following:
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.
-	* `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.
-	* `timezone` - Timezone for the given schedule.
-	* `start_time` - Time when the schedule will start. Unix timestamp in milliseconds. For example, if you have a rule with a `start_time` of `0` and a `duration` of `60,000` then that rule would be active from `00:00` to `00:01`. If the `start_time` was `3,600,000` the it would be active starting at `01:00`.
-	* `duration` - Length of time the schedule will be active.  Unix timestamp in milliseconds.
+  * `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.
+  * `timezone` - [The name of the timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for the given schedule, which will be used to determine UTC offset including adjustment for daylight saving time. For example: `timezone = "America/Toronto"`
+  * `start_time` - A Unix timestamp in milliseconds which is combined with the `timezone` to determine the time this rule will start on each specified `weekday`. Note that the _date_ of the timestamp you specify does **not** matter, except that it lets you determine whether or not daylight saving time is in effect so that you use the correct UTC offset for the timezone you specify. In practice, you may want to use [the `time_static` resource](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/static) to generate this value, as demonstrated in the `resource.pagerduty_ruleset_rule.foo` code example at the top of this page. To generate this timestamp manually, if you want your rule to apply starting at 9:30am in the `America/New_York` timezone, use your programing language of choice to determine a Unix timestamp that represents 9:30am in that timezone, like [1554989400000](https://www.epochconverter.com/timezones?q=1554989400000&tz=America%2FNew_York).
+  * `duration` - Length of time the schedule will be active in milliseconds. For example `duration = 2 * 60 * 60 * 1000` if you want your rule to apply for 2 hours, from the specified `start_time`.
 * `active_between` (Optional) - Values for executing the rule during a specific time period.
-	* `start_time` - Beginning of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
-	* `end_time` - Ending of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
+  * `start_time` - Beginning of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
+  * `end_time` - Ending of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
 
 ## Attributes Reference
 

@@ -1,3 +1,17 @@
+## 1.9.7 (May 27, 2021)
+BUG FIXES:
+* `resource/pagerduty_escalation_policy`: Fixed `num_loops` field so that it could be unset to match API behavior ([#324](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/324))
+* `resource/pagerduty_user_contact_method`: Corrected error message on exceptions during import ([#327](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/327))
+
+
+IMPROVEMENTS:
+* `resource/pagerduty_team`,`resource/pagerduty_ruleset_rule`,`resource/pagerduty_schedule`,`resource/pagerduty_service_event_rule`: Documentation clarifications, fixes and improvements ([#322](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/322))
+* `resource/pagerduty_team_membership`,`resource/pagerduty_user`: Update user role documenation to add clarity over user vs team roles  ([#325](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/325))
+* General provider improvement: Update dependencies to use go1.16 ([#326](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/326))
+* General provider improvement: Update release task to use go1.16 ([#333](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/333))
+* `resource/pagerduty_ruleset_rule`: Clarified documentation on the `start_time` of scheduled event rules ([#340](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/340))
+
+
 ## 1.9.6 (April 6, 2021)
 BUG FIXES:
 * `resource/pagerduty_response_play`: Fixed `responder` field to be optional to match API behavior ([#316](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/316))
@@ -8,8 +22,6 @@ IMPROVEMENTS:
 
 FEATURES:
 * `resource/pagerduty_team`: Added `parent` field to resource to support team hierarchy ([#319](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/319))
-
-
 
 ## 1.9.5 (March 11, 2021)
 BUG FIXES:
@@ -22,12 +34,6 @@ IMPROVEMENTS:
 FEATURES:
 * `resource/pagerduty_ruleset_rule` and `resource/pagerduty_service_event_rule`: Add `template` field to the rule object([#314](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/314))
 
-## 1.9.4 (February 26, 2021)
-BUG FIXES:
-* `resource/pagerduty_team_membership`: Fixed issue with importing team members to teams with more than 100 users ([#305](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/305))
-
-IMPROVEMENTS:
-* `data_source_pagerduty_ruleset`: Added `routing_keys` field to the `ruleset` object ([#305](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/305))
 ## 1.9.4 (February 26, 2021)
 BUG FIXES:
 * `resource/pagerduty_team_membership`: Fixed issue with importing team members to teams with more than 100 users ([#305](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/305))

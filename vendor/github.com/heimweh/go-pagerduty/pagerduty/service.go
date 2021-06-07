@@ -34,6 +34,19 @@ type SupportHours struct {
 	Type       string `json:"type,omitempty"`
 }
 
+// AlertGroupingConfig - populate timeout if AlertGroupingParameters Type is 'time', populate Aggregate & Fields if Type is 'content_grouping'
+type AlertGroupingConfig struct {
+	Timeout   *int     `json:"timeout,omitempty"`
+	Aggregate *string  `json:"aggregate,omitempty"`
+	Fields    []string `json:"fields,omitempty"`
+}
+
+// AlertGroupingParameters defines how alerts are grouped into incidents
+type AlertGroupingParameters struct {
+	Type   *string              `json:"type,omitempty"`
+	Config *AlertGroupingConfig `json:"config,omitempty"`
+}
+
 // IncidentUrgencyRule is the default urgency for new incidents.
 type IncidentUrgencyRule struct {
 	DuringSupportHours  *IncidentUrgencyType `json:"during_support_hours,omitempty"`
@@ -60,29 +73,30 @@ type Integration struct {
 
 // Service represents a service.
 type Service struct {
-	AcknowledgementTimeout *int                       `json:"acknowledgement_timeout"`
-	Addons                 []*AddonReference          `json:"addons,omitempty"`
-	AlertCreation          string                     `json:"alert_creation,omitempty"`
-	AlertGrouping          *string                    `json:"alert_grouping"`
-	AlertGroupingTimeout   *int                       `json:"alert_grouping_timeout,omitempty"`
-	AutoResolveTimeout     *int                       `json:"auto_resolve_timeout"`
-	CreatedAt              string                     `json:"created_at,omitempty"`
-	Description            string                     `json:"description,omitempty"`
-	EscalationPolicy       *EscalationPolicyReference `json:"escalation_policy,omitempty"`
-	HTMLURL                string                     `json:"html_url,omitempty"`
-	ID                     string                     `json:"id,omitempty"`
-	IncidentUrgencyRule    *IncidentUrgencyRule       `json:"incident_urgency_rule,omitempty"`
-	Integrations           []*IntegrationReference    `json:"integrations,omitempty"`
-	LastIncidentTimestamp  string                     `json:"last_incident_timestamp,omitempty"`
-	Name                   string                     `json:"name,omitempty"`
-	ScheduledActions       []*ScheduledAction         `json:"scheduled_actions,omitempty"`
-	Self                   string                     `json:"self,omitempty"`
-	Service                *Service                   `json:"service,omitempty"`
-	Status                 string                     `json:"status,omitempty"`
-	Summary                string                     `json:"summary,omitempty"`
-	SupportHours           *SupportHours              `json:"support_hours,omitempty"`
-	Teams                  []*TeamReference           `json:"teams,omitempty"`
-	Type                   string                     `json:"type,omitempty"`
+	AcknowledgementTimeout  *int                       `json:"acknowledgement_timeout"`
+	Addons                  []*AddonReference          `json:"addons,omitempty"`
+	AlertCreation           string                     `json:"alert_creation,omitempty"`
+	AlertGrouping           *string                    `json:"alert_grouping"`
+	AlertGroupingTimeout    *int                       `json:"alert_grouping_timeout,omitempty"`
+	AlertGroupingParameters *AlertGroupingParameters   `json:"alert_grouping_parameters,omitempty"`
+	AutoResolveTimeout      *int                       `json:"auto_resolve_timeout"`
+	CreatedAt               string                     `json:"created_at,omitempty"`
+	Description             string                     `json:"description,omitempty"`
+	EscalationPolicy        *EscalationPolicyReference `json:"escalation_policy,omitempty"`
+	HTMLURL                 string                     `json:"html_url,omitempty"`
+	ID                      string                     `json:"id,omitempty"`
+	IncidentUrgencyRule     *IncidentUrgencyRule       `json:"incident_urgency_rule,omitempty"`
+	Integrations            []*IntegrationReference    `json:"integrations,omitempty"`
+	LastIncidentTimestamp   string                     `json:"last_incident_timestamp,omitempty"`
+	Name                    string                     `json:"name,omitempty"`
+	ScheduledActions        []*ScheduledAction         `json:"scheduled_actions,omitempty"`
+	Self                    string                     `json:"self,omitempty"`
+	Service                 *Service                   `json:"service,omitempty"`
+	Status                  string                     `json:"status,omitempty"`
+	Summary                 string                     `json:"summary,omitempty"`
+	SupportHours            *SupportHours              `json:"support_hours,omitempty"`
+	Teams                   []*TeamReference           `json:"teams,omitempty"`
+	Type                    string                     `json:"type,omitempty"`
 }
 
 // ServiceEventRule represents a service event rule

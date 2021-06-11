@@ -98,7 +98,7 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 			}
 
 			if err := d.Set("members", dataSourceMembersRead(resp.Members)); err != nil {
-				return fmt.Errorf("error setting users: %w", err)
+				return resource.RetryableError(err)
 			}
 		}
 

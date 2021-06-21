@@ -1,3 +1,7 @@
+## 1.9.8 (June 17, 2021)
+BUG FIXES:
+* `resource/pagerduty_schedule`: Fixed the spurious diff in the `start` field when it's set to the past ([#343](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/343))
+
 ## 1.9.7 (May 27, 2021)
 BUG FIXES:
 * `resource/pagerduty_escalation_policy`: Fixed `num_loops` field so that it could be unset to match API behavior ([#324](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/324))

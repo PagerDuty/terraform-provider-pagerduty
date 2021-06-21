@@ -194,6 +194,51 @@ func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGrouping(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping", "rules"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_parameters.0.config.0.aggregate", "all"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_parameters.0.type", "content_based"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_parameters.0.config.0.fields.0", "custom_details.field1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.com", username)
@@ -676,6 +721,47 @@ resource "pagerduty_service" "foo" {
 `, username, email, escalationPolicy, service)
 }
 
+func testAccCheckPagerDutyServiceConfigWithAlertContentGrouping(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters { 
+        type = "content_based"
+        config { 
+            aggregate = "all"
+            fields = ["custom_details.field1"]
+        }
+    }
+}
+`, username, email, escalationPolicy, service)
+}
 func testAccCheckPagerDutyServiceConfigWithAlertGroupingUpdated(username, email, escalationPolicy, service string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {

@@ -75,24 +75,24 @@ resource "pagerduty_ruleset_rule" "foo" {
     }
   }
   actions {
-    route {
-			value = "P5DTL0K"
-		}
-		severity  {
-			value = "warning"
-		}
-		annotate {
-			value = "From Terraform"
-		}
-		extractions {
-			target = "dedup_key"
-			source = "details.host"
-			regex = "(.*)"
-		}
-    extractions {
-      target = "summary"
-      template = "Warning: Disk Space Low on {{Src}}"
-    }
+    	route {
+		value = pagerduty_service.foo.id
+	}
+	severity {
+		value = "warning"
+	}
+	annotate {
+		value = "From Terraform"
+	}
+	extractions {
+		target = "dedup_key"
+		source = "details.host"
+		regex = "(.*)"
+	}
+    	extractions {
+    	  target = "summary"
+    	  template = "Warning: Disk Space Low on {{Src}}"
+    	}
   }
 }
 ```

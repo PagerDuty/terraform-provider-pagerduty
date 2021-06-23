@@ -1,3 +1,8 @@
+## 1.9.9 (June 23, 2021)
+IMPROVEMENT:
+* `resource/pagerduty_ruleset_rule`: Update sample code in documentation to reference a Terraform resource rather than hard coded service ID ([#349](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/349))
+
+
 ## 1.9.8 (June 17, 2021)
 BUG FIXES:
 * `resource/pagerduty_schedule`: Fixed the spurious diff in the `start` field when it's set to the past ([#343](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/343))

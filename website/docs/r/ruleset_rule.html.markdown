@@ -33,7 +33,7 @@ resource "time_static" "eastern_time_at_0930" {
 }
 
 resource "pagerduty_ruleset_rule" "foo" {
-  ruleset = pagerduty_ruleset.foo.id
+  ruleset  = pagerduty_ruleset.foo.id
   position = 0
   disabled = "false"
   time_frame {
@@ -55,14 +55,14 @@ resource "pagerduty_ruleset_rule" "foo" {
       operator = "contains"
       parameter {
         value = "disk space"
-        path = "payload.summary"
+        path  = "payload.summary"
       }
     }
     subconditions {
       operator = "contains"
       parameter {
         value = "db"
-        path = "payload.source"
+        path  = "payload.source"
       }
     }
   }
@@ -76,21 +76,21 @@ resource "pagerduty_ruleset_rule" "foo" {
   }
   actions {
     route {
-			value = "P5DTL0K"
-		}
-		severity  {
-			value = "warning"
-		}
-		annotate {
-			value = "From Terraform"
-		}
-		extractions {
-			target = "dedup_key"
-			source = "details.host"
-			regex = "(.*)"
-		}
+      value = pagerduty_service.foo.id
+    }
+    severity {
+      value = "warning"
+    }
+    annotate {
+      value = "From Terraform"
+    }
     extractions {
-      target = "summary"
+      target = "dedup_key"
+      source = "details.host"
+      regex  = "(.*)"
+    }
+    extractions {
+      target   = "summary"
       template = "Warning: Disk Space Low on {{Src}}"
     }
   }

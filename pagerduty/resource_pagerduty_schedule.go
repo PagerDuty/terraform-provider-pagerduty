@@ -60,7 +60,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 							Type:             schema.TypeString,
 							Required:         true,
 							ValidateFunc:     validateRFC3339,
-							DiffSuppressFunc: suppressRFC3339Diff,
+							DiffSuppressFunc: suppressScheduleLayerStartDiff,
 						},
 
 						"end": {

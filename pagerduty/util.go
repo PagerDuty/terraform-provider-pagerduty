@@ -30,17 +30,42 @@ func validateRFC3339(v interface{}, k string) (we []string, errors []error) {
 }
 
 func suppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) bool {
+	oldT, newT, err := parseRFC3339Time(k, oldTime, newTime)
+	if err != nil {
+		log.Printf(err.Error())
+		return false
+	}
+
+	return oldT.Equal(newT)
+}
+
+// issue: https://github.com/PagerDuty/terraform-provider-pagerduty/issues/200
+// The start value of schedule layer can't be set to a time in the past. So if the value passed in is before the current time then PagerDuty
+// will set the start to the current time. Thus, we do not need to show diff if both newT and oldT is in the past, as it will not bring
+// any real changes to the schedule layer.
+func suppressScheduleLayerStartDiff(k, oldTime, newTime string, d *schema.ResourceData) bool {
+	oldT, newT, err := parseRFC3339Time(k, oldTime, newTime)
+	if err != nil {
+		log.Printf(err.Error())
+		return false
+	}
+
+	return oldT.Equal(newT) || (newT.Before(time.Now()) && oldT.Before(time.Now()))
+}
+
+func parseRFC3339Time(k, oldTime, newTime string) (time.Time, time.Time, error) {
+	var t time.Time
 	oldT, err := time.Parse(time.RFC3339, oldTime)
 	if err != nil {
-		log.Printf("[ERROR] Failed to parse %q (old %q). Expected format: %s (RFC3339)", oldTime, k, time.RFC3339)
-		return false
+		return t, t, fmt.Errorf("[ERROR] Failed to parse %q (old %q). Expected format: %s (RFC3339)", oldTime, k, time.RFC3339)
 	}
+
 	newT, err := time.Parse(time.RFC3339, newTime)
 	if err != nil {
-		log.Printf("[ERROR] Failed to parse %q (new %q). Expected format: %s (RFC3339)", newTime, k, time.RFC3339)
-		return false
+		return t, t, fmt.Errorf("[ERROR] Failed to parse %q (new %q). Expected format: %s (RFC3339)", oldTime, k, time.RFC3339)
 	}
-	return oldT.Equal(newT)
+
+	return oldT, newT, nil
 }
 
 func suppressLeadTrailSpaceDiff(k, old, new string, d *schema.ResourceData) bool {

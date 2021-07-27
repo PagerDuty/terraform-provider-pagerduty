@@ -14,11 +14,11 @@ import (
 func init() {
 	resource.AddTestSweepers("pagerduty_extension_servicenow", &resource.Sweeper{
 		Name: "pagerduty_extension_servicenow",
-		F:    testSweepExtensionServicenow,
+		F:    testSweepExtensionServiceNow,
 	})
 }
 
-func testSweepExtensionServicenow(region string) error {
+func testSweepExtensionServiceNow(region string) error {
 	config, err := sharedConfigForRegion(region)
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func testSweepExtensionServicenow(region string) error {
 	return nil
 }
 
-func TestAccPagerDutyExtensionServicenow_Basic(t *testing.T) {
+func TestAccPagerDutyExtensionServiceNow_Basic(t *testing.T) {
 	extension_name := resource.PrefixedUniqueId("tf-")
 	extension_name_updated := resource.PrefixedUniqueId("tf-")
 	name := resource.PrefixedUniqueId("tf-")
@@ -56,12 +56,12 @@ func TestAccPagerDutyExtensionServicenow_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyExtensionServicenowDestroy,
+		CheckDestroy: testAccCheckPagerDutyExtensionServiceNowDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyExtensionServicenowConfig(name, extension_name, url, "false", "any"),
+				Config: testAccCheckPagerDutyExtensionServiceNowConfig(name, extension_name, url, "false", "any"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyExtensionServicenowExists("pagerduty_extension_servicenow.foo"),
+					testAccCheckPagerDutyExtensionServiceNowExists("pagerduty_extension_servicenow.foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "name", extension_name),
 					resource.TestCheckResourceAttr(
@@ -85,9 +85,9 @@ func TestAccPagerDutyExtensionServicenow_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyExtensionServicenowConfig(name, extension_name_updated, url_updated, "true", "pd-users"),
+				Config: testAccCheckPagerDutyExtensionServiceNowConfig(name, extension_name_updated, url_updated, "true", "pd-users"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyExtensionServicenowExists("pagerduty_extension_servicenow.foo"),
+					testAccCheckPagerDutyExtensionServiceNowExists("pagerduty_extension_servicenow.foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "name", extension_name_updated),
 					resource.TestCheckResourceAttr(
@@ -114,7 +114,7 @@ func TestAccPagerDutyExtensionServicenow_Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckPagerDutyExtensionServicenowDestroy(s *terraform.State) error {
+func testAccCheckPagerDutyExtensionServiceNowDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*pagerduty.Client)
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_extension_servicenow" {
@@ -129,7 +129,7 @@ func testAccCheckPagerDutyExtensionServicenowDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckPagerDutyExtensionServicenowExists(n string) resource.TestCheckFunc {
+func testAccCheckPagerDutyExtensionServiceNowExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -155,7 +155,7 @@ func testAccCheckPagerDutyExtensionServicenowExists(n string) resource.TestCheck
 	}
 }
 
-func testAccCheckPagerDutyExtensionServicenowConfig(name string, extension_name string, url string, notify_types string, restrict string) string {
+func testAccCheckPagerDutyExtensionServiceNowConfig(name string, extension_name string, url string, notify_types string, restrict string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"

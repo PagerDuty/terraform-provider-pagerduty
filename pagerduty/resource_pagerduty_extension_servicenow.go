@@ -12,7 +12,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-type PagerDutyExtensionServicenowConfig struct {
+type PagerDutyExtensionServiceNowConfig struct {
 	User        string `json:"snow_user"`
 	Password    string `json:"snow_password"`
 	SyncOptions string `json:"sync_options"`
@@ -21,14 +21,14 @@ type PagerDutyExtensionServicenowConfig struct {
 	Referer     string `json:"referer"`
 }
 
-func resourcePagerDutyExtensionServicenow() *schema.Resource {
+func resourcePagerDutyExtensionServiceNow() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyExtensionServicenowCreate,
-		Read:   resourcePagerDutyExtensionServicenowRead,
-		Update: resourcePagerDutyExtensionServicenowUpdate,
-		Delete: resourcePagerDutyExtensionServicenowDelete,
+		Create: resourcePagerDutyExtensionServiceNowCreate,
+		Read:   resourcePagerDutyExtensionServiceNowRead,
+		Update: resourcePagerDutyExtensionServiceNowUpdate,
+		Delete: resourcePagerDutyExtensionServiceNowDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyExtensionServicenowImport,
+			State: resourcePagerDutyExtensionServiceNowImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -91,7 +91,7 @@ func resourcePagerDutyExtensionServicenow() *schema.Resource {
 	}
 }
 
-func buildExtensionServicenowStruct(d *schema.ResourceData) *pagerduty.Extension {
+func buildExtensionServiceNowStruct(d *schema.ResourceData) *pagerduty.Extension {
 	Extension := &pagerduty.Extension{
 		Name:        d.Get("name").(string),
 		Type:        "extension",
@@ -103,7 +103,7 @@ func buildExtensionServicenowStruct(d *schema.ResourceData) *pagerduty.Extension
 		ExtensionObjects: expandServiceNowServiceObjects(d.Get("extension_objects")),
 	}
 
-	var config = &PagerDutyExtensionServicenowConfig{
+	var config = &PagerDutyExtensionServiceNowConfig{
 		User:        d.Get("snow_user").(string),
 		Password:    d.Get("snow_password").(string),
 		SyncOptions: d.Get("sync_options").(string),
@@ -116,10 +116,10 @@ func buildExtensionServicenowStruct(d *schema.ResourceData) *pagerduty.Extension
 	return Extension
 }
 
-func resourcePagerDutyExtensionServicenowCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	extension := buildExtensionServicenowStruct(d)
+	extension := buildExtensionServiceNowStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty extension %s", extension.Name)
 
@@ -130,10 +130,10 @@ func resourcePagerDutyExtensionServicenowCreate(d *schema.ResourceData, meta int
 
 	d.SetId(extension.ID)
 
-	return resourcePagerDutyExtensionServicenowRead(d, meta)
+	return resourcePagerDutyExtensionServiceNowRead(d, meta)
 }
 
-func resourcePagerDutyExtensionServicenowRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
 	log.Printf("[INFO] Reading PagerDuty extension %s", d.Id())
@@ -154,13 +154,13 @@ func resourcePagerDutyExtensionServicenowRead(d *schema.ResourceData, meta inter
 		d.Set("name", extension.Name)
 		d.Set("endpoint_url", extension.EndpointURL)
 		d.Set("html_url", extension.HTMLURL)
-		if err := d.Set("extension_objects", flattenExtensionServicenowObjects(extension.ExtensionObjects)); err != nil {
+		if err := d.Set("extension_objects", flattenExtensionServiceNowObjects(extension.ExtensionObjects)); err != nil {
 			log.Printf("[WARN] error setting extension_objects: %s", err)
 		}
 		d.Set("extension_schema", extension.ExtensionSchema)
 
 		b, _ := json.Marshal(extension.Config)
-		var config = new(PagerDutyExtensionServicenowConfig)
+		var config = new(PagerDutyExtensionServiceNowConfig)
 		json.Unmarshal(b, config)
 		d.Set("snow_user", config.User)
 		d.Set("snow_password", config.Password)
@@ -173,10 +173,10 @@ func resourcePagerDutyExtensionServicenowRead(d *schema.ResourceData, meta inter
 	})
 }
 
-func resourcePagerDutyExtensionServicenowUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	extension := buildExtensionServicenowStruct(d)
+	extension := buildExtensionServiceNowStruct(d)
 
 	log.Printf("[INFO] Updating PagerDuty extension %s", d.Id())
 
@@ -184,10 +184,10 @@ func resourcePagerDutyExtensionServicenowUpdate(d *schema.ResourceData, meta int
 		return err
 	}
 
-	return resourcePagerDutyExtensionServicenowRead(d, meta)
+	return resourcePagerDutyExtensionServiceNowRead(d, meta)
 }
 
-func resourcePagerDutyExtensionServicenowDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
 	log.Printf("[INFO] Deleting PagerDuty extension %s", d.Id())
@@ -205,7 +205,7 @@ func resourcePagerDutyExtensionServicenowDelete(d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourcePagerDutyExtensionServicenowImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyExtensionServiceNowImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*pagerduty.Client)
 
 	extension, _, err := client.Extensions.Get(d.Id())
@@ -235,7 +235,7 @@ func expandServiceNowServiceObjects(v interface{}) []*pagerduty.ServiceReference
 	return services
 }
 
-func flattenExtensionServicenowObjects(serviceList []*pagerduty.ServiceReference) interface{} {
+func flattenExtensionServiceNowObjects(serviceList []*pagerduty.ServiceReference) interface{} {
 	var services []interface{}
 	for _, s := range serviceList {
 		// only flatten service_reference types, because that's all we send at this

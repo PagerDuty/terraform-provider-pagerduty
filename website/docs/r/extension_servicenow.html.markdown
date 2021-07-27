@@ -20,10 +20,9 @@ data "pagerduty_extension_schema" "webhook" {
 resource "pagerduty_user" "example" {
   name  = "Howard James"
   email = "howard.james@example.domain"
-  teams = [pagerduty_team.example.id]
 }
 
-resource "pagerduty_escalation_policy" "foo" {
+resource "pagerduty_escalation_policy" "example" {
   name      = "Engineering Escalation Policy"
   num_loops = 2
 

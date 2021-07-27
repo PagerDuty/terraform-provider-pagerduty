@@ -14,7 +14,7 @@ import (
 func init() {
 	resource.AddTestSweepers("pagerduty_extension_servicenow", &resource.Sweeper{
 		Name: "pagerduty_extension_servicenow",
-		F:    testSweepExtension,
+		F:    testSweepExtensionServicenow,
 	})
 }
 
@@ -56,7 +56,7 @@ func TestAccPagerDutyExtensionServicenow_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyExtensionDestroy,
+		CheckDestroy: testAccCheckPagerDutyExtensionServicenowDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyExtensionServicenowConfig(name, extension_name, url, "false", "any"),
@@ -69,9 +69,19 @@ func TestAccPagerDutyExtensionServicenow_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "endpoint_url", url),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension_servicenow.foo", "config", "{\"notify_types\":{\"acknowledge\":false,\"assignments\":false,\"resolve\":false},\"restrict\":\"any\"}"),
-					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "html_url", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "snow_user", "meeps"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "snow_password", "zorz"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "sync_options", "manual_sync"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "target", "foo.servicenow.com/webhook_foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "task_type", "incident"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "referer", "None"),
 				),
 			},
 			{
@@ -85,7 +95,19 @@ func TestAccPagerDutyExtensionServicenow_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "endpoint_url", url_updated),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension_servicenow.foo", "config", "{\"notify_types\":{\"acknowledge\":true,\"assignments\":true,\"resolve\":true},\"restrict\":\"pd-users\"}"),
+						"pagerduty_extension_servicenow.foo", "html_url", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "snow_user", "meeps"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "snow_password", "zorz"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "sync_options", "manual_sync"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "target", "foo.servicenow.com/webhook_foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "task_type", "incident"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_extension_servicenow.foo", "referer", "None"),
 				),
 			},
 		},
@@ -179,12 +201,12 @@ data "pagerduty_extension_schema" "foo" {
 resource "pagerduty_extension_servicenow" "foo"{
   name = "%s"
   endpoint_url = "%s"
-  extension_schema = data.pagerduty_extension_servicenow_schema.foo.id
+  extension_schema = data.pagerduty_extension_schema.foo.id
   extension_objects = [pagerduty_service.foo.id]
   snow_user = "meeps"
   snow_password = "zorz"
   sync_options = "manual_sync"
-  target = foo.servicenow.com/webhook_foo
+  target = "foo.servicenow.com/webhook_foo"
   task_type = "incident"
   referer = "None"
 }

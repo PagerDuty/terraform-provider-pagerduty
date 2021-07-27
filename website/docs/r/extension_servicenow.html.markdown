@@ -1,14 +1,14 @@
 ---
 layout: "pagerduty"
-page_title: "PagerDuty: pagerduty_extension"
-sidebar_current: "docs-pagerduty-resource-extension"
+page_title: "PagerDuty: pagerduty_extension_servicenow"
+sidebar_current: "docs-pagerduty-resource-extension-servicenow"
 description: |-
-  Creates and manages a service extension in PagerDuty.
+  Creates and manages a ServiceNow service extension in PagerDuty.
 ---
 
-# pagerduty\_extension
+# pagerduty\_extension\_servicenow
 
-An [extension](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Extensions/post_extensions) can be associated with a service.
+A special case for [extension](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Extensions/post_extensions) for ServiceNow.
 
 ## Example Usage
 
@@ -44,24 +44,16 @@ resource "pagerduty_service" "example" {
 }
 
 
-resource "pagerduty_extension" "slack"{
+resource "pagerduty_extension_servicenow" "snow"{
   name = "My Web App Extension"
-  endpoint_url = "https://generic_webhook_url/XXXXXX/BBBBBB"
   extension_schema = data.pagerduty_extension_schema.webhook.id
-  extension_objects    = [pagerduty_service.example.id]
-
-  config = <<EOF
-{
-	"restrict": "any",
-	"notify_types": {
-			"resolve": false,
-			"acknowledge": false,
-			"assignments": false
-	},
-	"access_token": "XXX"
-}
-EOF
-
+  extension_objects = [pagerduty_service.example.id]
+  snow_user = "meeps"
+  snow_password = "zorz"
+  sync_options = "manual_sync"
+  target = "https://foo.servicenow.com/webhook_foo"
+  task_type = "incident"
+  referer = "None"
 }
 ```
 
@@ -70,13 +62,14 @@ EOF
 The following arguments are supported:
 
   * `name` - (Optional) The name of the service extension.
-  * `endpoint_url` - (Required|Optional) The url of the extension.
-  **Note:** The [endpoint URL is Optional API wise](https://api-reference.pagerduty.com/#!/Extensions/post_extensions) in most cases. But in some cases it is a _Required_ parameter. For example, `pagerduty_extension_schema` named `Generic V2 Webhook` doesn't accept `pagerduty_extension` with no `endpoint_url`, but one with named `Slack` accepts.
   * `extension_schema` - (Required) This is the schema for this extension.
   * `extension_objects` - (Required) This is the objects for which the extension applies (An array of service ids).
-  * `config` - (Optional) The configuration of the service extension as string containing plain JSON-encoded data.
-
-    **Note:** You can use the `pagerduty_extension_schema` data source to locate the appropriate extension vendor ID.
+    * `snow_user` - (Required) The ServiceNow username.
+    * `snow_password` - (Required) The ServiceNow password.
+    * `sync_options` - (Required) The ServiceNow sync option.
+    * `target` - (Required) Target Webhook URL
+    * `task_type` - (Required) The ServiceNow task type, typically `incident`.
+    * `referer` - (Required) The ServiceNow referer.
 ## Attributes Reference
 
 The following attributes are exported:
@@ -89,5 +82,5 @@ The following attributes are exported:
 Extensions can be imported using the id.e.g.
 
 ```
-$ terraform import pagerduty_extension.main PLBP09X
+$ terraform import pagerduty_extension_servicenow.main PLBP09X
 ```

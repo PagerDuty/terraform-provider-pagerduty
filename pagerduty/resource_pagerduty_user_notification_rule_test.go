@@ -114,7 +114,7 @@ resource "pagerduty_user_contact_method" "email_contact_method" {
 resource "pagerduty_user_contact_method" "sms_contact_method" {
   user_id      = pagerduty_user.foo.id
   type         = "sms_contact_method"
-  address      = "8005551234"
+  address      = "8015541234"
   country_code = "+1"
   label        = "Work"
 }
@@ -123,7 +123,7 @@ resource "pagerduty_user_contact_method" "phone_contact_method" {
   user_id      = pagerduty_user.foo.id
   type         = "phone_contact_method"
   country_code = "+1"
-  address      = "8005551234"
+  address      = "8015541234"
   label        = "Work"
 }
 

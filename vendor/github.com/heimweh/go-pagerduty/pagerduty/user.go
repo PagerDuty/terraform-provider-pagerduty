@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
 )
 
 // UserService handles the communication with user
@@ -41,6 +42,29 @@ type User struct {
 	TimeZone          string                    `json:"time_zone,omitempty"`
 	Type              string                    `json:"type,omitempty"`
 	User              *User                     `json:"user,omitempty"`
+}
+
+// FullUser represents a user fetched with include[]=contact_methods,notification_rules.
+// This is only used when caching is enabled
+type FullUser struct {
+	AvatarURL         string              `json:"avatar_url,omitempty"`
+	Color             string              `json:"color,omitempty"`
+	ContactMethods    []*ContactMethod    `json:"contact_methods,omitempty"`
+	Description       string              `json:"description,omitempty"`
+	Email             string              `json:"email,omitempty"`
+	HTMLURL           string              `json:"html_url,omitempty"`
+	ID                string              `json:"id,omitempty"`
+	InvitationSent    bool                `json:"invitation_sent,omitempty"`
+	JobTitle          string              `json:"job_title,omitempty"`
+	Name              string              `json:"name,omitempty"`
+	NotificationRules []*NotificationRule `json:"notification_rules,omitempty"`
+	Role              string              `json:"role,omitempty"`
+	Self              string              `json:"self,omitempty"`
+	Summary           string              `json:"summary,omitempty"`
+	Teams             []*Team             `json:"teams,omitempty"`
+	TimeZone          string              `json:"time_zone,omitempty"`
+	Type              string              `json:"type,omitempty"`
+	User              *FullUser           `json:"user,omitempty"`
 }
 
 // ContactMethod represents a contact method for a user.
@@ -103,6 +127,15 @@ type ListUsersResponse struct {
 	Users  []*User `json:"users,omitempty"`
 }
 
+// ListFullUsersResponse represents a list response containing FullUser objects.
+type ListFullUsersResponse struct {
+	Limit  int         `json:"limit,omitempty"`
+	More   bool        `json:"more,omitempty"`
+	Offset int         `json:"offset,omitempty"`
+	Total  int         `json:"total,omitempty"`
+	Users  []*FullUser `json:"users,omitempty"`
+}
+
 // GetUserOptions represents options when retrieving a user.
 type GetUserOptions struct {
 	Include []string `url:"include,omitempty,brackets"`
@@ -121,6 +154,28 @@ func (s *UserService) List(o *ListUsersOptions) (*ListUsersResponse, *Response, 
 	return v, resp, nil
 }
 
+// ListAll lists users into FullUser objects
+func (s *UserService) ListAll(o *ListUsersOptions) ([]*FullUser, error) {
+	var users = make([]*FullUser, 0, 25)
+	var v *ListFullUsersResponse
+	more := true
+	offset := 0
+
+	for more {
+		log.Printf("==== Getting users at offset %d", offset)
+		v = new(ListFullUsersResponse)
+		_, err := s.client.newRequestDo("GET", "/users", o, nil, &v)
+		if err != nil {
+			return users, err
+		}
+		users = append(users, v.Users...)
+		more = v.More
+		offset += v.Limit
+		o.Offset = offset
+	}
+	return users, nil
+}
+
 // Create creates a new user.
 func (s *UserService) Create(user *User) (*User, *Response, error) {
 	u := "/users"
@@ -131,19 +186,53 @@ func (s *UserService) Create(user *User) (*User, *Response, error) {
 		return nil, nil, err
 	}
 
+	if err = cachePutUser(v.User); err != nil {
+		log.Printf("===== Error adding user %q to cache: %q", v.User.ID, err)
+	} else {
+		log.Printf("===== Added user %q to cache", v.User.ID)
+	}
+
 	return v.User, resp, nil
 }
 
 // Delete removes an existing user.
 func (s *UserService) Delete(id string) (*Response, error) {
 	u := fmt.Sprintf("/users/%s", id)
-	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+	resp, err := s.client.newRequestDo("DELETE", u, nil, nil, nil)
+
+	if cerr := cacheDeleteUser(id); cerr != nil {
+		log.Printf("===== Error deleting user %q from cache: %q", id, cerr)
+	} else {
+		log.Printf("===== Deleted user %q from cache", id)
+	}
+
+	return resp, err
 }
 
 // Get retrieves information about a user.
 func (s *UserService) Get(id string, o *GetUserOptions) (*User, *Response, error) {
 	u := fmt.Sprintf("/users/%s", id)
 	v := new(User)
+
+	if err := cacheGetUser(id, v); err == nil {
+		return v, nil, nil
+	}
+
+	resp, err := s.client.newRequestDo("GET", u, o, nil, v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.User, resp, nil
+}
+
+// GetFull retrieves information about a user including contact methods and notification rules.
+func (s *UserService) GetFull(id string) (*FullUser, *Response, error) {
+	u := fmt.Sprintf("/users/%s", id)
+	v := new(FullUser)
+	o := &GetUserOptions{
+		Include: []string{"contact_methods", "notification_rules"},
+	}
 
 	resp, err := s.client.newRequestDo("GET", u, o, nil, v)
 	if err != nil {
@@ -162,6 +251,8 @@ func (s *UserService) Update(id string, user *User) (*User, *Response, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
+	cachePutUser(v.User)
 
 	return v.User, resp, nil
 }
@@ -189,6 +280,12 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 		return nil, nil, err
 	}
 
+	if err = cachePutContactMethod(v.ContactMethod); err != nil {
+		log.Printf("===== Error adding contact method %q to cache: %q", v.ContactMethod.ID, err)
+	} else {
+		log.Printf("===== Added contact method %q to cache", v.ContactMethod.ID)
+	}
+
 	return v.ContactMethod, resp, nil
 }
 
@@ -196,6 +293,10 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 func (s *UserService) GetContactMethod(userID string, contactMethodID string) (*ContactMethod, *Response, error) {
 	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
 	v := new(ContactMethod)
+
+	if err := cacheGetContactMethod(contactMethodID, v); err == nil {
+		return v, nil, nil
+	}
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
 	if err != nil {
@@ -215,13 +316,23 @@ func (s *UserService) UpdateContactMethod(userID, contactMethodID string, contac
 		return nil, nil, err
 	}
 
+	cachePutContactMethod(v.ContactMethod)
+
 	return v.ContactMethod, resp, nil
 }
 
 // DeleteContactMethod deletes a contact method for a user.
 func (s *UserService) DeleteContactMethod(userID, contactMethodID string) (*Response, error) {
 	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
-	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+	resp, err := s.client.newRequestDo("DELETE", u, nil, nil, nil)
+
+	if cerr := cacheDeleteContactMethod(contactMethodID); cerr != nil {
+		log.Printf("===== Error deleting contact method %q from cache: %q", contactMethodID, cerr)
+	} else {
+		log.Printf("===== Deleted contact method %q from cache", contactMethodID)
+	}
+
+	return resp, err
 }
 
 // CreateNotificationRule creates a new notification rule for a user.
@@ -234,6 +345,12 @@ func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRu
 		return nil, nil, err
 	}
 
+	if err = cachePutNotificationRule(v.NotificationRule); err != nil {
+		log.Printf("===== Error adding notification rule %q to cache: %q", v.NotificationRule.ID, err)
+	} else {
+		log.Printf("===== Added notification rule %q to cache", v.NotificationRule.ID)
+	}
+
 	return v.NotificationRule, resp, nil
 }
 
@@ -241,6 +358,10 @@ func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRu
 func (s *UserService) GetNotificationRule(userID string, ruleID string) (*NotificationRule, *Response, error) {
 	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
 	v := new(NotificationRule)
+
+	if err := cacheGetNotificationRule(ruleID, v); err == nil {
+		return v, nil, nil
+	}
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
 	if err != nil {
@@ -260,11 +381,21 @@ func (s *UserService) UpdateNotificationRule(userID, ruleID string, rule *Notifi
 		return nil, nil, err
 	}
 
+	cachePutNotificationRule(v.NotificationRule)
+
 	return v.NotificationRule, resp, nil
 }
 
 // DeleteNotificationRule deletes a notification rule for a user.
 func (s *UserService) DeleteNotificationRule(userID, ruleID string) (*Response, error) {
 	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
-	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+	resp, err := s.client.newRequestDo("DELETE", u, nil, nil, nil)
+
+	if cerr := cacheDeleteNotificationRule(ruleID); cerr != nil {
+		log.Printf("===== Error deleting notification rule %q from cache: %q", ruleID, cerr)
+	} else {
+		log.Printf("===== Deleted notification rule %q from cache", ruleID)
+	}
+
+	return resp, err
 }

@@ -49,14 +49,7 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Services.List(o)
 		if err != nil {
-			if isErrCode(err, 429) {
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
-				return resource.RetryableError(err)
-			}
-
-			return resource.NonRetryableError(err)
+			return handleError(err)
 		}
 
 		var found *pagerduty.Service
@@ -79,11 +72,7 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 			if strings.EqualFold(integration.Summary, integrationType) {
 				integrationDetails, _, err := client.Services.GetIntegration(found.ID, integration.ID, &pagerduty.GetIntegrationOptions{})
 				if err != nil {
-					if isErrCode(err, 429) {
-						time.Sleep(30 * time.Second)
-						return resource.RetryableError(err)
-					}
-					return resource.NonRetryableError(err)
+					return handleError(err)
 				}
 				d.SetId(integration.ID)
 				d.Set("service_name", found.Name)
@@ -94,7 +83,16 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 
 		}
 		return resource.NonRetryableError(
-			fmt.Errorf("Unable to locate any integration of type %s on service %s", integrationType, searchName),
+			fmt.Errorf("unable to locate any integration of type %s on service %s", integrationType, searchName),
 		)
 	})
+}
+
+func handleError(err error) *resource.RetryError {
+	if isErrCode(err, 429) {
+		time.Sleep(30 * time.Second)
+		return resource.RetryableError(err)
+	}
+
+	return resource.NonRetryableError(err)
 }

@@ -108,6 +108,9 @@ func NewClient(config *Config) (*Client, error) {
 	c.Priorities = &PriorityService{c}
 	c.ResponsePlays = &ResponsePlayService{c}
 
+	InitCache(c)
+	PopulateCache()
+
 	return c, nil
 }
 

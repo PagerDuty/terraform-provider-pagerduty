@@ -1,3 +1,17 @@
+## 1.10.0 (July 29, 2021)
+FEATURES:
+* `resource/pagerduty_extension_servicenow`: Added `pagerduty_extension_servicenow` resource to account for specific values that need to be set for ServiceNow extension ([#348](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/348))
+* `resource/pagerduty_schedule`: Added `alert_grouping_parameters`field to `resource_pagerduty_service` ([#342](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/342))
+
+
+BUG FIXES:
+* `resource/pagerduty_user`: Fixed broken tests on user objects because of new API constraints ([#362](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/362))
+
+
+IMPROVEMENTS:
+* `resource/pagerduty_schedule`: Set `MinItem: 1` parameter for the schedule layers field ([#350](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/350))
+* `resource/pagerduty_user`: Added option for caching user objects ([#362](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/362))
+
 ## 1.9.9 (June 23, 2021)
 IMPROVEMENT:
 * `resource/pagerduty_ruleset_rule`: Update sample code in documentation to reference a Terraform resource rather than hard coded service ID ([#349](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/349))

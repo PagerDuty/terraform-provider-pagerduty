@@ -63,7 +63,7 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 
 		if found == nil {
 			return resource.NonRetryableError(
-				fmt.Errorf("Unable to locate any service with the name: %s", searchName),
+				fmt.Errorf("unable to locate any service with the name: %s", searchName),
 			)
 		}
 

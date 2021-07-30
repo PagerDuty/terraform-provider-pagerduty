@@ -11,9 +11,9 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-func dataSourcePagerDutyIntegration() *schema.Resource {
+func dataSourcePagerDutyServiceIntegration() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyIntegrationRead,
+		Read: dataSourcePagerDutyServiceIntegrationRead,
 
 		Schema: map[string]*schema.Schema{
 			"service_name": {
@@ -35,7 +35,7 @@ func dataSourcePagerDutyIntegration() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
 	log.Printf("[INFO] Reading PagerDuty service")

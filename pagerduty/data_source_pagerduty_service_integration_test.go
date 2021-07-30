@@ -2,30 +2,71 @@ package pagerduty
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
+
+func setupResources(service, serviceIntegration, escalationPolicy, username, email string) error {
+	client, err := pagerduty.NewClient(&pagerduty.Config{Token: os.Getenv("PAGERDUTY_TOKEN")})
+	if err != nil {
+		return err
+	}
+
+	createUser, _, err := client.Users.Create(&pagerduty.User{Name: username, Email: email})
+	if err != nil {
+		return err
+	}
+
+	createEp, _, err := client.EscalationPolicies.Create(&pagerduty.EscalationPolicy{
+		Name:            escalationPolicy,
+		EscalationRules: []*pagerduty.EscalationRule{{EscalationDelayInMinutes: 10, Targets: []*pagerduty.EscalationTargetReference{{Type: "user_reference", ID: createUser.ID}}}},
+	})
+	if err != nil {
+		return err
+	}
+
+	createResponse, _, err := client.Services.Create(&pagerduty.Service{
+		Name:             service,
+		EscalationPolicy: &pagerduty.EscalationPolicyReference{ID: createEp.ID, Type: "escalation_policy_reference"},
+	})
+	if err != nil {
+		return err
+	}
+
+	_, _, err = client.Services.CreateIntegration(createResponse.ID, &pagerduty.Integration{
+		Summary: serviceIntegration,
+		Type:    "service_integration_reference",
+		Service: &pagerduty.ServiceReference{ID: createResponse.ID, Type: "service_reference"},
+		Vendor:  &pagerduty.VendorReference{ID: "PAM4FGS", Type: "vendor_reference"},
+	})
+	if err != nil {
+		return fmt.Errorf("error creating integration: %v", err)
+	}
+
+	return nil
+}
 
 func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.com", username)
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	serviceIntegration := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	serviceIntegration := "Datadog"
+
+	err := setupResources(service, serviceIntegration, escalationPolicy, username, email)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			{
-				Config: testAccDataSourcePagerDutyIntegrationConfigStep1(username, email, service, escalationPolicy, serviceIntegration),
-				Check: resource.ComposeTestCheckFunc(
-					testAccDataSourcePagerDutyIntegration("pagerduty_service.test", "data.pagerduty_service.by_name"),
-				),
-			},
 			{
 				Config: testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration),
 				Check:  verifyOutput("output_id"),
@@ -50,79 +91,11 @@ func verifyOutput(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyIntegration(src, n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		srcR := s.RootModule().Resources[src]
-		srcA := srcR.Primary.Attributes
-
-		r := s.RootModule().Resources[n]
-		a := r.Primary.Attributes
-
-		if a["id"] == "" {
-			return fmt.Errorf("expected to get a service ID from PagerDuty")
-		}
-
-		testAtts := []string{"id", "name"}
-
-		for _, att := range testAtts {
-			if a[att] != srcA[att] {
-				return fmt.Errorf("Expected the service %s to be: %s, but got: %s", att, srcA[att], a[att])
-			}
-		}
-
-		return nil
-	}
-}
-
-func testAccDataSourcePagerDutyIntegrationConfigStep1(username, email, service, escalationPolicy, serviceIntegration string) string {
-	return fmt.Sprintf(`
-resource "pagerduty_user" "test" {
-  name  = "%s"
-  email = "%s"
-}
-
-resource "pagerduty_service" "test" {
-  name                    = "%s"
-  auto_resolve_timeout    = 14400
-  acknowledgement_timeout = 600
-  escalation_policy       = pagerduty_escalation_policy.test.id
-  alert_creation          = "create_incidents"
-}
-
-resource "pagerduty_escalation_policy" "test" {
-  name        = "%s"
-  num_loops   = 2
-  rule {
-    escalation_delay_in_minutes = 10
-    target {
-      type = "user_reference"
-      id   = pagerduty_user.test.id
-    }
-  }
-}
-
-resource "pagerduty_service_integration" "foo" {
-  name    = "%s"
-  service = pagerduty_service.test.id
-  vendor  = data.pagerduty_vendor.datadog.id
-}
-
-data "pagerduty_vendor" "datadog" {
-  name = "datadog"
-}
-
-data "pagerduty_service" "by_name" {
- name = pagerduty_service.test.name
-}
-`, username, email, service, escalationPolicy, serviceIntegration)
-}
-
 func testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration string) string {
 	return fmt.Sprintf(`
 data "pagerduty_service_integration" "service_integration" {
   service_name = "%s"
-  integration_type = "%s"
+  integration_summary = "%s"
 }
 
 output "output_id" {

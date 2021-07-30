@@ -20,7 +20,7 @@ func dataSourcePagerDutyIntegration() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"integration_type": {
+			"integration_summary": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "examples 'Amazon CloudWatch', 'New Relic",
@@ -67,9 +67,9 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 			)
 		}
 
-		integrationType := d.Get("integration_type").(string)
+		integrationSummary := d.Get("integration_summary").(string)
 		for _, integration := range found.Integrations {
-			if strings.EqualFold(integration.Summary, integrationType) {
+			if strings.EqualFold(integration.Summary, integrationSummary) {
 				integrationDetails, _, err := client.Services.GetIntegration(found.ID, integration.ID, &pagerduty.GetIntegrationOptions{})
 				if err != nil {
 					return handleError(err)
@@ -83,7 +83,7 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 
 		}
 		return resource.NonRetryableError(
-			fmt.Errorf("unable to locate any integration of type %s on service %s", integrationType, searchName),
+			fmt.Errorf("unable to locate any integration of type %s on service %s", integrationSummary, searchName),
 		)
 	})
 }

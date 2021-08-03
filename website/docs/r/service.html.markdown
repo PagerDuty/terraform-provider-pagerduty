@@ -87,7 +87,8 @@ The block contains the following arguments:
   * `start_time` - The support hours' starting time of day.
   * `end_time` - The support hours' ending time of day.
 
-When using `type = "use_support_hours"` in `incident_urgency_rule` you can specify an optional `scheduled_actions` block.
+A `scheduled_actions` block is required when using `type = "use_support_hours"` in `incident_urgency_rule`.
+
 The block contains the following arguments:
 
   * `type` - The type of scheduled action. Currently, this must be set to `urgency_change`.

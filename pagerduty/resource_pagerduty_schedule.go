@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -121,6 +122,13 @@ func resourcePagerDutySchedule() *schema.Resource {
 					},
 				},
 			},
+			"teams": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -139,6 +147,10 @@ func buildScheduleStruct(d *schema.ResourceData) (*pagerduty.Schedule, error) {
 
 	if attr, ok := d.GetOk("description"); ok {
 		schedule.Description = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("teams"); ok {
+		schedule.Teams = expandSchedTeams(attr.([]interface{}))
 	}
 
 	return schedule, nil
@@ -192,6 +204,10 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 			if err := d.Set("layer", layers); err != nil {
 				return resource.NonRetryableError(err)
 			}
+			if err := d.Set("teams", flattenShedTeams(schedule.Teams)); err != nil {
+				return resource.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
+			}
+
 		}
 		return nil
 	})
@@ -417,4 +433,29 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 	}
 
 	return resultReversed, nil
+}
+
+// the expandShedTeams and flattenSchedTeams are based on the expandTeams and flattenTeams functions in the user
+// resource. added these functions here for maintainability
+func expandSchedTeams(v interface{}) []*pagerduty.TeamReference {
+	var teams []*pagerduty.TeamReference
+
+	for _, t := range v.([]interface{}) {
+		team := &pagerduty.TeamReference{
+			ID:   t.(string),
+			Type: "team_reference",
+		}
+		teams = append(teams, team)
+	}
+
+	return teams
+}
+
+func flattenShedTeams(teams []*pagerduty.TeamReference) []string {
+	res := make([]string, len(teams))
+	for i, t := range teams {
+		res[i] = t.ID
+	}
+
+	return res
 }

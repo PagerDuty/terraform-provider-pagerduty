@@ -17,7 +17,10 @@ A [schedule](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Schedule
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.example.id]
+}
+
+resource "pagerduty_team" "example" {
+  name = "A Team"
 }
 
 resource "pagerduty_schedule" "foo" {
@@ -29,7 +32,7 @@ resource "pagerduty_schedule" "foo" {
     start                        = "2015-11-06T20:00:00-05:00"
     rotation_virtual_start       = "2015-11-06T20:00:00-05:00"
     rotation_turn_length_seconds = 86400
-    users                        = [pagerduty_user.foo.id]
+    users                        = [pagerduty_user.example.id]
 
     restriction {
       type              = "daily_restriction"
@@ -37,6 +40,8 @@ resource "pagerduty_schedule" "foo" {
       duration_seconds  = 32400
     }
   }
+
+  teams = [pagerduty_team.example.id]
 }
 ```
 
@@ -51,6 +56,7 @@ The following arguments are supported:
 * `overflow` - (Optional) Any on-call schedule entries that pass the date range bounds will be truncated at the bounds, unless the parameter `overflow` is passed. For instance, if your schedule is a rotation that changes daily at midnight UTC, and your date range is from `2011-06-01T10:00:00Z` to `2011-06-01T14:00:00Z`:
 If you don't pass the overflow=true parameter, you will get one schedule entry returned with a start of `2011-06-01T10:00:00Z` and end of `2011-06-01T14:00:00Z`.
 If you do pass the `overflow` parameter, you will get one schedule entry returned with a start of `2011-06-01T00:00:00Z` and end of `2011-06-02T00:00:00Z`.
+* `teams` - (Optional) Teams associated with the schedule.
 
 
 Schedule layers (`layer`) supports the following:

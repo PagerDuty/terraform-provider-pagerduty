@@ -209,6 +209,8 @@ github.com/heimweh/go-pagerduty v0.0.0-20210605042823-5a9026c44cb2 h1:ZHlT48cTcm
 github.com/heimweh/go-pagerduty v0.0.0-20210605042823-5a9026c44cb2/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/heimweh/go-pagerduty v0.0.0-20210727215404-3da4ffdbaa95 h1:Urqoj46k8QuRBMWUB/CoWjygFZpKiMm4I96eSJCZ/x8=
 github.com/heimweh/go-pagerduty v0.0.0-20210727215404-3da4ffdbaa95/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
+github.com/heimweh/go-pagerduty v0.0.0-20210810155842-7de939d717c0 h1:F3c5KAaStFpCvNWo8x0mniARDa0D16hIkfw6chMqTRI=
+github.com/heimweh/go-pagerduty v0.0.0-20210810155842-7de939d717c0/go.mod h1:6+bccpjQ/PM8uQY9m8avM4MJea+3vo3ta9r8kGQ4XFY=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=

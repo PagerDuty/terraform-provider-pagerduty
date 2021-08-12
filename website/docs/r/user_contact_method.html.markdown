@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty_user_contact_method
 
-A [contact method](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Users/get_users_id_contact_methods) is a contact method for a PagerDuty user (email, phone or SMS).
+A [contact method](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1users~1%7Bid%7D~1contact_methods/get) is a contact method for a PagerDuty user (email, phone or SMS).
 
 
 ## Example Usage

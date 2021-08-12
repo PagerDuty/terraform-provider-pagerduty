@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty_response_play
 
-A [response play](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Services/get_services) allows you to create packages of Incident Actions that can be applied during an Incident's life cycle.
+A [response play](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1response_plays/get) allows you to create packages of Incident Actions that can be applied during an Incident's life cycle.
 
 
 ## Example Usage

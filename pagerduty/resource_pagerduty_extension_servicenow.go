@@ -14,7 +14,7 @@ import (
 
 type PagerDutyExtensionServiceNowConfig struct {
 	User        string `json:"snow_user"`
-	Password    string `json:"snow_password"`
+	Password    string `json:"snow_password,omitempty"`
 	SyncOptions string `json:"sync_options"`
 	Target      string `json:"target"`
 	TaskType    string `json:"task_type"`

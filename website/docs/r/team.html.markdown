@@ -23,7 +23,7 @@ resource "pagerduty_team" "parent" {
 resource "pagerduty_team" "example" {
   name        = "Engineering"
   description = "All engineering"
-  parent      = pagerduty.team.id
+  parent      = pagerduty_team.parent.id
 }
 ```
 

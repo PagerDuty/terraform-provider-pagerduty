@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_user
 
-A [user](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Users/get_users) is a member of a PagerDuty account that have the ability to interact with incidents and other data on the account.
+A [user](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1users/get) is a member of a PagerDuty account that have the ability to interact with incidents and other data on the account.
 
 
 ## Example Usage

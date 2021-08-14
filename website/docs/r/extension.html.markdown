@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_extension
 
-An [extension](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Extensions/post_extensions) can be associated with a service.
+An [extension](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1extensions/post) can be associated with a service.
 
 ## Example Usage
 

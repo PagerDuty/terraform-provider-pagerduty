@@ -11,7 +11,7 @@ description: |-
 *NOTE: The `pagerduty_event_rule` resource has been deprecated in favor of the [pagerduty_ruleset](ruleset.html) and [pagerduty_ruleset_rule](ruleset_rule.html) resources. Please use the `ruleset` based resources for working with Event Rules.*
 
 
-An [event rule](https://v2.developer.pagerduty.com/docs/global-event-rules-api) determines what happens to an event that is sent to PagerDuty by monitoring tools and other integrations.
+An [event rule](https://developer.pagerduty.com/docs/rest-api-v2/global-event-rules-api/) determines what happens to an event that is sent to PagerDuty by monitoring tools and other integrations.
 
 
 ## Example Usage
@@ -91,7 +91,7 @@ The following arguments are supported:
 
 * `action_json` - (Required) A list of one or more actions for each rule. Each action within the list is itself a list.
 * `condition_json` - (Required) Contains a list of conditions. The first field in the list is `and` or `or`, followed by a list of operators and values.
-* `advanced_condition_json` - (Optional) Contains a list of specific conditions including `active-between`,`scheduled-weekly`, and `frequency-over`. The first element in the list is the label for the condition, followed by a list of values for the specific condition. For more details on these conditions see [Advanced Condition](https://v2.developer.pagerduty.com/docs/global-event-rules-api#section-advanced-condition) in the PagerDuty API documentation.
+* `advanced_condition_json` - (Optional) Contains a list of specific conditions including `active-between`,`scheduled-weekly`, and `frequency-over`. The first element in the list is the label for the condition, followed by a list of values for the specific condition. For more details on these conditions see [Advanced Condition](https://developer.pagerduty.com/docs/rest-api-v2/global-event-rules-api/#advanced-condition-parameter) in the PagerDuty API documentation.
 * `depends_on` - (Optional) A [Terraform meta-parameter](https://www.terraform.io/docs/configuration-0-11/resources.html#depends_on) that ensures that the `event_rule` specified is created before the current rule. This is important because Event Rules in PagerDuty are executed in order. `depends_on` ensures that  the rules are created in the order specified.
 
 ## Attributes Reference

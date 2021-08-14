@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty_team_membership
 
-A [team membership](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Teams/put_teams_id_users_user_id) manages memberships within a team.
+A [team membership](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1teams~1%7Bid%7D~1users~1%7Buser_id%7D/put) manages memberships within a team.
 
 ## Example Usage
 

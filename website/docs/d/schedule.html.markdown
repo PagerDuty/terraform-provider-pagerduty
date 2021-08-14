@@ -44,4 +44,4 @@ The following arguments are supported:
 * `id` - The ID of the found schedule.
 * `name` - The short name of the found schedule.
 
-[1]: https://v2.developer.pagerduty.com/v2/page/api-reference#!/Schedules/get_schedules
+[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1schedules~1%7Bid%7D/get

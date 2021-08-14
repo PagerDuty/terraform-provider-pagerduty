@@ -37,4 +37,4 @@ The following arguments are supported:
 * `id` - The ID of the found escalation policy.
 * `name` - The short name of the found escalation policy.
 
-[1]: https://v2.developer.pagerduty.com/v2/page/api-reference#!/Escalation_Policies/get_escalation_policies
+[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1escalation_policies/get

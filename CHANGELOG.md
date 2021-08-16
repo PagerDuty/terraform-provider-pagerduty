@@ -1,3 +1,13 @@
+## 1.10.1 (August 16, 2021)
+FEATURES:
+* `data_source_pagerduty_service_integration`: Add new data source for Service Integrations ([#363](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/363))
+* `resource/pagerduty_schedule`: Add `teams` field to schedule resource ([#368](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/368))
+
+BUG FIXES:
+* `resource/pagerduty_extension_servicenow`: Fixed blank `snow_password` when changes ignored ([#371](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/371))
+* `data_source_pagerduty_business_service`: Fixed bug where any business service can now be a data source ([#372](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/372))
+* Various Resources: Updated links to API reference throughout documentation ([#369](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/369))
+
 ## 1.10.0 (July 29, 2021)
 FEATURES:
 * `resource/pagerduty_extension_servicenow`: Added `pagerduty_extension_servicenow` resource to account for specific values that need to be set for ServiceNow extension ([#348](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/348))

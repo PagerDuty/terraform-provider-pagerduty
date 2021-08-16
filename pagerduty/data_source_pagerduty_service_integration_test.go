@@ -22,7 +22,6 @@ func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy),
-				//Destroy: false,
 				Check: func(state *terraform.State) error {
 					resource.Test(t, resource.TestCase{
 						Providers: testAccProviders,

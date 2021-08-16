@@ -2,54 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
-
-func setupResources(service, serviceIntegration, escalationPolicy, username, email string) error {
-	client, err := pagerduty.NewClient(&pagerduty.Config{Token: os.Getenv("PAGERDUTY_TOKEN")})
-	if err != nil {
-		return err
-	}
-
-	createUser, _, err := client.Users.Create(&pagerduty.User{Name: username, Email: email})
-	if err != nil {
-		return err
-	}
-
-	createEp, _, err := client.EscalationPolicies.Create(&pagerduty.EscalationPolicy{
-		Name:            escalationPolicy,
-		EscalationRules: []*pagerduty.EscalationRule{{EscalationDelayInMinutes: 10, Targets: []*pagerduty.EscalationTargetReference{{Type: "user_reference", ID: createUser.ID}}}},
-	})
-	if err != nil {
-		return err
-	}
-
-	createResponse, _, err := client.Services.Create(&pagerduty.Service{
-		Name:             service,
-		EscalationPolicy: &pagerduty.EscalationPolicyReference{ID: createEp.ID, Type: "escalation_policy_reference"},
-	})
-	if err != nil {
-		return err
-	}
-
-	_, _, err = client.Services.CreateIntegration(createResponse.ID, &pagerduty.Integration{
-		Summary: serviceIntegration,
-		Type:    "service_integration_reference",
-		Service: &pagerduty.ServiceReference{ID: createResponse.ID, Type: "service_reference"},
-		Vendor:  &pagerduty.VendorReference{ID: "PAM4FGS", Type: "vendor_reference"},
-	})
-	if err != nil {
-		return fmt.Errorf("error creating integration: %v", err)
-	}
-
-	return nil
-}
 
 func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -58,18 +16,24 @@ func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	serviceIntegration := "Datadog"
 
-	err := setupResources(service, serviceIntegration, escalationPolicy, username, email)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration),
-				Check:  verifyOutput("output_id"),
+				Config: testAccDataSourcePagerDutyIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy),
+				//Destroy: false,
+				Check: func(state *terraform.State) error {
+					resource.Test(t, resource.TestCase{
+						Providers: testAccProviders,
+						Steps: []resource.TestStep{
+							{
+								Config: testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration),
+								Check:  verifyOutput("output_id"),
+							}},
+					})
+					return nil
+				},
 			},
 		},
 	})
@@ -91,15 +55,54 @@ func verifyOutput(name string) resource.TestCheckFunc {
 	}
 }
 
+func testAccDataSourcePagerDutyIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "pagerduty_user" {
+  email = "%s"
+  name = "test user"
+}
+
+resource "pagerduty_escalation_policy" "escalation_policy" {
+  name = "%s"
+  rule {
+    escalation_delay_in_minutes = 5
+    target {
+      type = "user_reference"
+      id = pagerduty_user.pagerduty_user.id
+    }
+  }
+
+}
+
+resource "pagerduty_service" "pagerduty_service" {
+  name = "%s"
+  escalation_policy = pagerduty_escalation_policy.escalation_policy.id
+}
+
+resource "pagerduty_service_integration" "service_integration" {
+  name    = "%s"
+  service = pagerduty_service.pagerduty_service.id
+  vendor  = data.pagerduty_vendor.datadog.id
+}
+
+data "pagerduty_vendor" "datadog" {
+  name = "datadog"
+}
+
+
+`, email, escalationPolicy, service, serviceIntegration)
+}
+
 func testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration string) string {
 	return fmt.Sprintf(`
+
 data "pagerduty_service_integration" "service_integration" {
-  service_name = "%s"
-  integration_summary = "%s"
+ service_name = "%s"
+ integration_summary = "%s"
 }
 
 output "output_id" {
-  value = data.pagerduty_service_integration.service_integration.integration_key
+ value = data.pagerduty_service_integration.service_integration.integration_key
 }
 `, service, serviceIntegration)
 }

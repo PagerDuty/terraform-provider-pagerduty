@@ -328,59 +328,7 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	return &service, nil
 }
 
-func configureResource(d *schema.ResourceData, service *pagerduty.Service) *resource.RetryError {
-	d.Set("name", service.Name)
-	d.Set("html_url", service.HTMLURL)
-	d.Set("status", service.Status)
-	d.Set("created_at", service.CreatedAt)
-	d.Set("escalation_policy", service.EscalationPolicy.ID)
-	d.Set("description", service.Description)
-	if service.AutoResolveTimeout == nil {
-		d.Set("auto_resolve_timeout", "null")
-	} else {
-		d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
-	}
-	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
-	if service.AcknowledgementTimeout == nil {
-		d.Set("acknowledgement_timeout", "null")
-	} else {
-		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
-	}
-	d.Set("alert_creation", service.AlertCreation)
-	if service.AlertGrouping != nil && *service.AlertGrouping != "" {
-		d.Set("alert_grouping", *service.AlertGrouping)
-	}
-	if service.AlertGroupingTimeout == nil {
-		d.Set("alert_grouping_timeout", "null")
-	} else {
-		d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
-	}
-	if service.AlertGroupingParameters != nil {
-		if err := d.Set("alert_grouping_parameters", flattenAlertGroupingParameters(service.AlertGroupingParameters)); err != nil {
-			return resource.NonRetryableError(err)
-		}
-	}
-	if service.IncidentUrgencyRule != nil {
-		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
-			return resource.NonRetryableError(err)
-		}
-	}
-
-	if service.SupportHours != nil {
-		if err := d.Set("support_hours", flattenSupportHours(service.SupportHours)); err != nil {
-			return resource.NonRetryableError(err)
-		}
-	}
-
-	if service.ScheduledActions != nil {
-		if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
-			return resource.NonRetryableError(err)
-		}
-	}
-	return nil
-}
-
-func fetchResource(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client := meta.(*pagerduty.Client)
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
@@ -394,12 +342,63 @@ func fetchResource(d *schema.ResourceData, meta interface{}, errCallback func(er
 
 			return nil
 		}
-		return configureResource(d, service)
+
+		d.Set("name", service.Name)
+		d.Set("html_url", service.HTMLURL)
+		d.Set("status", service.Status)
+		d.Set("created_at", service.CreatedAt)
+		d.Set("escalation_policy", service.EscalationPolicy.ID)
+		d.Set("description", service.Description)
+		if service.AutoResolveTimeout == nil {
+			d.Set("auto_resolve_timeout", "null")
+		} else {
+			d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
+		}
+		d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
+		if service.AcknowledgementTimeout == nil {
+			d.Set("acknowledgement_timeout", "null")
+		} else {
+			d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
+		}
+		d.Set("alert_creation", service.AlertCreation)
+		if service.AlertGrouping != nil && *service.AlertGrouping != "" {
+			d.Set("alert_grouping", *service.AlertGrouping)
+		}
+		if service.AlertGroupingTimeout == nil {
+			d.Set("alert_grouping_timeout", "null")
+		} else {
+			d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
+		}
+		if service.AlertGroupingParameters != nil {
+			if err := d.Set("alert_grouping_parameters", flattenAlertGroupingParameters(service.AlertGroupingParameters)); err != nil {
+				return resource.NonRetryableError(err)
+			}
+		}
+		if service.IncidentUrgencyRule != nil {
+			if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
+				return resource.NonRetryableError(err)
+			}
+		}
+
+		if service.SupportHours != nil {
+			if err := d.Set("support_hours", flattenSupportHours(service.SupportHours)); err != nil {
+				return resource.NonRetryableError(err)
+			}
+		}
+
+		if service.ScheduledActions != nil {
+			if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
+				return resource.NonRetryableError(err)
+			}
+		}
+		return nil
+
 	})
 }
 
 func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
+
 	service, err := buildServiceStruct(d)
 	if err != nil {
 		return err
@@ -414,12 +413,12 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 
 	d.SetId(service.ID)
 
-	return fetchResource(d, meta, genError)
+	return fetchService(d, meta, genError)
 }
 
 func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty service %s", d.Id())
-	return fetchResource(d, meta, handleNotFoundError)
+	return fetchService(d, meta, handleNotFoundError)
 }
 
 func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {

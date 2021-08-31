@@ -10,7 +10,9 @@ description: |-
 
 A [slack connection](https://developer.pagerduty.com/api-reference/reference/integration-slack-service/openapiv3.json) allows you to connect a workspace in Slack to a PagerDuty service or team which allows you to acknowledge and resolve PagerDuty incidents from the Slack user interface. 
 
-**NOTE: Using this resource requires a PagerDuty [user-level API key](https://support.pagerduty.com/docs/generating-api-keys#section-generating-a-personal-rest-api-key) set as the `PAGERDUTY_USER_TOKEN` environment variable.*
+**NOTES for using this resource:** 
+* To first use this resource you will need to [map your PagerDuty account to a valid Slack Workspace](https://support.pagerduty.com/docs/slack-integration-guide#integration-walkthrough). *This can only be done through the PagerDuty UI.*
+* This resource requires a PagerDuty [user-level API key](https://support.pagerduty.com/docs/generating-api-keys#section-generating-a-personal-rest-api-key) set as the `PAGERDUTY_USER_TOKEN` environment variable.
 ## Example Usage
 
 ```hcl

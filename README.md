@@ -64,3 +64,5 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```sh
 $ make testacc
 ```
+
+*Additional Note:* In order for the tests on the Slack Connection resources to pass you will need valid Slack workspace and channel IDs from a [Slack workspace connected to your PagerDuty account](https://support.pagerduty.com/docs/slack-integration-guide#integration-walkthrough).

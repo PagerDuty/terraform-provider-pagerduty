@@ -12,6 +12,8 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+const AppBaseUrl = "https://app.pagerduty.com"
+
 func resourcePagerDutySlackConnection() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutySlackConnectionCreate,
@@ -108,10 +110,7 @@ func buildSlackConnectionStruct(d *schema.ResourceData) (*pagerduty.SlackConnect
 }
 
 func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interface{}) error {
-	config := &pagerduty.Config{
-		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: "https://app.pagerduty.com",
-	}
+	config := setClientConfig()
 	client, err := pagerduty.NewClient(config)
 	if err != nil {
 		return err
@@ -141,10 +140,7 @@ func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface{}) error {
-	config := &pagerduty.Config{
-		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: "https://app.pagerduty.com",
-	}
+	config := setClientConfig()
 	client, err := pagerduty.NewClient(config)
 	if err != nil {
 		return err
@@ -181,7 +177,7 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := &pagerduty.Config{
 		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: "https://app.pagerduty.com",
+		BaseURL: AppBaseUrl,
 	}
 	client, err := pagerduty.NewClient(config)
 	if err != nil {
@@ -202,10 +198,7 @@ func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutySlackConnectionDelete(d *schema.ResourceData, meta interface{}) error {
-	config := &pagerduty.Config{
-		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: "https://app.pagerduty.com",
-	}
+	config := setClientConfig()
 	client, err := pagerduty.NewClient(config)
 	if err != nil {
 		return err
@@ -273,18 +266,15 @@ func flattenConfigList(list []string) interface{} {
 	return items
 }
 
-func setClientConfig(c *pagerduty.Client) {
-	c.Config = &pagerduty.Config{
+func setClientConfig() *pagerduty.Config {
+	return &pagerduty.Config{
 		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: "https://app.pagerduty.com",
+		BaseURL: AppBaseUrl,
 	}
 }
 
 func resourcePagerDutySlackConnectionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := &pagerduty.Config{
-		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: "https://app.pagerduty.com",
-	}
+	config := setClientConfig()
 	client, err := pagerduty.NewClient(config)
 	if err != nil {
 		return nil, err

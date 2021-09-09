@@ -161,7 +161,7 @@ The following attributes are exported:
 
 ## Import
 
-Ruleset rules can be imported using using the related `ruleset` id and the `ruleset_rule` id separated by a dot, e.g.
+Ruleset rules can be imported using using the related `ruleset` ID and the `ruleset_rule` ID separated by a dot, e.g.
 
 ```
 $ terraform import pagerduty_ruleset_rule.main a19cdca1-3d5e-4b52-bfea-8c8de04da243.19acac92-027a-4ea0-b06c-bbf516519601

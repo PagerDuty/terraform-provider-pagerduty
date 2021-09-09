@@ -24,6 +24,18 @@ func Provider() *schema.Provider {
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
 			},
+
+			"apiurl": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "https://api.pagerduty.com",
+			},
+
+			"appurl": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "https://app.pagerduty.com",
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -102,6 +114,8 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	config := Config{
+		ApiURL:              data.Get("apiurl").(string),
+		AppURL:              data.Get("appurl").(string),
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),

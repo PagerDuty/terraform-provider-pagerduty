@@ -1,3 +1,10 @@
+## 1.11.0 (September 9, 2021)
+FEATURES:
+* `resource/pagerduty_slack_connection`: Added resource to manage Slack Connections (aka Slack v2) ([#381](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/381))
+
+BUG FIXES:
+* `resource/pagerduty_service`: Clarified docs surrounding the `scheduled_actions` block on the service resource ([#360](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/360))
+
 ## 1.10.1 (August 16, 2021)
 FEATURES:
 * `data_source_pagerduty_service_integration`: Add new data source for Service Integrations ([#363](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/363))

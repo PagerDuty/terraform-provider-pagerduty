@@ -25,16 +25,10 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
 			},
 
-			"apiurl": {
+			"service_region": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "https://api.pagerduty.com",
-			},
-
-			"appurl": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "https://app.pagerduty.com",
+				Default:  "",
 			},
 		},
 

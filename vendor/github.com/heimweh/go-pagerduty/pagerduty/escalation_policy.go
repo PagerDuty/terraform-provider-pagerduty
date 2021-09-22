@@ -21,7 +21,7 @@ type EscalationPolicy struct {
 	HTMLURL          string              `json:"html_url,omitempty"`
 	ID               string              `json:"id,omitempty"`
 	Name             string              `json:"name,omitempty"`
-	NumLoops         int                 `json:"num_loops,omitempty"`
+	NumLoops         *int                `json:"num_loops,omitempty"`
 	RepeatEnabled    bool                `json:"repeat_enabled,omitempty"`
 	Self             string              `json:"self,omitempty"`
 	Services         []*ServiceReference `json:"services,omitempty"`

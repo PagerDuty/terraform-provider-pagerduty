@@ -33,6 +33,7 @@ type Schedule struct {
 	TimeZone             string                       `json:"time_zone,omitempty"`
 	Type                 string                       `json:"type,omitempty"`
 	Users                []*UserReference             `json:"users,omitempty"`
+	Teams                []*TeamReference             `json:"teams,omitempty"`
 }
 
 // SubSchedule represents a sub-schedule of a schedule.

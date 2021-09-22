@@ -30,6 +30,8 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "disabled", "true"),
 					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "variable.#", "2"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.#", "1"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "conditions.0.operator", "and"),
@@ -41,6 +43,8 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.value", "disk space"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", rule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "actions.0.extractions.1.template", "{{VAR1}} | {{VAR2}}"),
 				),
 			},
 			{
@@ -69,6 +73,52 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyRulesetRule_MultipleRules(t *testing.T) {
+	ruleset := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	rule1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	rule2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	rule3 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyRulesetRuleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyRulesetRuleConfigMultipleRules(team, ruleset, rule1, rule2, rule3),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.foo"),
+					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.bar"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "position", "0"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.bar", "position", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.baz", "position", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "disabled", "false"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.operator", "and"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.operator", "contains"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.value", "disk space"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", rule1),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.bar", "actions.0.annotate.0.value", rule2),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.baz", "actions.0.annotate.0.value", rule3),
+				),
+			},
+		},
+	})
+}
 func testAccCheckPagerDutyRulesetRuleDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*pagerduty.Client)
 	for _, r := range s.RootModule().Resources {
@@ -143,11 +193,34 @@ resource "pagerduty_ruleset_rule" "foo" {
 		annotate {
 			value = "%s"
 		}
+		suppress {
+			value = true
+		}
 		extractions {
 			target = "dedup_key"
 			source = "details.host"
 			regex = "(.*)"
 		}
+		extractions {
+			target   = "summary"
+			template = "{{VAR1}} | {{VAR2}}"
+		}
+	}
+	variable {
+		type = "regex"
+		parameters {
+		  value = "another.*regex"
+		  path = "custom_details.path.to.field"
+		}
+		name = "VAR2"
+	}
+	variable {
+		type = "regex"
+		parameters {
+			value = ".*"
+			path = "class"
+		}
+		name = "VAR1"
 	}
 }
 `, team, ruleset, rule)
@@ -198,12 +271,126 @@ resource "pagerduty_ruleset_rule" "foo" {
 		annotate {
 			value = "%s"
 		}
+		suppress {
+			value = false
+		}
 		extractions {
 			target = "dedup_key"
 			source = "details.host"
 			regex = "(.*)"
 		}
 	}
+	variable {
+		type = "regex"
+		parameters {
+		  value = "another.*regex"
+		  path = "custom_details.path.to.field"
+		}
+		name = "VAR2"
+	}
+	variable {
+		type = "regex"
+		parameters {
+			value = ".*"
+			path = "class"
+		}
+		name = "VAR1"
+	}
 }
 `, team, ruleset, rule)
+}
+
+func testAccCheckPagerDutyRulesetRuleConfigMultipleRules(team, ruleset, rule1, rule2, rule3 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+
+resource "pagerduty_ruleset" "foo" {
+	name = "%s"
+	team { 
+		id = pagerduty_team.foo.id
+	}
+}
+resource "pagerduty_ruleset_rule" "foo" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 0
+	disabled = false
+	time_frame {
+		scheduled_weekly {
+			weekdays = [3,7]
+			timezone = "America/Los_Angeles"
+			start_time = "1000000"
+			duration = "3600000"
+
+		}
+	}
+	conditions {
+		operator = "and"
+		subconditions {
+			operator = "contains"
+			parameter {
+				value = "disk space"
+				path = "summary"
+			}
+		}
+	}
+	actions {
+		route {
+			value = "P5DTL0K"
+		}
+		severity  {
+			value = "warning"
+		}
+		annotate {
+			value = "%s"
+		}
+		extractions {
+			target = "dedup_key"
+			source = "source"
+			regex = "(.*)"
+		}
+	}
+}
+resource "pagerduty_ruleset_rule" "bar" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 1
+	disabled = true
+	conditions {
+		operator = "and"
+		subconditions {
+			operator = "contains"
+			parameter {
+				value = "cpu spike"
+				path = "summary"
+			}
+		}
+	}
+	actions {
+		annotate {
+			value = "%s"
+		}
+	}
+}
+resource "pagerduty_ruleset_rule" "baz" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 2
+	disabled = true
+	conditions {
+		operator = "and"
+		subconditions {
+			operator = "contains"
+			parameter {
+				value = "slow database connection"
+				path = "summary"
+			}
+		}
+	}
+	actions {
+		annotate {
+			value = "%s"
+		}
+	}
+}
+`, team, ruleset, rule1, rule2, rule3)
 }

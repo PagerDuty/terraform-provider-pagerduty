@@ -3,7 +3,9 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -17,6 +19,13 @@ func dataSourcePagerDutyRuleset() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"routing_keys": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -28,26 +37,38 @@ func dataSourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) er
 
 	searchName := d.Get("name").(string)
 
-	resp, _, err := client.Rulesets.List()
-	if err != nil {
-		return err
-	}
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Rulesets.List()
+		if err != nil {
+			if isErrCode(err, 429) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
+				return resource.RetryableError(err)
+			}
 
-	var found *pagerduty.Ruleset
-
-	for _, ruleset := range resp.Rulesets {
-		if ruleset.Name == searchName {
-			found = ruleset
-			break
+			return resource.NonRetryableError(err)
 		}
-	}
 
-	if found == nil {
-		return fmt.Errorf("Unable to locate any ruleset with the name: %s", searchName)
-	}
+		var found *pagerduty.Ruleset
 
-	d.SetId(found.ID)
-	d.Set("name", found.Name)
+		for _, ruleset := range resp.Rulesets {
+			if ruleset.Name == searchName {
+				found = ruleset
+				break
+			}
+		}
 
-	return nil
+		if found == nil {
+			return resource.NonRetryableError(
+				fmt.Errorf("Unable to locate any ruleset with the name: %s", searchName),
+			)
+		}
+
+		d.SetId(found.ID)
+		d.Set("name", found.Name)
+		d.Set("routing_keys", found.RoutingKeys)
+
+		return nil
+	})
 }

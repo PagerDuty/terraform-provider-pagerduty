@@ -55,7 +55,7 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(usernameUpdated, emailUpdated, "8669351337"),
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(usernameUpdated, emailUpdated, "8019351337"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
 				),
@@ -208,7 +208,7 @@ resource "pagerduty_user_contact_method" "foo" {
   user_id      = pagerduty_user.foo.id
   type         = "sms_contact_method"
   country_code = "+1"
-  address      = "8448003889"
+  address      = "8458003889"
   label        = "%[1]v"
 }
 `, username, email)

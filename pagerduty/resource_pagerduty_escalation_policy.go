@@ -87,9 +87,8 @@ func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPo
 		escalationPolicy.Description = attr.(string)
 	}
 
-	if attr, ok := d.GetOk("num_loops"); ok {
-		escalationPolicy.NumLoops = attr.(int)
-	}
+	loops := d.Get("num_loops").(int)
+	escalationPolicy.NumLoops = &loops
 
 	if attr, ok := d.GetOk("teams"); ok {
 		escalationPolicy.Teams = expandTeams(attr.([]interface{}))
@@ -171,8 +170,20 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 
-	if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
-		return err
+	// Retrying to give other resources (such as services) to delete
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
+			if isErrCode(err, 400) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	d.SetId("")

@@ -110,6 +110,9 @@ func NewClient(config *Config) (*Client, error) {
 	c.ResponsePlays = &ResponsePlayService{c}
 	c.Tags = &TagService{c}
 
+	InitCache(c)
+	PopulateCache()
+
 	return c, nil
 }
 

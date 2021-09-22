@@ -106,6 +106,69 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyScheduleWithTeams_Basic(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	scheduleUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	location := "America/New_York"
+	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyScheduleWithTeamsConfig(username, email, schedule, location, start, rotationVirtualStart, team),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "time_zone", location),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.name", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.start", start),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.rotation_virtual_start", rotationVirtualStart),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "teams.#", "1"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleWithTeamsConfigUpdated(username, email, scheduleUpdated, location, start, rotationVirtualStart, teamUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", scheduleUpdated),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "Managed by Terraform"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "time_zone", location),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.name", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.start", start),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.rotation_virtual_start", rotationVirtualStart),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "teams.#", "1"),
+				),
+			},
+		},
+	})
+}
 func TestAccPagerDutyScheduleOverflow_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.com", username)
@@ -627,4 +690,77 @@ resource "pagerduty_schedule" "foo" {
   }
 }
 `, username, email, schedule, location, start, rotationVirtualStart, end)
+}
+
+func testAccCheckPagerDutyScheduleWithTeamsConfig(username, email, schedule, location, start, rotationVirtualStart, team string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "fighters"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+  
+  teams = [pagerduty_team.foo.id]
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+`, username, email, team, schedule, location, start, rotationVirtualStart)
+}
+func testAccCheckPagerDutyScheduleWithTeamsConfigUpdated(username, email, schedule, location, start, rotationVirtualStart, team string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "bar"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "Managed by Terraform"
+  
+  teams = [pagerduty_team.foo.id]
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+`, username, email, team, schedule, location, start, rotationVirtualStart)
 }

@@ -42,7 +42,7 @@ type ListRulesetsResponse struct {
 // RulesetRule represents a Ruleset rule
 type RulesetRule struct {
 	ID         string            `json:"id,omitempty"`
-	Position   int               `json:"position,omitempty"`
+	Position   *int              `json:"position,omitempty"`
 	Disabled   bool              `json:"disabled"`
 	Conditions *RuleConditions   `json:"conditions,omitempty"`
 	Actions    *RuleActions      `json:"actions,omitempty"`
@@ -50,6 +50,7 @@ type RulesetRule struct {
 	Self       string            `json:"self,omitempty"`
 	CatchAll   bool              `json:"catch_all,omitempty"`
 	TimeFrame  *RuleTimeFrame    `json:"time_frame,omitempty"`
+	Variables  []*RuleVariable   `json:"variables,omitempty"`
 }
 
 // RulesetRulePayload represents a payload for ruleset rules
@@ -79,6 +80,19 @@ type ConditionParameter struct {
 type RuleTimeFrame struct {
 	ScheduledWeekly *ScheduledWeekly `json:"scheduled_weekly,omitempty"`
 	ActiveBetween   *ActiveBetween   `json:"active_between,omitempty"`
+}
+
+// RuleVariable represents a rule variable
+type RuleVariable struct {
+	Name       string                 `json:"name,omitempty"`
+	Type       string                 `json:"type,omitempty"`
+	Parameters *RuleVariableParameter `json:"parameters,omitempty"`
+}
+
+// RuleVariableParameter represents a rule variable parameter
+type RuleVariableParameter struct {
+	Value string `json:"value"`
+	Path  string `json:"path"`
 }
 
 // ScheduledWeekly represents a time_frame object for scheduling rules weekly
@@ -113,16 +127,22 @@ type RuleActions struct {
 	Route       *RuleActionParameter    `json:"route,omitempty"`
 	EventAction *RuleActionParameter    `json:"event_action,omitempty"`
 	Extractions []*RuleActionExtraction `json:"extractions,omitempty"`
+	Suspend     *RuleActionIntParameter `json:"suspend,omitempty"`
 }
 
-// RuleActionParameter represents a generic parameter object on a rule action
+// RuleActionParameter represents a string parameter object on a rule action
 type RuleActionParameter struct {
 	Value string `json:"value,omitempty"`
 }
 
+// RuleActionIntParameter represents an integer parameter object on a rule action
+type RuleActionIntParameter struct {
+	Value int `json:"value"`
+}
+
 // RuleActionSuppress represents a rule suppress action object
 type RuleActionSuppress struct {
-	Value               bool   `json:"value,omitempty"`
+	Value               bool   `json:"value"`
 	ThresholdValue      int    `json:"threshold_value,omitempty"`
 	ThresholdTimeUnit   string `json:"threshold_time_unit,omitempty"`
 	ThresholdTimeAmount int    `json:"threshold_time_amount,omitempty"`
@@ -130,9 +150,10 @@ type RuleActionSuppress struct {
 
 // RuleActionExtraction represents a rule extraction action object
 type RuleActionExtraction struct {
-	Target string `json:"target,omitempty"`
-	Source string `json:"source,omitempty"`
-	Regex  string `json:"regex,omitempty"`
+	Target   string `json:"target,omitempty"`
+	Source   string `json:"source,omitempty"`
+	Regex    string `json:"regex,omitempty"`
+	Template string `json:"template,omitempty"`
 }
 
 // List lists existing rulesets.

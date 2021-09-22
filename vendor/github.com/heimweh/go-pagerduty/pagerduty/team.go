@@ -8,14 +8,15 @@ type TeamService service
 
 // Team represents a team.
 type Team struct {
-	Description string `json:"description,omitempty"`
-	HTMLURL     string `json:"html_url,omitempty"`
-	ID          string `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Self        string `json:"self,omitempty"`
-	Summary     string `json:"summary,omitempty"`
-	Team        *Team  `json:"team,omitempty"`
-	Type        string `json:"type,omitempty"`
+	Description string         `json:"description,omitempty"`
+	HTMLURL     string         `json:"html_url,omitempty"`
+	ID          string         `json:"id,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	Self        string         `json:"self,omitempty"`
+	Summary     string         `json:"summary,omitempty"`
+	Team        *Team          `json:"team,omitempty"`
+	Type        string         `json:"type,omitempty"`
+	Parent      *TeamReference `json:"parent,omitempty"`
 }
 
 // Member represents a team member.
@@ -42,7 +43,7 @@ type ListTeamsResponse struct {
 	Teams  []*Team `json:"teams,omitempty"`
 }
 
-// GetMembersOptions represents options when get member informations in team.
+// GetMembersOptions represents options when getting a list of members.
 type GetMembersOptions struct {
 	Limit    int      `url:"limit,omitempty"`
 	More     bool     `url:"more,omitempty"`
@@ -51,7 +52,7 @@ type GetMembersOptions struct {
 	Includes []string `url:"include,omitempty,brackets"`
 }
 
-// GetMembersResponse represents member informations response of a team.
+// GetMembersResponse represents a response of a list of members.
 type GetMembersResponse struct {
 	Limit   int       `json:"limit,omitempty"`
 	More    bool      `json:"more,omitempty"`
@@ -146,12 +147,31 @@ func (s *TeamService) GetMembers(teamID string, o *GetMembersOptions) (*GetMembe
 	u := fmt.Sprintf("/teams/%s/members", teamID)
 	v := new(GetMembersResponse)
 
-	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
+	members := make([]*Member, 0)
+
+	responseHandler := func(response *Response) (ListResp, *Response, error) {
+		var result GetMembersResponse
+
+		if err := s.client.DecodeJSON(response, &result); err != nil {
+			return ListResp{}, response, err
+		}
+
+		members = append(members, result.Members...)
+
+		// Return stats on the current page. Caller can use this information to
+		// adjust for requesting additional pages.
+		return ListResp{
+			More:   result.More,
+			Offset: result.Offset,
+			Limit:  result.Limit,
+		}, response, nil
+	}
+	err := s.client.newRequestPagedGetDo(u, responseHandler)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	return v, resp, nil
+	v.Members = members
+	return v, nil, nil
 }
 
 // RemoveEscalationPolicy removes an escalation policy from a team.

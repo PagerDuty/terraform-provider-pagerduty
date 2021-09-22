@@ -22,6 +22,11 @@ func (s *AbilityService) List() (*ListAbilitiesResponse, *Response, error) {
 	u := "/abilities"
 	v := new(ListAbilitiesResponse)
 
+	err := cacheGetAbilities(v)
+	if err == nil {
+		return v, nil, nil
+	}
+
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, v)
 	if err != nil {
 		return nil, nil, err

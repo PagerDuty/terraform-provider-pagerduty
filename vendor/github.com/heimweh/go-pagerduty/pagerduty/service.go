@@ -34,6 +34,19 @@ type SupportHours struct {
 	Type       string `json:"type,omitempty"`
 }
 
+// AlertGroupingConfig - populate timeout if AlertGroupingParameters Type is 'time', populate Aggregate & Fields if Type is 'content_grouping'
+type AlertGroupingConfig struct {
+	Timeout   *int     `json:"timeout,omitempty"`
+	Aggregate *string  `json:"aggregate,omitempty"`
+	Fields    []string `json:"fields,omitempty"`
+}
+
+// AlertGroupingParameters defines how alerts are grouped into incidents
+type AlertGroupingParameters struct {
+	Type   *string              `json:"type,omitempty"`
+	Config *AlertGroupingConfig `json:"config,omitempty"`
+}
+
 // IncidentUrgencyRule is the default urgency for new incidents.
 type IncidentUrgencyRule struct {
 	DuringSupportHours  *IncidentUrgencyType `json:"during_support_hours,omitempty"`
@@ -60,29 +73,48 @@ type Integration struct {
 
 // Service represents a service.
 type Service struct {
-	AcknowledgementTimeout *int                       `json:"acknowledgement_timeout"`
-	Addons                 []*AddonReference          `json:"addons,omitempty"`
-	AlertCreation          string                     `json:"alert_creation,omitempty"`
-	AlertGrouping          *string                    `json:"alert_grouping"`
-	AlertGroupingTimeout   *int                       `json:"alert_grouping_timeout,omitempty"`
-	AutoResolveTimeout     *int                       `json:"auto_resolve_timeout"`
-	CreatedAt              string                     `json:"created_at,omitempty"`
-	Description            string                     `json:"description,omitempty"`
-	EscalationPolicy       *EscalationPolicyReference `json:"escalation_policy,omitempty"`
-	HTMLURL                string                     `json:"html_url,omitempty"`
-	ID                     string                     `json:"id,omitempty"`
-	IncidentUrgencyRule    *IncidentUrgencyRule       `json:"incident_urgency_rule,omitempty"`
-	Integrations           []*IntegrationReference    `json:"integrations,omitempty"`
-	LastIncidentTimestamp  string                     `json:"last_incident_timestamp,omitempty"`
-	Name                   string                     `json:"name,omitempty"`
-	ScheduledActions       []*ScheduledAction         `json:"scheduled_actions,omitempty"`
-	Self                   string                     `json:"self,omitempty"`
-	Service                *Service                   `json:"service,omitempty"`
-	Status                 string                     `json:"status,omitempty"`
-	Summary                string                     `json:"summary,omitempty"`
-	SupportHours           *SupportHours              `json:"support_hours,omitempty"`
-	Teams                  []*TeamReference           `json:"teams,omitempty"`
-	Type                   string                     `json:"type,omitempty"`
+	AcknowledgementTimeout  *int                       `json:"acknowledgement_timeout"`
+	Addons                  []*AddonReference          `json:"addons,omitempty"`
+	AlertCreation           string                     `json:"alert_creation,omitempty"`
+	AlertGrouping           *string                    `json:"alert_grouping"`
+	AlertGroupingTimeout    *int                       `json:"alert_grouping_timeout,omitempty"`
+	AlertGroupingParameters *AlertGroupingParameters   `json:"alert_grouping_parameters,omitempty"`
+	AutoResolveTimeout      *int                       `json:"auto_resolve_timeout"`
+	CreatedAt               string                     `json:"created_at,omitempty"`
+	Description             string                     `json:"description,omitempty"`
+	EscalationPolicy        *EscalationPolicyReference `json:"escalation_policy,omitempty"`
+	HTMLURL                 string                     `json:"html_url,omitempty"`
+	ID                      string                     `json:"id,omitempty"`
+	IncidentUrgencyRule     *IncidentUrgencyRule       `json:"incident_urgency_rule,omitempty"`
+	Integrations            []*IntegrationReference    `json:"integrations,omitempty"`
+	LastIncidentTimestamp   string                     `json:"last_incident_timestamp,omitempty"`
+	Name                    string                     `json:"name,omitempty"`
+	ScheduledActions        []*ScheduledAction         `json:"scheduled_actions,omitempty"`
+	Self                    string                     `json:"self,omitempty"`
+	Service                 *Service                   `json:"service,omitempty"`
+	Status                  string                     `json:"status,omitempty"`
+	Summary                 string                     `json:"summary,omitempty"`
+	SupportHours            *SupportHours              `json:"support_hours,omitempty"`
+	Teams                   []*TeamReference           `json:"teams,omitempty"`
+	Type                    string                     `json:"type,omitempty"`
+}
+
+// ServiceEventRule represents a service event rule
+type ServiceEventRule struct {
+	ID         string            `json:"id,omitempty"`
+	Self       string            `json:"self,omitempty"`
+	Disabled   bool              `json:"disabled"`
+	Conditions *RuleConditions   `json:"conditions,omitempty"`
+	TimeFrame  *RuleTimeFrame    `json:"time_frame,omitempty"`
+	Variables  []*RuleVariable   `json:"variables,omitempty"`
+	Position   *int              `json:"position,omitempty"`
+	Actions    *RuleActions      `json:"actions,omitempty"`
+	Service    *ServiceReference `json:"service_id,omitempty"`
+}
+
+// ServiceEventRulePayload represents a payload for service event rules
+type ServiceEventRulePayload struct {
+	Rule *ServiceEventRule `json:"rule,omitempty"`
 }
 
 // GetIntegrationOptions represents options when retrieving a service integration.
@@ -115,6 +147,23 @@ type ListServicesResponse struct {
 // GetServiceOptions represents options when retrieving a service.
 type GetServiceOptions struct {
 	Includes []string `url:"include,brackets,omitempty"`
+}
+
+// ListServiceEventRuleOptions represents options when retrieving a list of event rules for a service
+type ListServiceEventRuleOptions struct {
+	Limit  int  `json:"limit,omitempty"`
+	More   bool `json:"more,omitempty"`
+	Offset int  `json:"offset,omitempty"`
+	Total  int  `json:"total,omitempty"`
+}
+
+// ListServiceEventRuleResponse represents a list of event rules for a service
+type ListServiceEventRuleResponse struct {
+	Limit      int                 `json:"limit,omitempty"`
+	More       bool                `json:"more,omitempty"`
+	Offset     int                 `json:"offset,omitempty"`
+	Total      int                 `json:"total,omitempty"`
+	EventRules []*ServiceEventRule `json:"rules,omitempty"`
 }
 
 // List lists existing services.
@@ -217,5 +266,65 @@ func (s *ServicesService) UpdateIntegration(serviceID, integrationID string, int
 // DeleteIntegration removes an existing service integration.
 func (s *ServicesService) DeleteIntegration(serviceID, integrationID string) (*Response, error) {
 	u := fmt.Sprintf("/services/%s/integrations/%s", serviceID, integrationID)
+	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+}
+
+// ListEventRules lists existing service event rules.
+func (s *ServicesService) ListEventRules(serviceID string, o *ListServiceEventRuleOptions) (*ListServiceEventRuleResponse, *Response, error) {
+	u := fmt.Sprintf("/services/%s/rules", serviceID)
+	v := new(ListServiceEventRuleResponse)
+
+	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
+// CreateEventRule creates a new service event rule.
+func (s *ServicesService) CreateEventRule(serviceID string, eventRule *ServiceEventRule) (*ServiceEventRule, *Response, error) {
+	u := fmt.Sprintf("/services/%s/rules", serviceID)
+	v := new(ServiceEventRulePayload)
+	p := ServiceEventRulePayload{Rule: eventRule}
+
+	resp, err := s.client.newRequestDo("POST", u, nil, p, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.Rule, resp, nil
+}
+
+// GetEventRule retrieves information about a service event rule.
+func (s *ServicesService) GetEventRule(serviceID, ruleID string) (*ServiceEventRule, *Response, error) {
+	u := fmt.Sprintf("/services/%s/rules/%s", serviceID, ruleID)
+	v := new(ServiceEventRulePayload)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.Rule, resp, nil
+}
+
+// UpdateEventRule updates an existing service event rule.
+func (s *ServicesService) UpdateEventRule(serviceID, ruleID string, eventRule *ServiceEventRule) (*ServiceEventRule, *Response, error) {
+	u := fmt.Sprintf("/services/%s/rules/%s", serviceID, ruleID)
+	v := new(ServiceEventRulePayload)
+	p := ServiceEventRulePayload{Rule: eventRule}
+
+	resp, err := s.client.newRequestDo("PUT", u, nil, p, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.Rule, resp, nil
+}
+
+// DeleteEventRule removes an existing service event rule.
+func (s *ServicesService) DeleteEventRule(serviceID, ruleID string) (*Response, error) {
+	u := fmt.Sprintf("/services/%s/rules/%s", serviceID, ruleID)
 	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
 }

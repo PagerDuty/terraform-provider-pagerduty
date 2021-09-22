@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -57,18 +58,24 @@ func resourcePagerDutySchedule() *schema.Resource {
 						},
 
 						"start": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressScheduleLayerStartDiff,
 						},
 
 						"end": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"rotation_virtual_start": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateFunc:     validateRFC3339,
+							DiffSuppressFunc: suppressRFC3339Diff,
 						},
 
 						"rotation_turn_length_seconds": {
@@ -79,6 +86,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 						"users": {
 							Type:     schema.TypeList,
 							Required: true,
+							MinItems: 1,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -114,6 +122,13 @@ func resourcePagerDutySchedule() *schema.Resource {
 					},
 				},
 			},
+			"teams": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -132,6 +147,10 @@ func buildScheduleStruct(d *schema.ResourceData) (*pagerduty.Schedule, error) {
 
 	if attr, ok := d.GetOk("description"); ok {
 		schedule.Description = attr.(string)
+	}
+
+	if attr, ok := d.GetOk("teams"); ok {
+		schedule.Teams = expandSchedTeams(attr.([]interface{}))
 	}
 
 	return schedule, nil
@@ -176,18 +195,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 			d.Set("name", schedule.Name)
 			d.Set("time_zone", schedule.TimeZone)
 			d.Set("description", schedule.Description)
-			// Here we override whatever `start` value we get back from the API
-			// and use what's in the configuration. This is to prevent a diff issue
-			// because we always get back a new `start` value from the PagerDuty API.
-			for _, sl := range schedule.ScheduleLayers {
-				for _, rsl := range d.Get("layer").([]interface{}) {
-					ssl := rsl.(map[string]interface{})
 
-					if sl.ID == ssl["id"].(string) {
-						sl.Start = ssl["start"].(string)
-					}
-				}
-			}
 			layers, err := flattenScheduleLayers(schedule.ScheduleLayers)
 			if err != nil {
 				return resource.NonRetryableError(err)
@@ -196,6 +204,10 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 			if err := d.Set("layer", layers); err != nil {
 				return resource.NonRetryableError(err)
 			}
+			if err := d.Set("teams", flattenShedTeams(schedule.Teams)); err != nil {
+				return resource.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
+			}
+
 		}
 		return nil
 	})
@@ -421,4 +433,29 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 	}
 
 	return resultReversed, nil
+}
+
+// the expandShedTeams and flattenSchedTeams are based on the expandTeams and flattenTeams functions in the user
+// resource. added these functions here for maintainability
+func expandSchedTeams(v interface{}) []*pagerduty.TeamReference {
+	var teams []*pagerduty.TeamReference
+
+	for _, t := range v.([]interface{}) {
+		team := &pagerduty.TeamReference{
+			ID:   t.(string),
+			Type: "team_reference",
+		}
+		teams = append(teams, team)
+	}
+
+	return teams
+}
+
+func flattenShedTeams(teams []*pagerduty.TeamReference) []string {
+	res := make([]string, len(teams))
+	for i, t := range teams {
+		res[i] = t.ID
+	}
+
+	return res
 }

@@ -32,6 +32,10 @@ func resourcePagerDutyTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"parent": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -44,7 +48,12 @@ func buildTeamStruct(d *schema.ResourceData) *pagerduty.Team {
 	if attr, ok := d.GetOk("description"); ok {
 		team.Description = attr.(string)
 	}
-
+	if attr, ok := d.GetOk("parent"); ok {
+		team.Parent = &pagerduty.TeamReference{
+			ID:   attr.(string),
+			Type: "team_reference",
+		}
+	}
 	return team
 }
 
@@ -55,12 +64,18 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Creating PagerDuty team %s", team.Name)
 
-	team, _, err := client.Teams.Create(team)
-	if err != nil {
-		return err
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if team, _, err := client.Teams.Create(team); err != nil {
+			return resource.RetryableError(err)
+		} else if team != nil {
+			d.SetId(team.ID)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
-	d.SetId(team.ID)
 
 	return resourcePagerDutyTeamRead(d, meta)
 
@@ -91,10 +106,16 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Updating PagerDuty team %s", d.Id())
 
-	if _, _, err := client.Teams.Update(d.Id(), team); err != nil {
-		return err
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, _, err := client.Teams.Update(d.Id(), team); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
-
 	return resourcePagerDutyTeamRead(d, meta)
 }
 

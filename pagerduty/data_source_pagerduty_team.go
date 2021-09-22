@@ -24,6 +24,10 @@ func dataSourcePagerDutyTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"parent": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -42,8 +46,14 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.List(o)
 		if err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			if isErrCode(err, 429) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
 		}
 
 		var found *pagerduty.Team
@@ -64,6 +74,7 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
 		d.Set("description", found.Description)
+		d.Set("parent", found.Parent)
 
 		return nil
 	})

@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty_team_membership
 
-A [team membership](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Teams/put_teams_id_users_user_id) manages memberships within a team.
+A [team membership](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1teams~1%7Bid%7D~1users~1%7Buser_id%7D/put) manages memberships within a team.
 
 ## Example Usage
 
@@ -36,7 +36,8 @@ The following arguments are supported:
 
   * `user_id` - (Required) The ID of the user to add to the team.
   * `team_id` - (Required) The ID of the team in which the user will belong.
-  * `role`    - (Optional) The role of the user in the team. One of `observer`, `responder`, or `manager`. Defaults to `manager`. These roles match up to user roles in the following ways:
+  * `role`    - (Optional) The role of the user in the team. One of `observer`, `responder`, or `manager`. Defaults to `manager`.  
+     These roles match up to user roles in the following ways:
     * User role of `user` is a Team role of `manager`
     * User role of `limited_user` is a Team role of `responder`
 

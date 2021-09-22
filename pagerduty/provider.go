@@ -28,16 +28,18 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"pagerduty_escalation_policy": dataSourcePagerDutyEscalationPolicy(),
-			"pagerduty_schedule":          dataSourcePagerDutySchedule(),
-			"pagerduty_user":              dataSourcePagerDutyUser(),
-			"pagerduty_team":              dataSourcePagerDutyTeam(),
-			"pagerduty_vendor":            dataSourcePagerDutyVendor(),
-			"pagerduty_extension_schema":  dataSourcePagerDutyExtensionSchema(),
-			"pagerduty_service":           dataSourcePagerDutyService(),
-			"pagerduty_business_service":  dataSourcePagerDutyBusinessService(),
-			"pagerduty_priority":          dataSourcePagerDutyPriority(),
-			"pagerduty_ruleset":           dataSourcePagerDutyRuleset(),
+			"pagerduty_escalation_policy":   dataSourcePagerDutyEscalationPolicy(),
+			"pagerduty_schedule":            dataSourcePagerDutySchedule(),
+			"pagerduty_user":                dataSourcePagerDutyUser(),
+			"pagerduty_user_contact_method": dataSourcePagerDutyUserContactMethod(),
+			"pagerduty_team":                dataSourcePagerDutyTeam(),
+			"pagerduty_vendor":              dataSourcePagerDutyVendor(),
+			"pagerduty_extension_schema":    dataSourcePagerDutyExtensionSchema(),
+			"pagerduty_service":             dataSourcePagerDutyService(),
+			"pagerduty_service_integration": dataSourcePagerDutyServiceIntegration(),
+			"pagerduty_business_service":    dataSourcePagerDutyBusinessService(),
+			"pagerduty_priority":            dataSourcePagerDutyPriority(),
+			"pagerduty_ruleset":             dataSourcePagerDutyRuleset(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -53,6 +55,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_user_contact_method":    resourcePagerDutyUserContactMethod(),
 			"pagerduty_user_notification_rule": resourcePagerDutyUserNotificationRule(),
 			"pagerduty_extension":              resourcePagerDutyExtension(),
+			"pagerduty_extension_servicenow":   resourcePagerDutyExtensionServiceNow(),
 			"pagerduty_event_rule":             resourcePagerDutyEventRule(),
 			"pagerduty_ruleset":                resourcePagerDutyRuleset(),
 			"pagerduty_ruleset_rule":           resourcePagerDutyRulesetRule(),
@@ -60,6 +63,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_service_dependency":     resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":          resourcePagerDutyResponsePlay(),
 			"pagerduty_tag":                    resourcePagerDutyTag(),
+			"pagerduty_service_event_rule":     resourcePagerDutyServiceEventRule(),
 		},
 	}
 

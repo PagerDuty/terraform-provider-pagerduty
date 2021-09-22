@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_extension
 
-An [extension](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Extensions/post_extensions) can be associated with a service.
+An [extension](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1extensions/post) can be associated with a service.
 
 ## Example Usage
 
@@ -20,10 +20,9 @@ data "pagerduty_extension_schema" "webhook" {
 resource "pagerduty_user" "example" {
   name  = "Howard James"
   email = "howard.james@example.domain"
-  teams = [pagerduty_team.example.id]
 }
 
-resource "pagerduty_escalation_policy" "foo" {
+resource "pagerduty_escalation_policy" "example" {
   name      = "Engineering Escalation Policy"
   num_loops = 2
 

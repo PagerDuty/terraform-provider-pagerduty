@@ -8,16 +8,22 @@ description: |-
 
 # pagerduty\_team
 
-A [team](https://v2.developer.pagerduty.com/v2/page/api-reference#!/Teams/get_teams) is a collection of users and escalation policies that represent a group of people within an organization.
+A [team](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1teams/get) is a collection of users and escalation policies that represent a group of people within an organization.
 
 The account must have the `teams` ability to use the following resource.
 
 ## Example Usage
 
 ```hcl
+resource "pagerduty_team" "parent" {
+  name        = "Product Development"
+  description = "Product and Engineering"
+}
+
 resource "pagerduty_team" "example" {
   name        = "Engineering"
   description = "All engineering"
+  parent      = pagerduty_team.parent.id
 }
 ```
 
@@ -28,6 +34,7 @@ The following arguments are supported:
   * `name` - (Required) The name of the group.
   * `description` - (Optional) A human-friendly description of the team.
     If not set, a placeholder of "Managed by Terraform" will be set.
+  * `parent` - (Optional) ID of the parent team. This is available to accounts with the Team Hierarchy feature enabled. Please contact your account manager for more information.
 
 ## Attributes Reference
 

@@ -65,7 +65,7 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 			},
 			"responder": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -240,7 +240,6 @@ func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{
 			d.SetId(responsePlay.ID)
 			d.Set("from", responsePlay.FromEmail)
 			log.Printf("[INFO] Created PagerDuty response play: %s (from: %s)", d.Id(), responsePlay.FromEmail)
-
 		}
 		return nil
 	})
@@ -305,7 +304,7 @@ func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{
 		time.Sleep(2 * time.Second)
 		return retryErr
 	}
-	return nil
+	return resourcePagerDutyResponsePlayRead(d, meta)
 }
 
 func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{}) error {

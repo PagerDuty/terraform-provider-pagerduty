@@ -53,6 +53,7 @@ type Client struct {
 	Priorities          *PriorityService
 	ResponsePlays       *ResponsePlayService
 	Tags                *TagService
+	SlackConnections    *SlackConnectionService
 }
 
 // Response is a wrapper around http.Response
@@ -109,6 +110,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.Priorities = &PriorityService{c}
 	c.ResponsePlays = &ResponsePlayService{c}
 	c.Tags = &TagService{c}
+	c.SlackConnections = &SlackConnectionService{c}
 
 	InitCache(c)
 	PopulateCache()

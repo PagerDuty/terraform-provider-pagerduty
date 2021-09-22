@@ -64,6 +64,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_response_play":          resourcePagerDutyResponsePlay(),
 			"pagerduty_tag":                    resourcePagerDutyTag(),
 			"pagerduty_service_event_rule":     resourcePagerDutyServiceEventRule(),
+			"pagerduty_slack_connection":       resourcePagerDutySlackConnection(),
 		},
 	}
 

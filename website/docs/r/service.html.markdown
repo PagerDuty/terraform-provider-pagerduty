@@ -87,7 +87,8 @@ The block contains the following arguments:
   * `start_time` - The support hours' starting time of day.
   * `end_time` - The support hours' ending time of day.
 
-When using `type = "use_support_hours"` in `incident_urgency_rule` you must specify at least one (otherwise optional) `scheduled_actions` block.
+A `scheduled_actions` block is required when using `type = "use_support_hours"` in `incident_urgency_rule`.
+
 The block contains the following arguments:
 
   * `type` - The type of scheduled action. Currently, this must be set to `urgency_change`.
@@ -97,6 +98,8 @@ The block contains the following arguments:
 The `at` block contains the following arguments:
   * `type` - The type of time specification. Currently, this must be set to `named_time`.
   * `name` - Designates either the start or the end of the scheduled action. Can be `support_hours_start` or `support_hours_end`.
+
+Note that it is currently only possible to define the scheduled action when urgency is set to `high` for `during_support_hours` and to `low`  for `outside_support_hours` in `incident_urgency_rule`.
 
 Below is an example for a `pagerduty_service` resource with `incident_urgency_rules` with `type = "use_support_hours"`, `support_hours` and a default `scheduled_action` as well.
 

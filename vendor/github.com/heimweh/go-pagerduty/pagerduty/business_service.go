@@ -76,10 +76,10 @@ func (s *BusinessServiceService) List() (*ListBusinessServicesResponse, *Respons
 }
 
 // Create creates a new business service.
-func (s *BusinessServiceService) Create(ruleset *BusinessService) (*BusinessService, *Response, error) {
+func (s *BusinessServiceService) Create(bservice *BusinessService) (*BusinessService, *Response, error) {
 	u := "/business_services"
 	v := new(BusinessServicePayload)
-	p := &BusinessServicePayload{BusinessService: ruleset}
+	p := &BusinessServicePayload{BusinessService: bservice}
 
 	resp, err := s.client.newRequestDo("POST", u, nil, p, v)
 	if err != nil {
@@ -110,10 +110,10 @@ func (s *BusinessServiceService) Delete(ID string) (*Response, error) {
 }
 
 // Update updates a business service.
-func (s *BusinessServiceService) Update(ID string, ruleset *BusinessService) (*BusinessService, *Response, error) {
+func (s *BusinessServiceService) Update(ID string, bserv *BusinessService) (*BusinessService, *Response, error) {
 	u := fmt.Sprintf("/business_services/%s", ID)
 	v := new(BusinessServicePayload)
-	p := BusinessServicePayload{BusinessService: ruleset}
+	p := BusinessServicePayload{BusinessService: bserv}
 
 	resp, err := s.client.newRequestDo("PUT", u, nil, p, v)
 	if err != nil {

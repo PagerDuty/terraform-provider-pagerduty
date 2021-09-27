@@ -17,6 +17,13 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 		Read:   resourcePagerDutyServiceIntegrationRead,
 		Update: resourcePagerDutyServiceIntegrationUpdate,
 		Delete: resourcePagerDutyServiceIntegrationDelete,
+		CustomizeDiff: func(diff *schema.ResourceDiff, i interface{}) error {
+			t := diff.Get("type").(string)
+			if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" {
+				return fmt.Errorf("integration_email attribute must be set for an integration type generic_email_inbound_integration")
+			}
+			return nil
+		},
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyServiceIntegrationImport,
 		},

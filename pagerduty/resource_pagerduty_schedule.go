@@ -2,7 +2,6 @@ package pagerduty
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"regexp"
 	"time"
@@ -129,8 +128,8 @@ func resourcePagerDutySchedule() *schema.Resource {
 									},
 
 									"start_day_of_week": {
-										Type:     schema.TypeInt,
-										Optional: true,
+										Type:         schema.TypeInt,
+										Optional:     true,
 										ValidateFunc: validation.IntBetween(1, 7),
 									},
 

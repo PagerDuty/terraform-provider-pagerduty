@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -18,7 +19,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 		Read:   resourcePagerDutyScheduleRead,
 		Update: resourcePagerDutyScheduleUpdate,
 		Delete: resourcePagerDutyScheduleDelete,
-		CustomizeDiff: func(diff *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			ln := diff.Get("layer.#").(int)
 			for li := 0; li <= ln; li++ {
 				rn := diff.Get(fmt.Sprintf("layer.%d.restriction.#", li)).(int)

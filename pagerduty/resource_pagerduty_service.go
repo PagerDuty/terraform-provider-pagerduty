@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -19,7 +20,7 @@ func resourcePagerDutyService() *schema.Resource {
 		Read:   resourcePagerDutyServiceRead,
 		Update: resourcePagerDutyServiceUpdate,
 		Delete: resourcePagerDutyServiceDelete,
-		CustomizeDiff: func(diff *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			in := diff.Get("incident_urgency_rule.#").(int)
 			for i := 0; i <= in; i++ {
 				t := diff.Get(fmt.Sprintf("incident_urgency_rule.%d.type", i)).(string)

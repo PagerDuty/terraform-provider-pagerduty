@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -107,7 +108,7 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 }
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
-	var ServiceRegion = data.Get("service_region").(string)
+	var ServiceRegion = strings.ToLower(data.Get("service_region").(string))
 
 	if ServiceRegion == "us" || ServiceRegion == "" {
 		ServiceRegion = ""

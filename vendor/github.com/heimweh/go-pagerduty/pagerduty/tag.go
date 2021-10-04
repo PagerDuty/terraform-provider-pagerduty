@@ -46,14 +46,51 @@ type TagAssignments struct {
 
 // TagAssignment represents a single tag assignment to an entity
 type TagAssignment struct {
-	Type  string `json:"type"`
-	TagID string `json:"id,omitempty"`
-	Label string `json:"label,omitempty"`
+	Type       string `json:"type"`
+	TagID      string `json:"id,omitempty"`
+	Label      string `json:"label,omitempty"`
+	EntityType string `json:"entity_type,omitempty"`
+	EntityID   string `json:"entity_id,omitempty"`
 }
 
 // List lists existing tags.
 func (s *TagService) List(o *ListTagsOptions) (*ListTagsResponse, *Response, error) {
 	u := "/tags"
+	v := new(ListTagsResponse)
+
+	tags := make([]*Tag, 0)
+
+	// Create a handler closure capable of parsing data from the response_plays endpoint
+	// and appending resultant response plays to the return slice.
+	responseHandler := func(response *Response) (ListResp, *Response, error) {
+		var result ListTagsResponse
+
+		if err := s.client.DecodeJSON(response, &result); err != nil {
+			return ListResp{}, response, err
+		}
+
+		tags = append(tags, result.Tags...)
+
+		// Return stats on the current page. Caller can use this information to
+		// adjust for requesting additional pages.
+		return ListResp{
+			More:   result.More,
+			Offset: result.Offset,
+			Limit:  result.Limit,
+		}, response, nil
+	}
+	err := s.client.newRequestPagedGetDo(u, responseHandler)
+	if err != nil {
+		return nil, nil, err
+	}
+	v.Tags = tags
+
+	return v, nil, nil
+}
+
+// List Tags for a given Entity.
+func (s *TagService) ListTagsForEntity(e, eid string) (*ListTagsResponse, *Response, error) {
+	u := fmt.Sprintf("/%s/%s/tags", e, eid)
 	v := new(ListTagsResponse)
 
 	tags := make([]*Tag, 0)

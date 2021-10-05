@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -50,8 +51,9 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 							Computed: true,
 						},
 						"escalation_delay_in_minutes": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntAtLeast(1),
 						},
 						"target": {
 							Type:     schema.TypeList,

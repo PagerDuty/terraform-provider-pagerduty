@@ -30,7 +30,12 @@ resource "pagerduty_team" "engineering" {
 resource "pagerduty_user" "earline" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.engineering.id]
+}
+
+# Create a team membership
+resource "pagerduty_team_membership" "earline_engineering" {
+  user_id = pagerduty_user.earline.id
+  team_id = pagerduty_team.engineering.id
 }
 ```
 

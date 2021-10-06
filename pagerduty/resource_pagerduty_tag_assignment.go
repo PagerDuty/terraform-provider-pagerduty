@@ -17,8 +17,7 @@ func resourcePagerDutyTagAssignment() *schema.Resource {
 		Read:   resourcePagerDutyTagAssignmentRead,
 		Delete: resourcePagerDutyTagAssignmentDelete,
 		Importer: &schema.ResourceImporter{
-			// TODO: need custom importer
-			State: schema.ImportStatePassthrough,
+			State: resourcePagerDutyTagAssignmentImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"entity_type": {
@@ -155,13 +154,13 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 
 func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	ids := strings.Split(d.Id(), ".")
-
 	if len(ids) != 3 {
 		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_tag_assignment. Expecting an importation ID formed as '<entity_type>.<entity_id>.<tag_id>'")
 	}
 	entityType, entityID, tagID := ids[0], ids[1], ids[2]
 	client := meta.(*pagerduty.Client)
-
+	// give PagerDuty 2 seconds to save the assignment correctly
+	time.Sleep(2 * time.Second)
 	tagResponse, _, err := client.Tags.ListTagsForEntity(entityType, entityID)
 
 	if err != nil {
@@ -174,6 +173,10 @@ func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface
 			// create tag_assignment id using the entityID.tagID as PagerDuty API does not return one
 			assignmentID := fmt.Sprintf("%v.%v", entityID, tagID)
 			d.SetId(assignmentID)
+			d.Set("entity_id", entityID)
+			d.Set("entity_type", entityType)
+			d.Set("tag_id", tagID)
+			foundTag = tag
 			break
 		}
 	}

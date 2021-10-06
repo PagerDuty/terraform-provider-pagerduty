@@ -18,11 +18,6 @@ func resourcePagerDutyTag() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
-			"type": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
 			"label": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -43,7 +38,7 @@ func resourcePagerDutyTag() *schema.Resource {
 func buildTagStruct(d *schema.ResourceData) *pagerduty.Tag {
 	tag := &pagerduty.Tag{
 		Label: d.Get("label").(string),
-		Type:  d.Get("type").(string),
+		Type:  "tag",
 	}
 
 	if attr, ok := d.GetOk("summary"); ok {

@@ -181,7 +181,6 @@ func testAccCheckPagerDutyTagAssignmentConfig(tagLabel, username, email string) 
 	return fmt.Sprintf(`
 resource "pagerduty_tag" "foo" {
 	label = "%s"
-	type = "tag"
 }
 resource "pagerduty_user" "foo" {
 	name = "%s"
@@ -199,7 +198,6 @@ func testAccCheckPagerDutyTagAssignmentTeamConfig(tagLabel, team string) string 
 	return fmt.Sprintf(`
 resource "pagerduty_tag" "foo" {
 	label = "%s"
-	type = "tag"
 }
 resource "pagerduty_team" "foo" {
 	name = "%s"
@@ -216,7 +214,6 @@ func testAccCheckPagerDutyTagAssignmentEPConfig(tagLabel, username, email, ep st
 	return fmt.Sprintf(`
 resource "pagerduty_tag" "foo" {
 	label = "%s"
-	type = "tag"
 }
 
 resource "pagerduty_user" "foo" {

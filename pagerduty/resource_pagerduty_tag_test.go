@@ -107,7 +107,6 @@ func testAccCheckPagerDutyTagConfig(tagLabel string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_tag" "foo" {
 	label = "%s"
-	type = "tag"
 }
 `, tagLabel)
 }

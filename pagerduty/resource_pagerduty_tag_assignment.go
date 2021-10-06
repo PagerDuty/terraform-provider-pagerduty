@@ -78,7 +78,7 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 			return resource.NonRetryableError(err)
 		} else {
 			// create tag_assignment id using the entityID.tagID as PagerDuty API does not return one
-			assignmentID := fmt.Sprintf("%v.%v", assignment.EntityID, assignment.TagID)
+			assignmentID := createAssignmentID(assignment.EntityID, assignment.TagID)
 			d.SetId(assignmentID)
 		}
 		return nil
@@ -171,7 +171,7 @@ func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface
 	for _, tag := range tagResponse.Tags {
 		if tag.ID == tagID {
 			// create tag_assignment id using the entityID.tagID as PagerDuty API does not return one
-			assignmentID := fmt.Sprintf("%v.%v", entityID, tagID)
+			assignmentID := createAssignmentID(entityID, tagID)
 			d.SetId(assignmentID)
 			d.Set("entity_id", entityID)
 			d.Set("entity_type", entityType)
@@ -186,4 +186,8 @@ func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface
 	}
 
 	return []*schema.ResourceData{d}, err
+}
+
+func createAssignmentID(entityID, tagID string) string {
+	return fmt.Sprintf("%v.%v", entityID, tagID)
 }

@@ -11,41 +11,6 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-// func init() {
-// 	resource.AddTestSweepers("pagerduty_tag_assignment", &resource.Sweeper{
-// 		Name: "pagerduty_tag_assignment",
-// 		F:    testSweepTagAssignment,
-// 	})
-// }
-
-// func testSweepTagAssignment(region string) error {
-// 	config, err := sharedConfigForRegion(region)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	client, err := config.Client()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	resp, _, err := client.Tags.List(&pagerduty.ListTagsOptions{})
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	for _, tag := range resp.Tags {
-// 		if strings.HasPrefix(tag.Label, "test") || strings.HasPrefix(tag.Label, "tf-") {
-// 			log.Printf("Destroying tag %s (%s)", tag.Label, tag.ID)
-// 			if _, err := client.Tags.Delete(tag.ID); err != nil {
-// 				return err
-// 			}
-// 		}
-// 	}
-
-// 	return nil
-// }
-
 func TestAccPagerDutyTagAssignment_User(t *testing.T) {
 	tagLabel := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))

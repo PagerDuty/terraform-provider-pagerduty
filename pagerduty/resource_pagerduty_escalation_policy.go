@@ -31,8 +31,8 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 				Default:  "Managed by Terraform",
 			},
 			"num_loops": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
 				ValidateFunc: validation.IntBetween(0, 9),
 			},
 			"teams": {

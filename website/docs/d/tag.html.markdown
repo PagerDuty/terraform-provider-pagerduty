@@ -37,4 +37,4 @@ The following arguments are supported:
 ## Attributes Reference
 * `id` - The ID of the found team.
 
-[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1tags/get
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIxNw-list-tags

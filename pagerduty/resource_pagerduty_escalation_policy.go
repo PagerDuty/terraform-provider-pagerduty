@@ -52,8 +52,9 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 							Computed: true,
 						},
 						"escalation_delay_in_minutes": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntAtLeast(1),
 						},
 						"target": {
 							Type:     schema.TypeList,

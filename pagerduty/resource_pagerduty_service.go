@@ -1,15 +1,16 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"strconv"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -19,7 +20,7 @@ func resourcePagerDutyService() *schema.Resource {
 		Read:   resourcePagerDutyServiceRead,
 		Update: resourcePagerDutyServiceUpdate,
 		Delete: resourcePagerDutyServiceDelete,
-		CustomizeDiff: func(diff *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			in := diff.Get("incident_urgency_rule.#").(int)
 			for i := 0; i <= in; i++ {
 				t := diff.Get(fmt.Sprintf("incident_urgency_rule.%d.type", i)).(string)

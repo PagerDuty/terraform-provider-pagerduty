@@ -1,13 +1,14 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -17,7 +18,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 		Read:   resourcePagerDutyServiceIntegrationRead,
 		Update: resourcePagerDutyServiceIntegrationUpdate,
 		Delete: resourcePagerDutyServiceIntegrationDelete,
-		CustomizeDiff: func(diff *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			t := diff.Get("type").(string)
 			if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" {
 				return fmt.Errorf("integration_email attribute must be set for an integration type generic_email_inbound_integration")

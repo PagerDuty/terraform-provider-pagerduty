@@ -1,14 +1,15 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -18,7 +19,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 		Read:   resourcePagerDutyScheduleRead,
 		Update: resourcePagerDutyScheduleUpdate,
 		Delete: resourcePagerDutyScheduleDelete,
-		CustomizeDiff: func(diff *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			ln := diff.Get("layer.#").(int)
 			for li := 0; li <= ln; li++ {
 				rn := diff.Get(fmt.Sprintf("layer.%d.restriction.#", li)).(int)

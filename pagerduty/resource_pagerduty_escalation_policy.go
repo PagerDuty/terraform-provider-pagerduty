@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -31,8 +31,8 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 				Default:  "Managed by Terraform",
 			},
 			"num_loops": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
 				ValidateFunc: validation.IntBetween(0, 9),
 			},
 			"teams": {

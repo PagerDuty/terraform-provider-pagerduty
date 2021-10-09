@@ -97,6 +97,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 						"rotation_turn_length_seconds": {
 							Type:     schema.TypeInt,
 							Required: true,
+							ValidateFunc: validation.IntBetween(3600, 365 * 24 * 3600),
 						},
 
 						"users": {

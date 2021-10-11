@@ -14,7 +14,6 @@ type Team struct {
 	Name        string         `json:"name,omitempty"`
 	Self        string         `json:"self,omitempty"`
 	Summary     string         `json:"summary,omitempty"`
-	Team        *Team          `json:"team,omitempty"`
 	Type        string         `json:"type,omitempty"`
 	Parent      *TeamReference `json:"parent,omitempty"`
 }
@@ -65,6 +64,11 @@ type teamRole struct {
 	Role string `json:"role,omitempty"`
 }
 
+// TeamPayload represents a team.
+type TeamPayload struct {
+	Team *Team `json:"team,omitempty"`
+}
+
 // List lists existing teams.
 func (s *TeamService) List(o *ListTeamsOptions) (*ListTeamsResponse, *Response, error) {
 	u := "/teams"
@@ -81,9 +85,9 @@ func (s *TeamService) List(o *ListTeamsOptions) (*ListTeamsResponse, *Response, 
 // Create creates a new team.
 func (s *TeamService) Create(team *Team) (*Team, *Response, error) {
 	u := "/teams"
-	v := new(Team)
+	v := new(TeamPayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &Team{Team: team}, &v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &TeamPayload{Team: team}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,7 +104,7 @@ func (s *TeamService) Delete(id string) (*Response, error) {
 // Get retrieves information about a team.
 func (s *TeamService) Get(id string) (*Team, *Response, error) {
 	u := fmt.Sprintf("/teams/%s", id)
-	v := new(Team)
+	v := new(TeamPayload)
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
 	if err != nil {
@@ -113,9 +117,9 @@ func (s *TeamService) Get(id string) (*Team, *Response, error) {
 // Update updates an existing team.
 func (s *TeamService) Update(id string, team *Team) (*Team, *Response, error) {
 	u := fmt.Sprintf("/teams/%s", id)
-	v := new(Team)
+	v := new(TeamPayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &Team{Team: team}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &TeamPayload{Team: team}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

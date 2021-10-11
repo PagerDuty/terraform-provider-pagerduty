@@ -60,7 +60,6 @@ type Integration struct {
 	CreatedAt        string            `json:"created_at,omitempty"`
 	HTMLURL          string            `json:"html_url,omitempty"`
 	ID               string            `json:"id,omitempty"`
-	Integration      *Integration      `json:"integration,omitempty"`
 	IntegrationEmail string            `json:"integration_email,omitempty"`
 	IntegrationKey   string            `json:"integration_key,omitempty"`
 	Name             string            `json:"name,omitempty"`
@@ -91,12 +90,16 @@ type Service struct {
 	Name                    string                     `json:"name,omitempty"`
 	ScheduledActions        []*ScheduledAction         `json:"scheduled_actions,omitempty"`
 	Self                    string                     `json:"self,omitempty"`
-	Service                 *Service                   `json:"service,omitempty"`
 	Status                  string                     `json:"status,omitempty"`
 	Summary                 string                     `json:"summary,omitempty"`
 	SupportHours            *SupportHours              `json:"support_hours,omitempty"`
 	Teams                   []*TeamReference           `json:"teams,omitempty"`
 	Type                    string                     `json:"type,omitempty"`
+}
+
+// ServicePayload represents a service.
+type ServicePayload struct {
+	Service *Service `json:"service,omitempty"`
 }
 
 // ServiceEventRule represents a service event rule
@@ -110,6 +113,11 @@ type ServiceEventRule struct {
 	Position   *int              `json:"position,omitempty"`
 	Actions    *RuleActions      `json:"actions,omitempty"`
 	Service    *ServiceReference `json:"service_id,omitempty"`
+}
+
+// IntegrationPayload represents an integration.
+type IntegrationPayload struct {
+	Integration *Integration `json:"integration,omitempty"`
 }
 
 // ServiceEventRulePayload represents a payload for service event rules
@@ -182,9 +190,9 @@ func (s *ServicesService) List(o *ListServicesOptions) (*ListServicesResponse, *
 // Create creates a new service.
 func (s *ServicesService) Create(service *Service) (*Service, *Response, error) {
 	u := "/services"
-	v := new(Service)
+	v := new(ServicePayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &Service{Service: service}, &v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &ServicePayload{Service: service}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -201,7 +209,7 @@ func (s *ServicesService) Delete(id string) (*Response, error) {
 // Get retrieves information about a service.
 func (s *ServicesService) Get(id string, o *GetServiceOptions) (*Service, *Response, error) {
 	u := fmt.Sprintf("/services/%s", id)
-	v := new(Service)
+	v := new(ServicePayload)
 
 	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
 	if err != nil {
@@ -214,9 +222,9 @@ func (s *ServicesService) Get(id string, o *GetServiceOptions) (*Service, *Respo
 // Update updates an existing service.
 func (s *ServicesService) Update(id string, service *Service) (*Service, *Response, error) {
 	u := fmt.Sprintf("/services/%s", id)
-	v := new(Service)
+	v := new(ServicePayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &Service{Service: service}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &ServicePayload{Service: service}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -227,9 +235,9 @@ func (s *ServicesService) Update(id string, service *Service) (*Service, *Respon
 // CreateIntegration creates a new service integration.
 func (s *ServicesService) CreateIntegration(serviceID string, integration *Integration) (*Integration, *Response, error) {
 	u := fmt.Sprintf("/services/%s/integrations", serviceID)
-	v := new(Integration)
+	v := new(IntegrationPayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &Integration{Integration: integration}, &v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &IntegrationPayload{Integration: integration}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -240,7 +248,7 @@ func (s *ServicesService) CreateIntegration(serviceID string, integration *Integ
 // GetIntegration retrieves information about a service integration.
 func (s *ServicesService) GetIntegration(serviceID, integrationID string, o *GetIntegrationOptions) (*Integration, *Response, error) {
 	u := fmt.Sprintf("/services/%s/integrations/%s", serviceID, integrationID)
-	v := new(Integration)
+	v := new(IntegrationPayload)
 
 	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
 	if err != nil {
@@ -253,9 +261,9 @@ func (s *ServicesService) GetIntegration(serviceID, integrationID string, o *Get
 // UpdateIntegration updates an existing service integration.
 func (s *ServicesService) UpdateIntegration(serviceID, integrationID string, integration *Integration) (*Integration, *Response, error) {
 	u := fmt.Sprintf("/services/%s/integrations/%s", serviceID, integrationID)
-	v := new(Integration)
+	v := new(IntegrationPayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &Integration{Integration: integration}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &IntegrationPayload{Integration: integration}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

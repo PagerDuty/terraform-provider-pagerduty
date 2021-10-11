@@ -10,11 +10,10 @@ type ScheduleService service
 
 // Override represents an override
 type Override struct {
-	Override *Override      `json:"override,omitempty"`
-	ID       string         `json:"id,omitempty"`
-	Start    string         `json:"start,omitempty"`
-	End      string         `json:"end,omitempty"`
-	User     *UserReference `json:"user,omitempty"`
+	ID    string         `json:"id,omitempty"`
+	Start string         `json:"start,omitempty"`
+	End   string         `json:"end,omitempty"`
+	User  *UserReference `json:"user,omitempty"`
 }
 
 // Schedule represents a schedule.
@@ -26,7 +25,6 @@ type Schedule struct {
 	ID                   string                       `json:"id,omitempty"`
 	Name                 string                       `json:"name,omitempty"`
 	OverridesSubSchedule *SubSchedule                 `json:"overrides_subschedule,omitempty"`
-	Schedule             *Schedule                    `json:"schedule,omitempty"`
 	ScheduleLayers       []*ScheduleLayer             `json:"schedule_layers,omitempty"`
 	Self                 string                       `json:"self,omitempty"`
 	Summary              string                       `json:"summary,omitempty"`
@@ -137,6 +135,16 @@ type UpdateScheduleOptions struct {
 	Overflow bool `url:"overflow,omitempty"`
 }
 
+// SchedulePayload represents a schedule.
+type SchedulePayload struct {
+	Schedule *Schedule `json:"schedule,omitempty"`
+}
+
+// OverridePayload represents an override.
+type OverridePayload struct {
+	Override *Override `json:"override,omitempty"`
+}
+
 // List lists existing schedules.
 func (s *ScheduleService) List(o *ListSchedulesOptions) (*ListSchedulesResponse, *Response, error) {
 	u := "/schedules"
@@ -153,9 +161,9 @@ func (s *ScheduleService) List(o *ListSchedulesOptions) (*ListSchedulesResponse,
 // Create creates a new schedule.
 func (s *ScheduleService) Create(schedule *Schedule, o *CreateScheduleOptions) (*Schedule, *Response, error) {
 	u := "/schedules"
-	v := new(Schedule)
+	v := new(SchedulePayload)
 
-	resp, err := s.client.newRequestDo("POST", u, o, &Schedule{Schedule: schedule}, &v)
+	resp, err := s.client.newRequestDo("POST", u, o, &SchedulePayload{Schedule: schedule}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -172,7 +180,7 @@ func (s *ScheduleService) Delete(id string) (*Response, error) {
 // Get retrieves information about a schedule.
 func (s *ScheduleService) Get(id string, o *GetScheduleOptions) (*Schedule, *Response, error) {
 	u := fmt.Sprintf("/schedules/%s", id)
-	v := new(Schedule)
+	v := new(SchedulePayload)
 
 	resp, err := s.client.newRequestDo("GET", u, o, nil, &v)
 	if err != nil {
@@ -185,9 +193,9 @@ func (s *ScheduleService) Get(id string, o *GetScheduleOptions) (*Schedule, *Res
 // Update updates an existing schedule.
 func (s *ScheduleService) Update(id string, schedule *Schedule, o *UpdateScheduleOptions) (*Schedule, *Response, error) {
 	u := fmt.Sprintf("/schedules/%s", id)
-	v := new(Schedule)
+	v := new(SchedulePayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, o, &Schedule{Schedule: schedule}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, o, &SchedulePayload{Schedule: schedule}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -224,9 +232,9 @@ func (s *ScheduleService) ListOverrides(scheduleID string, o *ListOverridesOptio
 // CreateOverride creates an override for a specific user covering the specified time range.
 func (s *ScheduleService) CreateOverride(id string, override *Override) (*Override, *Response, error) {
 	u := fmt.Sprintf("/schedules/%s/overrides", id)
-	v := new(Override)
+	v := new(OverridePayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &Override{Override: override}, &v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &OverridePayload{Override: override}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

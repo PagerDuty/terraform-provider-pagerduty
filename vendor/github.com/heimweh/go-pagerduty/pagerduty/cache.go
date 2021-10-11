@@ -91,16 +91,16 @@ func InitCache(c *Client) {
 
 // PopulateMemoryCache does initial population of the cache if memory caching is selected
 func PopulateMemoryCache() {
-	abilities, _, _ := pdClient.Abilities.List()
-
-	abilitiesRecord := &cacheAbilitiesRecord{
-		ID:        "abilities",
-		Abilities: abilities,
-	}
-	cachePut("misc", "abilities", abilitiesRecord)
-
 	if _, present := os.LookupEnv("TF_PAGERDUTY_CACHE_PREFILL"); present {
 		log.Println("===== Prefilling memory cache =====")
+		abilities, _, _ := pdClient.Abilities.List()
+
+		abilitiesRecord := &cacheAbilitiesRecord{
+			ID:        "abilities",
+			Abilities: abilities,
+		}
+		cachePut("misc", "abilities", abilitiesRecord)
+		
 		var pdo = ListUsersOptions{
 			Include: []string{"contact_methods", "notification_rules"},
 			Limit:   100,

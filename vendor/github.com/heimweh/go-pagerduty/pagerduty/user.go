@@ -11,7 +11,6 @@ type UserService service
 
 // NotificationRule represents a user notification rule.
 type NotificationRule struct {
-	NotificationRule    *NotificationRule       `json:"notification_rule,omitempty"`
 	ContactMethod       *ContactMethodReference `json:"contact_method,omitempty"`
 	HTMLURL             string                  `json:"html_url,omitempty"`
 	ID                  string                  `json:"id,omitempty"`
@@ -20,6 +19,11 @@ type NotificationRule struct {
 	Summary             string                  `json:"summary,omitempty"`
 	Type                string                  `json:"type,omitempty"`
 	Urgency             string                  `json:"urgency,omitempty"`
+}
+
+// NotificationRulePayload represents a notification rule.
+type NotificationRulePayload struct {
+	NotificationRule *NotificationRule `json:"notification_rule,omitempty"`
 }
 
 // User represents a user.
@@ -41,7 +45,11 @@ type User struct {
 	Teams             []*TeamReference          `json:"teams,omitempty"`
 	TimeZone          string                    `json:"time_zone,omitempty"`
 	Type              string                    `json:"type,omitempty"`
-	User              *User                     `json:"user,omitempty"`
+}
+
+// UserPayload represents a user.
+type UserPayload struct {
+	User *User `json:"user,omitempty"`
 }
 
 // FullUser represents a user fetched with include[]=contact_methods,notification_rules.
@@ -64,20 +72,23 @@ type FullUser struct {
 	Teams             []*Team             `json:"teams,omitempty"`
 	TimeZone          string              `json:"time_zone,omitempty"`
 	Type              string              `json:"type,omitempty"`
-	User              *FullUser           `json:"user,omitempty"`
+}
+
+// FullUserPayload represents a user.
+type FullUserPayload struct {
+	User *FullUser `json:"user,omitempty"`
 }
 
 // ContactMethod represents a contact method for a user.
 type ContactMethod struct {
-	ContactMethod *ContactMethod `json:"contact_method,omitempty"`
-	ID            string         `json:"id,omitempty"`
-	Summary       string         `json:"summary,omitempty"`
-	Type          string         `json:"type,omitempty"`
-	Self          string         `json:"self,omitempty"`
-	HTMLURL       string         `json:"html_url,omitempty"`
-	Label         string         `json:"label,omitempty"`
-	Address       string         `json:"address,omitempty"`
-	BlackListed   bool           `json:"blacklisted,omitempty"`
+	ID          string `json:"id,omitempty"`
+	Summary     string `json:"summary,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Self        string `json:"self,omitempty"`
+	HTMLURL     string `json:"html_url,omitempty"`
+	Label       string `json:"label,omitempty"`
+	Address     string `json:"address,omitempty"`
+	BlackListed bool   `json:"blacklisted,omitempty"`
 
 	// Email contact method options
 	SendShortEmail bool `json:"send_short_email,omitempty"`
@@ -90,6 +101,11 @@ type ContactMethod struct {
 	DeviceType string                    `json:"device_type,omitempty"`
 	Sounds     []*PushContactMethodSound `json:"sounds,omitempty"`
 	CreatedAt  string                    `json:"created_at,omitempty"`
+}
+
+// ContactMethodPayload represents a contact method.
+type ContactMethodPayload struct {
+	ContactMethod *ContactMethod `json:"contact_method"`
 }
 
 // PushContactMethodSound represents a sound for a push contact method.
@@ -179,9 +195,9 @@ func (s *UserService) ListAll(o *ListUsersOptions) ([]*FullUser, error) {
 // Create creates a new user.
 func (s *UserService) Create(user *User) (*User, *Response, error) {
 	u := "/users"
-	v := new(User)
+	v := new(UserPayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &User{User: user}, &v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &UserPayload{User: user}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -212,10 +228,10 @@ func (s *UserService) Delete(id string) (*Response, error) {
 // Get retrieves information about a user.
 func (s *UserService) Get(id string, o *GetUserOptions) (*User, *Response, error) {
 	u := fmt.Sprintf("/users/%s", id)
-	v := new(User)
+	v := new(UserPayload)
 
 	if err := cacheGetUser(id, v); err == nil {
-		return v, nil, nil
+		return v.User, nil, nil
 	}
 
 	resp, err := s.client.newRequestDo("GET", u, o, nil, v)
@@ -229,7 +245,7 @@ func (s *UserService) Get(id string, o *GetUserOptions) (*User, *Response, error
 // GetFull retrieves information about a user including contact methods and notification rules.
 func (s *UserService) GetFull(id string) (*FullUser, *Response, error) {
 	u := fmt.Sprintf("/users/%s", id)
-	v := new(FullUser)
+	v := new(FullUserPayload)
 	o := &GetUserOptions{
 		Include: []string{"contact_methods", "notification_rules"},
 	}
@@ -245,9 +261,9 @@ func (s *UserService) GetFull(id string) (*FullUser, *Response, error) {
 // Update updates an existing user.
 func (s *UserService) Update(id string, user *User) (*User, *Response, error) {
 	u := fmt.Sprintf("/users/%s", id)
-	v := new(User)
+	v := new(UserPayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &User{User: user}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &UserPayload{User: user}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -273,9 +289,9 @@ func (s *UserService) ListContactMethods(userID string) (*ListContactMethodsResp
 // CreateContactMethod creates a new contact method for a user.
 func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
 	u := fmt.Sprintf("/users/%s/contact_methods", userID)
-	v := new(ContactMethod)
+	v := new(ContactMethodPayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethod{ContactMethod: contactMethod}, &v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -292,10 +308,10 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 // GetContactMethod retrieves a contact method for a user.
 func (s *UserService) GetContactMethod(userID string, contactMethodID string) (*ContactMethod, *Response, error) {
 	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
-	v := new(ContactMethod)
+	v := new(ContactMethodPayload)
 
 	if err := cacheGetContactMethod(contactMethodID, v); err == nil {
-		return v, nil, nil
+		return v.ContactMethod, nil, nil
 	}
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
@@ -309,9 +325,9 @@ func (s *UserService) GetContactMethod(userID string, contactMethodID string) (*
 // UpdateContactMethod updates a contact method for a user.
 func (s *UserService) UpdateContactMethod(userID, contactMethodID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
 	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
-	v := new(ContactMethod)
+	v := new(ContactMethodPayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethod{ContactMethod: contactMethod}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -338,9 +354,9 @@ func (s *UserService) DeleteContactMethod(userID, contactMethodID string) (*Resp
 // CreateNotificationRule creates a new notification rule for a user.
 func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRule) (*NotificationRule, *Response, error) {
 	u := fmt.Sprintf("/users/%s/notification_rules", userID)
-	v := new(NotificationRule)
+	v := new(NotificationRulePayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &NotificationRule{NotificationRule: rule}, &v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &NotificationRulePayload{NotificationRule: rule}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -357,10 +373,10 @@ func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRu
 // GetNotificationRule retrieves a notification rule for a user.
 func (s *UserService) GetNotificationRule(userID string, ruleID string) (*NotificationRule, *Response, error) {
 	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
-	v := new(NotificationRule)
+	v := new(NotificationRulePayload)
 
 	if err := cacheGetNotificationRule(ruleID, v); err == nil {
-		return v, nil, nil
+		return v.NotificationRule, nil, nil
 	}
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
@@ -374,9 +390,9 @@ func (s *UserService) GetNotificationRule(userID string, ruleID string) (*Notifi
 // UpdateNotificationRule updates a notification rulefor a user.
 func (s *UserService) UpdateNotificationRule(userID, ruleID string, rule *NotificationRule) (*NotificationRule, *Response, error) {
 	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
-	v := new(NotificationRule)
+	v := new(NotificationRulePayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &NotificationRule{NotificationRule: rule}, &v)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &NotificationRulePayload{NotificationRule: rule}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

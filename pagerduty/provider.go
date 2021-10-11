@@ -39,6 +39,7 @@ func Provider() *schema.Provider {
 			"pagerduty_business_service":    dataSourcePagerDutyBusinessService(),
 			"pagerduty_priority":            dataSourcePagerDutyPriority(),
 			"pagerduty_ruleset":             dataSourcePagerDutyRuleset(),
+			"pagerduty_tag":                 dataSourcePagerDutyTag(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -61,6 +62,8 @@ func Provider() *schema.Provider {
 			"pagerduty_business_service":       resourcePagerDutyBusinessService(),
 			"pagerduty_service_dependency":     resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":          resourcePagerDutyResponsePlay(),
+			"pagerduty_tag":                    resourcePagerDutyTag(),
+			"pagerduty_tag_assignment":         resourcePagerDutyTagAssignment(),
 			"pagerduty_service_event_rule":     resourcePagerDutyServiceEventRule(),
 			"pagerduty_slack_connection":       resourcePagerDutySlackConnection(),
 		},

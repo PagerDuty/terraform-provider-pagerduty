@@ -8,7 +8,6 @@ type AddonService service
 
 // Addon represents a PagerDuty add-on.
 type Addon struct {
-	Addon   *Addon `json:"addon,omitempty"`
 	HTMLURL string `json:"html_url,omitempty"`
 	ID      string `json:"id,omitempty"`
 	Name    string `json:"name,omitempty"`
@@ -38,6 +37,11 @@ type ListAddonsResponse struct {
 	Addons []*Addon `json:"addons,omitempty"`
 }
 
+// AddonPayload represents an addon.
+type AddonPayload struct {
+	Addon *Addon `json:"addon,omitempty"`
+}
+
 // List lists installed add-ons.
 func (s *AddonService) List(o *ListAddonsOptions) (*ListAddonsResponse, *Response, error) {
 	u := "/addons"
@@ -54,9 +58,9 @@ func (s *AddonService) List(o *ListAddonsOptions) (*ListAddonsResponse, *Respons
 // Install installs an add-on.
 func (s *AddonService) Install(addon *Addon) (*Addon, *Response, error) {
 	u := "/addons"
-	v := new(Addon)
+	v := new(AddonPayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &Addon{Addon: addon}, v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &AddonPayload{Addon: addon}, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -73,7 +77,7 @@ func (s *AddonService) Delete(id string) (*Response, error) {
 // Get retrieves information about an add-on.
 func (s *AddonService) Get(id string) (*Addon, *Response, error) {
 	u := fmt.Sprintf("/addons/%s", id)
-	v := new(Addon)
+	v := new(AddonPayload)
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
 	if err != nil {
@@ -86,8 +90,8 @@ func (s *AddonService) Get(id string) (*Addon, *Response, error) {
 // Update updates an existing add-on.
 func (s *AddonService) Update(id string, addon *Addon) (*Addon, *Response, error) {
 	u := fmt.Sprintf("/addons/%s", id)
-	v := new(Addon)
-	resp, err := s.client.newRequestDo("PUT", u, nil, &Addon{Addon: addon}, &v)
+	v := new(AddonPayload)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &AddonPayload{Addon: addon}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

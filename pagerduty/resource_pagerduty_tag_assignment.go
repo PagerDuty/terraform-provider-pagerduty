@@ -1,0 +1,193 @@
+package pagerduty
+
+import (
+	"fmt"
+	"log"
+	"strings"
+	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/heimweh/go-pagerduty/pagerduty"
+)
+
+func resourcePagerDutyTagAssignment() *schema.Resource {
+	return &schema.Resource{
+		Create: resourcePagerDutyTagAssignmentCreate,
+		Read:   resourcePagerDutyTagAssignmentRead,
+		Delete: resourcePagerDutyTagAssignmentDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourcePagerDutyTagAssignmentImport,
+		},
+		Schema: map[string]*schema.Schema{
+			"entity_type": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				ValidateFunc: validateValueFunc([]string{
+					"users",
+					"teams",
+					"escalation_policies",
+				}),
+			},
+			"entity_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"tag_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+		},
+	}
+}
+
+func buildTagAssignmentStruct(d *schema.ResourceData) *pagerduty.TagAssignment {
+	assignment := &pagerduty.TagAssignment{
+		// Hard-coding "tag_reference" here because using the "tag" type doesn't allow users to delete the tags as
+		// they receive no tag id from the PagerDuty API at this time
+		Type:       "tag_reference",
+		EntityType: d.Get("entity_type").(string),
+		EntityID:   d.Get("entity_id").(string),
+	}
+	if attr, ok := d.GetOk("tag_id"); ok {
+		assignment.TagID = attr.(string)
+	}
+
+	return assignment
+}
+
+func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*pagerduty.Client)
+
+	assignment := buildTagAssignmentStruct(d)
+	assignments := &pagerduty.TagAssignments{
+		Add: []*pagerduty.TagAssignment{assignment},
+	}
+
+	log.Printf("[INFO] Creating PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
+
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
+			if isErrCode(err, 400) || isErrCode(err, 429) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		} else {
+			// create tag_assignment id using the entityID.tagID as PagerDuty API does not return one
+			assignmentID := createAssignmentID(assignment.EntityID, assignment.TagID)
+			d.SetId(assignmentID)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return retryErr
+	}
+	// give PagerDuty 2 seconds to save the assignment correctly
+	time.Sleep(2 * time.Second)
+	return resourcePagerDutyTagAssignmentRead(d, meta)
+
+}
+
+func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*pagerduty.Client)
+
+	assignment := buildTagAssignmentStruct(d)
+
+	log.Printf("[INFO] Reading PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
+
+	return resource.Retry(30*time.Second, func() *resource.RetryError {
+		if tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID); err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
+		} else if tagResponse != nil {
+			var foundTag *pagerduty.Tag
+
+			// loop tags and find matching ID
+			for _, tag := range tagResponse.Tags {
+				if tag.ID == assignment.TagID {
+					foundTag = tag
+					break
+				}
+			}
+			if foundTag == nil {
+				d.SetId("")
+				return nil
+			}
+		}
+		return nil
+	})
+}
+
+func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*pagerduty.Client)
+
+	assignment := buildTagAssignmentStruct(d)
+	assignments := &pagerduty.TagAssignments{
+		Remove: []*pagerduty.TagAssignment{assignment},
+	}
+	log.Printf("[INFO] Deleting PagerDuty tag assignment with tagID %s for entityID %s", assignment.TagID, assignment.EntityID)
+
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
+			if isErrCode(err, 400) || isErrCode(err, 429) {
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		} else {
+			d.SetId("")
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return retryErr
+	}
+
+	return nil
+}
+
+func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 3 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_tag_assignment. Expecting an importation ID formed as '<entity_type>.<entity_id>.<tag_id>'")
+	}
+	entityType, entityID, tagID := ids[0], ids[1], ids[2]
+	client := meta.(*pagerduty.Client)
+	// give PagerDuty 2 seconds to save the assignment correctly
+	time.Sleep(2 * time.Second)
+	tagResponse, _, err := client.Tags.ListTagsForEntity(entityType, entityID)
+
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_tag_assignment: %s", err.Error())
+	}
+	var foundTag *pagerduty.Tag
+	// loop tags and find matching ID
+	for _, tag := range tagResponse.Tags {
+		if tag.ID == tagID {
+			// create tag_assignment id using the entityID.tagID as PagerDuty API does not return one
+			assignmentID := createAssignmentID(entityID, tagID)
+			d.SetId(assignmentID)
+			d.Set("entity_id", entityID)
+			d.Set("entity_type", entityType)
+			d.Set("tag_id", tagID)
+			foundTag = tag
+			break
+		}
+	}
+	if foundTag == nil {
+		d.SetId("")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_tag_assignment. Tag not found for entity")
+	}
+
+	return []*schema.ResourceData{d}, err
+}
+
+func createAssignmentID(entityID, tagID string) string {
+	return fmt.Sprintf("%v.%v", entityID, tagID)
+}

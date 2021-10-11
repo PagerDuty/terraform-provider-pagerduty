@@ -6,6 +6,7 @@ FEATURES:
 
 * `data_source_pagerduty_tag`: Added data source for Tags ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
 
+* Update Terraform Plugin SDK to v2 ([#375](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/375))
 
 
 IMPROVEMENTS:
@@ -20,7 +21,7 @@ IMPROVEMENTS:
 
 * `resource/pagerduty_service`: CustomizeDiff to ensure general urgency rule is not set for an urgency rule of type support hours ([#387](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/387))
 
-* Docs: `resource/rulset_rule`: Update severity order to reflect criticality ([#392](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/392))
+* Docs: `resource/pagerduty_rulset_rule`: Update severity order to reflect criticality ([#392](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/392))
 
 * `resource/pagerduty_escalation_policy`: Added validation to ensure `num_loops` stays between `0` and `9` ([#395](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/395))
 
@@ -31,9 +32,11 @@ IMPROVEMENTS:
 
 
 BUG FIXES:
-* Docs: `resource/service`: Corrected `acknowledgement_timeout` to add statement about default being set to 1800.  ([#393](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/393))
+* Docs: `resource/pagerduty_service`: Corrected `acknowledgement_timeout` to add statement about default being set to 1800.  ([#393](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/393))
 
+* `resource/pagerduty_service` and `resource/pagerduty_service_dependency`: Fix `alert_grouping` and `alert_grouping_timeout` conflicting with `alert_grouping_parameters` ([#377](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/377))
 
+* `resource/pagerduty_service_dependency`: Fix sporadic panic when processing service dependencies ([#376](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/376))
 
 ## 1.11.0 (September 9, 2021)
 FEATURES:

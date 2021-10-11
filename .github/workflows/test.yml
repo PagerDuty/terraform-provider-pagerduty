@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    -
+      name: Checkout code
+      uses: actions/checkout@v2
+    -
+      name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    -
+      name: Install cookie
+      run: scripts/gogetcookie.sh
+    -
+      name: Run tests
+      env:
+        GOFLAGS: "-mod=vendor"
+      run: |
+        make test
+        make vet

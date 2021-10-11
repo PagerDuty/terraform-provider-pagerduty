@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -44,6 +44,16 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "user",
+				ValidateFunc: validateValueFunc([]string{
+					"admin",
+					"limited_user",
+					"observer",
+					"owner",
+					"read_only_user",
+					"restricted_access",
+					"read_only_limited_user",
+					"user",
+				}),
 			},
 
 			"job_title": {

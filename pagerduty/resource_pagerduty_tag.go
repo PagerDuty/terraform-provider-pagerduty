@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -86,8 +86,8 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if tag != nil {
+			log.Printf("Tag Type: %v", tag.Type)
 			d.Set("label", tag.Label)
-			d.Set("type", tag.Type)
 			d.Set("summary", tag.Summary)
 			d.Set("html_url", tag.HTMLURL)
 		}

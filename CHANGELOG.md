@@ -1,3 +1,40 @@
+## 2.0.0 (October 11, 2021)
+FEATURES:
+* `resource/pagerduty_tag`: Added resource to manage Tags ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
+
+* `resource/pagerduty_tag_assignment`: Added resource to manage Tag Assignments ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
+
+* `data_source_pagerduty_tag`: Added data source for Tags ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
+
+
+
+IMPROVEMENTS:
+* `resource/pagerduty_service_integration`: Added validation that ensures an email address is specified for email integrations ([#382](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/382))
+
+* `resource/pagerduty_schedule`: Added validation for `start_time_of_day` format ([#383](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/383))
+
+* `resource/pagerduty_schedule`: Added validation for `start_day_of_week` format ([#385](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/385))
+
+* `resource/pagerduty_schedule`: Added validation that `start_day_of_week` is only set when `weekly_restriction` is set as `restriction.type` ([#386](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/386))
+
+
+* `resource/pagerduty_service`: CustomizeDiff to ensure general urgency rule is not set for an urgency rule of type support hours ([#387](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/387))
+
+* Docs: `resource/rulset_rule`: Update severity order to reflect criticality ([#392](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/392))
+
+* `resource/pagerduty_escalation_policy`: Added validation to ensure `num_loops` stays between `0` and `9` ([#395](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/395))
+
+* `resource/pagerduty_escalation_policy`: Added validation to ensure `escalation_delay_in_minutes` is an int and greater than `0` ([#401](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/401))
+
+* `resource/pagerduty_schedule`: Added validation to `rotation_turn_length_seconds` ([#405](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/405))
+
+
+
+BUG FIXES:
+* Docs: `resource/service`: Corrected `acknowledgement_timeout` to add statement about default being set to 1800.  ([#393](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/393))
+
+
+
 ## 1.11.0 (September 9, 2021)
 FEATURES:
 * `resource/pagerduty_slack_connection`: Added resource to manage Slack Connections (aka Slack v2) ([#381](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/381))

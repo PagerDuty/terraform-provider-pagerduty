@@ -65,8 +65,6 @@ func dataSourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error 
 
 		d.SetId(found.ID)
 		d.Set("label", found.Label)
-		d.Set("summary", found.Summary)
-		d.Set("html_url", found.HTMLURL)
 
 		return nil
 	})

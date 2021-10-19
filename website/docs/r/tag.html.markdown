@@ -15,7 +15,6 @@ A [tag](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIxNw-list-tags) 
 ```hcl
 resource "pagerduty_tag" "example" {
   label = "Product"
-  type = "tag"
 }
 ```
 

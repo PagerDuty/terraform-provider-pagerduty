@@ -29,6 +29,7 @@ resource "pagerduty_slack_connection" "foo" {
   source_type = "team_reference"
   workspace_id = "T02A123LV1A"
   channel_id = "C02CABCDAC9"
+  notification_type = "responder"
   config {
     events = [
       "incident.triggered",

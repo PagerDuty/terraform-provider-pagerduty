@@ -41,6 +41,7 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				MaxItems: 1,
 			},
 			"rule": {
 				Type:     schema.TypeList,

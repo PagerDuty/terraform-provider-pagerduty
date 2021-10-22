@@ -120,7 +120,7 @@ func testAccCheckPagerDutySlackConnectionDestroy(s *terraform.State) error {
 
 		scatts := r.Primary.Attributes
 		if _, _, err := client.SlackConnections.Get(scatts["workspace_id"], r.Primary.ID); err == nil {
-			return fmt.Errorf("response play still exists")
+			return fmt.Errorf("slack connection still exists")
 		}
 
 	}

@@ -3,7 +3,6 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -110,8 +109,7 @@ func buildSlackConnectionStruct(d *schema.ResourceData) (*pagerduty.SlackConnect
 }
 
 func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interface{}) error {
-	config := setClientConfig()
-	client, err := pagerduty.NewClient(config)
+	client, err := meta.(*Config).SlackClient()
 	if err != nil {
 		return err
 	}
@@ -140,8 +138,7 @@ func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface{}) error {
-	config := setClientConfig()
-	client, err := pagerduty.NewClient(config)
+	client, err := meta.(*Config).SlackClient()
 	if err != nil {
 		return err
 	}
@@ -175,11 +172,7 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 }
 
 func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := &pagerduty.Config{
-		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: AppBaseUrl,
-	}
-	client, err := pagerduty.NewClient(config)
+	client, err := meta.(*Config).SlackClient()
 	if err != nil {
 		return err
 	}
@@ -198,8 +191,7 @@ func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutySlackConnectionDelete(d *schema.ResourceData, meta interface{}) error {
-	config := setClientConfig()
-	client, err := pagerduty.NewClient(config)
+	client, err := meta.(*Config).SlackClient()
 	if err != nil {
 		return err
 	}
@@ -266,16 +258,8 @@ func flattenConfigList(list []string) interface{} {
 	return items
 }
 
-func setClientConfig() *pagerduty.Config {
-	return &pagerduty.Config{
-		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: AppBaseUrl,
-	}
-}
-
 func resourcePagerDutySlackConnectionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := setClientConfig()
-	client, err := pagerduty.NewClient(config)
+	client, err := meta.(*Config).SlackClient()
 	if err != nil {
 		return nil, err
 	}

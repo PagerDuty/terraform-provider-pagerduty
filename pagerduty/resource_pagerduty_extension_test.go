@@ -93,7 +93,7 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyExtensionDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_extension" {
 			continue
@@ -118,7 +118,7 @@ func testAccCheckPagerDutyExtensionExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No extension ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Extensions.Get(rs.Primary.ID)
 		if err != nil {

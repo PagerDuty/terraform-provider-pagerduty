@@ -115,7 +115,7 @@ func buildServiceIntegrationStruct(d *schema.ResourceData) *pagerduty.Integratio
 }
 
 func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	serviceIntegration := buildServiceIntegrationStruct(d)
 
@@ -145,7 +145,7 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 }
 
 func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty service integration %s", d.Id())
 
@@ -194,7 +194,7 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	serviceIntegration := buildServiceIntegrationStruct(d)
 
@@ -210,7 +210,7 @@ func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta inte
 }
 
 func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	service := d.Get("service").(string)
 
@@ -226,7 +226,7 @@ func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta inte
 }
 
 func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	ids := strings.Split(d.Id(), ".")
 

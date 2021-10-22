@@ -323,7 +323,7 @@ func buildServiceEventRuleStruct(d *schema.ResourceData) *pagerduty.ServiceEvent
 	return rule
 }
 func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	rule := buildServiceEventRuleStruct(d)
 
@@ -352,7 +352,7 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
@@ -383,7 +383,7 @@ func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	rule := buildServiceEventRuleStruct(d)
 
@@ -408,7 +408,7 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
@@ -429,7 +429,7 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceEventRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	ids := strings.Split(d.Id(), ".")
 

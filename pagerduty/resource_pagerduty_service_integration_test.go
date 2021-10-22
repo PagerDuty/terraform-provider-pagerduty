@@ -106,7 +106,7 @@ func TestAccPagerDutyServiceIntegrationGeneric_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyServiceIntegrationDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_service_integration" {
 			continue
@@ -135,7 +135,7 @@ func testAccCheckPagerDutyServiceIntegrationExists(n string) resource.TestCheckF
 
 		service, _ := s.RootModule().Resources["pagerduty_service.foo"]
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Services.GetIntegration(service.Primary.ID, rs.Primary.ID, &pagerduty.GetIntegrationOptions{})
 		if err != nil {

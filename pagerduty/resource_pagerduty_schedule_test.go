@@ -370,7 +370,7 @@ func TestAccPagerDutySchedule_Multi(t *testing.T) {
 }
 
 func testAccCheckPagerDutyScheduleDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_schedule" {
 			continue
@@ -394,7 +394,7 @@ func testAccCheckPagerDutyScheduleExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No Schedule ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Schedules.Get(rs.Primary.ID, &pagerduty.GetScheduleOptions{})
 		if err != nil {

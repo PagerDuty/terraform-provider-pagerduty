@@ -87,7 +87,7 @@ func buildExtensionStruct(d *schema.ResourceData) *pagerduty.Extension {
 }
 
 func resourcePagerDutyExtensionCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	extension := buildExtensionStruct(d)
 
@@ -104,7 +104,7 @@ func resourcePagerDutyExtensionCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty extension %s", d.Id())
 
@@ -138,7 +138,7 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePagerDutyExtensionUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	extension := buildExtensionStruct(d)
 
@@ -152,7 +152,7 @@ func resourcePagerDutyExtensionUpdate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyExtensionDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty extension %s", d.Id())
 
@@ -170,7 +170,7 @@ func resourcePagerDutyExtensionDelete(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyExtensionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	extension, _, err := client.Extensions.Get(d.Id())
 

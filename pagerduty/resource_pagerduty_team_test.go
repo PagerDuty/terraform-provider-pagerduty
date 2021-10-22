@@ -118,7 +118,7 @@ func TestAccPagerDutyTeam_Parent(t *testing.T) {
 }
 
 func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_team" {
 			continue
@@ -134,7 +134,7 @@ func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
 
 func testAccCheckPagerDutyTeamExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 		for _, r := range s.RootModule().Resources {
 			if _, _, err := client.Teams.Get(r.Primary.ID); err != nil {
 				return fmt.Errorf("Received an error retrieving team %s ID: %s", err, r.Primary.ID)

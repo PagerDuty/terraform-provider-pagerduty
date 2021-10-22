@@ -72,7 +72,7 @@ func buildUserNotificationRuleStruct(d *schema.ResourceData) (*pagerduty.Notific
 }
 
 func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 
@@ -92,7 +92,7 @@ func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta in
 }
 
 func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 
@@ -117,7 +117,7 @@ func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta inte
 }
 
 func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	notificationRule, err := buildUserNotificationRuleStruct(d)
 	if err != nil {
@@ -136,7 +136,7 @@ func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta in
 }
 
 func resourcePagerDutyUserNotificationRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty user notification rule %s", d.Id())
 
@@ -152,7 +152,7 @@ func resourcePagerDutyUserNotificationRuleDelete(d *schema.ResourceData, meta in
 }
 
 func resourcePagerDutyUserNotificationRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	ids := strings.Split(d.Id(), ":")
 

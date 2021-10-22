@@ -45,7 +45,7 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 	}
 }
 func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 	teamID := d.Get("team_id").(string)
@@ -74,7 +74,7 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 
@@ -110,7 +110,7 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 }
 
 func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 	teamID := d.Get("team_id").(string)
@@ -140,7 +140,7 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 

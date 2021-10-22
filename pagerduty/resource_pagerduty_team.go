@@ -58,7 +58,7 @@ func buildTeamStruct(d *schema.ResourceData) *pagerduty.Team {
 }
 
 func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	team := buildTeamStruct(d)
 
@@ -82,7 +82,7 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty team %s", d.Id())
 
@@ -100,7 +100,7 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	team := buildTeamStruct(d)
 
@@ -120,7 +120,7 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty team %s", d.Id())
 

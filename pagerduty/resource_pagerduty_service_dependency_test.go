@@ -50,7 +50,7 @@ func testAccCheckPagerDutyBusinessServiceDependencyExists(n string) resource.Tes
 		}
 		businessService, _ := s.RootModule().Resources["pagerduty_business_service.foo"]
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		depResp, _, err := client.ServiceDependencies.GetServiceDependenciesForType(businessService.Primary.ID, "business_service")
 		if err != nil {
@@ -74,7 +74,7 @@ func testAccCheckPagerDutyBusinessServiceDependencyExists(n string) resource.Tes
 }
 
 func testAccCheckPagerDutyBusinessServiceDependencyDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_service_dependency" {
 			continue
@@ -187,7 +187,7 @@ func testAccCheckPagerDutyTechnicalServiceDependencyExists(n string) resource.Te
 		}
 		supportService, _ := s.RootModule().Resources["pagerduty_service.supportBar"]
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		depResp, _, err := client.ServiceDependencies.GetServiceDependenciesForType(supportService.Primary.ID, "service")
 		if err != nil {
@@ -211,7 +211,7 @@ func testAccCheckPagerDutyTechnicalServiceDependencyExists(n string) resource.Te
 }
 
 func testAccCheckPagerDutyTechnicalServiceDependencyDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_service_dependency" {
 			continue

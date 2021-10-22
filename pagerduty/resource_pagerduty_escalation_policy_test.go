@@ -155,7 +155,7 @@ func TestAccPagerDutyEscalationPolicyWithTeams_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyEscalationPolicyDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_escalation_policy" {
 			continue
@@ -179,7 +179,7 @@ func testAccCheckPagerDutyEscalationPolicyExists(n string) resource.TestCheckFun
 			return fmt.Errorf("No Escalation Policy ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.EscalationPolicies.Get(rs.Primary.ID, &pagerduty.GetEscalationPolicyOptions{})
 		if err != nil {

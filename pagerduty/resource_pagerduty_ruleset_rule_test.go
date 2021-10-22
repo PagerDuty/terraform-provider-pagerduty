@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
@@ -120,7 +119,7 @@ func TestAccPagerDutyRulesetRule_MultipleRules(t *testing.T) {
 	})
 }
 func testAccCheckPagerDutyRulesetRuleDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_ruleset_rule" {
 			continue
@@ -147,7 +146,7 @@ func testAccCheckPagerDutyRulesetRuleExists(n string) resource.TestCheckFunc {
 
 		ruleset, _ := s.RootModule().Resources["pagerduty_ruleset.foo"]
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 		found, _, err := client.Rulesets.GetRule(ruleset.Primary.ID, rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("Ruleset Rule not found: %v", rs.Primary.ID)

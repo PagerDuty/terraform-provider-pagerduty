@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyUserNotificationRuleContactMethod_Basic(t *testing.T) {
@@ -114,7 +113,7 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Unknown_key(t *testing.T)
 }
 
 func testAccCheckPagerDutyUserNotificationRuleDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_user_notification_rule" {
 			continue
@@ -139,7 +138,7 @@ func testAccCheckPagerDutyUserNotificationRuleExists(n string) resource.TestChec
 			return fmt.Errorf("No user notification rule ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Users.GetNotificationRule(rs.Primary.Attributes["user_id"], rs.Primary.ID)
 		if err != nil {

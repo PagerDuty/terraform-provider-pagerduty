@@ -68,7 +68,7 @@ func TestAccPagerDutyTag_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyTagDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_tag" {
 			continue
@@ -90,7 +90,7 @@ func testAccCheckPagerDutyTagExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No Tag ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 		found, _, err := client.Tags.Get(rs.Primary.ID)
 		if err != nil {
 			return err

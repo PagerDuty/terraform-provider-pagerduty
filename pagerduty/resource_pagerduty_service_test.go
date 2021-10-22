@@ -596,7 +596,7 @@ func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.Tes
 			return fmt.Errorf("No Service ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
 		if err != nil {
@@ -614,7 +614,7 @@ func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.Tes
 }
 
 func testAccCheckPagerDutyServiceDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_service" {
 			continue
@@ -639,7 +639,7 @@ func testAccCheckPagerDutyServiceExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No Service ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
 		if err != nil {

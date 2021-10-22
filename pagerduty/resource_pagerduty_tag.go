@@ -49,7 +49,7 @@ func buildTagStruct(d *schema.ResourceData) *pagerduty.Tag {
 }
 
 func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	tag := buildTagStruct(d)
 
@@ -77,7 +77,7 @@ func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty tag %s", d.Id())
 
@@ -96,7 +96,7 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourcePagerDutyTagDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty tag %s", d.Id())
 

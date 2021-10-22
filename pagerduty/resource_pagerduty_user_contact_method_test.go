@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyUserContactMethodEmail_Basic(t *testing.T) {
@@ -92,7 +91,7 @@ func TestAccPagerDutyUserContactMethodSMS_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyUserContactMethodDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_user_contact_method" {
 			continue
@@ -117,7 +116,7 @@ func testAccCheckPagerDutyUserContactMethodExists(n string) resource.TestCheckFu
 			return fmt.Errorf("No user contact method ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Users.GetContactMethod(rs.Primary.Attributes["user_id"], rs.Primary.ID)
 		if err != nil {

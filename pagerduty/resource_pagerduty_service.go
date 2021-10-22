@@ -351,7 +351,7 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 }
 
 func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
@@ -371,7 +371,7 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty service %s", d.Id())
 
@@ -396,7 +396,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
@@ -414,7 +414,7 @@ func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty service %s", d.Id())
 

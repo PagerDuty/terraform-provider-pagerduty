@@ -729,7 +729,7 @@ func flattenActiveBetween(ab *pagerduty.ActiveBetween) []interface{} {
 }
 
 func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	rule := buildRulesetRuleStruct(d)
 
@@ -758,7 +758,7 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
@@ -789,7 +789,7 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	rule := buildRulesetRuleStruct(d)
 
@@ -813,7 +813,7 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
@@ -834,7 +834,7 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	ids := strings.Split(d.Id(), ".")
 

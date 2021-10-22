@@ -102,7 +102,7 @@ func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPo
 }
 
 func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	escalationPolicy := buildEscalationPolicyStruct(d)
 
@@ -119,7 +119,7 @@ func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty escalation policy: %s", d.Id())
 
@@ -149,7 +149,7 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	escalationPolicy := buildEscalationPolicyStruct(d)
 
@@ -170,7 +170,7 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 

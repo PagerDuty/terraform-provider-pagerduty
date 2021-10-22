@@ -24,7 +24,7 @@ func dataSourcePagerDutySchedule() *schema.Resource {
 }
 
 func dataSourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty schedule")
 

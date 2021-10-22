@@ -93,7 +93,7 @@ func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMeth
 	return contactMethod
 }
 func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 
@@ -110,7 +110,7 @@ func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 
@@ -139,7 +139,7 @@ func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	contactMethod := buildUserContactMethodStruct(d)
 
@@ -155,7 +155,7 @@ func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty user contact method %s", d.Id())
 
@@ -171,7 +171,7 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyUserContactMethodImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	ids := strings.Split(d.Id(), ":")
 

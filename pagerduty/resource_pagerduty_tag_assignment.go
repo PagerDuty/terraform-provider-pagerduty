@@ -60,7 +60,7 @@ func buildTagAssignmentStruct(d *schema.ResourceData) *pagerduty.TagAssignment {
 }
 
 func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	assignment := buildTagAssignmentStruct(d)
 	assignments := &pagerduty.TagAssignments{
@@ -94,7 +94,7 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 }
 
 func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	assignment := buildTagAssignmentStruct(d)
 
@@ -124,7 +124,7 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	assignment := buildTagAssignmentStruct(d)
 	assignments := &pagerduty.TagAssignments{
@@ -158,7 +158,7 @@ func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface
 		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_tag_assignment. Expecting an importation ID formed as '<entity_type>.<entity_id>.<tag_id>'")
 	}
 	entityType, entityID, tagID := ids[0], ids[1], ids[2]
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 	// give PagerDuty 2 seconds to save the assignment correctly
 	time.Sleep(2 * time.Second)
 	tagResponse, _, err := client.Tags.ListTagsForEntity(entityType, entityID)

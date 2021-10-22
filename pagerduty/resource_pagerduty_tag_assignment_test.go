@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyTagAssignment_User(t *testing.T) {
@@ -84,7 +83,7 @@ func TestAccPagerDutyTagAssignment_EP(t *testing.T) {
 }
 
 func testAccCheckPagerDutyTagAssignmentDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_tag_assignment" {
 			continue
@@ -122,7 +121,7 @@ func testAccCheckPagerDutyTagAssignmentExists(n, entityType string) resource.Tes
 
 		entityID, tagID := ids[0], ids[1]
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 		response, _, err := client.Tags.ListTagsForEntity(entityType, entityID)
 		if err != nil {
 			return err

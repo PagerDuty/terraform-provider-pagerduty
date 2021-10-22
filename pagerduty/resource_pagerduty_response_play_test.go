@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyResponsePlay_Basic(t *testing.T) {
@@ -49,7 +48,7 @@ func TestAccPagerDutyResponsePlay_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyResponsePlayDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_response_play" {
 			continue
@@ -78,7 +77,7 @@ func testAccCheckPagerDutyResponsePlayExists(n string) resource.TestCheckFunc {
 		u, _ := s.RootModule().Resources["pagerduty_user.foo"]
 		ua := u.Primary.Attributes
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.ResponsePlays.Get(rs.Primary.ID, ua["email"])
 		if err != nil {

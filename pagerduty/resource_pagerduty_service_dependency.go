@@ -112,7 +112,7 @@ func expandService(v interface{}) *pagerduty.ServiceObj {
 	return so
 }
 func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	serviceDependency, err := buildServiceDependencyStruct(d)
 	if err != nil {
@@ -151,7 +151,7 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 }
 
 func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	dependency, err := buildServiceDependencyStruct(d)
 	if err != nil {
@@ -260,7 +260,7 @@ func convertType(s string) string {
 }
 
 func findDependencySetState(depID, serviceID, serviceType string, d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	// Pausing to let the PD API sync.
 	time.Sleep(1 * time.Second)

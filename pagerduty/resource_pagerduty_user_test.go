@@ -152,7 +152,7 @@ func TestAccPagerDutyUserWithTeams_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyUserDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_user" {
 			continue
@@ -176,7 +176,7 @@ func testAccCheckPagerDutyUserExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No user ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Users.Get(rs.Primary.ID, &pagerduty.GetUserOptions{})
 		if err != nil {

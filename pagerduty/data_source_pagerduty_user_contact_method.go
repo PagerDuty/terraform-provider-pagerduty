@@ -59,7 +59,7 @@ func dataSourcePagerDutyUserContactMethod() *schema.Resource {
 }
 
 func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty user's contact method")
 

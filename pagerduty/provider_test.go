@@ -37,6 +37,10 @@ func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("PAGERDUTY_TOKEN"); v == "" {
 		t.Fatal("PAGERDUTY_TOKEN must be set for acceptance tests")
 	}
+
+	if v := os.Getenv("PAGERDUTY_USER_TOKEN"); v == "" {
+		t.Fatal("PAGERDUTY_USER_TOKEN must be set for acceptance tests")
+	}
 }
 
 // timeNowInLoc returns the current time in the given location.
@@ -68,9 +72,13 @@ func testAccPreCheckPagerDutyAbility(t *testing.T, ability string) {
 	if v := os.Getenv("PAGERDUTY_TOKEN"); v == "" {
 		t.Fatal("PAGERDUTY_TOKEN must be set for acceptance tests")
 	}
+	if v := os.Getenv("PAGERDUTY_USER_TOKEN"); v == "" {
+		t.Fatal("PAGERDUTY_USER_TOKEN must be set for acceptance tests")
+	}
 
 	config := &Config{
-		Token: os.Getenv("PAGERDUTY_TOKEN"),
+		Token:     os.Getenv("PAGERDUTY_TOKEN"),
+		TokenUser: os.Getenv("PAGERDUTY_USER_TOKEN"),
 	}
 
 	client, err := config.Client()

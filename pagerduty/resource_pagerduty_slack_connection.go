@@ -12,6 +12,8 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+const AppBaseUrl = "https://app.pagerduty.com"
+
 func resourcePagerDutySlackConnection() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutySlackConnectionCreate,
@@ -173,10 +175,9 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 }
 
 func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interface{}) error {
-	var c Config
 	config := &pagerduty.Config{
 		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: c.AppUrl,
+		BaseURL: AppBaseUrl,
 	}
 	client, err := pagerduty.NewClient(config)
 	if err != nil {
@@ -266,10 +267,9 @@ func flattenConfigList(list []string) interface{} {
 }
 
 func setClientConfig() *pagerduty.Config {
-	var c Config
 	return &pagerduty.Config{
 		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
-		BaseURL: c.AppUrl,
+		BaseURL: AppBaseUrl,
 	}
 }
 

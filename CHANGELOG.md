@@ -1,5 +1,20 @@
-## 2.0.0 (October 11, 2021)
+## 2.1.0 (October 25, 2021)
+
 FEATURES:
+* `pagerduty/provider`: Added support for `service_region` and `user_token` tags on the provider block ([#384](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/384))
+* Added GitHub Actions workflow to run tests ([#406](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/406))
+
+IMPROVEMENTS:
+* Docs: `resource/pagerduty_slack_connection`: Added `notification_type` to sample code ([#408](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/408))
+* `resource/pagerduty_escalation_policy`: Added validation for teams maxitems 1 ([#412](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/412))
+
+BUG FIXES:
+* Docs: `resource/pagerduty_tag`: Corrected sample code ([#409](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/409))
+* Docs: `index`: Removed deprecated `teams` field from sample code ([#411](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/411))
+
+
+## 2.0.0 (October 11, 2021)
+  FEATURES:
 * `resource/pagerduty_tag`: Added resource to manage Tags ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
 
 * `resource/pagerduty_tag_assignment`: Added resource to manage Tag Assignments ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))

@@ -46,5 +46,5 @@ The following arguments are supported:
 * `token` - (Required) The v2 authorization token. It can also be sourced from the PAGERDUTY_TOKEN environment variable. See [API Documentation](https://developer.pagerduty.com/docs/rest-api-v2/authentication/) for more information.
 * `user_token` - (Optional) The v2 user level authorization token. It can also be sourced from the PAGERDUTY_USER_TOKEN environment variable. See [API Documentation](https://developer.pagerduty.com/docs/rest-api-v2/authentication/) for more information.
 * `skip_credentials_validation` - (Optional) Skip validation of the token against the PagerDuty API.
-* `service_region` - (Optional) Which PagerDuty service region to use. Default to empty (use US region)
+* `service_region` - (Optional) The PagerDuty service region to use. Default to empty (use US region). Supported value: `eu`. 
 

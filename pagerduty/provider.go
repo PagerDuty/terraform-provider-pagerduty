@@ -26,7 +26,7 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
 			},
 
-			"token_user": {
+			"user_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_USER_TOKEN", nil),
@@ -127,7 +127,7 @@ func providerConfigure(data *schema.ResourceData, terraformVersion string) (inte
 		AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
-		TokenUser:           data.Get("token_user").(string),
+		UserToken:           data.Get("user_token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
 	}
 

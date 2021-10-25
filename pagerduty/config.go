@@ -21,7 +21,7 @@ type Config struct {
 	Token string
 
 	// The PagerDuty User level token for Slack
-	TokenUser string
+	UserToken string
 
 	// Skip validation of the token against the PagerDuty API
 	SkipCredsValidation bool
@@ -76,7 +76,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 
 func (c *Config) SlackClient() (*pagerduty.Client, error) {
 	// Validate that the user level PagerDuty token is set
-	if c.TokenUser == "" {
+	if c.UserToken == "" {
 		return nil, fmt.Errorf(invalidCreds)
 	}
 
@@ -88,7 +88,7 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 		BaseURL:    c.AppUrl,
 		Debug:      logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
-		Token:      c.TokenUser,
+		Token:      c.UserToken,
 		UserAgent:  c.UserAgent,
 	}
 

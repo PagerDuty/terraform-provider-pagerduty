@@ -78,7 +78,7 @@ func testAccPreCheckPagerDutyAbility(t *testing.T, ability string) {
 
 	config := &Config{
 		Token:     os.Getenv("PAGERDUTY_TOKEN"),
-		TokenUser: os.Getenv("PAGERDUTY_USER_TOKEN"),
+		UserToken: os.Getenv("PAGERDUTY_USER_TOKEN"),
 	}
 
 	client, err := config.Client()

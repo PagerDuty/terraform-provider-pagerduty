@@ -1,6 +1,8 @@
 package pagerduty
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // ServicesService handles the communication with service
 // related methods of the PagerDuty API.
@@ -57,17 +59,66 @@ type IncidentUrgencyRule struct {
 
 // Integration represents a service integration.
 type Integration struct {
-	CreatedAt        string            `json:"created_at,omitempty"`
-	HTMLURL          string            `json:"html_url,omitempty"`
-	ID               string            `json:"id,omitempty"`
-	IntegrationEmail string            `json:"integration_email,omitempty"`
-	IntegrationKey   string            `json:"integration_key,omitempty"`
-	Name             string            `json:"name,omitempty"`
-	Self             string            `json:"self,omitempty"`
-	Service          *ServiceReference `json:"service,omitempty"`
-	Summary          string            `json:"summary,omitempty"`
-	Type             string            `json:"type,omitempty"`
-	Vendor           *VendorReference  `json:"vendor,omitempty"`
+	CreatedAt             string            `json:"created_at,omitempty"`
+	EmailIncidentCreation string            `json:"email_incident_creation,omitempty"`
+	EmailFilterMode       string            `json:"email_filter_mode,omitempty"`
+	EmailParsers          []*EmailParser    `json:"email_parsers,omitempty"`
+	EmailParsingFallback  string            `json:"email_parsing_fallback,omitempty"`
+	EmailFilters          []*EmailFilter    `json:"email_filters,omitempty"`
+	HTMLURL               string            `json:"html_url,omitempty"`
+	ID                    string            `json:"id,omitempty"`
+	Integration           *Integration      `json:"integration,omitempty"`
+	IntegrationEmail      string            `json:"integration_email,omitempty"`
+	IntegrationKey        string            `json:"integration_key,omitempty"`
+	Name                  string            `json:"name,omitempty"`
+	Self                  string            `json:"self,omitempty"`
+	Service               *ServiceReference `json:"service,omitempty"`
+	Summary               string            `json:"summary,omitempty"`
+	Type                  string            `json:"type,omitempty"`
+	Vendor                *VendorReference  `json:"vendor,omitempty"`
+}
+
+// EmailFilter represents a integration email filters
+type EmailFilter struct {
+	BodyMode       string `json:"body_mode,omitempty"`
+	BodyRegex      string `json:"body_regex,omitempty"`
+	FromEmailMode  string `json:"from_email_mode,omitempty"`
+	FromEmailRegex string `json:"from_email_regex,omitempty"`
+	ID             string `json:"id,omitempty"`
+	SubjectMode    string `json:"subject_mode,omitempty"`
+	SubjectRegex   string `json:"subject_regex,omitempty"`
+}
+
+// EmailParser represents a integration email parsers
+type EmailParser struct {
+	Action          string            `json:"action,omitempty"`
+	ID              *int              `json:"id,omitempty"`
+	MatchPredicate  *MatchPredicate   `json:"match_predicate,omitempty"`
+	ValueExtractors []*ValueExtractor `json:"value_extractors,omitempty"`
+}
+
+// MatchPredicate represents a integration email MatchPredicate
+type MatchPredicate struct {
+	Predicates []*Predicate `json:"children,omitempty"`
+	Type       string       `json:"type,omitempty"`
+}
+
+// Predicate represents a integration email Predicate
+type Predicate struct {
+	Matcher    string       `json:"matcher,omitempty"`
+	Part       string       `json:"part,omitempty"`
+	Predicates []*Predicate `json:"children,omitempty"`
+	Type       string       `json:"type,omitempty"`
+}
+
+// ValueExtractor represents a integration email ValueExtractor
+type ValueExtractor struct {
+	ValueName   string `json:"value_name,omitempty"`
+	Part        string `json:"part,omitempty"`
+	StartsAfter string `json:"starts_after,omitempty"`
+	EndsBefore  string `json:"ends_before,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Regex       string `json:"regex,omitempty"`
 }
 
 // Service represents a service.

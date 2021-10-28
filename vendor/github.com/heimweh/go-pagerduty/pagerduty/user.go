@@ -230,8 +230,10 @@ func (s *UserService) Get(id string, o *GetUserOptions) (*User, *Response, error
 	u := fmt.Sprintf("/users/%s", id)
 	v := new(UserPayload)
 
-	if err := cacheGetUser(id, v); err == nil {
-		return v.User, nil, nil
+	cv := new(User)
+	if err := cacheGetUser(id, cv); err == nil {
+		log.Printf("Got user %q from cache", id)
+		return cv, nil, nil
 	}
 
 	resp, err := s.client.newRequestDo("GET", u, o, nil, v)

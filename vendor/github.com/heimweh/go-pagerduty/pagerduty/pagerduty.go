@@ -32,28 +32,29 @@ type Config struct {
 
 // Client manages the communication with the PagerDuty API
 type Client struct {
-	baseURL             *url.URL
-	client              *http.Client
-	Config              *Config
-	Abilities           *AbilityService
-	Addons              *AddonService
-	EscalationPolicies  *EscalationPolicyService
-	Extensions          *ExtensionService
-	MaintenanceWindows  *MaintenanceWindowService
-	Rulesets            *RulesetService
-	Schedules           *ScheduleService
-	Services            *ServicesService
-	Teams               *TeamService
-	ExtensionSchemas    *ExtensionSchemaService
-	Users               *UserService
-	Vendors             *VendorService
-	EventRules          *EventRuleService
-	BusinessServices    *BusinessServiceService
-	ServiceDependencies *ServiceDependencyService
-	Priorities          *PriorityService
-	ResponsePlays       *ResponsePlayService
-	SlackConnections    *SlackConnectionService
-	Tags                *TagService
+	baseURL                    *url.URL
+	client                     *http.Client
+	Config                     *Config
+	Abilities                  *AbilityService
+	Addons                     *AddonService
+	EscalationPolicies         *EscalationPolicyService
+	Extensions                 *ExtensionService
+	MaintenanceWindows         *MaintenanceWindowService
+	Rulesets                   *RulesetService
+	Schedules                  *ScheduleService
+	Services                   *ServicesService
+	Teams                      *TeamService
+	ExtensionSchemas           *ExtensionSchemaService
+	Users                      *UserService
+	Vendors                    *VendorService
+	EventRules                 *EventRuleService
+	BusinessServices           *BusinessServiceService
+	ServiceDependencies        *ServiceDependencyService
+	Priorities                 *PriorityService
+	ResponsePlays              *ResponsePlayService
+	SlackConnections           *SlackConnectionService
+	Tags                       *TagService
+	BusinessServiceSubscribers *BusinessServiceSubscriberService
 }
 
 // Response is a wrapper around http.Response
@@ -111,6 +112,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.ResponsePlays = &ResponsePlayService{c}
 	c.SlackConnections = &SlackConnectionService{c}
 	c.Tags = &TagService{c}
+	c.BusinessServiceSubscribers = &BusinessServiceSubscriberService{c}
 
 	InitCache(c)
 	PopulateCache()

@@ -1,3 +1,11 @@
+## 2.1.1 (October 29, 2021)
+BUG FIXES:
+* `resource/pagerduty_user`: Fixed caching ([#413](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/413))
+
+IMPROVEMENTS:
+* `resource/pagerduty_extension`: Added plumbing to enable paging in a future release  ([#413](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/413))
+* `resource/pagerduty_service`: Added plumbing to enable email filtering in a future release  ([#413](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/413))
+
 ## 2.1.0 (October 25, 2021)
 
 FEATURES:

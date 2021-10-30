@@ -26,6 +26,9 @@ type ListExtensionsOptions struct {
 	Query             string   `url:"query,omitempty"`
 	ExtensionSchemaID string   `url:"extension_schema_id,omitempty"`
 	Include           []string `url:"include,omitempty,brackets"`
+	Limit             int      `url:"limit,omitempty"`
+	Offset            int      `url:"offset,omitemtpy"`
+	Total             bool     `url:"total,omitempty"`
 }
 
 // ListExtensionsResponse represents a list response of extensions.

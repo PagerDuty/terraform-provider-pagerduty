@@ -45,9 +45,9 @@ resource "pagerduty_service" "example" {
 }
 
 resource "pagerduty_service_integration" "example" {
-  name            = "Datadog Integration"
-  vendor          = data.pagerduty_vendor.datadog.id
-  service         = pagerduty_service.example.id
+  name    = "Datadog Integration"
+  vendor  = data.pagerduty_vendor.datadog.id
+  service = pagerduty_service.example.id
 }
 ```
 

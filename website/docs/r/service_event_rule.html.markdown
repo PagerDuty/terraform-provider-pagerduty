@@ -14,11 +14,11 @@ A [service event rule](https://support.pagerduty.com/docs/rulesets#service-event
 
 ```hcl
 resource "pagerduty_service" "example" {
-	name                    = "Checkout API Service"
-	auto_resolve_timeout    = 14400
-	acknowledgement_timeout = 600
-	escalation_policy       = pagerduty_escalation_policy.example.id
-	alert_creation          = "create_alerts_and_incidents"
+  name                    = "Checkout API Service"
+  auto_resolve_timeout    = 14400
+  acknowledgement_timeout = 600
+  escalation_policy       = pagerduty_escalation_policy.example.id
+  alert_creation          = "create_alerts_and_incidents"
 }
 
 resource "pagerduty_service_event_rule" "foo" {
@@ -109,7 +109,7 @@ The following arguments are supported:
 ### Conditions (`conditions`) supports the following:
 
 * `operator` - Operator to combine sub-conditions. Can be `and` or `or`.
-* `subconditions` - List of sub-conditions that define the the condition. 
+* `subconditions` - List of sub-conditions that define the condition.
 
 ### Sub-Conditions (`subconditions`) supports the following:
 

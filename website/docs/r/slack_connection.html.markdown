@@ -64,6 +64,7 @@ The following arguments are supported:
   * `notification_type` - (Required) Type of notification. Either `responder` or `stakeholder`.
 
 ### Connection Config (`config`) Supports the following:
+
   * `events` - (Required) A list of strings to filter events by PagerDuty event type. `"incident.triggered"` is required. The follow event types are also possible:
     - `incident.acknowledged`
     - `incident.escalated`

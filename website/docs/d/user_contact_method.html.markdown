@@ -44,6 +44,7 @@ The following arguments are supported:
   * `label` - (Required) The label (e.g., "Work", "Mobile", "Ashley's iPhone", etc.).
 
 ## Attributes Reference
+
   * `id` - The ID of the found user.
   * `type` - The type of the found contact method. May be (`email_contact_method`, `phone_contact_method`, `sms_contact_method`, `push_notification_contact_method`).
   * `send_short_email` - Send an abbreviated email message instead of the standard email output. (Email contact method only.)

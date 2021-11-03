@@ -94,14 +94,17 @@ The following arguments are supported:
 * `variable` - (Optional) Populate variables from event payloads and use those variables in other event actions. *NOTE: A rule can have multiple `variable` objects.*
 
 ### Conditions (`conditions`) supports the following:
+
 * `operator` - Operator to combine sub-conditions. Can be `and` or `or`.
 * `subconditions` - List of sub-conditions that define the the condition. 
 
 ### Sub-Conditions (`subconditions`) supports the following:
+
 * `operator` - Type of operator to apply to the sub-condition. Can be `exists`,`nexists`,`equals`,`nequals`,`contains`,`ncontains`,`matches`, or `nmatches`.
 * `parameter` - Parameter for the sub-condition. It requires both a `path` and `value` to be set. The `path` value must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field. 
 
 ### Action (`actions`) supports the following:
+
 * `priority` (Optional) - The ID of the priority applied to the event.
 * `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
@@ -126,6 +129,7 @@ The following arguments are supported:
 * `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering.
 
 ### Variable ('variable') supports the following:
+
 * `name` (Optional) - The name of the variable.
 * `type` (Optional) - Type of operation to populate the variable. Usually `regex`.
 * `parameters` (Optional) - The parameters for performing the operation to populate the variable.
@@ -133,6 +137,7 @@ The following arguments are supported:
 	* `path` - Path to a field in an event, in dot-notation. For Event Rules on a Service, this will have to be a [PD-CEF field](https://support.pagerduty.com/docs/pd-cef).
 
 ### Time Frame (`time_frame`) supports the following:
+
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.
 	* `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.
 	* `timezone` - Timezone for the given schedule.

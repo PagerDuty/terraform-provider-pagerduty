@@ -41,6 +41,7 @@ The following arguments are supported:
 * `name` - (Required) The name to use to find a schedule in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found schedule.
 * `name` - The short name of the found schedule.
 

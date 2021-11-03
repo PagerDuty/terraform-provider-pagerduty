@@ -59,6 +59,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the priority to find in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found priority.
 * `name` - The name of the found priority.
 * `description` - A description of the found priority.

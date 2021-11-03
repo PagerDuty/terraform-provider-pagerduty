@@ -106,6 +106,7 @@ The following arguments are supported:
   * `integration_email` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.
 
     **Note:** You can use the `pagerduty_vendor` data source to locate the appropriate vendor ID.
+
 ## Attributes Reference
 
 The following attributes are exported:

@@ -35,6 +35,7 @@ The following arguments are supported:
 * `label` - (Required) The label of the tag to find in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found team.
 
 [1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIxNw-list-tags

@@ -8,9 +8,9 @@ description: |-
 
 # pagerduty\_slack\_connection
 
-A [slack connection](https://developer.pagerduty.com/api-reference/reference/integration-slack-service/openapiv3.json) allows you to connect a workspace in Slack to a PagerDuty service or team which allows you to acknowledge and resolve PagerDuty incidents from the Slack user interface. 
+A [slack connection](https://developer.pagerduty.com/api-reference/reference/integration-slack-service/openapiv3.json) allows you to connect a workspace in Slack to a PagerDuty service or team which allows you to acknowledge and resolve PagerDuty incidents from the Slack user interface.
 
-**NOTES for using this resource:** 
+**NOTES for using this resource:**
 * To first use this resource you will need to [map your PagerDuty account to a valid Slack Workspace](https://support.pagerduty.com/docs/slack-integration-guide#integration-walkthrough). *This can only be done through the PagerDuty UI.*
 * This resource requires a PagerDuty [user-level API key](https://support.pagerduty.com/docs/generating-api-keys#section-generating-a-personal-rest-api-key). This can be set as the `user_token` on the provider tag or as the `PAGERDUTY_USER_TOKEN` environment variable.
 ## Example Usage
@@ -58,7 +58,7 @@ The following arguments are supported:
 
   * `source_id` - (Required) The ID of the source in PagerDuty. Valid sources are services or teams.
   * `source_type` - (Required) The type of the source. Either `team_reference` or `service_reference`.
-  * `workspace_id` - (Required) The ID of the connected Slack workspace. Can also be defined by the `SLACK_CONNECTION_WORKSPACE_ID` environment variable. 
+  * `workspace_id` - (Required) The ID of the connected Slack workspace. Can also be defined by the `SLACK_CONNECTION_WORKSPACE_ID` environment variable.
   * `channel_id` - (Required) The ID of a Slack channel in the workspace.
   * `config` - (Required) Configuration options for the Slack connection that provide options to filter events.
   * `notification_type` - (Required) Type of notification. Either `responder` or `stakeholder`.
@@ -86,11 +86,12 @@ The following attributes are exported:
 
   * `id` - The ID of the slack connection.
   * `source_name`- Name of the source (team or service) in Slack connection.
-  * `channel_name`- Name of the Slack channel in Slack connection
+  * `channel_name`- Name of the Slack channel in Slack connection.
 
 ## Import
 
-Slack connections can be imported using using the related `workspace` ID and the `slack_connection` ID separated by a dot, e.g.
+Slack connections can be imported using the related `workspace` ID and the `slack_connection` ID separated by a dot, e.g.
+
 ```
 $ terraform import pagerduty_slack_connection.main T02A123LV1A.PUABCDL
 ```

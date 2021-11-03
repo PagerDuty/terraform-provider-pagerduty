@@ -21,7 +21,7 @@ data "pagerduty_tag" "devops" {
   label = "devops"
 }
 
-resource "pagerduty_tag_assingment" "foo" {
+resource "pagerduty_tag_assignment" "foo" {
   tag_id      = data.pagerduty_tag.devops.id
   entity_id   = data.pagerduty_user.me.id
   entity_type = "users"

@@ -102,7 +102,7 @@ resource "pagerduty_ruleset_rule" "foo" {
 The following arguments are supported:
 
 * `ruleset` - (Required) The ID of the ruleset that the rule belongs to.
-* `conditions` - (Required) Conditions evaluated to check if an event matches this event rule. Is always empty for the catch all rule, though.
+* `conditions` - (Required) Conditions evaluated to check if an event matches this event rule. Is always empty for the catch-all rule, though.
 * `position` - (Optional) Position/index of the rule within the ruleset.
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
 * `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules).
@@ -111,7 +111,7 @@ The following arguments are supported:
 
 ### Conditions (`conditions`) supports the following:
 * `operator` - Operator to combine sub-conditions. Can be `and` or `or`.
-* `subconditions` - List of sub-conditions that define the the condition.
+* `subconditions` - List of sub-conditions that define the condition.
 
 ### Sub-Conditions (`subconditions`) supports the following:
 * `operator` - Type of operator to apply to the sub-condition. Can be `exists`,`nexists`,`equals`,`nequals`,`contains`,`ncontains`,`matches`, or `nmatches`.
@@ -146,11 +146,9 @@ The following arguments are supported:
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.
   * `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.
   * `timezone` - [The name of the timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for the given schedule, which will be used to determine UTC offset including adjustment for daylight saving time. For example: `timezone = "America/Toronto"`
-  * `start_time` - A Unix timestamp in milliseconds which is combined with the `timezone` to determine the time this rule will start on each specified `weekday`. Note that the _date_ of the timestamp you specify does **not** matter, except that it lets you determine whether or not daylight saving time is in effect so that you use the correct UTC offset for the timezone you specify. In practice, you may want to use [the `time_static` resource](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/static) to generate this value, as demonstrated in the `resource.pagerduty_ruleset_rule.foo` code example at the top of this page. To generate this timestamp manually, if you want your rule to apply starting at 9:30am in the `America/New_York` timezone, use your programing language of choice to determine a Unix timestamp that represents 9:30am in that timezone, like [1554989400000](https://www.epochconverter.com/timezones?q=1554989400000&tz=America%2FNew_York).
+  * `start_time` - A Unix timestamp in milliseconds which is combined with the `timezone` to determine the time this rule will start on each specified `weekday`. Note that the _date_ of the timestamp you specify does **not** matter, except that it lets you determine whether daylight saving time is in effect so that you use the correct UTC offset for the timezone you specify. In practice, you may want to use [the `time_static` resource](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/static) to generate this value, as demonstrated in the `resource.pagerduty_ruleset_rule.foo` code example at the top of this page. To generate this timestamp manually, if you want your rule to apply starting at 9:30am in the `America/New_York` timezone, use your programing language of choice to determine a Unix timestamp that represents 9:30am in that timezone, like [1554989400000](https://www.epochconverter.com/timezones?q=1554989400000&tz=America%2FNew_York).
   * `duration` - Length of time the schedule will be active in milliseconds. For example `duration = 2 * 60 * 60 * 1000` if you want your rule to apply for 2 hours, from the specified `start_time`.
 * `active_between` (Optional) - Values for executing the rule during a specific time period.
-  * `start_time` - Beginning of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
-  * `end_time` - Ending of the scheduled time when the rule should execute.  Unix timestamp in milliseconds.
 
 ## Attributes Reference
 
@@ -161,7 +159,7 @@ The following attributes are exported:
 
 ## Import
 
-Ruleset rules can be imported using using the related `ruleset` ID and the `ruleset_rule` ID separated by a dot, e.g.
+Ruleset rules can be imported using the related `ruleset` ID and the `ruleset_rule` ID separated by a dot, e.g.
 
 ```
 $ terraform import pagerduty_ruleset_rule.main a19cdca1-3d5e-4b52-bfea-8c8de04da243.19acac92-027a-4ea0-b06c-bbf516519601

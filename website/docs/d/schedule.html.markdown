@@ -5,7 +5,7 @@ sidebar_current: "docs-pagerduty-datasource-schedule"
 description: |-
   Provides information about a Schedule.
 
-  This data source can be helpful when a schedule is handled outside Terraform but you still want to reference it in other resources.
+  This data source can be helpful when a schedule is handled outside Terraform, but you still want to reference it in other resources.
 ---
 
 # pagerduty\_schedule

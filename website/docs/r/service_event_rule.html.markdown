@@ -102,7 +102,7 @@ The following arguments are supported:
 * `conditions` - (Required) Conditions evaluated to check if an event matches this event rule.
 * `position` - (Optional) Position/index of the rule within the service.
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
-* `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules). 
+* `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules).
 * `actions` - (Optional) Actions to apply to an event if the conditions match.
 * `variable` - (Optional) Populate variables from event payloads and use those variables in other event actions. *NOTE: A rule can have multiple `variable` objects.*
 
@@ -114,7 +114,7 @@ The following arguments are supported:
 ### Sub-Conditions (`subconditions`) supports the following:
 
 * `operator` - Type of operator to apply to the sub-condition. Can be `exists`,`nexists`,`equals`,`nequals`,`contains`,`ncontains`,`matches`, or `nmatches`.
-* `parameter` - Parameter for the sub-condition. It requires both a `path` and `value` to be set. The `path` value must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field. 
+* `parameter` - Parameter for the sub-condition. It requires both a `path` and `value` to be set. The `path` value must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 
 ### Action (`actions`) supports the following:
 

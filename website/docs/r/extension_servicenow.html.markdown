@@ -67,7 +67,7 @@ The following arguments are supported:
   * `snow_password` - (Required) The ServiceNow password.
   * `summary`- A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to `name`, though it is not intended to be an identifier.
   * `sync_options` - (Required) The ServiceNow sync option.
-  * `target` - (Required) Target Webhook URL
+  * `target` - (Required) Target Webhook URL.
   * `task_type` - (Required) The ServiceNow task type, typically `incident`.
   * `referer` - (Required) The ServiceNow referer.
 
@@ -76,7 +76,7 @@ The following arguments are supported:
 The following attributes are exported:
 
   * `id` - The ID of the extension.
-  * `html_url` - URL at which the entity is uniquely displayed in the Web app
+  * `html_url` - URL at which the entity is uniquely displayed in the Web app.
 
 ## Import
 

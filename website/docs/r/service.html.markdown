@@ -61,7 +61,7 @@ The following arguments are supported:
 The `alert_grouping_parameters` block contains the following arguments:
 
 * `type` (Optional) - The type of alert grouping; one of `intelligent`, `time` or `content_based`.
-* `config` (Optional) - Alert grouping parameters dependant on `type`. If `type` is set to `intelligent` or empty then `config` can be empty.
+* `config` (Optional) - Alert grouping parameters dependent on `type`. If `type` is set to `intelligent` or empty then `config` can be empty.
     * `timeout` - (Optional) The duration in minutes within which to automatically group incoming alerts. This setting applies only when `type` is set to `time`. To continue grouping alerts until the incident is resolved, set this value to `0`.
     * `aggregate` - (Optional) One of `any` or `all`. This setting applies only when `type` is set to `content_based`. Group alerts based on one or all of `fields` value(s).
     * `fields` - (Optional) Alerts will be grouped together if the content of these fields match. This setting applies only when `type` is set to `content_based`.
@@ -74,7 +74,7 @@ The block contains the following arguments:
   * `type` - The type of incident urgency: `constant` or `use_support_hours` (when depending on specific support hours; see `support_hours`).
   * `urgency` - The urgency: `low` Notify responders (does not escalate), `high` (follows escalation rules) or `severity_based` Set's the urgency of the incident based on the severity set by the triggering monitoring tool.
   * `during_support_hours` - (Optional) Incidents' urgency during support hours.
-  * `outside_support_hours` - (Optional) Incidents' urgency outside of support hours.
+  * `outside_support_hours` - (Optional) Incidents' urgency outside support hours.
 
 When using `type = "use_support_hours"` in `incident_urgency_rule` you must specify exactly one (otherwise optional) `support_hours` block.
 Your PagerDuty account must have the `service_support_hours` ability to assign support hours.

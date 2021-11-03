@@ -20,7 +20,7 @@ resource "pagerduty_team" "foo" {
 
 resource "pagerduty_ruleset" "foo" {
 	name = "Primary Ruleset"
-	team { 
+	team {
 		id = pagerduty_team.foo.id
 	}
 }

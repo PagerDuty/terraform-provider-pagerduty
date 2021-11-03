@@ -43,17 +43,16 @@ resource "pagerduty_service" "example" {
   escalation_policy       = pagerduty_escalation_policy.example.id
 }
 
-
-resource "pagerduty_extension_servicenow" "snow"{
-  name = "My Web App Extension"
-  extension_schema = data.pagerduty_extension_schema.webhook.id
+resource "pagerduty_extension_servicenow" "snow" {
+  name              = "My Web App Extension"
+  extension_schema  = data.pagerduty_extension_schema.webhook.id
   extension_objects = [pagerduty_service.example.id]
-  snow_user = "meeps"
-  snow_password = "zorz"
-  sync_options = "manual_sync"
-  target = "https://foo.servicenow.com/webhook_foo"
-  task_type = "incident"
-  referer = "None"
+  snow_user         = "meeps"
+  snow_password     = "zorz"
+  sync_options      = "manual_sync"
+  target            = "https://foo.servicenow.com/webhook_foo"
+  task_type         = "incident"
+  referer           = "None"
 }
 ```
 

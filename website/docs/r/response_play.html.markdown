@@ -42,10 +42,12 @@ resource "pagerduty_response_play" "example" {
     type = "escalation_policy_reference"
     id   = pagerduty_escalation_policy.example.id
   }
+
   subscriber {
     type = "user_reference"
     id   = pagerduty_user.example.id
   }
+
   runnability = "services"
 }
 ```

@@ -44,7 +44,7 @@ resource "pagerduty_slack_connection" "foo" {
       "incident.responder.added",
       "incident.responder.replied",
       "incident.status_update_published",
-      "incident.reopened"		  
+      "incident.reopened"
     ]
     priorities = [data.pagerduty_priority.p1.id]
 
@@ -77,7 +77,7 @@ The following arguments are supported:
     - `incident.responder.added`
     - `incident.responder.replied`
     - `incident.status_update_published`
-    - `incident.reopened`		  
+    - `incident.reopened`
   * `priorities` - (Optional) Allows you to filter events by priority. Needs to be an array of PagerDuty priority IDs. Available through [pagerduty_priority](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) data source.
   * `urgency` - (Optional) Allows you to filter events by urgency. Either `high` or `low`.
 

@@ -22,62 +22,75 @@ resource "pagerduty_service" "example" {
 }
 
 resource "pagerduty_service_event_rule" "foo" {
-	service = pagerduty_service.example.id
-	position = 0
-	disabled = true
-	conditions {
-		operator = "and"
-		subconditions {
-			operator = "contains"
-			parameter {
-				value = "disk space"
-				path = "summary"
-			}
-		}
-	}
-	variable {
-		type = "regex"
-		name = "Src"
-		parameters {
-			value = "(.*)"
-			path = "source"
-		}
-	}
-	actions {
-		annotate {
-			value = "From Terraform"
-		}
-		extractions {
-			target = "dedup_key"
-			source = "source"
-			regex = "(.*)"
-		}
-		extractions {
-			target = "summary"
-			template = "Warning: Disk Space Low on {{Src}}"
-		}
-	}
+  service  = pagerduty_service.example.id
+  position = 0
+  disabled = true
+
+  conditions {
+    operator = "and"
+
+    subconditions {
+      operator = "contains"
+
+      parameter {
+        value = "disk space"
+        path  = "summary"
+      }
+    }
+  }
+
+  variable {
+    type = "regex"
+    name = "Src"
+
+    parameters {
+      value = "(.*)"
+      path  = "source"
+    }
+  }
+
+  actions {
+
+    annotate {
+      value = "From Terraform"
+    }
+
+    extractions {
+      target = "dedup_key"
+      source = "source"
+      regex  = "(.*)"
+    }
+
+    extractions {
+      target   = "summary"
+      template = "Warning: Disk Space Low on {{Src}}"
+    }
+  }
 }
 
 resource "pagerduty_service_event_rule" "bar" {
-	service = pagerduty_service.foo.id
-	position = 1
-	disabled = true
-	conditions {
-		operator = "and"
-		subconditions {
-			operator = "contains"
-			parameter {
-				value = "cpu spike"
-				path = "summary"
-			}
-		}
-	}
-	actions {
-		annotate {
-			value = "From Terraform"
-		}
-	}
+  service  = pagerduty_service.foo.id
+  position = 1
+  disabled = true
+
+  conditions {
+    operator = "and"
+
+    subconditions {
+      operator = "contains"
+
+      parameter {
+        value = "cpu spike"
+        path  = "summary"
+      }
+    }
+  }
+
+  actions {
+    annotate {
+      value = "From Terraform"
+    }
+  }
 }
 ```
 

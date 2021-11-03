@@ -126,8 +126,8 @@ The following arguments are supported:
 	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 	* `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
 
-	*- **OR** -*  
-	
+	*- **OR** -*
+
 	* `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
 	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 
@@ -137,7 +137,7 @@ The following arguments are supported:
 	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
 	* `threshold_value` - The number of alerts that should be suppressed.
 	* `threshold_time_amount` - The number value of the `threshold_time_unit` before an incident is created.
-	* `threshold_time_unit` - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured. 
+	* `threshold_time_unit` - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured.
 * `event_action` (Optional) - An object with a single `value` field. The value sets whether the resulting alert status is `trigger` or `resolve`.
 * `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering.
 

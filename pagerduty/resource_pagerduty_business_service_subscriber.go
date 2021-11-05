@@ -1,7 +1,9 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -15,7 +17,7 @@ func resourcePagerDutyBusinessServiceSubscriber() *schema.Resource {
 		Read:   resourcePagerDutyBusinessServiceSubscriberRead,
 		Delete: resourcePagerDutyBusinessServiceSubscriberDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourcePagerDutyBusinessServiceSubscriberImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"subscriber_id": {
@@ -65,7 +67,9 @@ func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, me
 		if _, err = client.BusinessServiceSubscribers.Create(businessServiceId, businessServiceSubscriber); err != nil {
 			return resource.RetryableError(err)
 		} else if businessServiceSubscriber != nil {
-			d.SetId(businessServiceSubscriber.ID)
+			// create subscriber assignment it as PagerDuty API does not return one
+			assignmentID := createSubscriberID(businessServiceId, businessServiceSubscriber.Type, businessServiceSubscriber.ID)
+			d.SetId(assignmentID)
 		}
 		return nil
 	})
@@ -123,4 +127,36 @@ func resourcePagerDutyBusinessServiceSubscriberDelete(d *schema.ResourceData, me
 	d.SetId("")
 
 	return nil
+}
+
+func createSubscriberID(businessServiceId string, subscriberType string, subscriberID string) string {
+	return fmt.Sprintf("%v.%v.%v", businessServiceId, subscriberType, subscriberID)
+}
+
+func resourcePagerDutyBusinessServiceSubscriberImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	ids := strings.Split(d.Id(), ".")
+	client, _ := meta.(*Config).Client()
+
+	if len(ids) != 3 {
+		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_business_service_subscriber. Expecting an importation ID formed as '<business_service_id>.<subscriber_type>.<subscriber_id>'")
+	}
+
+	businessServiceId, businessServiceSubscriberType, businessServiceSubscriberID := ids[0], ids[1], ids[2]
+	subscriberResponse, _, err := client.BusinessServiceSubscribers.List(businessServiceId)
+	if subscriberResponse != nil {
+		// loop subscribers and find matching ID
+		for _, subscriber := range subscriberResponse.BusinessServiceSubscribers {
+			if subscriber.ID == businessServiceSubscriberID && subscriber.Type == businessServiceSubscriberType {
+				// create subscriber assignment it as PagerDuty API does not return one
+				assignmentID := createSubscriberID(businessServiceId, businessServiceSubscriberType, businessServiceSubscriberID)
+				d.SetId(assignmentID)
+				d.Set("business_service_id", businessServiceId)
+				d.Set("subscriber_type", businessServiceSubscriberType)
+				d.Set("subscriber_id", businessServiceSubscriberID)
+				break
+			}
+		}
+	}
+
+	return []*schema.ResourceData{d}, err
 }

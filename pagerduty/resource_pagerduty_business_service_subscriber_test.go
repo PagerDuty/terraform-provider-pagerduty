@@ -24,12 +24,9 @@ func TestAccPagerDutyBusinessServiceSubscriber_User(t *testing.T) {
 				Config: testAccCheckPagerDutyBusinessServiceSubscriberConfig(businessServiceName, username, email),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo", "pagerduty_business_service.foo", "user"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_business_service.foo", "name", businessServiceName),
-					resource.TestCheckResourceAttr(
-						"pagerduty_user.foo", "name", username),
-					resource.TestCheckResourceAttr(
-						"pagerduty_user.foo", "email", email),
+					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
+					resource.TestCheckResourceAttr("pagerduty_user.foo", "name", username),
+					resource.TestCheckResourceAttr("pagerduty_user.foo", "email", email),
 				),
 			},
 		},
@@ -48,10 +45,35 @@ func TestAccPagerDutyBusinessServiceSubscriber_Team(t *testing.T) {
 				Config: testAccCheckPagerDutyBusinessServiceSubscriberTeamConfig(businessServiceName, team),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo", "pagerduty_business_service.foo", "team"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_business_service.foo", "name", businessServiceName),
-					resource.TestCheckResourceAttr(
-						"pagerduty_team.foo", "name", team),
+					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
+					resource.TestCheckResourceAttr("pagerduty_team.foo", "name", team),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyBusinessServiceSubscriber_TeamUser(t *testing.T) {
+	businessServiceName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyBusinessServiceSubscriberDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyBusinessServiceSubscriberTeamUserConfig(businessServiceName, team, username, email),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo", "pagerduty_business_service.foo", "team"),
+					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.bar", "pagerduty_business_service.foo", "user"),
+					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
+					resource.TestCheckResourceAttr("pagerduty_team.foo", "name", team),
+					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
+					resource.TestCheckResourceAttr("pagerduty_user.bar", "name", username),
+					resource.TestCheckResourceAttr("pagerduty_user.bar", "email", email),
 				),
 			},
 		},
@@ -86,6 +108,9 @@ func testAccCheckPagerDutyBusinessServiceSubscriberDestroy(s *terraform.State) e
 func testAccCheckPagerDutyBusinessServiceSubscriberExists(n, b, subscriberType string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
 		bs, ok := s.RootModule().Resources[b]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -114,13 +139,13 @@ func testAccCheckPagerDutyBusinessServiceSubscriberExists(n, b, subscriberType s
 			}
 		}
 		if !isFound {
-			return fmt.Errorf("Subscriber %s type %s still exists and is connected to ID %s", subscriberId, subscriberType, businessServiceID)
+			return fmt.Errorf("Business Service %s subscriber not found: %s - %s", businessServiceID, subscriberId, subscriberType)
 		}
 		return nil
 	}
 }
 
-func testAccCheckPagerDutyBusinessServiceSubscriberConfig(businessServiceName, username, email string) string {
+func testAccCheckPagerDutyBusinessServiceSubscriberConfig(businessServiceName string, username string, email string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_business_service" "foo" {
 	name = "%s"
@@ -137,7 +162,7 @@ resource "pagerduty_business_service_subscriber" "foo" {
 `, businessServiceName, username, email)
 }
 
-func testAccCheckPagerDutyBusinessServiceSubscriberTeamConfig(businessServiceName, team string) string {
+func testAccCheckPagerDutyBusinessServiceSubscriberTeamConfig(businessServiceName string, team string) string {
 	return fmt.Sprintf(`
 	resource "pagerduty_business_service" "foo" {
 		name = "%s"
@@ -151,4 +176,29 @@ func testAccCheckPagerDutyBusinessServiceSubscriberTeamConfig(businessServiceNam
 		business_service_id = pagerduty_business_service.foo.id
 	}
 `, businessServiceName, team)
+}
+
+func testAccCheckPagerDutyBusinessServiceSubscriberTeamUserConfig(businessServiceName string, team string, username string, email string) string {
+	return fmt.Sprintf(`
+	resource "pagerduty_business_service" "foo" {
+		name = "%s"
+	}
+	resource "pagerduty_team" "foo" {
+		name = "%s"
+	}
+	resource "pagerduty_user" "bar" {
+		name = "%s"
+		email = "%s"
+	}
+	resource "pagerduty_business_service_subscriber" "foo" {
+		subscriber_type = "team"
+		subscriber_id = pagerduty_team.foo.id
+		business_service_id = pagerduty_business_service.foo.id
+	}
+	resource "pagerduty_business_service_subscriber" "bar" {
+		subscriber_type = "user"
+		subscriber_id = pagerduty_user.bar.id
+		business_service_id = pagerduty_business_service.foo.id
+	}
+`, businessServiceName, team, username, email)
 }

@@ -23,7 +23,7 @@ func TestAccPagerDutyBusinessServiceSubscriber_User(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyBusinessServiceSubscriberConfig(businessServiceName, username, email),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo", "pagerduty_business_service.foo", "user"),
+					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo"),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
 					resource.TestCheckResourceAttr("pagerduty_user.foo", "name", username),
 					resource.TestCheckResourceAttr("pagerduty_user.foo", "email", email),
@@ -44,7 +44,7 @@ func TestAccPagerDutyBusinessServiceSubscriber_Team(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyBusinessServiceSubscriberTeamConfig(businessServiceName, team),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo", "pagerduty_business_service.foo", "team"),
+					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo"),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
 					resource.TestCheckResourceAttr("pagerduty_team.foo", "name", team),
 				),
@@ -67,8 +67,8 @@ func TestAccPagerDutyBusinessServiceSubscriber_TeamUser(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyBusinessServiceSubscriberTeamUserConfig(businessServiceName, team, username, email),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo", "pagerduty_business_service.foo", "team"),
-					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.bar", "pagerduty_business_service.foo", "user"),
+					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.foo"),
+					testAccCheckPagerDutyBusinessServiceSubscriberExists("pagerduty_business_service_subscriber.bar"),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
 					resource.TestCheckResourceAttr("pagerduty_team.foo", "name", team),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", businessServiceName),
@@ -105,28 +105,21 @@ func testAccCheckPagerDutyBusinessServiceSubscriberDestroy(s *terraform.State) e
 	return nil
 }
 
-func testAccCheckPagerDutyBusinessServiceSubscriberExists(n, b, subscriberType string) resource.TestCheckFunc {
+func testAccCheckPagerDutyBusinessServiceSubscriberExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-		bs, ok := s.RootModule().Resources[b]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No Business Service Subscriber ID is set")
 		}
-		if bs.Primary.ID == "" {
-			return fmt.Errorf("No Business Service ID is set")
-		}
+		ids := strings.Split(rs.Primary.ID, ".")
 
-		subscriberId := rs.Primary.ID
-		businessServiceID := bs.Primary.ID
+		businessServiceId, subscriberType, subscriberId := ids[0], ids[1], ids[2]
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		response, _, err := client.BusinessServiceSubscribers.List(businessServiceID)
+		response, _, err := client.BusinessServiceSubscribers.List(businessServiceId)
 		if err != nil {
 			return err
 		}
@@ -139,7 +132,7 @@ func testAccCheckPagerDutyBusinessServiceSubscriberExists(n, b, subscriberType s
 			}
 		}
 		if !isFound {
-			return fmt.Errorf("Business Service %s subscriber not found: %s - %s", businessServiceID, subscriberId, subscriberType)
+			return fmt.Errorf("Business Service %s subscriber not found: %s - %s", businessServiceId, subscriberId, subscriberType)
 		}
 		return nil
 	}

@@ -21,31 +21,36 @@ resource "pagerduty_ruleset" "foo" {
   name = "Primary Ruleset"
 }
 resource "pagerduty_ruleset_rule" "foo" {
-  ruleset = pagerduty_ruleset.foo.id
+  ruleset  = pagerduty_ruleset.foo.id
   position = 0
   disabled = "false"
+
   conditions {
     operator = "and"
-	subconditions {
-	  operator = "contains"
-	  parameter {
-	    value = "disk space"
-		path = "payload.summary"
-	  }
-	}
-	subconditions {
-	  operator = "contains"
-	  parameter {
-	    value = "db"
-	    path = "payload.source"
-	  }
-	}
+
+    subconditions {
+      operator = "contains"
+      parameter {
+        value = "disk space"
+        path  = "payload.summary"
+      }
+    }
+
+    subconditions {
+      operator = "contains"
+      parameter {
+        value = "db"
+        path  = "payload.source"
+      }
+    }
   }
+
   actions {
     route {
-	  value = "P5DTL0K"
-	}
-	priority {
+      value = "P5DTL0K"
+    }
+
+    priority {
       value = data.pagerduty_priority.p1.id
     }
   }
@@ -59,6 +64,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the priority to find in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found priority.
 * `name` - The name of the found priority.
 * `description` - A description of the found priority.

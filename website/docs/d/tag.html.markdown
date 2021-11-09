@@ -21,7 +21,7 @@ data "pagerduty_tag" "devops" {
   label = "devops"
 }
 
-resource "pagerduty_tag_assingment" "foo" {
+resource "pagerduty_tag_assignment" "foo" {
   tag_id      = data.pagerduty_tag.devops.id
   entity_id   = data.pagerduty_user.me.id
   entity_type = "users"
@@ -35,6 +35,7 @@ The following arguments are supported:
 * `label` - (Required) The label of the tag to find in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found team.
 
 [1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIxNw-list-tags

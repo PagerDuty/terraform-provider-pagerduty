@@ -99,13 +99,14 @@ The following arguments are supported:
   `pingdom_inbound_integration`or `sql_monitor_inbound_integration`.
 
     **Note:** This is meant for **generic** service integrations.
-    To integrate with a **vendor** (e.g Datadog or Amazon Cloudwatch) use the `vendor` field instead.
+    To integrate with a **vendor** (e.g. Datadog or Amazon Cloudwatch) use the `vendor` field instead.
 
-  * `vendor` - (Optional) The ID of the vendor the integration should integrate with (e.g Datadog or Amazon Cloudwatch).
+  * `vendor` - (Optional) The ID of the vendor the integration should integrate with (e.g. Datadog or Amazon Cloudwatch).
   * `integration_key` - (Optional) This is the unique key used to route events to this integration when received via the PagerDuty Events API.
   * `integration_email` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.
 
     **Note:** You can use the `pagerduty_vendor` data source to locate the appropriate vendor ID.
+
 ## Attributes Reference
 
 The following attributes are exported:
@@ -113,7 +114,7 @@ The following attributes are exported:
   * `id` - The ID of the service integration.
   * `integration_key` - This is the unique key used to route events to this integration when received via the PagerDuty Events API.
   * `integration_email` - This is the unique fully-qualified email address used for routing emails to this integration for processing.
-  * `html_url` - URL at which the entity is uniquely displayed in the Web app
+  * `html_url` - URL at which the entity is uniquely displayed in the Web app.
 
 To configure an event, please use the `integration_key` in the following interpolation:
 

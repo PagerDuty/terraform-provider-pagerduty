@@ -30,7 +30,7 @@ The following attributes are exported:
 
   * `id` - The ID of the tag.
   * `summary`- A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to name, though it is not intended to be an identifier.
-  * `html_url` - URL at which the entity is uniquely displayed in the Web app
+  * `html_url` - URL at which the entity is uniquely displayed in the Web app.
 
 ## Import
 

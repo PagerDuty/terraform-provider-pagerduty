@@ -99,7 +99,7 @@ The following arguments are supported:
 The following attributes are exported:
 
   * `id` - The ID of the event rule.
-  * `catch_all` - A boolean that indicates whether the rule is a catch all for the account. This field is read-only through the PagerDuty API.
+  * `catch_all` - A boolean that indicates whether the rule is a catch-all for the account. This field is read-only through the PagerDuty API.
 
 ## Import
 

@@ -42,10 +42,12 @@ resource "pagerduty_response_play" "example" {
     type = "escalation_policy_reference"
     id   = pagerduty_escalation_policy.example.id
   }
+
   subscriber {
     type = "user_reference"
     id   = pagerduty_user.example.id
   }
+
   runnability = "services"
 }
 ```
@@ -58,7 +60,7 @@ The following arguments are supported:
   * `from` - (Required) The email of the user attributed to the request. Needs to be a valid email address of a user in the PagerDuty account.
   * `description` - (Optional) A human-friendly description of the response play.
     If not set, a placeholder of "Managed by Terraform" will be set.
-  * `type` - (Optional)  A string that determines the schema of the object. If not set, the default value is "response_play". 
+  * `type` - (Optional)  A string that determines the schema of the object. If not set, the default value is "response_play".
   * `team` - (Optional) The ID of the team associated with the response play.
   * `subscriber` - (Required) A user and/or team to be added as a subscriber to any incident on which this response play is run. There can be multiple subscribers defined on a single response play.
   * `subscribers_message` - (Optional) The content of the notification that will be sent to all incident subscribers upon the running of this response play. Note that this includes any users who may have already been subscribed to the incident prior to the running of this response play. If empty, no notifications will be sent.
@@ -86,7 +88,7 @@ The following arguments are supported:
 * `description` - Description of escalation policy
 * `num_loops` - The number of times the escalation policy will repeat after reaching the end of its escalation.
 * `on_call_handoff_notifications` - Determines how on call handoff notifications will be sent for users on the escalation policy. Defaults to "if_has_services". Could be "if_has_services", "always
-* `escalation_rule` - The escalation rules 
+* `escalation_rule` - The escalation rules
   * `escalation_delay_in_minutes` - The number of minutes before an unacknowledged incident escalates away from this rule.
   * `target` - The targets an incident should be assigned to upon reaching this rule.
     * `type` - Type of object of the target. Supported types are `user`, `schedule`, `user_reference`, `schedule_reference`.

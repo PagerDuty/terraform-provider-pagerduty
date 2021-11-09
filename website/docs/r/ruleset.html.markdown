@@ -20,7 +20,7 @@ resource "pagerduty_team" "foo" {
 
 resource "pagerduty_ruleset" "foo" {
 	name = "Primary Ruleset"
-	team { 
+	team {
 		id = pagerduty_team.foo.id
 	}
 }
@@ -39,7 +39,7 @@ The following attributes are exported:
 
 * `id` - The ID of the ruleset.
 * `routing_keys` - Routing keys routed to this ruleset.
-* `type` - Type of ruleset. Currently only sets to `global`.
+* `type` - Type of ruleset. Currently, only sets to `global`.
 
 ## Import
 

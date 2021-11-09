@@ -57,11 +57,11 @@ The following arguments are supported:
   * `alert_grouping` - (Optional) (Deprecated) Defines how alerts on this service will be automatically grouped into incidents. Note that the alert grouping features are available only on certain plans. If not set, each alert will create a separate incident; If value is set to `time`: All alerts within a specified duration will be grouped into the same incident. This duration is set in the `alert_grouping_timeout` setting (described below). Available on Standard, Enterprise, and Event Intelligence plans; If value is set to `intelligent` - Alerts will be intelligently grouped based on a machine learning model that looks at the alert summary, timing, and the history of grouped alerts. Available on Enterprise and Event Intelligence plan. This field is deprecated, use `alert_grouping_parameters.type` instead,
   * `alert_grouping_timeout` - (Optional) (Deprecated) The duration in minutes within which to automatically group incoming alerts. This setting applies only when `alert_grouping` is set to `time`. To continue grouping alerts until the incident is resolved, set this value to `0`. This field is deprecated, use `alert_grouping_parameters.config.timeout` instead,
   * `alert_grouping_parameters` - (Optional) Defines how alerts on this service will be automatically grouped into incidents. Note that the alert grouping features are available only on certain plans. If not set, each alert will create a separate incident.
-    
+
 The `alert_grouping_parameters` block contains the following arguments:
 
 * `type` (Optional) - The type of alert grouping; one of `intelligent`, `time` or `content_based`.
-* `config` (Optional) - Alert grouping parameters dependant on `type`. If `type` is set to `intelligent` or empty then `config` can be empty.
+* `config` (Optional) - Alert grouping parameters dependent on `type`. If `type` is set to `intelligent` or empty then `config` can be empty.
     * `timeout` - (Optional) The duration in minutes within which to automatically group incoming alerts. This setting applies only when `type` is set to `time`. To continue grouping alerts until the incident is resolved, set this value to `0`.
     * `aggregate` - (Optional) One of `any` or `all`. This setting applies only when `type` is set to `content_based`. Group alerts based on one or all of `fields` value(s).
     * `fields` - (Optional) Alerts will be grouped together if the content of these fields match. This setting applies only when `type` is set to `content_based`.
@@ -74,7 +74,7 @@ The block contains the following arguments:
   * `type` - The type of incident urgency: `constant` or `use_support_hours` (when depending on specific support hours; see `support_hours`).
   * `urgency` - The urgency: `low` Notify responders (does not escalate), `high` (follows escalation rules) or `severity_based` Set's the urgency of the incident based on the severity set by the triggering monitoring tool.
   * `during_support_hours` - (Optional) Incidents' urgency during support hours.
-  * `outside_support_hours` - (Optional) Incidents' urgency outside of support hours.
+  * `outside_support_hours` - (Optional) Incidents' urgency outside support hours.
 
 When using `type = "use_support_hours"` in `incident_urgency_rule` you must specify exactly one (otherwise optional) `support_hours` block.
 Your PagerDuty account must have the `service_support_hours` ability to assign support hours.
@@ -150,10 +150,10 @@ resource "pagerduty_service" "foo" {
 The following attributes are exported:
 
   * `id` - The ID of the service.
-  * `last_incident_timestamp`- Last incident timestamp of the service
-  * `created_at`- Creation timestamp of the service
-  * `status`- The status of the service
-  * `html_url`- URL at which the entity is uniquely displayed in the Web app
+  * `last_incident_timestamp`- Last incident timestamp of the service.
+  * `created_at`- Creation timestamp of the service.
+  * `status`- The status of the service.
+  * `html_url`- URL at which the entity is uniquely displayed in the Web app.
 
 ## Import
 

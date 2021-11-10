@@ -37,6 +37,12 @@ func Provider() *schema.Provider {
 				Optional: true,
 				Default:  "",
 			},
+
+			"api_url_override": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -131,6 +137,7 @@ func providerConfigure(data *schema.ResourceData, terraformVersion string) (inte
 		Token:               data.Get("token").(string),
 		UserToken:           data.Get("user_token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
+		ApiUrlOverride:      data.Get("api_url_override").(string),
 	}
 
 	log.Println("[INFO] Initializing PagerDuty client")

@@ -54,6 +54,7 @@ type Client struct {
 	ResponsePlays              *ResponsePlayService
 	SlackConnections           *SlackConnectionService
 	Tags                       *TagService
+	WebhookSubscriptions       *WebhookSubscriptionService
 	BusinessServiceSubscribers *BusinessServiceSubscriberService
 }
 
@@ -112,6 +113,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.ResponsePlays = &ResponsePlayService{c}
 	c.SlackConnections = &SlackConnectionService{c}
 	c.Tags = &TagService{c}
+	c.WebhookSubscriptions = &WebhookSubscriptionService{c}
 	c.BusinessServiceSubscribers = &BusinessServiceSubscriberService{c}
 
 	InitCache(c)

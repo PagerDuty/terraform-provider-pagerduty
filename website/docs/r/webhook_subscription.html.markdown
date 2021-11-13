@@ -93,8 +93,8 @@ The following attributes are exported:
 
 ## Import
 
-Slack connections can be imported using the related `workspace` ID and the `slack_connection` ID separated by a dot, e.g.
+Webhook Subscriptions can be imported using the `id`, e.g.
 
 ```
-$ terraform import pagerduty_slack_connection.main T02A123LV1A.PUABCDL
+$ terraform import pagerduty_webhook_subscription.main PUABCDL
 ```

@@ -100,7 +100,7 @@ func PopulateMemoryCache() {
 			Abilities: abilities,
 		}
 		cachePut("misc", "abilities", abilitiesRecord)
-		
+
 		var pdo = ListUsersOptions{
 			Include: []string{"contact_methods", "notification_rules"},
 			Limit:   100,

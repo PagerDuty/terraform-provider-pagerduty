@@ -106,7 +106,6 @@ func testAccCheckPagerDutyWebhookSubscriptionExists(n string) resource.TestCheck
 	}
 }
 
-
 func testAccCheckPagerDutyWebhookSubscriptionConfig(username, useremail, escalationPolicy, service, description string) string {
 	return fmt.Sprintf(`
 	resource "pagerduty_user" "foo" {

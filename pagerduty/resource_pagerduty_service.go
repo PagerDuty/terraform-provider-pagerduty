@@ -1,14 +1,16 @@
 package pagerduty
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"regexp"
 	"strconv"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -18,6 +20,16 @@ func resourcePagerDutyService() *schema.Resource {
 		Read:   resourcePagerDutyServiceRead,
 		Update: resourcePagerDutyServiceUpdate,
 		Delete: resourcePagerDutyServiceDelete,
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			in := diff.Get("incident_urgency_rule.#").(int)
+			for i := 0; i <= in; i++ {
+				t := diff.Get(fmt.Sprintf("incident_urgency_rule.%d.type", i)).(string)
+				if t == "use_support_hours" && diff.Get(fmt.Sprintf("incident_urgency_rule.%d.urgency", i)).(string) != "" {
+					return fmt.Errorf("general urgency cannot be set for a use_support_hours incident urgency rule type")
+				}
+			}
+			return nil
+		},
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -54,16 +66,21 @@ func resourcePagerDutyService() *schema.Resource {
 					"intelligent",
 					"rules",
 				}),
+				Deprecated:    "Use `alert_grouping_parameters.type`",
+				ConflictsWith: []string{"alert_grouping_parameters"},
 			},
 			"alert_grouping_timeout": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Deprecated:    "Use `alert_grouping_parameters.config.timeout`",
+				ConflictsWith: []string{"alert_grouping_parameters"},
 			},
 			"alert_grouping_parameters": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Optional: true,
-				MaxItems: 1,
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"alert_grouping", "alert_grouping_timeout"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -296,12 +313,17 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
 		service.AlertGroupingParameters = expandAlertGroupingParameters(attr)
 	} else {
-		service.AlertGroupingParameters = &pagerduty.AlertGroupingParameters{}
+		// Clear AlertGroupingParameters as it takes precedence over AlertGrouping and AlertGroupingTimeout which are apparently deprecated (that's not explicitly documented in the API)
+		service.AlertGroupingParameters = nil
 	}
-	// Using GetOkExists to allow for alert_grouping_timeout to be set to 0 if needed.
-	if attr, ok := d.GetOkExists("alert_grouping_timeout"); ok {
-		val := attr.(int)
-		service.AlertGroupingTimeout = &val
+	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
+		if attr.(string) != "null" {
+			if val, err := strconv.Atoi(attr.(string)); err == nil {
+				service.AlertGroupingTimeout = &val
+			} else {
+				return nil, err
+			}
+		}
 	}
 
 	if attr, ok := d.GetOk("escalation_policy"); ok {
@@ -343,53 +365,8 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 			return nil
 		}
 
-		d.Set("name", service.Name)
-		d.Set("html_url", service.HTMLURL)
-		d.Set("status", service.Status)
-		d.Set("created_at", service.CreatedAt)
-		d.Set("escalation_policy", service.EscalationPolicy.ID)
-		d.Set("description", service.Description)
-		if service.AutoResolveTimeout == nil {
-			d.Set("auto_resolve_timeout", "null")
-		} else {
-			d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
-		}
-		d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
-		if service.AcknowledgementTimeout == nil {
-			d.Set("acknowledgement_timeout", "null")
-		} else {
-			d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
-		}
-		d.Set("alert_creation", service.AlertCreation)
-		if service.AlertGrouping != nil && *service.AlertGrouping != "" {
-			d.Set("alert_grouping", *service.AlertGrouping)
-		}
-		if service.AlertGroupingTimeout == nil {
-			d.Set("alert_grouping_timeout", "null")
-		} else {
-			d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
-		}
-		if service.AlertGroupingParameters != nil {
-			if err := d.Set("alert_grouping_parameters", flattenAlertGroupingParameters(service.AlertGroupingParameters)); err != nil {
-				return resource.NonRetryableError(err)
-			}
-		}
-		if service.IncidentUrgencyRule != nil {
-			if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
-				return resource.NonRetryableError(err)
-			}
-		}
-
-		if service.SupportHours != nil {
-			if err := d.Set("support_hours", flattenSupportHours(service.SupportHours)); err != nil {
-				return resource.NonRetryableError(err)
-			}
-		}
-
-		if service.ScheduledActions != nil {
-			if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
-				return resource.NonRetryableError(err)
-			}
+		if err := flattenService(d, service); err != nil {
+			return resource.NonRetryableError(err)
 		}
 		return nil
 
@@ -397,7 +374,7 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 }
 
 func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
@@ -422,7 +399,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
@@ -431,15 +408,16 @@ func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
 
-	if _, _, err := client.Services.Update(d.Id(), service); err != nil {
+	updatedService, _, err := client.Services.Update(d.Id(), service)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	return flattenService(d, updatedService)
 }
 
 func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty service %s", d.Id())
 
@@ -453,6 +431,59 @@ func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) er
 	time.Sleep(time.Second)
 	return nil
 }
+
+func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
+	d.Set("name", service.Name)
+	d.Set("html_url", service.HTMLURL)
+	d.Set("status", service.Status)
+	d.Set("created_at", service.CreatedAt)
+	d.Set("escalation_policy", service.EscalationPolicy.ID)
+	d.Set("description", service.Description)
+	if service.AutoResolveTimeout == nil {
+		d.Set("auto_resolve_timeout", "null")
+	} else {
+		d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
+	}
+	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
+	if service.AcknowledgementTimeout == nil {
+		d.Set("acknowledgement_timeout", "null")
+	} else {
+		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
+	}
+	d.Set("alert_creation", service.AlertCreation)
+	if service.AlertGrouping != nil && *service.AlertGrouping != "" {
+		d.Set("alert_grouping", *service.AlertGrouping)
+	}
+	if service.AlertGroupingTimeout == nil {
+		d.Set("alert_grouping_timeout", "null")
+	} else {
+		d.Set("alert_grouping_timeout", strconv.Itoa(*service.AlertGroupingTimeout))
+	}
+	if _, ok := d.GetOk("alert_grouping_parameters"); ok && service.AlertGroupingParameters != nil {
+		if err := d.Set("alert_grouping_parameters", flattenAlertGroupingParameters(service.AlertGroupingParameters)); err != nil {
+			return err
+		}
+	}
+	if service.IncidentUrgencyRule != nil {
+		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
+			return err
+		}
+	}
+
+	if service.SupportHours != nil {
+		if err := d.Set("support_hours", flattenSupportHours(service.SupportHours)); err != nil {
+			return err
+		}
+	}
+
+	if service.ScheduledActions != nil {
+		if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParameters {
 	riur := v.([]interface{})[0].(map[string]interface{})
 	alertGroupingParameters := &pagerduty.AlertGroupingParameters{

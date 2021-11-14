@@ -8,20 +8,19 @@ type MaintenanceWindowService service
 
 // MaintenanceWindow represents a PagerDuty maintenance window.
 type MaintenanceWindow struct {
-	CreatedBy         *UserReference      `json:"created_by,omitempty"`
-	Description       string              `json:"description,omitempty"`
-	EndTime           string              `json:"end_time,omitempty"`
-	HTMLURL           string              `json:"html_url,omitempty"`
-	ID                string              `json:"id,omitempty"`
-	MaintenanceWindow *MaintenanceWindow  `json:"maintenance_window,omitempty"`
-	Self              string              `json:"self,omitempty"`
-	SequenceNumber    int                 `json:"sequence_number,omitempty"`
-	Services          []*ServiceReference `json:"services,omitempty"`
-	Src               string              `json:"src,omitempty"`
-	StartTime         string              `json:"start_time,omitempty"`
-	Summary           string              `json:"summary,omitempty"`
-	Teams             []*TeamReference    `json:"teams,omitempty"`
-	Type              string              `json:"type,omitempty"`
+	CreatedBy      *UserReference      `json:"created_by,omitempty"`
+	Description    string              `json:"description,omitempty"`
+	EndTime        string              `json:"end_time,omitempty"`
+	HTMLURL        string              `json:"html_url,omitempty"`
+	ID             string              `json:"id,omitempty"`
+	Self           string              `json:"self,omitempty"`
+	SequenceNumber int                 `json:"sequence_number,omitempty"`
+	Services       []*ServiceReference `json:"services,omitempty"`
+	Src            string              `json:"src,omitempty"`
+	StartTime      string              `json:"start_time,omitempty"`
+	Summary        string              `json:"summary,omitempty"`
+	Teams          []*TeamReference    `json:"teams,omitempty"`
+	Type           string              `json:"type,omitempty"`
 }
 
 // ListMaintenanceWindowsOptions represents options when listing maintenance windows.
@@ -42,6 +41,11 @@ type ListMaintenanceWindowsResponse struct {
 	Total              int                  `json:"total,omitempty"`
 }
 
+// MaintenanceWindowPayload represents a maintenance window.
+type MaintenanceWindowPayload struct {
+	MaintenanceWindow *MaintenanceWindow `json:"maintenance_window,omitempty"`
+}
+
 // List lists existing maintenance windows.
 func (s *MaintenanceWindowService) List(o *ListMaintenanceWindowsOptions) (*ListMaintenanceWindowsResponse, *Response, error) {
 	u := "/maintenance_windows"
@@ -58,9 +62,9 @@ func (s *MaintenanceWindowService) List(o *ListMaintenanceWindowsOptions) (*List
 // Create creates a new maintenancce window.
 func (s *MaintenanceWindowService) Create(maintenanceWindow *MaintenanceWindow) (*MaintenanceWindow, *Response, error) {
 	u := "/maintenance_windows"
-	v := new(MaintenanceWindow)
+	v := new(MaintenanceWindowPayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &MaintenanceWindow{MaintenanceWindow: maintenanceWindow}, v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &MaintenanceWindowPayload{MaintenanceWindow: maintenanceWindow}, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -77,7 +81,7 @@ func (s *MaintenanceWindowService) Delete(id string) (*Response, error) {
 // Get retrieves information about a maintenance window.
 func (s *MaintenanceWindowService) Get(id string) (*MaintenanceWindow, *Response, error) {
 	u := fmt.Sprintf("/maintenance_windows/%s", id)
-	v := new(MaintenanceWindow)
+	v := new(MaintenanceWindowPayload)
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
 	if err != nil {
@@ -90,8 +94,8 @@ func (s *MaintenanceWindowService) Get(id string) (*MaintenanceWindow, *Response
 // Update updates an existing maintenance window.
 func (s *MaintenanceWindowService) Update(id string, maintenanceWindow *MaintenanceWindow) (*MaintenanceWindow, *Response, error) {
 	u := fmt.Sprintf("/maintenance_windows/%s", id)
-	v := new(MaintenanceWindow)
-	resp, err := s.client.newRequestDo("PUT", u, nil, &MaintenanceWindow{MaintenanceWindow: maintenanceWindow}, &v)
+	v := new(MaintenanceWindowPayload)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &MaintenanceWindowPayload{MaintenanceWindow: maintenanceWindow}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

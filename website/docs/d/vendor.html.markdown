@@ -3,12 +3,12 @@ layout: "pagerduty"
 page_title: "PagerDuty: pagerduty_vendor"
 sidebar_current: "docs-pagerduty-datasource-vendor"
 description: |-
-  Get information about a vendor that you can use for a service integration (e.g Amazon Cloudwatch, Splunk, Datadog).
+  Get information about a vendor that you can use for a service integration (e.g. Amazon Cloudwatch, Splunk, Datadog).
 ---
 
 # pagerduty\_vendor
 
-Use this data source to get information about a specific [vendor][1] that you can use for a service integration (e.g Amazon Cloudwatch, Splunk, Datadog).
+Use this data source to get information about a specific [vendor][1] that you can use for a service integration (e.g. Amazon Cloudwatch, Splunk, Datadog).
 
 ## Example Usage
 
@@ -48,7 +48,6 @@ resource "pagerduty_service_integration" "example" {
   name    = "Datadog Integration"
   vendor  = data.pagerduty_vendor.datadog.id
   service = pagerduty_service.example.id
-  type    = "generic_events_api_inbound_integration"
 }
 ```
 
@@ -59,6 +58,7 @@ The following arguments are supported:
 * `name` - (Required) The vendor name to use to find a vendor in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found vendor.
 * `name` - The short name of the found vendor.
 * `type` - The generic service type for this vendor.

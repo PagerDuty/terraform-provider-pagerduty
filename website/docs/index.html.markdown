@@ -30,7 +30,12 @@ resource "pagerduty_team" "engineering" {
 resource "pagerduty_user" "earline" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.engineering.id]
+}
+
+# Create a team membership
+resource "pagerduty_team_membership" "earline_engineering" {
+  user_id = pagerduty_user.earline.id
+  team_id = pagerduty_team.engineering.id
 }
 ```
 
@@ -39,4 +44,6 @@ resource "pagerduty_user" "earline" {
 The following arguments are supported:
 
 * `token` - (Required) The v2 authorization token. It can also be sourced from the PAGERDUTY_TOKEN environment variable. See [API Documentation](https://developer.pagerduty.com/docs/rest-api-v2/authentication/) for more information.
+* `user_token` - (Optional) The v2 user level authorization token. It can also be sourced from the PAGERDUTY_USER_TOKEN environment variable. See [API Documentation](https://developer.pagerduty.com/docs/rest-api-v2/authentication/) for more information.
 * `skip_credentials_validation` - (Optional) Skip validation of the token against the PagerDuty API.
+* `service_region` - (Optional) The PagerDuty service region to use. Default to empty (uses US region). Supported value: `eu`.

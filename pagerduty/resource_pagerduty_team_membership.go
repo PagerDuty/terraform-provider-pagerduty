@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -46,7 +46,7 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 }
 
 func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
@@ -111,7 +111,7 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 }
 
 func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 	teamID := d.Get("team_id").(string)
@@ -141,7 +141,7 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 

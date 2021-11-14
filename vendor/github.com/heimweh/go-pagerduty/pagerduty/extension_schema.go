@@ -8,20 +8,19 @@ type ExtensionSchemaService service
 
 // ExtensionSchema represents an extension schema.
 type ExtensionSchema struct {
-	ExtensionSchema *ExtensionSchema `json:"extension_schema,omitempty"`
-	Description     string           `json:"description,omitempty"`
-	GuideURL        string           `json:"guide_url,omitempty"`
-	HTMLURL         string           `json:"html_url,omitempty"`
-	IconURL         string           `json:"icon_url,omitempty"`
-	ID              string           `json:"id,omitempty"`
-	Key             string           `json:"key,omitempty"`
-	Label           string           `json:"label,omitempty"`
-	LogoURL         string           `json:"logo_url,omitempty"`
-	Self            string           `json:"self,omitempty"`
-	SendTypes       []string         `json:"send_types,omitempty"`
-	Summary         string           `json:"summary,omitempty"`
-	Type            string           `json:"type,omitempty"`
-	URL             string           `json:"url,omitempty"`
+	Description string   `json:"description,omitempty"`
+	GuideURL    string   `json:"guide_url,omitempty"`
+	HTMLURL     string   `json:"html_url,omitempty"`
+	IconURL     string   `json:"icon_url,omitempty"`
+	ID          string   `json:"id,omitempty"`
+	Key         string   `json:"key,omitempty"`
+	Label       string   `json:"label,omitempty"`
+	LogoURL     string   `json:"logo_url,omitempty"`
+	Self        string   `json:"self,omitempty"`
+	SendTypes   []string `json:"send_types,omitempty"`
+	Summary     string   `json:"summary,omitempty"`
+	Type        string   `json:"type,omitempty"`
+	URL         string   `json:"url,omitempty"`
 }
 
 // ListExtensionSchemasResponse represents a list response of extension schemas.
@@ -41,6 +40,11 @@ type ListExtensionSchemasOptions struct {
 	Query  string `url:"query,omitempty"`
 }
 
+// ExtensionSchemaPayload represents an extension schema.
+type ExtensionSchemaPayload struct {
+	ExtensionSchema *ExtensionSchema `json:"extension_schema"`
+}
+
 // List lists extension schemas.
 func (s *ExtensionSchemaService) List(o *ListExtensionSchemasOptions) (*ListExtensionSchemasResponse, *Response, error) {
 	u := "/extension_schemas"
@@ -57,7 +61,7 @@ func (s *ExtensionSchemaService) List(o *ListExtensionSchemasOptions) (*ListExte
 // Get retrieves information about an extension schema.
 func (s *ExtensionSchemaService) Get(id string) (*ExtensionSchema, *Response, error) {
 	u := fmt.Sprintf("/extension_schemas/%s", id)
-	v := new(ExtensionSchema)
+	v := new(ExtensionSchemaPayload)
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
 	if err != nil {

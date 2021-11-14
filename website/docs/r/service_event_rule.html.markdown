@@ -14,70 +14,83 @@ A [service event rule](https://support.pagerduty.com/docs/rulesets#service-event
 
 ```hcl
 resource "pagerduty_service" "example" {
-	name                    = "Checkout API Service"
-	auto_resolve_timeout    = 14400
-	acknowledgement_timeout = 600
-	escalation_policy       = pagerduty_escalation_policy.example.id
-	alert_creation          = "create_alerts_and_incidents"
+  name                    = "Checkout API Service"
+  auto_resolve_timeout    = 14400
+  acknowledgement_timeout = 600
+  escalation_policy       = pagerduty_escalation_policy.example.id
+  alert_creation          = "create_alerts_and_incidents"
 }
 
 resource "pagerduty_service_event_rule" "foo" {
-	service = pagerduty_service.example.id
-	position = 0
-	disabled = true
-	conditions {
-		operator = "and"
-		subconditions {
-			operator = "contains"
-			parameter {
-				value = "disk space"
-				path = "summary"
-			}
-		}
-	}
-	variable {
-		type = "regex"
-		name = "Src"
-		parameters {
-			value = "(.*)"
-			path = "source"
-		}
-	}
-	actions {
-		annotate {
-			value = "From Terraform"
-		}
-		extractions {
-			target = "dedup_key"
-			source = "source"
-			regex = "(.*)"
-		}
-		extractions {
-			target = "summary"
-			template = "Warning: Disk Space Low on {{Src}}"
-		}
-	}
+  service  = pagerduty_service.example.id
+  position = 0
+  disabled = true
+
+  conditions {
+    operator = "and"
+
+    subconditions {
+      operator = "contains"
+
+      parameter {
+        value = "disk space"
+        path  = "summary"
+      }
+    }
+  }
+
+  variable {
+    type = "regex"
+    name = "Src"
+
+    parameters {
+      value = "(.*)"
+      path  = "source"
+    }
+  }
+
+  actions {
+
+    annotate {
+      value = "From Terraform"
+    }
+
+    extractions {
+      target = "dedup_key"
+      source = "source"
+      regex  = "(.*)"
+    }
+
+    extractions {
+      target   = "summary"
+      template = "Warning: Disk Space Low on {{Src}}"
+    }
+  }
 }
 
 resource "pagerduty_service_event_rule" "bar" {
-	service = pagerduty_service.foo.id
-	position = 1
-	disabled = true
-	conditions {
-		operator = "and"
-		subconditions {
-			operator = "contains"
-			parameter {
-				value = "cpu spike"
-				path = "summary"
-			}
-		}
-	}
-	actions {
-		annotate {
-			value = "From Terraform"
-		}
-	}
+  service  = pagerduty_service.foo.id
+  position = 1
+  disabled = true
+
+  conditions {
+    operator = "and"
+
+    subconditions {
+      operator = "contains"
+
+      parameter {
+        value = "cpu spike"
+        path  = "summary"
+      }
+    }
+  }
+
+  actions {
+    annotate {
+      value = "From Terraform"
+    }
+  }
 }
 ```
 
@@ -89,19 +102,22 @@ The following arguments are supported:
 * `conditions` - (Required) Conditions evaluated to check if an event matches this event rule.
 * `position` - (Optional) Position/index of the rule within the service.
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
-* `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules). 
+* `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules).
 * `actions` - (Optional) Actions to apply to an event if the conditions match.
 * `variable` - (Optional) Populate variables from event payloads and use those variables in other event actions. *NOTE: A rule can have multiple `variable` objects.*
 
 ### Conditions (`conditions`) supports the following:
+
 * `operator` - Operator to combine sub-conditions. Can be `and` or `or`.
-* `subconditions` - List of sub-conditions that define the the condition. 
+* `subconditions` - List of sub-conditions that define the condition.
 
 ### Sub-Conditions (`subconditions`) supports the following:
+
 * `operator` - Type of operator to apply to the sub-condition. Can be `exists`,`nexists`,`equals`,`nequals`,`contains`,`ncontains`,`matches`, or `nmatches`.
-* `parameter` - Parameter for the sub-condition. It requires both a `path` and `value` to be set. The `path` value must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field. 
+* `parameter` - Parameter for the sub-condition. It requires both a `path` and `value` to be set. The `path` value must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 
 ### Action (`actions`) supports the following:
+
 * `priority` (Optional) - The ID of the priority applied to the event.
 * `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
@@ -110,8 +126,8 @@ The following arguments are supported:
 	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 	* `regex` - The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression syntax](https://github.com/google/re2/wiki/Syntax).
 
-	*- **OR** -*  
-	
+	*- **OR** -*
+
 	* `template` - A customized field message. This can also include variables extracted from the payload by using string interpolation.
 	* `target` - Field where the data is being copied to. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
 
@@ -121,11 +137,12 @@ The following arguments are supported:
 	* `value` - Boolean value that indicates if the alert should be suppressed before the indicated threshold values are met.
 	* `threshold_value` - The number of alerts that should be suppressed.
 	* `threshold_time_amount` - The number value of the `threshold_time_unit` before an incident is created.
-	* `threshold_time_unit` - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured. 
+	* `threshold_time_unit` - The `seconds`,`minutes`, or `hours` the `threshold_time_amount` should be measured.
 * `event_action` (Optional) - An object with a single `value` field. The value sets whether the resulting alert status is `trigger` or `resolve`.
 * `suspend` (Optional) - An object with a single `value` field. The value sets the length of time to suspend the resulting alert before triggering.
 
 ### Variable ('variable') supports the following:
+
 * `name` (Optional) - The name of the variable.
 * `type` (Optional) - Type of operation to populate the variable. Usually `regex`.
 * `parameters` (Optional) - The parameters for performing the operation to populate the variable.
@@ -133,6 +150,7 @@ The following arguments are supported:
 	* `path` - Path to a field in an event, in dot-notation. For Event Rules on a Service, this will have to be a [PD-CEF field](https://support.pagerduty.com/docs/pd-cef).
 
 ### Time Frame (`time_frame`) supports the following:
+
 * `scheduled_weekly` (Optional) - Values for executing the rule on a recurring schedule.
 	* `weekdays` - An integer array representing which days during the week the rule executes. For example `weekdays = [1,3,7]` would execute on Monday, Wednesday and Sunday.
 	* `timezone` - Timezone for the given schedule.

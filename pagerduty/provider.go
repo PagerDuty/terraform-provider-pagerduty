@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 // Provider represents a resource provider in Terraform
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"skip_credentials_validation": {
@@ -24,6 +24,18 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
+			},
+
+			"user_token": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_USER_TOKEN", nil),
+			},
+
+			"service_region": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
 			},
 		},
 
@@ -40,6 +52,7 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_business_service":    dataSourcePagerDutyBusinessService(),
 			"pagerduty_priority":            dataSourcePagerDutyPriority(),
 			"pagerduty_ruleset":             dataSourcePagerDutyRuleset(),
+			"pagerduty_tag":                 dataSourcePagerDutyTag(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -62,7 +75,10 @@ func Provider() terraform.ResourceProvider {
 			"pagerduty_business_service":       resourcePagerDutyBusinessService(),
 			"pagerduty_service_dependency":     resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":          resourcePagerDutyResponsePlay(),
+			"pagerduty_tag":                    resourcePagerDutyTag(),
+			"pagerduty_tag_assignment":         resourcePagerDutyTagAssignment(),
 			"pagerduty_service_event_rule":     resourcePagerDutyServiceEventRule(),
+			"pagerduty_slack_connection":       resourcePagerDutySlackConnection(),
 		},
 	}
 
@@ -101,12 +117,23 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 }
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
+	var ServiceRegion = strings.ToLower(data.Get("service_region").(string))
+
+	if ServiceRegion == "us" || ServiceRegion == "" {
+		ServiceRegion = ""
+	} else {
+		ServiceRegion = ServiceRegion + "."
+	}
+
 	config := Config{
+		ApiUrl:              "https://api." + ServiceRegion + "pagerduty.com",
+		AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
+		UserToken:           data.Get("user_token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
 	}
 
 	log.Println("[INFO] Initializing PagerDuty client")
-	return config.Client()
+	return &config, nil
 }

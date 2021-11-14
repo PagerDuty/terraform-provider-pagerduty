@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -71,7 +71,7 @@ func TestAccPagerDutyMaintenanceWindow_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyMaintenanceWindowDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_maintenance_window" {
 			continue
@@ -96,7 +96,7 @@ func testAccCheckPagerDutyMaintenanceWindowExists(n string) resource.TestCheckFu
 			return fmt.Errorf("No maintenance window ID is set")
 		}
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.MaintenanceWindows.Get(rs.Primary.ID)
 		if err != nil {

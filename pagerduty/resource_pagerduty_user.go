@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -44,6 +44,16 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "user",
+				ValidateFunc: validateValueFunc([]string{
+					"admin",
+					"limited_user",
+					"observer",
+					"owner",
+					"read_only_user",
+					"restricted_access",
+					"read_only_limited_user",
+					"user",
+				}),
 			},
 
 			"job_title": {
@@ -122,7 +132,7 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 }
 
 func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	user := buildUserStruct(d)
 
@@ -139,7 +149,7 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
@@ -178,7 +188,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	user := buildUserStruct(d)
 
@@ -244,7 +254,7 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty user %s", d.Id())
 

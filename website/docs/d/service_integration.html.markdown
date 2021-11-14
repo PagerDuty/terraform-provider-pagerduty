@@ -24,7 +24,8 @@ data "pagerduty_service_integration" "example" {
 The following arguments are supported:
 
 * `service_name` - (Required) The service name to use to find a service in the PagerDuty API.
-* `integration_summary` - (Required) The integration summary used to find the desired integration on the service
+* `integration_summary` - (Required) The integration summary used to find the desired integration on the service.
 
 ## Attributes Reference
+
 * `integration_key` - The integration key for the integration. This can be used to configure alerts.

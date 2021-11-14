@@ -2,11 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -86,12 +87,26 @@ func TestAccPagerDutyServiceIntegrationGeneric_Basic(t *testing.T) {
 						"pagerduty_service_integration.foo", "type", "generic_events_api_inbound_integration"),
 				),
 			},
+			{
+				Config:      testAccCheckPagerDutyServiceIntegrationGenericEmail(username, email, escalationPolicy, service, serviceIntegration, ""),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("integration_email attribute must be set for an integration type generic_email_inbound_integration"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceIntegrationGenericEmail(username, email, escalationPolicy, service, serviceIntegration, "user@pagerduty.com"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_integration.foo", "type", "generic_email_inbound_integration"),
+				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
 
 func testAccCheckPagerDutyServiceIntegrationDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pagerduty.Client)
+	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_service_integration" {
 			continue
@@ -120,7 +135,7 @@ func testAccCheckPagerDutyServiceIntegrationExists(n string) resource.TestCheckF
 
 		service, _ := s.RootModule().Resources["pagerduty_service.foo"]
 
-		client := testAccProvider.Meta().(*pagerduty.Client)
+		client, _ := testAccProvider.Meta().(*Config).Client()
 
 		found, _, err := client.Services.GetIntegration(service.Primary.ID, rs.Primary.ID, &pagerduty.GetIntegrationOptions{})
 		if err != nil {
@@ -321,4 +336,52 @@ resource "pagerduty_service_integration" "foo" {
   type    = "generic_events_api_inbound_integration"
 }
 `, username, email, escalationPolicy, service, serviceIntegration)
+}
+
+func testAccCheckPagerDutyServiceIntegrationGenericEmail(username, email, escalationPolicy, service, serviceIntegration, integrationEmail string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "bar"
+  num_loops   = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%s"
+  description             = "bar"
+  auto_resolve_timeout    = 3600
+  acknowledgement_timeout = 3600
+  escalation_policy       = pagerduty_escalation_policy.foo.id
+
+  incident_urgency_rule {
+    type    = "constant"
+    urgency = "high"
+  }
+}
+
+resource "pagerduty_service_integration" "foo" {
+  name              = "%s"
+  service           = pagerduty_service.foo.id
+  type              = "generic_email_inbound_integration"
+  integration_email = "%s"
+}
+`, username, email, escalationPolicy, service, serviceIntegration, integrationEmail)
 }

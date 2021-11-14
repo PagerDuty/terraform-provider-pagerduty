@@ -5,14 +5,23 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 // Config defines the configuration options for the PagerDuty client
 type Config struct {
+	// The PagerDuty API URL
+	ApiUrl string
+
+	// The PagerDuty APP URL
+	AppUrl string
+
 	// The PagerDuty API V2 token
 	Token string
+
+	// The PagerDuty User level token for Slack
+	UserToken string
 
 	// Skip validation of the token against the PagerDuty API
 	SkipCredsValidation bool
@@ -40,6 +49,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
 	config := &pagerduty.Config{
+		BaseURL:    c.ApiUrl,
 		Debug:      logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
 		Token:      c.Token,
@@ -60,6 +70,34 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	log.Printf("[INFO] PagerDuty client configured")
+
+	return client, nil
+}
+
+func (c *Config) SlackClient() (*pagerduty.Client, error) {
+	// Validate that the user level PagerDuty token is set
+	if c.UserToken == "" {
+		return nil, fmt.Errorf(invalidCreds)
+	}
+
+	var httpClient *http.Client
+	httpClient = http.DefaultClient
+	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
+
+	config := &pagerduty.Config{
+		BaseURL:    c.AppUrl,
+		Debug:      logging.IsDebugOrHigher(),
+		HTTPClient: httpClient,
+		Token:      c.UserToken,
+		UserAgent:  c.UserAgent,
+	}
+
+	client, err := pagerduty.NewClient(config)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("[INFO] PagerDuty client configured for slack")
 
 	return client, nil
 }

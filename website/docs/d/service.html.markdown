@@ -36,6 +36,7 @@ The following arguments are supported:
 * `name` - (Required) The service name to use to find a service in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found service.
 * `name` - The short name of the found service.
 

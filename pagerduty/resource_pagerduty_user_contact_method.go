@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -94,7 +94,7 @@ func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMeth
 }
 
 func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 	userID := d.Get("user_id").(string)
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
@@ -143,7 +143,7 @@ func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	contactMethod := buildUserContactMethodStruct(d)
 
@@ -159,7 +159,7 @@ func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty user contact method %s", d.Id())
 
@@ -175,7 +175,7 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyUserContactMethodImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	ids := strings.Split(d.Id(), ":")
 

@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -63,7 +63,7 @@ func buildMaintenanceWindowStruct(d *schema.ResourceData) *pagerduty.Maintenance
 }
 
 func resourcePagerDutyMaintenanceWindowCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	window := buildMaintenanceWindowStruct(d)
 
@@ -80,7 +80,7 @@ func resourcePagerDutyMaintenanceWindowCreate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty maintenance window %s", d.Id())
 
@@ -109,7 +109,7 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutyMaintenanceWindowUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	window := buildMaintenanceWindowStruct(d)
 
@@ -123,7 +123,7 @@ func resourcePagerDutyMaintenanceWindowUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyMaintenanceWindowDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty maintenance window %s", d.Id())
 

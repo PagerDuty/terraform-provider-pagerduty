@@ -50,4 +50,4 @@ The following arguments are supported:
 * `description` - A description of the found team.
 * `parent` - ID of the parent team. This is available to accounts with the Team Hierarchy feature enabled. Please contact your account manager for more information.
 
-[1]: https://v1.developer.pagerduty.com/documentation/rest/teams/list
+[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1teams/get

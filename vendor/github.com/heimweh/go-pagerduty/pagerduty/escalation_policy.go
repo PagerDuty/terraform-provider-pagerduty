@@ -15,19 +15,18 @@ type EscalationRule struct {
 
 // EscalationPolicy represents an escalation policy.
 type EscalationPolicy struct {
-	Description      string              `json:"description,omitempty"`
-	EscalationPolicy *EscalationPolicy   `json:"escalation_policy,omitempty"`
-	EscalationRules  []*EscalationRule   `json:"escalation_rules,omitempty"`
-	HTMLURL          string              `json:"html_url,omitempty"`
-	ID               string              `json:"id,omitempty"`
-	Name             string              `json:"name,omitempty"`
-	NumLoops         *int                `json:"num_loops,omitempty"`
-	RepeatEnabled    bool                `json:"repeat_enabled,omitempty"`
-	Self             string              `json:"self,omitempty"`
-	Services         []*ServiceReference `json:"services,omitempty"`
-	Summary          string              `json:"summary,omitempty"`
-	Teams            []*TeamReference    `json:"teams"`
-	Type             string              `json:"type,omitempty"`
+	Description     string              `json:"description,omitempty"`
+	EscalationRules []*EscalationRule   `json:"escalation_rules,omitempty"`
+	HTMLURL         string              `json:"html_url,omitempty"`
+	ID              string              `json:"id,omitempty"`
+	Name            string              `json:"name,omitempty"`
+	NumLoops        *int                `json:"num_loops,omitempty"`
+	RepeatEnabled   bool                `json:"repeat_enabled,omitempty"`
+	Self            string              `json:"self,omitempty"`
+	Services        []*ServiceReference `json:"services,omitempty"`
+	Summary         string              `json:"summary,omitempty"`
+	Teams           []*TeamReference    `json:"teams"`
+	Type            string              `json:"type,omitempty"`
 }
 
 // ListEscalationPoliciesResponse represents a list response of escalation policies.
@@ -84,12 +83,17 @@ func (s *EscalationPolicyService) List(o *ListEscalationPoliciesOptions) (*ListE
 	return v, resp, nil
 }
 
+// EscalationPolicyPayload represents an escalation policy.
+type EscalationPolicyPayload struct {
+	EscalationPolicy *EscalationPolicy `json:"escalation_policy"`
+}
+
 // Create creates a new escalation policy.
 func (s *EscalationPolicyService) Create(escalationPolicy *EscalationPolicy) (*EscalationPolicy, *Response, error) {
 	u := "/escalation_policies"
-	v := new(EscalationPolicy)
+	v := new(EscalationPolicyPayload)
 
-	resp, err := s.client.newRequestDo("POST", u, nil, &EscalationPolicy{EscalationPolicy: escalationPolicy}, v)
+	resp, err := s.client.newRequestDo("POST", u, nil, &EscalationPolicyPayload{EscalationPolicy: escalationPolicy}, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -106,7 +110,7 @@ func (s *EscalationPolicyService) Delete(id string) (*Response, error) {
 // Get retrieves information about an escalation policy.
 func (s *EscalationPolicyService) Get(id string, o *GetEscalationPolicyOptions) (*EscalationPolicy, *Response, error) {
 	u := fmt.Sprintf("/escalation_policies/%s", id)
-	v := new(EscalationPolicy)
+	v := new(EscalationPolicyPayload)
 
 	resp, err := s.client.newRequestDo("GET", u, o, nil, v)
 	if err != nil {
@@ -119,9 +123,9 @@ func (s *EscalationPolicyService) Get(id string, o *GetEscalationPolicyOptions) 
 // Update updates an existing escalation policy.
 func (s *EscalationPolicyService) Update(id string, escalationPolicy *EscalationPolicy) (*EscalationPolicy, *Response, error) {
 	u := fmt.Sprintf("/escalation_policies/%s", id)
-	v := new(EscalationPolicy)
+	v := new(EscalationPolicyPayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &EscalationPolicy{EscalationPolicy: escalationPolicy}, v)
+	resp, err := s.client.newRequestDo("PUT", u, nil, &EscalationPolicyPayload{EscalationPolicy: escalationPolicy}, v)
 	if err != nil {
 		return nil, nil, err
 	}

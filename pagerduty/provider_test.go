@@ -6,28 +6,27 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var testAccProviders map[string]terraform.ResourceProvider
+var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider().(*schema.Provider)
-	testAccProviders = map[string]terraform.ResourceProvider{
+	testAccProvider = Provider()
+	testAccProviders = map[string]*schema.Provider{
 		"pagerduty": testAccProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().(*schema.Provider).InternalValidate(); err != nil {
+	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProviderImpl(t *testing.T) {
-	var _ terraform.ResourceProvider = Provider()
+	var _ *schema.Provider = Provider()
 }
 
 func testAccPreCheck(t *testing.T) {
@@ -37,6 +36,10 @@ func testAccPreCheck(t *testing.T) {
 
 	if v := os.Getenv("PAGERDUTY_TOKEN"); v == "" {
 		t.Fatal("PAGERDUTY_TOKEN must be set for acceptance tests")
+	}
+
+	if v := os.Getenv("PAGERDUTY_USER_TOKEN"); v == "" {
+		t.Fatal("PAGERDUTY_USER_TOKEN must be set for acceptance tests")
 	}
 }
 
@@ -69,9 +72,13 @@ func testAccPreCheckPagerDutyAbility(t *testing.T, ability string) {
 	if v := os.Getenv("PAGERDUTY_TOKEN"); v == "" {
 		t.Fatal("PAGERDUTY_TOKEN must be set for acceptance tests")
 	}
+	if v := os.Getenv("PAGERDUTY_USER_TOKEN"); v == "" {
+		t.Fatal("PAGERDUTY_USER_TOKEN must be set for acceptance tests")
+	}
 
 	config := &Config{
-		Token: os.Getenv("PAGERDUTY_TOKEN"),
+		Token:     os.Getenv("PAGERDUTY_TOKEN"),
+		UserToken: os.Getenv("PAGERDUTY_USER_TOKEN"),
 	}
 
 	client, err := config.Client()

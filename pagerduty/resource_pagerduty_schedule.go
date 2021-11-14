@@ -1,12 +1,15 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -16,6 +19,19 @@ func resourcePagerDutySchedule() *schema.Resource {
 		Read:   resourcePagerDutyScheduleRead,
 		Update: resourcePagerDutyScheduleUpdate,
 		Delete: resourcePagerDutyScheduleDelete,
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			ln := diff.Get("layer.#").(int)
+			for li := 0; li <= ln; li++ {
+				rn := diff.Get(fmt.Sprintf("layer.%d.restriction.#", li)).(int)
+				for ri := 0; ri <= rn; ri++ {
+					t := diff.Get(fmt.Sprintf("layer.%d.restriction.%d.type", li, ri)).(string)
+					if t == "daily_restriction" && diff.Get(fmt.Sprintf("layer.%d.restriction.%d.start_day_of_week", li, ri)).(int) != 0 {
+						return fmt.Errorf("start_day_of_week must only be set for a weekly_restriction schedule restriction type")
+					}
+				}
+			}
+			return nil
+		},
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -79,8 +95,9 @@ func resourcePagerDutySchedule() *schema.Resource {
 						},
 
 						"rotation_turn_length_seconds": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(3600, 365*24*3600),
 						},
 
 						"users": {
@@ -100,16 +117,22 @@ func resourcePagerDutySchedule() *schema.Resource {
 									"type": {
 										Type:     schema.TypeString,
 										Required: true,
+										ValidateFunc: validateValueFunc([]string{
+											"daily_restriction",
+											"weekly_restriction",
+										}),
 									},
 
 									"start_time_of_day": {
-										Type:     schema.TypeString,
-										Required: true,
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: validation.StringMatch(regexp.MustCompile(`([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]`), "must be of 00:00:00 format"),
 									},
 
 									"start_day_of_week": {
-										Type:     schema.TypeInt,
-										Optional: true,
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntBetween(1, 7),
 									},
 
 									"duration_seconds": {
@@ -157,7 +180,7 @@ func buildScheduleStruct(d *schema.ResourceData) (*pagerduty.Schedule, error) {
 }
 
 func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	schedule, err := buildScheduleStruct(d)
 	if err != nil {
@@ -183,7 +206,7 @@ func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
 
@@ -221,7 +244,7 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	schedule, err := buildScheduleStruct(d)
 	if err != nil {
@@ -290,7 +313,7 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", d.Id())
 

@@ -1,3 +1,73 @@
+## 2.1.1 (October 29, 2021)
+BUG FIXES:
+* `resource/pagerduty_user`: Fixed caching ([#413](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/413))
+
+IMPROVEMENTS:
+* `resource/pagerduty_extension`: Added plumbing to enable paging in a future release  ([#413](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/413))
+* `resource/pagerduty_service`: Added plumbing to enable email filtering in a future release  ([#413](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/413))
+
+## 2.1.0 (October 25, 2021)
+
+FEATURES:
+* `pagerduty/provider`: Added support for `service_region` and `user_token` tags on the provider block ([#384](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/384))
+* Added GitHub Actions workflow to run tests ([#406](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/406))
+
+IMPROVEMENTS:
+* Docs: `resource/pagerduty_slack_connection`: Added `notification_type` to sample code ([#408](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/408))
+* `resource/pagerduty_escalation_policy`: Added validation for teams maxitems 1 ([#412](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/412))
+
+BUG FIXES:
+* Docs: `resource/pagerduty_tag`: Corrected sample code ([#409](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/409))
+* Docs: `index`: Removed deprecated `teams` field from sample code ([#411](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/411))
+
+
+## 2.0.0 (October 11, 2021)
+  FEATURES:
+* `resource/pagerduty_tag`: Added resource to manage Tags ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
+
+* `resource/pagerduty_tag_assignment`: Added resource to manage Tag Assignments ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
+
+* `data_source_pagerduty_tag`: Added data source for Tags ([#402](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/402))
+
+* Update Terraform Plugin SDK to v2 ([#375](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/375))
+
+
+IMPROVEMENTS:
+* `resource/pagerduty_service_integration`: Added validation that ensures an email address is specified for email integrations ([#382](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/382))
+
+* `resource/pagerduty_schedule`: Added validation for `start_time_of_day` format ([#383](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/383))
+
+* `resource/pagerduty_schedule`: Added validation for `start_day_of_week` format ([#385](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/385))
+
+* `resource/pagerduty_schedule`: Added validation that `start_day_of_week` is only set when `weekly_restriction` is set as `restriction.type` ([#386](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/386))
+
+
+* `resource/pagerduty_service`: CustomizeDiff to ensure general urgency rule is not set for an urgency rule of type support hours ([#387](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/387))
+
+* Docs: `resource/pagerduty_rulset_rule`: Update severity order to reflect criticality ([#392](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/392))
+
+* `resource/pagerduty_escalation_policy`: Added validation to ensure `num_loops` stays between `0` and `9` ([#395](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/395))
+
+* `resource/pagerduty_escalation_policy`: Added validation to ensure `escalation_delay_in_minutes` is an int and greater than `0` ([#401](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/401))
+
+* `resource/pagerduty_schedule`: Added validation to `rotation_turn_length_seconds` ([#405](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/405))
+
+
+
+BUG FIXES:
+* Docs: `resource/pagerduty_service`: Corrected `acknowledgement_timeout` to add statement about default being set to 1800.  ([#393](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/393))
+
+* `resource/pagerduty_service` and `resource/pagerduty_service_dependency`: Fix `alert_grouping` and `alert_grouping_timeout` conflicting with `alert_grouping_parameters` ([#377](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/377))
+
+* `resource/pagerduty_service_dependency`: Fix sporadic panic when processing service dependencies ([#376](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/376))
+
+## 1.11.0 (September 9, 2021)
+FEATURES:
+* `resource/pagerduty_slack_connection`: Added resource to manage Slack Connections (aka Slack v2) ([#381](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/381))
+
+BUG FIXES:
+* `resource/pagerduty_service`: Clarified docs surrounding the `scheduled_actions` block on the service resource ([#360](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/360))
+
 ## 1.10.1 (August 16, 2021)
 FEATURES:
 * `data_source_pagerduty_service_integration`: Add new data source for Service Integrations ([#363](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/363))
@@ -39,7 +109,7 @@ BUG FIXES:
 
 IMPROVEMENTS:
 * `resource/pagerduty_team`,`resource/pagerduty_ruleset_rule`,`resource/pagerduty_schedule`,`resource/pagerduty_service_event_rule`: Documentation clarifications, fixes and improvements ([#322](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/322))
-* `resource/pagerduty_team_membership`,`resource/pagerduty_user`: Update user role documenation to add clarity over user vs team roles  ([#325](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/325))
+* `resource/pagerduty_team_membership`,`resource/pagerduty_user`: Update user role documentation to add clarity over user vs team roles  ([#325](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/325))
 * General provider improvement: Update dependencies to use go1.16 ([#326](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/326))
 * General provider improvement: Update release task to use go1.16 ([#333](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/333))
 * `resource/pagerduty_ruleset_rule`: Clarified documentation on the `start_time` of scheduled event rules ([#340](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/340))
@@ -117,7 +187,7 @@ BUG FIXES:
 
 ## 1.7.10 (August 27, 2020)
 IMPROVEMENTS:
-* `resource/resource_pagerduty_schedule`, `resource/resource_pagerduty_escalation_policy` added retry logic to updating schedule and escalation_policy ([#264](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/264)))
+* `resource/resource_pagerduty_schedule`, `resource/resource_pagerduty_escalation_policy` added retry logic to updating schedule and escalation_policy ([#264](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/264))
 
 ## 1.7.4 (July 27, 2020)
 
@@ -154,7 +224,7 @@ FEATURES
 * Update docs/tests to TF 0.12 syntax ([#223](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/223))
 
 BUG FIXES: 
-* testing: udate sweepers ([#220](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/220))
+* testing: update sweepers ([#220](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/220))
 * data_source_priority: adding doc to sidebar nav ([#221](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/221))
 
 ## 1.7.1 (April 29, 2020)
@@ -171,7 +241,7 @@ FEATURES:
 BUG FIXES:
 * resource_pagerduty_service_integration: Fix panic when reading ([#214](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/214))
 * resource_pagerduty_ruleset_rule: Fix Import of catch_all rules ([#205](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/205))
-* resource_pagerduty_ruleset_rule: Fixing mulit-rule creation bug and suppress rule panic ([#211](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/211))
+* resource_pagerduty_ruleset_rule: Fixing multi-rule creation bug and suppress rule panic ([#211](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/211))
 
 ## 1.6.1 (April 09, 2020)
 BUG FIXES:
@@ -188,7 +258,7 @@ BUG FIXES:
 * resource/resource_pagerduty_team_membership: Docs: Fixed Team membership role defaults to manager ([#194](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/194))
 
 IMPROVEMENTS:
-* `resource/resource_pagerduty_service` and `resource/resource_pagerduty_service_integration`:mplement retry logic on read([#191](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/191))
+* `resource/resource_pagerduty_service` and `resource/resource_pagerduty_service_integration`: implement retry logic on read([#191](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/191))
 
 ## 1.5.1 (March 19, 2020)
 
@@ -206,7 +276,7 @@ IMPROVEMENTS:
 
 BUG FIXES:
 
-* data_source_pagerduty_user: Docs: update `team_responder` role thath as been renamed to `observer` ([#179](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/179))
+* data_source_pagerduty_user: Docs: update `team_responder` role that as been renamed to `observer` ([#179](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/179))
 * data_source_pagerduty_vendor: Update vendor id to fix test failures ([#178](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/178))
 
 IMPROVEMENTS:
@@ -369,7 +439,7 @@ BUG FIXES:
 
 * resource/pagerduty_service: Fixing updates for `escalation_policy` ([#7](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/7))
 * resource/pagerduty_schedule: Fix diff issues related to `start`, `rotation_virtual_start`, `end` ([#4](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/4))
-* r/pagerdy_service_integration: Protect against panics on imports ([#16](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/16))
+* r/pagerduty_service_integration: Protect against panics on imports ([#16](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/16))
 
 ## 0.1.0 (June 21, 2017)
 

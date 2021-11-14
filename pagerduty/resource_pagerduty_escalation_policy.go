@@ -5,8 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -30,8 +31,9 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 				Default:  "Managed by Terraform",
 			},
 			"num_loops": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validation.IntBetween(0, 9),
 			},
 			"teams": {
 				Type:     schema.TypeList,
@@ -39,6 +41,7 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				MaxItems: 1,
 			},
 			"rule": {
 				Type:     schema.TypeList,
@@ -50,8 +53,9 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 							Computed: true,
 						},
 						"escalation_delay_in_minutes": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntAtLeast(1),
 						},
 						"target": {
 							Type:     schema.TypeList,
@@ -98,7 +102,7 @@ func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPo
 }
 
 func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	escalationPolicy := buildEscalationPolicyStruct(d)
 
@@ -115,7 +119,7 @@ func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading PagerDuty escalation policy: %s", d.Id())
 
@@ -145,7 +149,7 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	escalationPolicy := buildEscalationPolicyStruct(d)
 
@@ -166,7 +170,7 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 

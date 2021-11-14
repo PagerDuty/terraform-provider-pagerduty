@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -42,7 +42,7 @@ func buildAddonStruct(d *schema.ResourceData) *pagerduty.Addon {
 }
 
 func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		addon, _, err := client.Addons.Get(d.Id())
 		if err != nil {
@@ -64,7 +64,7 @@ func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, errCallback f
 }
 
 func resourcePagerDutyAddonCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	addon := buildAddonStruct(d)
 
@@ -86,7 +86,7 @@ func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	addon := buildAddonStruct(d)
 
@@ -100,7 +100,7 @@ func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourcePagerDutyAddonDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Deleting PagerDuty add-on %s", d.Id())
 

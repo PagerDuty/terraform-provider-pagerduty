@@ -79,6 +79,7 @@ func Provider() *schema.Provider {
 			"pagerduty_tag_assignment":         resourcePagerDutyTagAssignment(),
 			"pagerduty_service_event_rule":     resourcePagerDutyServiceEventRule(),
 			"pagerduty_slack_connection":       resourcePagerDutySlackConnection(),
+			"pagerduty_webhook_subscription":   resourcePagerDutyWebhookSubscription(),
 		},
 	}
 

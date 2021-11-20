@@ -96,7 +96,7 @@ func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 

@@ -78,7 +78,7 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 	})
 }
 func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	userID := d.Get("user_id").(string)
 	teamID := d.Get("team_id").(string)

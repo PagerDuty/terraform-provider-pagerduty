@@ -159,7 +159,7 @@ func fetchPagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	extension := buildExtensionServiceNowStruct(d)
 

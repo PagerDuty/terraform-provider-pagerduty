@@ -101,7 +101,7 @@ func flattenTeam(v *pagerduty.RulesetObject) []interface{} {
 }
 
 func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		ruleset, _, err := client.Rulesets.Get(d.Id())
 		if err != nil {

@@ -351,7 +351,7 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 }
 
 func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
 		if err != nil {

@@ -100,7 +100,10 @@ func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta in
 
 	userID := d.Get("user_id").(string)
 
-	notificationRule := buildUserNotificationRuleStruct(d)
+	notificationRule, err := buildUserNotificationRuleStruct(d)
+	if err != nil {
+		return err
+	}
 
 	resp, _, err := client.Users.CreateNotificationRule(userID, notificationRule)
 	if err != nil {

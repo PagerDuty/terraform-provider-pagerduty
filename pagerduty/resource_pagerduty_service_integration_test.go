@@ -101,6 +101,15 @@ func TestAccPagerDutyServiceIntegrationGeneric_Basic(t *testing.T) {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
+			{
+				Config: testAccCheckPagerDutyServiceIntegrationGenericEmailWithKnownAfterApply(username, email, escalationPolicy, service, serviceIntegration, "pagerduty.com"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_integration.foo", "type", "generic_email_inbound_integration"),
+				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -384,4 +393,54 @@ resource "pagerduty_service_integration" "foo" {
   integration_email = "%s"
 }
 `, username, email, escalationPolicy, service, serviceIntegration, integrationEmail)
+}
+
+func testAccCheckPagerDutyServiceIntegrationGenericEmailWithKnownAfterApply(username, email, escalationPolicy, service, serviceIntegration, integrationEmailDomain string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "bar"
+  num_loops   = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%s"
+  description             = "bar"
+  auto_resolve_timeout    = 3600
+  acknowledgement_timeout = 3600
+  escalation_policy       = pagerduty_escalation_policy.foo.id
+
+  incident_urgency_rule {
+    type    = "constant"
+    urgency = "high"
+  }
+}
+
+resource "pagerduty_service_integration" "foo" {
+  name              = "%s"
+  service           = pagerduty_service.foo.id
+  type              = "generic_email_inbound_integration"
+  # Instead of 'pagerduty_escalation_policy.foo.id', people could use
+  # 'random_id.foo.hex' which has the same effect.
+  integration_email = "service-${pagerduty_escalation_policy.foo.id}@%s"
+}
+`, username, email, escalationPolicy, service, serviceIntegration, integrationEmailDomain)
 }

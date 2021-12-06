@@ -71,6 +71,30 @@ func buildUserNotificationRuleStruct(d *schema.ResourceData) (*pagerduty.Notific
 	return notificationRule, nil
 }
 
+func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+	client, _ := meta.(*Config).Client()
+	userID := d.Get("user_id").(string)
+
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
+		if err != nil {
+			errResp := errCallback(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
+
+			return nil
+		}
+
+		d.Set("urgency", resp.Urgency)
+		d.Set("start_delay_in_minutes", resp.StartDelayInMinutes)
+		d.Set("contact_method", flattenContactMethod(resp.ContactMethod))
+
+		return nil
+	})
+}
+
 func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta interface{}) error {
 	client, _ := meta.(*Config).Client()
 
@@ -88,32 +112,11 @@ func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta in
 
 	d.SetId(resp.ID)
 
-	return resourcePagerDutyUserNotificationRuleRead(d, meta)
+	return fetchPagerDutyUserNotificationRule(d, meta, genError)
 }
 
 func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
-
-	userID := d.Get("user_id").(string)
-
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
-		if err != nil {
-			errResp := handleNotFoundError(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
-			}
-
-			return nil
-		}
-
-		d.Set("urgency", resp.Urgency)
-		d.Set("start_delay_in_minutes", resp.StartDelayInMinutes)
-		d.Set("contact_method", flattenContactMethod(resp.ContactMethod))
-
-		return nil
-	})
+	return fetchPagerDutyUserNotificationRule(d, meta, handleNotFoundError)
 }
 
 func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta interface{}) error {

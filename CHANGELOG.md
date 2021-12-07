@@ -1,3 +1,16 @@
+## 2.2.0 (December 6, 2021)
+FEATURES:
+* `resource/pagerduty_webhook_subscriptions`: Added resource to support Webhooks v3 ([#420](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/420))
+* `resource/pagerduty_business_service_subscriber`: Added resource to support Business Service Subscribers ([#414](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/414))
+
+IMPROVEMENTS:
+* `pagerduty/provider`: Added `api_url_override` to support routing PagerDuty API traffic through a proxy ([#366](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/366))
+* `pagerduty/provider`: Adding various fetch functions to fix race conditions with PagerDuty API ([#380](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/380))
+
+BUG FIXES:
+* `data_source/pagerduty_vendor`: Correct example in docs ([#417](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/417))
+* Documentation fixes ([#418](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/418))
+
 ## 2.1.1 (October 29, 2021)
 BUG FIXES:
 * `resource/pagerduty_user`: Fixed caching ([#413](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/413))

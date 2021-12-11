@@ -1,3 +1,7 @@
+## 2.2.1 (December 10, 2021)
+BUG FIX:
+* `resource/pagerduty_user`: Fix in go library for user object ([ref](https://github.com/heimweh/go-pagerduty/pull/74))
+
 ## 2.2.0 (December 6, 2021)
 FEATURES:
 * `resource/pagerduty_webhook_subscriptions`: Added resource to support Webhooks v3 ([#420](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/420))

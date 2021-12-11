@@ -312,8 +312,9 @@ func (s *UserService) GetContactMethod(userID string, contactMethodID string) (*
 	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
 	v := new(ContactMethodPayload)
 
-	if err := cacheGetContactMethod(contactMethodID, v); err == nil {
-		return v.ContactMethod, nil, nil
+	cv := new(ContactMethod)
+	if err := cacheGetContactMethod(contactMethodID, cv); err == nil {
+		return cv, nil, nil
 	}
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
@@ -377,8 +378,9 @@ func (s *UserService) GetNotificationRule(userID string, ruleID string) (*Notifi
 	u := fmt.Sprintf("/users/%s/notification_rules/%s", userID, ruleID)
 	v := new(NotificationRulePayload)
 
-	if err := cacheGetNotificationRule(ruleID, v); err == nil {
-		return v.NotificationRule, nil, nil
+	cv := new(NotificationRule)
+	if err := cacheGetNotificationRule(ruleID, cv); err == nil {
+		return cv, nil, nil
 	}
 
 	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)

@@ -16,6 +16,14 @@ Use the navigation to the left to read about the available resources.
 
 ```hcl
 # Configure the PagerDuty provider
+terraform {
+  required_providers {
+    pagerduty = {
+      source  = "pagerduty/pagerduty"
+    }
+  }
+}
+
 provider "pagerduty" {
   token = var.pagerduty_token
 }

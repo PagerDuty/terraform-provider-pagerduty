@@ -14,6 +14,9 @@ type Config struct {
 	// The PagerDuty API URL
 	ApiUrl string
 
+	// Override default PagerDuty API URL
+	ApiUrlOverride string
+
 	// The PagerDuty APP URL
 	AppUrl string
 
@@ -48,8 +51,13 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	httpClient = http.DefaultClient
 	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
+	var apiUrl = c.ApiUrl
+	if c.ApiUrlOverride != "" {
+		apiUrl = c.ApiUrlOverride
+	}
+
 	config := &pagerduty.Config{
-		BaseURL:    c.ApiUrl,
+		BaseURL:    apiUrl,
 		Debug:      logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
 		Token:      c.Token,

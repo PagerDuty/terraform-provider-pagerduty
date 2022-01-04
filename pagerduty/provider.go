@@ -37,6 +37,12 @@ func Provider() *schema.Provider {
 				Optional: true,
 				Default:  "",
 			},
+
+			"api_url_override": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -105,14 +111,17 @@ func isErrCode(err error, code int) bool {
 	return false
 }
 
+func genError(err error, d *schema.ResourceData) error {
+	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
+}
+
 func handleNotFoundError(err error, d *schema.ResourceData) error {
 	if isErrCode(err, 404) {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")
 		return nil
 	}
-
-	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
+	return genError(err, d)
 }
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
@@ -131,6 +140,7 @@ func providerConfigure(data *schema.ResourceData, terraformVersion string) (inte
 		Token:               data.Get("token").(string),
 		UserToken:           data.Get("user_token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
+		ApiUrlOverride:      data.Get("api_url_override").(string),
 	}
 
 	log.Println("[INFO] Initializing PagerDuty client")

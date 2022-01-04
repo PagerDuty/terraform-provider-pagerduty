@@ -40,6 +40,19 @@ func TestConfigCustomApiUrl(t *testing.T) {
 	}
 }
 
+// Test config with a custom ApiUrl override
+func TestConfigCustomApiUrlOverride(t *testing.T) {
+	config := Config{
+		Token:               "foo",
+		ApiUrlOverride:      "https://api.domain-override.tld",
+		SkipCredsValidation: true,
+	}
+
+	if _, err := config.Client(); err != nil {
+		t.Fatalf("error: expected the client to not fail: %v", err)
+	}
+}
+
 // Test config with a custom AppUrl
 func TestConfigCustomAppUrl(t *testing.T) {
 	config := Config{

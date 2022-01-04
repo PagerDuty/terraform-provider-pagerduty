@@ -141,6 +141,7 @@ github.com/golang/mock v1.3.1/go.mod h1:sBzyDLLjw3U8JLTeZvSv8jJB+tU5PVekmnlKIyFU
 github.com/golang/mock v1.4.0/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt3cw=
 github.com/golang/mock v1.4.1/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt3cw=
 github.com/golang/mock v1.4.3/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt3cw=
+github.com/golang/mock v1.4.4 h1:l75CXGRSwbaYNpl/Z2X1XIIAMSCquvXgpVZDhwEIJsc=
 github.com/golang/mock v1.4.4/go.mod h1:l3mdAwkq5BuhzHwde/uurv3sEJeZMXNpwsxVWU71h+4=
 github.com/golang/protobuf v1.1.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -249,6 +250,8 @@ github.com/heimweh/go-pagerduty v0.0.0-20211110145933-0ab24da93a91 h1:vqBxGv/CFA
 github.com/heimweh/go-pagerduty v0.0.0-20211110145933-0ab24da93a91/go.mod h1:JtJGtgN0y9KOCaqFMZFaBCWskpO/KK3Ro9TwjP9ss6w=
 github.com/heimweh/go-pagerduty v0.0.0-20211119212911-31ef1eea0d0f h1:/sgh3L7adJkcpj87qfMjAsr4mDxlIJrbGIGbS1JxxtQ=
 github.com/heimweh/go-pagerduty v0.0.0-20211119212911-31ef1eea0d0f/go.mod h1:JtJGtgN0y9KOCaqFMZFaBCWskpO/KK3Ro9TwjP9ss6w=
+github.com/heimweh/go-pagerduty v0.0.0-20211210233744-b65de43109c1 h1:49zl3n/g+ff/7/CpxiuqnenyxId5iAjbhgoE9iDHULc=
+github.com/heimweh/go-pagerduty v0.0.0-20211210233744-b65de43109c1/go.mod h1:JtJGtgN0y9KOCaqFMZFaBCWskpO/KK3Ro9TwjP9ss6w=
 github.com/huandu/xstrings v1.3.2/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=

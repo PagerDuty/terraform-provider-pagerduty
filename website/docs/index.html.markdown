@@ -47,3 +47,4 @@ The following arguments are supported:
 * `user_token` - (Optional) The v2 user level authorization token. It can also be sourced from the PAGERDUTY_USER_TOKEN environment variable. See [API Documentation](https://developer.pagerduty.com/docs/rest-api-v2/authentication/) for more information.
 * `skip_credentials_validation` - (Optional) Skip validation of the token against the PagerDuty API.
 * `service_region` - (Optional) The PagerDuty service region to use. Default to empty (uses US region). Supported value: `eu`.
+* `api_url_override` - (Optional) It can be used to set a custom proxy endpoint as PagerDuty client api url overriding `service_region` setup.

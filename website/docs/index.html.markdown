@@ -8,7 +8,7 @@ description: |-
 
 # PagerDuty Provider
 
-[PagerDuty](https://www.pagerduty.com/) is an alarm aggregation and dispatching service for system administrators and support teams. It collects alerts from your monitoring tools, gives you an overall view of all of your monitoring alarms, and alerts an on duty engineer if there’s a problem.
+[PagerDuty](https://www.pagerduty.com/) is an incident management platform that provides reliable notifications, automatic escalations, on-call scheduling,and other functionality to help teams detect and fix infrastructure problems quickly.
 
 Use the navigation to the left to read about the available resources.
 

@@ -361,6 +361,9 @@ resource "pagerduty_service_event_rule" "foo" {
 resource "pagerduty_service_event_rule" "bar" {
 	service = pagerduty_service.foo.id
 	position = 1
+	depends_on = [
+		pagerduty_service_event_rule.foo
+	]
 	disabled = true
 	conditions {
 		operator = "and"
@@ -382,6 +385,9 @@ resource "pagerduty_service_event_rule" "baz" {
 	service = pagerduty_service.foo.id
 	position = 2
 	disabled = true
+	depends_on = [
+		pagerduty_service_event_rule.bar
+	]
 	conditions {
 		operator = "and"
 		subconditions {

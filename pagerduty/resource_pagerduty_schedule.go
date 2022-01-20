@@ -143,8 +143,9 @@ func resourcePagerDutySchedule() *schema.Resource {
 									},
 
 									"duration_seconds": {
-										Type:     schema.TypeInt,
-										Required: true,
+										Type:         schema.TypeInt,
+										Required:     true,
+										ValidateFunc: validation.IntBetween(1, 7*24*3600-1),
 									},
 								},
 							},

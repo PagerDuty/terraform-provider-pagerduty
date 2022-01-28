@@ -19,7 +19,7 @@ func dataSourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"type": {
+			"dependency_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -68,7 +68,7 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
-		d.Set("type", found.Type)
+		d.Set("dependency_type", found.Type)
 
 		return nil
 	})

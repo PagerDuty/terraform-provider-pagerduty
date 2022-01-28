@@ -57,6 +57,10 @@ func resourcePagerDutyBusinessService() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"dependency_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -130,6 +134,7 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 			d.Set("html_url", businessService.HTMLUrl)
 			d.Set("description", businessService.Description)
 			d.Set("type", businessService.Type)
+			d.Set("dependency_type", businessService.Type)
 			d.Set("point_of_contact", businessService.PointOfContact)
 			d.Set("summary", businessService.Summary)
 			d.Set("self", businessService.Self)

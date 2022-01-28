@@ -27,5 +27,6 @@ The following arguments are supported:
 ## Attributes Reference
 * `id` - The ID of the found business service.
 * `name` - The short name of the found business service.
+* `dependency_type` - The type for passing to a service dependency.
 
 [1]: https://api-reference.pagerduty.com/#!/Business_Services/get_business_services

@@ -154,6 +154,7 @@ The following attributes are exported:
   * `created_at`- Creation timestamp of the service.
   * `status`- The status of the service.
   * `html_url`- URL at which the entity is uniquely displayed in the Web app.
+  * `dependency_type` - The type for passing to a service dependency.
 
 ## Import
 

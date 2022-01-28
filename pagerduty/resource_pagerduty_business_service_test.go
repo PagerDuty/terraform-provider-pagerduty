@@ -72,7 +72,7 @@ func TestAccPagerDutyBusinessService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"pagerduty_business_service.foo", "self"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_business_service.foo", "dependency_type", pointOfContact),
+						"pagerduty_business_service.foo", "dependency_type", "business_service"),
 				),
 			},
 			{

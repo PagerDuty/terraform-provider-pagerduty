@@ -18,11 +18,11 @@ resource "pagerduty_service_dependency" "foo" {
 	dependency {
 		dependent_service {
 			id = pagerduty_business_service.foo.id
-			type = pagerduty_business_service.foo.dependency_type
+			type = pagerduty_business_service.foo.type
 		}
 		supporting_service {
 			id = pagerduty_service.foo.id
-			type = pagerduty_service.foo.dependency_type
+			type = pagerduty_service.foo.type
 		}
 	}
 }
@@ -31,11 +31,11 @@ resource "pagerduty_service_dependency" "bar" {
 	dependency {
 		dependent_service {
 			id = pagerduty_business_service.foo.id
-			type = pagerduty_business_service.foo.dependency_type
+			type = pagerduty_business_service.foo.type
 		}
 		supporting_service {
 			id = pagerduty_service.two.id
-			type = pagerduty_service.two.dependency_type
+			type = pagerduty_service.two.type
 		}
 	}
 }

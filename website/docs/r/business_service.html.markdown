@@ -30,7 +30,7 @@ The following arguments are supported:
   * `description` - (Optional) A human-friendly description of the service.
     If not set, a placeholder of "Managed by Terraform" will be set.
   * `point_of_contact` - (Optional) The owner of the business service. 
-  * `type` - (Optional) Default value is `business_service`. Can also be set as `business_service_reference`.
+  * `type` - **Deprecated** (Optional) Default (and only supported) value is `business_service`.
   * `team` - (Optional) ID of the team that owns the business service.
   
 ## Attributes Reference
@@ -41,7 +41,6 @@ The following attributes are exported:
   * `summary`- A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to `name`, though it is not intended to be an identifier.
   * `html_url`- A URL at which the entity is uniquely displayed in the Web app.
   * `self`- The API show URL at which the object is accessible.
-  * `dependency_type` - The type for passing to a service dependency.
 
 ## Import
 

@@ -269,7 +269,7 @@ func resourcePagerDutyService() *schema.Resource {
 					},
 				},
 			},
-			"dependency_type": {
+			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -438,7 +438,7 @@ func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) er
 
 func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	d.Set("name", service.Name)
-	d.Set("dependency_type", service.Type)
+	d.Set("type", service.Type)
 	d.Set("html_url", service.HTMLURL)
 	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)

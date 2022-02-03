@@ -103,19 +103,32 @@ func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPo
 
 func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interface{}) error {
 	client, _ := meta.(*Config).Client()
+	var readErr error
 
 	escalationPolicy := buildEscalationPolicyStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty escalation policy: %s", escalationPolicy.Name)
 
-	escalationPolicy, _, err := client.EscalationPolicies.Create(escalationPolicy)
-	if err != nil {
-		return err
-	}
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+		escalationPolicy, _, err := client.EscalationPolicies.Create(escalationPolicy)
+		if err != nil {
+			if isErrCode(err, 429) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
+				return resource.RetryableError(err)
+			}
 
-	d.SetId(escalationPolicy.ID)
+			return resource.NonRetryableError(err)
+		}
 
-	return resourcePagerDutyEscalationPolicyRead(d, meta)
+		d.SetId(escalationPolicy.ID)
+		readErr = resourcePagerDutyEscalationPolicyRead(d, meta)
+		if readErr != nil {
+			return resource.NonRetryableError(readErr)
+		}
+		return nil
+	})
 }
 
 func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interface{}) error {
@@ -125,7 +138,7 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 
 	o := &pagerduty.GetEscalationPolicyOptions{}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 		if err != nil {
 			time.Sleep(2 * time.Second)
@@ -155,7 +168,7 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Updating PagerDuty escalation policy: %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
 			return resource.RetryableError(err)
 		}

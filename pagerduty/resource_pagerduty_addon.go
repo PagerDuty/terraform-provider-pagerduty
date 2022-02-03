@@ -43,7 +43,7 @@ func buildAddonStruct(d *schema.ResourceData) *pagerduty.Addon {
 
 func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client, _ := meta.(*Config).Client()
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		addon, _, err := client.Addons.Get(d.Id())
 		if err != nil {
 			log.Printf("[WARN] Service read error")

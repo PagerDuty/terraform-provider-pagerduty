@@ -56,7 +56,7 @@ func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, me
 	client, _ := meta.(*Config).Client()
 	businessServiceId := d.Get("business_service_id").(string)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 
 		businessServiceSubscriber, err := buildBusinessServiceSubscriberStruct(d)
 		if err != nil {
@@ -89,7 +89,7 @@ func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Reading PagerDuty business service %s subscriber %s type %s", businessServiceId, businessServiceSubscriber.ID, businessServiceSubscriber.Type)
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if subscriberResponse, _, err := client.BusinessServiceSubscribers.List(businessServiceId); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)

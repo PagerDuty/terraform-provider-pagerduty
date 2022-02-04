@@ -3,13 +3,11 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -43,14 +41,27 @@ func resourcePagerDutyUserNotificationRule() *schema.Resource {
 			},
 			"contact_method": {
 				Required: true,
-				Type:     schema.TypeMap,
-				// Using the `Elem` block to define specific keys for the map is currently not possible.
-				// The workaround described in SDK documentation is to confirm the required keys are set when expanding the Map object inside the resource code.
-				// See https://www.terraform.io/docs/extend/schemas/schema-types.html#typemap
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				MinItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validateValueFunc([]string{
+								"email_contact_method",
+								"phone_contact_method",
+								"push_notification_contact_method",
+								"sms_contact_method",
+							}),
+						},
+					},
 				},
-				ValidateDiagFunc: validation.MapKeyMatch(regexp.MustCompile("(id|type)"), "`contact_method` must only have `id` and `types` attributes"),
 			},
 		},
 	}
@@ -176,7 +187,7 @@ func resourcePagerDutyUserNotificationRuleImport(d *schema.ResourceData, meta in
 }
 
 func expandContactMethod(v interface{}) (*pagerduty.ContactMethodReference, error) {
-	cm := v.(map[string]interface{})
+	cm := v.([]interface{})[0].(map[string]interface{})
 
 	if _, ok := cm["id"]; !ok {
 		return nil, fmt.Errorf("the `id` attribute of `contact_method` is required")
@@ -204,12 +215,12 @@ func expandContactMethod(v interface{}) (*pagerduty.ContactMethodReference, erro
 	return contactMethod, nil
 }
 
-func flattenContactMethod(v *pagerduty.ContactMethodReference) map[string]interface{} {
+func flattenContactMethod(v *pagerduty.ContactMethodReference) []interface{} {
 
 	var contactMethod = map[string]interface{}{
 		"id":   v.ID,
 		"type": v.Type,
 	}
 
-	return contactMethod
+	return []interface{}{contactMethod}
 }

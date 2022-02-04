@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
 
 func dataSourcePagerDutyUserContactMethod() *schema.Resource {

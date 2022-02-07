@@ -64,7 +64,7 @@ Escalation rules (`rule`) supports the following:
 
 Targets (`target`) supports the following:
 
-  * `type` - (Optional) Can be `user`, `schedule`, `user_reference` or `schedule_reference`. Defaults to `user_reference`. For multiple users as example, repeat the target.
+  * `type` - (Optional) Can be `user_reference` or `schedule_reference`. Defaults to `user_reference`. For multiple users as example, repeat the target.
   * `id` - (Required) A target ID
 
 ## Attributes Reference

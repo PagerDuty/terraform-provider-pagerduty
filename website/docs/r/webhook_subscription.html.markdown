@@ -77,6 +77,7 @@ The following arguments are supported:
 * `temporarily_disabled` - (Required) Whether this webhook subscription is temporarily disabled. Becomes true if the delivery method URL is repeatedly rejected by the server.
 * `type` - (Required) Indicates the type of the delivery method. Allowed and default value: `http_delivery_method`.
 * `url` - (Required) The destination URL for webhook delivery.
+* `custom_headers` - (Optional) The custom_headers of a webhook subscription define any optional headers that will be passed along with the payload to the destination URL.
 
 ### Webhook filter (`filter`) supports the following:
 

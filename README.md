@@ -1,8 +1,8 @@
 Terraform Provider for PagerDuty
 ================================
 
-- Website: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest
-- Documentation: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs
+- Website: https://registry.terraform.io/providers/nordcloud/pagerduty/latest
+- Documentation: https://registry.terraform.io/providers/nordcloud/pagerduty/latest/docs
 
 [PagerDuty](https://www.pagerduty.com/) is an alarm aggregation and dispatching service for system administrators and support teams. It collects alerts from your monitoring tools, gives you an overall view of all of your monitoring alarms, and alerts an on duty engineer if there’s a problem. The Terraform Pagerduty provider is a plugin for Terraform that allows for the management of PagerDuty resources using HCL (HashiCorp Configuration Language).
 

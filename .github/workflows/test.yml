@@ -5,7 +5,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
@@ -14,7 +14,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.17'
+          go-version: '1.17.6'
 
       - name: Install dependencies
         run: go mod vendor

@@ -30,7 +30,7 @@ func dataSourcePagerDutyEscalationPolicies() *schema.Resource {
 }
 
 func dataSourcePagerDutyEscalationPoliciesRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading all PagerDuty escalation policies")
 

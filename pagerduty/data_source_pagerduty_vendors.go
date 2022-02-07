@@ -35,7 +35,7 @@ func dataSourcePagerDutyVendors() *schema.Resource {
 }
 
 func dataSourcePagerDutyVendorsRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
+	client, _ := meta.(*Config).Client()
 
 	log.Printf("[INFO] Reading all PagerDuty vendors")
 

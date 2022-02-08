@@ -63,13 +63,16 @@ func buildMaintenanceWindowStruct(d *schema.ResourceData) *pagerduty.Maintenance
 }
 
 func resourcePagerDutyMaintenanceWindowCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	window := buildMaintenanceWindowStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty maintenance window")
 
-	window, _, err := client.MaintenanceWindows.Create(window)
+	window, _, err = client.MaintenanceWindows.Create(window)
 	if err != nil {
 		return err
 	}
@@ -80,7 +83,10 @@ func resourcePagerDutyMaintenanceWindowCreate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty maintenance window %s", d.Id())
 
@@ -109,7 +115,10 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutyMaintenanceWindowUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	window := buildMaintenanceWindowStruct(d)
 
@@ -123,7 +132,10 @@ func resourcePagerDutyMaintenanceWindowUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyMaintenanceWindowDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty maintenance window %s", d.Id())
 

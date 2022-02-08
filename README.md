@@ -20,14 +20,14 @@ Building The Provider
 Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-pagerduty`
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-pagerduty
+$ mkdir -p $GOPATH/src/github.com/PagerDuty; cd $GOPATH/src/github.com/PagerDuty
+$ git clone git@github.com:PagerDuty/terraform-provider-pagerduty
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-pagerduty
+$ cd $GOPATH/src/github.com/PagerDuty/terraform-provider-pagerduty
 $ make build
 ```
 

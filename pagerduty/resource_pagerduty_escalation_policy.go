@@ -66,6 +66,10 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 										Default:  "user_reference",
+										ValidateFunc: validateValueFunc([]string{
+											"user_reference",
+											"schedule_reference",
+										}),
 									},
 									"id": {
 										Type:     schema.TypeString,

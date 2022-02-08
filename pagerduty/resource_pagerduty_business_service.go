@@ -41,12 +41,12 @@ func resourcePagerDutyBusinessService() *schema.Resource {
 				Computed: true,
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "business_service",
+				Type:       schema.TypeString,
+				Optional:   true,
+				Default:    "business_service",
+				Deprecated: "This will change to a computed resource in the next major release.",
 				ValidateFunc: validateValueFunc([]string{
 					"business_service",
-					"business_service_reference",
 				}),
 			},
 			"point_of_contact": {

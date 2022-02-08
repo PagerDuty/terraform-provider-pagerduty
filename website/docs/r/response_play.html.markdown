@@ -91,7 +91,7 @@ The following arguments are supported:
 * `escalation_rule` - The escalation rules
   * `escalation_delay_in_minutes` - The number of minutes before an unacknowledged incident escalates away from this rule.
   * `target` - The targets an incident should be assigned to upon reaching this rule.
-    * `type` - Type of object of the target. Supported types are `user`, `schedule`, `user_reference`, `schedule_reference`.
+    * `type` - Type of object of the target. Supported types are `user_reference`, `schedule_reference`.
 * `service` - There can be multiple services associated with a policy.
 * `team` - (Optional) Teams associated with the policy. Account must have the `teams` ability to use this parameter. There can be multiple teams associated with a policy.
 

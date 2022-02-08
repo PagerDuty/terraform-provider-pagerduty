@@ -30,7 +30,7 @@ The following arguments are supported:
   * `description` - (Optional) A human-friendly description of the service.
     If not set, a placeholder of "Managed by Terraform" will be set.
   * `point_of_contact` - (Optional) The owner of the business service. 
-  * `type` - (Optional) Default value is `business_service`. Can also be set as `business_service_reference`.
+  * `type` - **Deprecated** (Optional) Default (and only supported) value is `business_service`.
   * `team` - (Optional) ID of the team that owns the business service.
   
 ## Attributes Reference

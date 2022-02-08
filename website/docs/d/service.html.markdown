@@ -39,5 +39,6 @@ The following arguments are supported:
 
 * `id` - The ID of the found service.
 * `name` - The short name of the found service.
+* `type` - The type of object. The value returned will be `service`. Can be used for passing to a service dependency.
 
 [1]: https://api-reference.pagerduty.com/#!/Services/get_services

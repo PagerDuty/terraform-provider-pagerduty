@@ -295,7 +295,8 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 				if err != nil {
 					return err
 				}
-				o.End = end.String()
+				endStr := end.String()
+				o.End = &endStr
 				schedule.ScheduleLayers = append(schedule.ScheduleLayers, o)
 			}
 		}
@@ -360,11 +361,20 @@ func expandScheduleLayers(v interface{}) ([]*pagerduty.ScheduleLayer, error) {
 			return nil, err
 		}
 
+		// If End is null, it means the layer does not end. The type of layer.*.end is schema.TypeString.
+		// A client should send a payload including `"end": null` to unset the end of layer.
+		// The condition below uses "" because the zero value of schema.TypeString is an empty string.
+		var end *string
+		if rsl["end"].(string) != "" {
+			e := rsl["end"].(string)
+			end = &e
+		}
+
 		scheduleLayer := &pagerduty.ScheduleLayer{
 			ID:                        rsl["id"].(string),
 			Name:                      rsl["name"].(string),
 			Start:                     rsl["start"].(string),
-			End:                       rsl["end"].(string),
+			End:                       end,
 			RotationVirtualStart:      rvs.String(),
 			RotationTurnLengthSeconds: rsl["rotation_turn_length_seconds"].(int),
 		}
@@ -405,8 +415,8 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		// A schedule layer can never be removed but it can be ended.
 		// Here we check each layer and if it has been ended we don't read it back
 		// because it's not relevant anymore.
-		if sl.End != "" {
-			end, err := timeToUTC(sl.End)
+		if *sl.End != "" {
+			end, err := timeToUTC(*sl.End)
 			if err != nil {
 				return nil, err
 			}
@@ -418,7 +428,7 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		scheduleLayer := map[string]interface{}{
 			"id":                           sl.ID,
 			"name":                         sl.Name,
-			"end":                          sl.End,
+			"end":                          *sl.End,
 			"start":                        sl.Start,
 			"rotation_virtual_start":       sl.RotationVirtualStart,
 			"rotation_turn_length_seconds": sl.RotationTurnLengthSeconds,

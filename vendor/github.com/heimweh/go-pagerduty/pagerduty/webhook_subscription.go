@@ -18,9 +18,15 @@ type WebhookSubscription struct {
 
 // DeliveryMethod represents a webhook delivery method
 type DeliveryMethod struct {
-	TemporarilyDisabled bool   `json:"temporarily_disabled,omitempty"`
-	Type                string `json:"type,omitempty"`
-	URL                 string `json:"url,omitempty"`
+	TemporarilyDisabled bool             `json:"temporarily_disabled,omitempty"`
+	Type                string           `json:"type,omitempty"`
+	URL                 string           `json:"url,omitempty"`
+	CustomHeaders       []*CustomHeaders `json:"custom_headers,omitempty"`
+}
+
+type CustomHeaders struct {
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 // Filter represents a webhook subscription filter

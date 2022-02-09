@@ -124,7 +124,11 @@ github.com/hashicorp/terraform-registry-address
 github.com/hashicorp/terraform-svchost
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 github.com/hashicorp/yamux
+<<<<<<< HEAD
 # github.com/heimweh/go-pagerduty v0.0.0-20220527195341-4e587aa9b58e
+=======
+# github.com/heimweh/go-pagerduty v0.0.0-20220208022815-41d374b4d21b
+>>>>>>> a246bf7 (Updated the dependancy hash and example usage)
 ## explicit
 github.com/heimweh/go-pagerduty/pagerduty
 # github.com/klauspost/compress v1.11.2

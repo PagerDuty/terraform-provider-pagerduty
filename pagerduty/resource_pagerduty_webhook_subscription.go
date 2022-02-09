@@ -210,9 +210,9 @@ func expandDeliveryMethod(v interface{}) pagerduty.DeliveryMethod {
 	var method pagerduty.DeliveryMethod
 
 	// convert interface to []*pagerduty.CustomHeaders
-	var list []*pagerduty.CustomHeaders
+	var headers []*pagerduty.CustomHeaders
 	for _, raw := range dmMap["custom_headers"].([]interface{}) {
-		list = append(list, &pagerduty.CustomHeaders{
+		headers = append(headers, &pagerduty.CustomHeaders{
 			Name:  raw.(map[string]interface{})["name"].(string),
 			Value: raw.(map[string]interface{})["value"].(string),
 		})

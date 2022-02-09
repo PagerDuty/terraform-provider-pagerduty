@@ -124,7 +124,11 @@ func buildServiceIntegrationStruct(d *schema.ResourceData) (*pagerduty.Integrati
 }
 
 func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	service := d.Get("service").(string)
 
 	o := &pagerduty.GetIntegrationOptions{}
@@ -170,7 +174,10 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 }
 
 func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	serviceIntegration, err := buildServiceIntegrationStruct(d)
 	if err != nil {
@@ -208,7 +215,10 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	serviceIntegration, err := buildServiceIntegrationStruct(d)
 	if err != nil {
@@ -227,7 +237,10 @@ func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta inte
 }
 
 func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	service := d.Get("service").(string)
 
@@ -243,7 +256,10 @@ func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta inte
 }
 
 func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	ids := strings.Split(d.Id(), ".")
 
@@ -252,7 +268,7 @@ func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta inte
 	}
 	sid, id := ids[0], ids[1]
 
-	_, _, err := client.Services.GetIntegration(sid, id, nil)
+	_, _, err = client.Services.GetIntegration(sid, id, nil)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

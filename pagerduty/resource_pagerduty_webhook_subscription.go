@@ -223,7 +223,7 @@ func expandDeliveryMethod(v interface{}) pagerduty.DeliveryMethod {
 		TemporarilyDisabled: dmMap["temporarily_disabled"].(bool),
 		Type:                dmMap["type"].(string),
 		URL:                 dmMap["url"].(string),
-		CustomHeaders: 		 list,
+		CustomHeaders: 		 headers,
 	}
 	return method
 }

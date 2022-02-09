@@ -94,7 +94,7 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 
 	config := &pagerduty.Config{
 		BaseURL:    c.AppUrl,
-		Debug:      logging.IsDebugOrHigher(),
+		Debug:      true, // Temporarily forcefully enabled : logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
 		Token:      c.UserToken,
 		UserAgent:  c.UserAgent,

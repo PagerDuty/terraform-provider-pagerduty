@@ -46,10 +46,10 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 		Query: searchName,
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Services.List(o)
-		if err != nil {
-			return handleError(err)
+		if checkErr := handleGenericErrors(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		var found *pagerduty.Service
@@ -71,8 +71,8 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 		for _, integration := range found.Integrations {
 			if strings.EqualFold(integration.Summary, integrationSummary) {
 				integrationDetails, _, err := client.Services.GetIntegration(found.ID, integration.ID, &pagerduty.GetIntegrationOptions{})
-				if err != nil {
-					return handleError(err)
+				if checkErr := handleGenericErrors(err, d); checkErr != nil {
+					return checkErr
 				}
 				d.SetId(integration.ID)
 				d.Set("service_name", found.Name)
@@ -86,13 +86,4 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 			fmt.Errorf("unable to locate any integration of type %s on service %s", integrationSummary, searchName),
 		)
 	})
-}
-
-func handleError(err error) *resource.RetryError {
-	if isErrCode(err, 429) {
-		time.Sleep(30 * time.Second)
-		return resource.RetryableError(err)
-	}
-
-	return resource.NonRetryableError(err)
 }

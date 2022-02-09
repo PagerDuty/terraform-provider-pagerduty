@@ -45,20 +45,14 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 	}
 }
 
-func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
 	client, _ := meta.(*Config).Client()
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
-		if err != nil {
-			errResp := errCallback(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
-			}
-
-			return nil
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		for _, member := range resp.Members {
@@ -86,7 +80,7 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Adding user: %s to team: %s with role: %s", userID, teamID, role)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
 				return resource.RetryableError(err)
@@ -103,11 +97,11 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
-	return fetchPagerDutyTeamMembership(d, meta, genError)
+	return fetchPagerDutyTeamMembership(d, meta, false)
 }
 
 func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{}) error {
-	return fetchPagerDutyTeamMembership(d, meta, handleNotFoundError)
+	return fetchPagerDutyTeamMembership(d, meta, true)
 }
 
 func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -120,7 +114,7 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] Updating user: %s to team: %s with role: %s", userID, teamID, role)
 
 	// To update existing membership resource, We can use the same API as creating a new membership.
-	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
 				return resource.RetryableError(err)
@@ -148,7 +142,7 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)

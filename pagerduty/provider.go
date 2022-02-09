@@ -2,9 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -112,16 +114,67 @@ func isErrCode(err error, code int) bool {
 }
 
 func genError(err error, d *schema.ResourceData) error {
-	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
+	resId := "<ID missing>"
+	if d != nil && d.Id() != "" {
+		resId = d.Id()
+	}
+	errStr := "unknown error"
+	if err != nil {
+		errStr = err.Error()
+	}
+	return fmt.Errorf("error reading: %s: %s", resId, errStr)
 }
 
-func handleNotFoundError(err error, d *schema.ResourceData) error {
+func handleGenericErrors(err error, d *schema.ResourceData) *resource.RetryError {
+	if err == nil {
+		return nil
+	}
+
+	if isErrCode(err, 429) {
+		// Delaying retry by 30s as recommended by PagerDuty
+		// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+		time.Sleep(30 * time.Second)
+		return resource.RetryableError(err)
+	}
+
 	if isErrCode(err, 404) {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")
 		return nil
 	}
-	return genError(err, d)
+
+	generatedError := genError(err, d)
+	if generatedError != nil {
+		return resource.NonRetryableError(generatedError)
+	}
+
+	return nil
+}
+
+func handleRateLimitErrors(err error, d *schema.ResourceData) *resource.RetryError {
+	if err == nil {
+		return nil
+	}
+
+	if isErrCode(err, 429) {
+		// Delaying retry by 30s as recommended by PagerDuty
+		// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+		time.Sleep(30 * time.Second)
+		return resource.RetryableError(err)
+	}
+	generatedError := genError(err, d)
+	if generatedError != nil {
+		return resource.NonRetryableError(generatedError)
+	}
+
+	return nil
+}
+
+func getErrorHandler(shouldHandle404Errors bool) func(err error, d *schema.ResourceData) *resource.RetryError {
+	if shouldHandle404Errors {
+		return handleGenericErrors
+	}
+	return handleRateLimitErrors
 }
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {

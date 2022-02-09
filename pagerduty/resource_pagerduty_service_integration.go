@@ -123,23 +123,16 @@ func buildServiceIntegrationStruct(d *schema.ResourceData) (*pagerduty.Integrati
 	return serviceIntegration, nil
 }
 
-func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
 	client, _ := meta.(*Config).Client()
 	service := d.Get("service").(string)
 
 	o := &pagerduty.GetIntegrationOptions{}
 
-	return resource.Retry(1*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
-		if err != nil {
-			log.Printf("[WARN] Service integration read error")
-			errResp := errCallback(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
-			}
-
-			return nil
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		d.Set("name", serviceIntegration.Name)
@@ -181,7 +174,7 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 
 	service := d.Get("service").(string)
 
-	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
 			if isErrCode(err, 400) {
 				time.Sleep(2 * time.Second)
@@ -199,12 +192,12 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 		return retryErr
 	}
 
-	return fetchPagerDutyServiceIntegration(d, meta, genError)
+	return fetchPagerDutyServiceIntegration(d, meta, false)
 }
 
 func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty service integration %s", d.Id())
-	return fetchPagerDutyServiceIntegration(d, meta, handleNotFoundError)
+	return fetchPagerDutyServiceIntegration(d, meta, true)
 }
 
 func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta interface{}) error {

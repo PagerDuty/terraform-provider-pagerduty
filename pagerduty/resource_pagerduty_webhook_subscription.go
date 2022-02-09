@@ -112,7 +112,7 @@ func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta int
 
 	log.Printf("[INFO] Creating PagerDuty webhook subscription to be delivered to %s", webhook.DeliveryMethod.URL)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Create(webhook); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -138,11 +138,13 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 
 	log.Printf("[INFO] Reading PagerDuty webhook subscription %s", d.Id())
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
-		if webhook, _, err := client.WebhookSubscriptions.Get(d.Id()); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if webhook != nil {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+		webhook, _, err := client.WebhookSubscriptions.Get(d.Id())
+		if checkErr := handleGenericErrors(err, d); checkErr != nil {
+			return checkErr
+		}
+
+		if webhook != nil {
 			setWebhookResourceData(d, webhook)
 		}
 		return nil

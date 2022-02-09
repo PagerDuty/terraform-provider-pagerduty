@@ -93,20 +93,14 @@ func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMeth
 	return contactMethod
 }
 
-func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
 	client, _ := meta.(*Config).Client()
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(1*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetContactMethod(userID, d.Id())
-		if err != nil {
-			errResp := handleNotFoundError(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(fmt.Errorf("error while reading contact method %s: %w", d.Id(), err))
-			}
-
-			return nil
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		d.Set("address", resp.Address)
@@ -135,11 +129,11 @@ func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta inter
 
 	d.SetId(resp.ID)
 
-	return fetchPagerDutyUserContactMethod(d, meta, genError)
+	return fetchPagerDutyUserContactMethod(d, meta, false)
 }
 
 func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
-	return fetchPagerDutyUserContactMethod(d, meta, handleNotFoundError)
+	return fetchPagerDutyUserContactMethod(d, meta, true)
 }
 
 func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -165,13 +159,17 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 
 	userID := d.Get("user_id").(string)
 
-	if _, err := client.Users.DeleteContactMethod(userID, d.Id()); err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+		if _, err := client.Users.DeleteContactMethod(userID, d.Id()); err != nil {
+			if checkErr := handleGenericErrors(err, d); checkErr != nil {
+				return checkErr
+			}
+		}
 
-	d.SetId("")
+		d.SetId("")
 
-	return nil
+		return nil
+	})
 }
 
 func resourcePagerDutyUserContactMethodImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

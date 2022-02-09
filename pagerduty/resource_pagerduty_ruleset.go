@@ -100,19 +100,14 @@ func flattenTeam(v *pagerduty.RulesetObject) []interface{} {
 	return []interface{}{team}
 }
 
-func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
 	client, _ := meta.(*Config).Client()
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		ruleset, _, err := client.Rulesets.Get(d.Id())
-		if err != nil {
-			errResp := errCallback(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
-			}
-
-			return nil
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
+			return checkErr
 		}
+
 		d.Set("name", ruleset.Name)
 		d.Set("type", ruleset.Type)
 
@@ -133,7 +128,7 @@ func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Creating PagerDuty ruleset: %s", ruleset.Name)
 
-	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if ruleset, _, err := client.Rulesets.Create(ruleset); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -149,12 +144,12 @@ func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) er
 	if retryErr != nil {
 		return retryErr
 	}
-	return fetchPagerDutyRuleset(d, meta, genError)
+	return fetchPagerDutyRuleset(d, meta, false)
 }
 
 func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty ruleset: %s", d.Id())
-	return fetchPagerDutyRuleset(d, meta, handleNotFoundError)
+	return fetchPagerDutyRuleset(d, meta, true)
 
 }
 func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {

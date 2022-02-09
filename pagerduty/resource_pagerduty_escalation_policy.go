@@ -129,11 +129,10 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 
 	o := &pagerduty.GetEscalationPolicyOptions{}
 
-	return resource.Retry(1*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
-		if err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+		if checkErr := handleGenericErrors(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		d.Set("name", escalationPolicy.Name)
@@ -159,7 +158,7 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Updating PagerDuty escalation policy: %s", d.Id())
 
-	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -179,7 +178,7 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 
 	// Retrying to give other resources (such as services) to delete
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)

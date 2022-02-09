@@ -55,7 +55,7 @@ func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error 
 
 	log.Printf("[INFO] Creating PagerDuty tag %s", tag.Label)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if tag, _, err := client.Tags.Create(tag); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -81,11 +81,13 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty tag %s", d.Id())
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
-		if tag, _, err := client.Tags.Get(d.Id()); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if tag != nil {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+		tag, _, err := client.Tags.Get(d.Id())
+		if checkErr := handleGenericErrors(err, d); checkErr != nil {
+			return checkErr
+		}
+
+		if tag != nil {
 			log.Printf("Tag Type: %v", tag.Type)
 			d.Set("label", tag.Label)
 			d.Set("summary", tag.Summary)
@@ -100,7 +102,7 @@ func resourcePagerDutyTagDelete(d *schema.ResourceData, meta interface{}) error 
 
 	log.Printf("[INFO] Deleting PagerDuty tag %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Delete(d.Id()); err != nil {
 			return resource.RetryableError(err)
 		}

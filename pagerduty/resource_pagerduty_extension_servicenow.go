@@ -121,18 +121,12 @@ func buildExtensionServiceNowStruct(d *schema.ResourceData) *pagerduty.Extension
 	return Extension
 }
 
-func fetchPagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchPagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
 	client, _ := meta.(*Config).Client()
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		extension, _, err := client.Extensions.Get(d.Id())
-		if err != nil {
-			errResp := errCallback(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
-			}
-
-			return nil
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		d.Set("summary", extension.Summary)
@@ -171,12 +165,12 @@ func resourcePagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta int
 	}
 
 	d.SetId(extension.ID)
-	return fetchPagerDutyExtensionServiceNowCreate(d, meta, genError)
+	return fetchPagerDutyExtensionServiceNowCreate(d, meta, false)
 }
 
 func resourcePagerDutyExtensionServiceNowRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty extension %s", d.Id())
-	return fetchPagerDutyExtensionServiceNowCreate(d, meta, handleNotFoundError)
+	return fetchPagerDutyExtensionServiceNowCreate(d, meta, true)
 }
 
 func resourcePagerDutyExtensionServiceNowUpdate(d *schema.ResourceData, meta interface{}) error {

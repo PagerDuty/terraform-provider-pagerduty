@@ -354,19 +354,12 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	return &service, nil
 }
 
-func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchService(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
 	client, _ := meta.(*Config).Client()
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
-		if err != nil {
-			log.Printf("[WARN] Service read error")
-			errResp := errCallback(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
-			}
-
-			return nil
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		if err := flattenService(d, service); err != nil {
@@ -394,12 +387,12 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 
 	d.SetId(service.ID)
 
-	return fetchService(d, meta, genError)
+	return fetchService(d, meta, false)
 }
 
 func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty service %s", d.Id())
-	return fetchService(d, meta, handleNotFoundError)
+	return fetchService(d, meta, true)
 }
 
 func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {

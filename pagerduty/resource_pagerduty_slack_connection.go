@@ -114,7 +114,7 @@ func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 
 		slackConn, err := buildSlackConnectionStruct(d)
 		if err != nil {
@@ -148,10 +148,13 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 	workspaceID := d.Get("workspace_id").(string)
 	log.Printf("[DEBUG] Read Slack Connection: workspace_id %s", workspaceID)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
-		if slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id()); err != nil {
-			return resource.RetryableError(err)
-		} else if slackConn != nil {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+		slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id())
+		if checkErr := handleGenericErrors(err, d); checkErr != nil {
+			return checkErr
+		}
+
+		if slackConn != nil {
 			d.Set("source_id", slackConn.SourceID)
 			d.Set("source_name", slackConn.SourceName)
 			d.Set("source_type", slackConn.SourceType)

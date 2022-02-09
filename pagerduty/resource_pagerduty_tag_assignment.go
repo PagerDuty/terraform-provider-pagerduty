@@ -69,7 +69,7 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 
 	log.Printf("[INFO] Creating PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -100,11 +100,13 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 
 	log.Printf("[INFO] Reading PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
-		if tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if tagResponse != nil {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+		tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID)
+		if checkErr := handleGenericErrors(err, d); checkErr != nil {
+			return checkErr
+		}
+
+		if tagResponse != nil {
 			var foundTag *pagerduty.Tag
 
 			// loop tags and find matching ID
@@ -132,7 +134,7 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 	}
 	log.Printf("[INFO] Deleting PagerDuty tag assignment with tagID %s for entityID %s", assignment.TagID, assignment.EntityID)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)

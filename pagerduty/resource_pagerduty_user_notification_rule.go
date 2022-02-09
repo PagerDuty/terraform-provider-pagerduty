@@ -82,20 +82,14 @@ func buildUserNotificationRuleStruct(d *schema.ResourceData) (*pagerduty.Notific
 	return notificationRule, nil
 }
 
-func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
 	client, _ := meta.(*Config).Client()
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(1*time.Minute, func() *resource.RetryError {
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
-		if err != nil {
-			errResp := errCallback(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(fmt.Errorf("error while reading notification rule %s: %w", d.Id(), err))
-			}
-
-			return nil
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
+			return checkErr
 		}
 
 		d.Set("urgency", resp.Urgency)
@@ -123,11 +117,11 @@ func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta in
 
 	d.SetId(resp.ID)
 
-	return fetchPagerDutyUserNotificationRule(d, meta, genError)
+	return fetchPagerDutyUserNotificationRule(d, meta, false)
 }
 
 func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta interface{}) error {
-	return fetchPagerDutyUserNotificationRule(d, meta, handleNotFoundError)
+	return fetchPagerDutyUserNotificationRule(d, meta, true)
 }
 
 func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -156,13 +150,16 @@ func resourcePagerDutyUserNotificationRuleDelete(d *schema.ResourceData, meta in
 
 	userID := d.Get("user_id").(string)
 
-	if _, err := client.Users.DeleteNotificationRule(userID, d.Id()); err != nil {
-		return handleNotFoundError(err, d)
-	}
+	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+		if _, err := client.Users.DeleteNotificationRule(userID, d.Id()); err != nil {
+			if checkErr := handleGenericErrors(err, d); checkErr != nil {
+				return checkErr
+			}
+		}
+		d.SetId("")
 
-	d.SetId("")
-
-	return nil
+		return nil
+	})
 }
 
 func resourcePagerDutyUserNotificationRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

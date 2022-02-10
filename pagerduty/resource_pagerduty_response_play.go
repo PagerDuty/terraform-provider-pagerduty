@@ -227,7 +227,10 @@ func buildResponsePlayStruct(d *schema.ResourceData) *pagerduty.ResponsePlay {
 }
 
 func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	responsePlay := buildResponsePlayStruct(d)
 
@@ -251,7 +254,10 @@ func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{
 }
 
 func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	from := d.Get("from").(string)
 	log.Printf("[INFO] Reading PagerDuty response play: %s (from: %s)", d.Id(), from)
@@ -290,7 +296,10 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 }
 
 func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	responsePlay := buildResponsePlayStruct(d)
 
@@ -310,7 +319,10 @@ func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{
 }
 
 func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty response play: %s", d.Id())
 	from := d.Get("from").(string)
@@ -463,7 +475,10 @@ func flattenRSTeams(teams []*pagerduty.TeamReference) []interface{} {
 }
 
 func resourcePagerDutyResponsePlayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	ids := strings.SplitN(d.Id(), ".", 2)
 
@@ -473,7 +488,7 @@ func resourcePagerDutyResponsePlayImport(d *schema.ResourceData, meta interface{
 	rid, from := ids[0], ids[1]
 	log.Printf("[INFO] Importing PagerDuty response play: %s (From: %s)", rid, from)
 
-	_, _, err := client.ResponsePlays.Get(rid, from)
+	_, _, err = client.ResponsePlays.Get(rid, from)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

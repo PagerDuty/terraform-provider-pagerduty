@@ -101,7 +101,11 @@ func flattenTeam(v *pagerduty.RulesetObject) []interface{} {
 }
 
 func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		ruleset, _, err := client.Rulesets.Get(d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
@@ -122,7 +126,10 @@ func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, handle404Er
 }
 
 func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	ruleset := buildRulesetStruct(d)
 
@@ -153,7 +160,10 @@ func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) erro
 
 }
 func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	ruleset := buildRulesetStruct(d)
 
@@ -167,7 +177,10 @@ func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePagerDutyRulesetDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset: %s", d.Id())
 

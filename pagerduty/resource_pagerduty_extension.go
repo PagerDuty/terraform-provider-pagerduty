@@ -87,7 +87,11 @@ func buildExtensionStruct(d *schema.ResourceData) *pagerduty.Extension {
 }
 
 func fetchPagerDutyExtension(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		extension, _, err := client.Extensions.Get(d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
@@ -112,13 +116,16 @@ func fetchPagerDutyExtension(d *schema.ResourceData, meta interface{}, handle404
 }
 
 func resourcePagerDutyExtensionCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	extension := buildExtensionStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty extension %s", extension.Name)
 
-	extension, _, err := client.Extensions.Create(extension)
+	extension, _, err = client.Extensions.Create(extension)
 	if err != nil {
 		return err
 	}
@@ -134,7 +141,10 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePagerDutyExtensionUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	extension := buildExtensionStruct(d)
 
@@ -148,7 +158,10 @@ func resourcePagerDutyExtensionUpdate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyExtensionDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty extension %s", d.Id())
 
@@ -166,7 +179,10 @@ func resourcePagerDutyExtensionDelete(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyExtensionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	extension, _, err := client.Extensions.Get(d.Id())
 

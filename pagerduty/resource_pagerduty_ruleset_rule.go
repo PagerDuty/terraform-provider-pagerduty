@@ -729,7 +729,10 @@ func flattenActiveBetween(ab *pagerduty.ActiveBetween) []interface{} {
 }
 
 func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	rule := buildRulesetRuleStruct(d)
 
@@ -758,7 +761,10 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
@@ -791,7 +797,10 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	rule := buildRulesetRuleStruct(d)
 
@@ -815,7 +824,10 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
@@ -836,7 +848,10 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	ids := strings.Split(d.Id(), ".")
 
@@ -845,7 +860,7 @@ func resourcePagerDutyRulesetRuleImport(d *schema.ResourceData, meta interface{}
 	}
 	rulesetID, ruleID := ids[0], ids[1]
 
-	_, _, err := client.Rulesets.GetRule(rulesetID, ruleID)
+	_, _, err = client.Rulesets.GetRule(rulesetID, ruleID)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

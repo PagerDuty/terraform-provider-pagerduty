@@ -42,7 +42,11 @@ func buildAddonStruct(d *schema.ResourceData) *pagerduty.Addon {
 }
 
 func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	return resource.Retry(3*time.Minute, func() *resource.RetryError {
 		addon, _, err := client.Addons.Get(d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
@@ -57,13 +61,16 @@ func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, handle404Erro
 }
 
 func resourcePagerDutyAddonCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	addon := buildAddonStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty add-on %s", addon.Name)
 
-	addon, _, err := client.Addons.Install(addon)
+	addon, _, err = client.Addons.Install(addon)
 	if err != nil {
 		return err
 	}
@@ -79,7 +86,10 @@ func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	addon := buildAddonStruct(d)
 
@@ -93,7 +103,10 @@ func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourcePagerDutyAddonDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty add-on %s", d.Id())
 

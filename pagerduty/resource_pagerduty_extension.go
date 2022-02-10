@@ -92,7 +92,7 @@ func fetchPagerDutyExtension(d *schema.ResourceData, meta interface{}, handle404
 		return err
 	}
 
-	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		extension, _, err := client.Extensions.Get(d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
 			return checkErr

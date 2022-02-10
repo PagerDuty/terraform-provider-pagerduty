@@ -332,7 +332,7 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Creating PagerDuty service event rule for service: %s", rule.Service.ID)
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Services.CreateEventRule(rule.Service.ID, rule); err != nil {
 			return resource.RetryableError(err)
 		} else if rule != nil {
@@ -363,7 +363,7 @@ func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interfac
 	log.Printf("[INFO] Reading PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		rule, _, err := client.Services.GetEventRule(serviceID, d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr != nil {
 			return checkErr
@@ -401,7 +401,7 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Updating PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if updatedRule, _, err := client.Services.UpdateEventRule(serviceID, d.Id(), rule); err != nil {
 			return resource.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
@@ -427,7 +427,7 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Deleting PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, err := client.Services.DeleteEventRule(serviceID, d.Id()); err != nil {
 			return resource.RetryableError(err)
 		}

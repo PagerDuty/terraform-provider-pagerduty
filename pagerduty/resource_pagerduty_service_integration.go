@@ -133,7 +133,7 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 
 	o := &pagerduty.GetIntegrationOptions{}
 
-	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
 			return checkErr
@@ -181,7 +181,7 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 
 	service := d.Get("service").(string)
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
 			if isErrCode(err, 400) {
 				time.Sleep(2 * time.Second)

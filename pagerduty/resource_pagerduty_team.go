@@ -67,7 +67,7 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Creating PagerDuty team %s", team.Name)
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if team, _, err := client.Teams.Create(team); err != nil {
 			return resource.RetryableError(err)
 		} else if team != nil {
@@ -92,7 +92,7 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty team %s", d.Id())
 
-	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		team, _, err := client.Teams.Get(d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr != nil {
 			return checkErr
@@ -117,7 +117,7 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Updating PagerDuty team %s", d.Id())
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Teams.Update(d.Id(), team); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -138,7 +138,7 @@ func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Deleting PagerDuty team %s", d.Id())
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.Delete(d.Id()); err != nil {
 			return resource.RetryableError(err)
 		}

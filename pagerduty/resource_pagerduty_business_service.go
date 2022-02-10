@@ -98,7 +98,7 @@ func resourcePagerDutyBusinessServiceCreate(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 
 		businessService, err := buildBusinessServiceStruct(d)
 		if err != nil {
@@ -128,7 +128,7 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 
 	log.Printf("[INFO] Reading PagerDuty business service %s", d.Id())
 
-	retryErr := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		businessService, _, err := client.BusinessServices.Get(d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr != nil {
 			return checkErr

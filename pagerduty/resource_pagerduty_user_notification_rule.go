@@ -90,7 +90,7 @@ func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}
 
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
 			return checkErr
@@ -163,7 +163,7 @@ func resourcePagerDutyUserNotificationRuleDelete(d *schema.ResourceData, meta in
 
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, err := client.Users.DeleteNotificationRule(userID, d.Id()); err != nil {
 			if checkErr := handleGenericErrors(err, d); checkErr != nil {
 				return checkErr

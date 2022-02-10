@@ -39,7 +39,7 @@ func dataSourcePagerDutyPriorityRead(d *schema.ResourceData, meta interface{}) e
 
 	searchTeam := d.Get("name").(string)
 
-	return resource.Retry(3*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Priorities.List()
 		if checkErr := handleGenericErrors(err, d); checkErr != nil {
 			return checkErr

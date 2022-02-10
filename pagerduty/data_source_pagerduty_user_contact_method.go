@@ -2,9 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -12,7 +14,7 @@ import (
 
 func dataSourcePagerDutyUserContactMethod() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyUserContactMethodRead,
+		ReadContext: dataSourcePagerDutyUserContactMethodRead,
 
 		Schema: map[string]*schema.Schema{
 			"user_id": {
@@ -58,10 +60,10 @@ func dataSourcePagerDutyUserContactMethod() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyUserContactMethodRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty user's contact method")
@@ -70,7 +72,7 @@ func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta inter
 	searchLabel := d.Get("label").(string)
 	searchType := d.Get("type").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.ListContactMethods(userId)
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -101,5 +103,5 @@ func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta inter
 		d.Set("type", found.Type)
 
 		return nil
-	})
+	}))
 }

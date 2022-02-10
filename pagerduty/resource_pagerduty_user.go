@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyUser() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyUserCreate,
-		Read:   resourcePagerDutyUserRead,
-		Update: resourcePagerDutyUserUpdate,
-		Delete: resourcePagerDutyUserDelete,
+		CreateContext: resourcePagerDutyUserCreate,
+		ReadContext:   resourcePagerDutyUserRead,
+		UpdateContext: resourcePagerDutyUserUpdate,
+		DeleteContext: resourcePagerDutyUserDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -131,10 +133,10 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	return user
 }
 
-func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	user := buildUserStruct(d)
@@ -143,23 +145,23 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 
 	user, _, err = client.Users.Create(user)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(user.ID)
 
-	return resourcePagerDutyUserUpdate(d, meta)
+	return resourcePagerDutyUserUpdate(ctx, d, meta)
 }
 
-func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -185,13 +187,13 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("invitation_sent", user.InvitationSent)
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	user := buildUserStruct(d)
@@ -199,7 +201,7 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[INFO] Updating PagerDuty user %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Users.Update(d.Id(), user); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -211,7 +213,7 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	if d.HasChange("teams") {
@@ -241,7 +243,7 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 			log.Printf("[INFO] Removing PagerDuty user %s from team: %s", d.Id(), t)
 
 			if _, err := client.Teams.RemoveUser(t, d.Id()); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 
@@ -249,24 +251,24 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 			log.Printf("[INFO] Adding PagerDuty user %s to team: %s", d.Id(), t)
 
 			if _, err := client.Teams.AddUser(t, d.Id()); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 	}
 
-	return resourcePagerDutyUserRead(d, meta)
+	return resourcePagerDutyUserRead(ctx, d, meta)
 }
 
-func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty user %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Users.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -278,7 +280,7 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	d.SetId("")

@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -15,12 +17,12 @@ const AppBaseUrl = "https://app.pagerduty.com"
 
 func resourcePagerDutySlackConnection() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutySlackConnectionCreate,
-		Read:   resourcePagerDutySlackConnectionRead,
-		Update: resourcePagerDutySlackConnectionUpdate,
-		Delete: resourcePagerDutySlackConnectionDelete,
+		CreateContext: resourcePagerDutySlackConnectionCreate,
+		ReadContext:   resourcePagerDutySlackConnectionRead,
+		UpdateContext: resourcePagerDutySlackConnectionUpdate,
+		DeleteContext: resourcePagerDutySlackConnectionDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutySlackConnectionImport,
+			StateContext: resourcePagerDutySlackConnectionImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"source_id": {
@@ -108,13 +110,13 @@ func buildSlackConnectionStruct(d *schema.ResourceData) (*pagerduty.SlackConnect
 	return &slackConn, nil
 }
 
-func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutySlackConnectionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 
 		slackConn, err := buildSlackConnectionStruct(d)
 		if err != nil {
@@ -132,15 +134,15 @@ func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interfa
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return resourcePagerDutySlackConnectionRead(d, meta)
+	return resourcePagerDutySlackConnectionRead(ctx, d, meta)
 }
 
-func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutySlackConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty slack connection %s", d.Id())
@@ -148,7 +150,7 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 	workspaceID := d.Get("workspace_id").(string)
 	log.Printf("[DEBUG] Read Slack Connection: workspace_id %s", workspaceID)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -168,42 +170,42 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	return nil
 }
 
-func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutySlackConnectionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	slackConn, err := buildSlackConnectionStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	log.Printf("[INFO] Updating PagerDuty slack connection %s", d.Id())
 
 	if _, _, err := client.SlackConnections.Update(slackConn.WorkspaceID, d.Id(), slackConn); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourcePagerDutySlackConnectionDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutySlackConnectionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty slack connection %s", d.Id())
 	workspaceID := d.Get("workspace_id").(string)
 
 	if _, err := client.SlackConnections.Delete(workspaceID, d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -261,7 +263,7 @@ func flattenConfigList(list []string) interface{} {
 	return items
 }
 
-func resourcePagerDutySlackConnectionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutySlackConnectionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {
 		return nil, err

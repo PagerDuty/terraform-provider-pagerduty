@@ -2,9 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -12,7 +14,7 @@ import (
 
 func dataSourcePagerDutyService() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyServiceRead,
+		ReadContext: dataSourcePagerDutyServiceRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -27,10 +29,10 @@ func dataSourcePagerDutyService() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty service")
@@ -41,7 +43,7 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 		Query: searchName,
 	}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Services.List(o)
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -67,5 +69,5 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 		d.Set("type", found.Type)
 
 		return nil
-	})
+	}))
 }

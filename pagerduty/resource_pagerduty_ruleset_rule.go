@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyRulesetRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyRulesetRuleCreate,
-		Read:   resourcePagerDutyRulesetRuleRead,
-		Update: resourcePagerDutyRulesetRuleUpdate,
-		Delete: resourcePagerDutyRulesetRuleDelete,
+		CreateContext: resourcePagerDutyRulesetRuleCreate,
+		ReadContext:   resourcePagerDutyRulesetRuleRead,
+		UpdateContext: resourcePagerDutyRulesetRuleUpdate,
+		DeleteContext: resourcePagerDutyRulesetRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyRulesetRuleImport,
+			StateContext: resourcePagerDutyRulesetRuleImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"ruleset": {
@@ -728,17 +730,17 @@ func flattenActiveBetween(ab *pagerduty.ActiveBetween) []interface{} {
 	return []interface{}{fab}
 }
 
-func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	rule := buildRulesetRuleStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty ruleset rule for ruleset: %s", rule.Ruleset.ID)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.CreateRule(rule.Ruleset.ID, rule); err != nil {
 			return resource.RetryableError(err)
 		} else if rule != nil {
@@ -746,8 +748,8 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 			// Verifying the position that was defined in terraform is the same position set in PagerDuty
 			pos := d.Get("position").(int)
 			if *rule.Position != pos {
-				if err := resourcePagerDutyRulesetRuleUpdate(d, meta); err != nil {
-					return resource.NonRetryableError(err)
+				if diagErr := resourcePagerDutyRulesetRuleUpdate(ctx, d, meta); diagErr.HasError() {
+					return resource.NonRetryableError(fmt.Errorf(diagErr[0].Summary))
 				}
 			}
 		}
@@ -755,21 +757,21 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return resourcePagerDutyRulesetRuleRead(d, meta)
+	return resourcePagerDutyRulesetRuleRead(ctx, d, meta)
 }
 
-func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -793,13 +795,13 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 			d.Set("ruleset", rulesetID)
 		}
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	rule := buildRulesetRuleStruct(d)
@@ -807,7 +809,7 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 	log.Printf("[INFO] Updating PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
 			return resource.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
@@ -818,21 +820,21 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	return nil
 }
 
-func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -840,14 +842,14 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	d.SetId("")
 
 	return nil
 }
 
-func resourcePagerDutyRulesetRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyRulesetRuleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err

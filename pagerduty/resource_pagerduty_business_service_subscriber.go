@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,11 +15,11 @@ import (
 
 func resourcePagerDutyBusinessServiceSubscriber() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyBusinessServiceSubscriberCreate,
-		Read:   resourcePagerDutyBusinessServiceSubscriberRead,
-		Delete: resourcePagerDutyBusinessServiceSubscriberDelete,
+		CreateContext: resourcePagerDutyBusinessServiceSubscriberCreate,
+		ReadContext:   resourcePagerDutyBusinessServiceSubscriberRead,
+		DeleteContext: resourcePagerDutyBusinessServiceSubscriberDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyBusinessServiceSubscriberImport,
+			StateContext: resourcePagerDutyBusinessServiceSubscriberImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"subscriber_id": {
@@ -52,15 +54,15 @@ func buildBusinessServiceSubscriberStruct(d *schema.ResourceData) (*pagerduty.Bu
 	return &subscriber, nil
 }
 
-func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyBusinessServiceSubscriberCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	businessServiceId := d.Get("business_service_id").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 
 		businessServiceSubscriber, err := buildBusinessServiceSubscriberStruct(d)
 		if err != nil {
@@ -79,16 +81,16 @@ func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, me
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
-	return resourcePagerDutyBusinessServiceSubscriberRead(d, meta)
+	return resourcePagerDutyBusinessServiceSubscriberRead(ctx, d, meta)
 }
 
-func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyBusinessServiceSubscriberRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	businessServiceId := d.Get("business_service_id").(string)
@@ -96,7 +98,7 @@ func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Reading PagerDuty business service %s subscriber %s type %s", businessServiceId, businessServiceSubscriber.ID, businessServiceSubscriber.Type)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		subscriberResponse, _, err := client.BusinessServiceSubscribers.List(businessServiceId)
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -118,13 +120,13 @@ func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta
 			}
 		}
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyBusinessServiceSubscriberDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyBusinessServiceSubscriberDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	businessServiceId := d.Get("business_service_id").(string)
@@ -133,7 +135,7 @@ func resourcePagerDutyBusinessServiceSubscriberDelete(d *schema.ResourceData, me
 	log.Printf("[INFO] Deleting PagerDuty business service %s subscriber %s type %s", businessServiceId, businessServiceSubscriber.ID, businessServiceSubscriber.Type)
 
 	if _, err := client.BusinessServiceSubscribers.Delete(businessServiceId, businessServiceSubscriber); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -145,7 +147,7 @@ func createSubscriberID(businessServiceId string, subscriberType string, subscri
 	return fmt.Sprintf("%v.%v.%v", businessServiceId, subscriberType, subscriberID)
 }
 
-func resourcePagerDutyBusinessServiceSubscriberImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyBusinessServiceSubscriberImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	ids := strings.Split(d.Id(), ".")
 	client, err := meta.(*Config).Client()
 	if err != nil {

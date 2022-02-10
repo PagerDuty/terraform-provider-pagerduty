@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -11,11 +13,11 @@ import (
 
 func resourcePagerDutyTag() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyTagCreate,
-		Read:   resourcePagerDutyTagRead,
-		Delete: resourcePagerDutyTagDelete,
+		CreateContext: resourcePagerDutyTagCreate,
+		ReadContext:   resourcePagerDutyTagRead,
+		DeleteContext: resourcePagerDutyTagDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"label": {
@@ -48,17 +50,17 @@ func buildTagStruct(d *schema.ResourceData) *pagerduty.Tag {
 	return tag
 }
 
-func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	tag := buildTagStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty tag %s", tag.Label)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if tag, _, err := client.Tags.Create(tag); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -72,22 +74,22 @@ func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error 
 	})
 
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
-	return resourcePagerDutyTagRead(d, meta)
+	return resourcePagerDutyTagRead(ctx, d, meta)
 
 }
 
-func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty tag %s", d.Id())
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		tag, _, err := client.Tags.Get(d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -100,18 +102,18 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set("html_url", tag.HTMLURL)
 		}
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyTagDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty tag %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Delete(d.Id()); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -119,7 +121,7 @@ func resourcePagerDutyTagDelete(d *schema.ResourceData, meta interface{}) error 
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	d.SetId("")
 

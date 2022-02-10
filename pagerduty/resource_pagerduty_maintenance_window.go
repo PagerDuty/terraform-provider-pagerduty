@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -11,12 +13,12 @@ import (
 
 func resourcePagerDutyMaintenanceWindow() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyMaintenanceWindowCreate,
-		Read:   resourcePagerDutyMaintenanceWindowRead,
-		Update: resourcePagerDutyMaintenanceWindowUpdate,
-		Delete: resourcePagerDutyMaintenanceWindowDelete,
+		CreateContext: resourcePagerDutyMaintenanceWindowCreate,
+		ReadContext:   resourcePagerDutyMaintenanceWindowRead,
+		UpdateContext: resourcePagerDutyMaintenanceWindowUpdate,
+		DeleteContext: resourcePagerDutyMaintenanceWindowDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"start_time": {
@@ -62,10 +64,10 @@ func buildMaintenanceWindowStruct(d *schema.ResourceData) *pagerduty.Maintenance
 	return window
 }
 
-func resourcePagerDutyMaintenanceWindowCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyMaintenanceWindowCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	window := buildMaintenanceWindowStruct(d)
@@ -74,7 +76,7 @@ func resourcePagerDutyMaintenanceWindowCreate(d *schema.ResourceData, meta inter
 
 	window, _, err = client.MaintenanceWindows.Create(window)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(window.ID)
@@ -82,15 +84,15 @@ func resourcePagerDutyMaintenanceWindowCreate(d *schema.ResourceData, meta inter
 	return nil
 }
 
-func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyMaintenanceWindowRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty maintenance window %s", d.Id())
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		window, _, err := client.MaintenanceWindows.Get(d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -105,13 +107,13 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 		}
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyMaintenanceWindowUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyMaintenanceWindowUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	window := buildMaintenanceWindowStruct(d)
@@ -119,22 +121,22 @@ func resourcePagerDutyMaintenanceWindowUpdate(d *schema.ResourceData, meta inter
 	log.Printf("[INFO] Updating PagerDuty maintenance window %s", d.Id())
 
 	if _, _, err := client.MaintenanceWindows.Update(d.Id(), window); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyMaintenanceWindowDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyMaintenanceWindowDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty maintenance window %s", d.Id())
 
 	if _, err := client.MaintenanceWindows.Delete(d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

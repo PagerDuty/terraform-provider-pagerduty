@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyServiceEventRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyServiceEventRuleCreate,
-		Read:   resourcePagerDutyServiceEventRuleRead,
-		Update: resourcePagerDutyServiceEventRuleUpdate,
-		Delete: resourcePagerDutyServiceEventRuleDelete,
+		CreateContext: resourcePagerDutyServiceEventRuleCreate,
+		ReadContext:   resourcePagerDutyServiceEventRuleRead,
+		UpdateContext: resourcePagerDutyServiceEventRuleUpdate,
+		DeleteContext: resourcePagerDutyServiceEventRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyServiceEventRuleImport,
+			StateContext: resourcePagerDutyServiceEventRuleImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"service": {
@@ -322,17 +324,17 @@ func buildServiceEventRuleStruct(d *schema.ResourceData) *pagerduty.ServiceEvent
 
 	return rule
 }
-func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceEventRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	rule := buildServiceEventRuleStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty service event rule for service: %s", rule.Service.ID)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Services.CreateEventRule(rule.Service.ID, rule); err != nil {
 			return resource.RetryableError(err)
 		} else if rule != nil {
@@ -340,8 +342,8 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 			// Verifying the position that was defined in terraform is the same position set in PagerDuty
 			pos := d.Get("position").(int)
 			if *rule.Position != pos {
-				if err := resourcePagerDutyServiceEventRuleUpdate(d, meta); err != nil {
-					return resource.NonRetryableError(err)
+				if diagErr := resourcePagerDutyServiceEventRuleUpdate(ctx, d, meta); diagErr.HasError() {
+					return resource.NonRetryableError(fmt.Errorf(diagErr[0].Summary))
 				}
 			}
 		}
@@ -349,21 +351,21 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return resourcePagerDutyServiceEventRuleRead(d, meta)
+	return resourcePagerDutyServiceEventRuleRead(ctx, d, meta)
 }
 
-func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceEventRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		rule, _, err := client.Services.GetEventRule(serviceID, d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -387,13 +389,13 @@ func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interfac
 			d.Set("service", serviceID)
 		}
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceEventRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	rule := buildServiceEventRuleStruct(d)
@@ -401,7 +403,7 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Updating PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if updatedRule, _, err := client.Services.UpdateEventRule(serviceID, d.Id(), rule); err != nil {
 			return resource.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
@@ -413,21 +415,21 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	return nil
 }
 
-func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceEventRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Services.DeleteEventRule(serviceID, d.Id()); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -435,14 +437,14 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	d.SetId("")
 
 	return nil
 }
 
-func resourcePagerDutyServiceEventRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyServiceEventRuleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err

@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,11 +15,11 @@ import (
 
 func resourcePagerDutyTagAssignment() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyTagAssignmentCreate,
-		Read:   resourcePagerDutyTagAssignmentRead,
-		Delete: resourcePagerDutyTagAssignmentDelete,
+		CreateContext: resourcePagerDutyTagAssignmentCreate,
+		ReadContext:   resourcePagerDutyTagAssignmentRead,
+		DeleteContext: resourcePagerDutyTagAssignmentDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyTagAssignmentImport,
+			StateContext: resourcePagerDutyTagAssignmentImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"entity_type": {
@@ -59,10 +61,10 @@ func buildTagAssignmentStruct(d *schema.ResourceData) *pagerduty.TagAssignment {
 	return assignment
 }
 
-func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTagAssignmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	assignment := buildTagAssignmentStruct(d)
@@ -72,7 +74,7 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 
 	log.Printf("[INFO] Creating PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -88,25 +90,25 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 	})
 
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	// give PagerDuty 2 seconds to save the assignment correctly
 	time.Sleep(2 * time.Second)
-	return resourcePagerDutyTagAssignmentRead(d, meta)
+	return resourcePagerDutyTagAssignmentRead(ctx, d, meta)
 
 }
 
-func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTagAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	assignment := buildTagAssignmentStruct(d)
 
 	log.Printf("[INFO] Reading PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID)
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -128,13 +130,13 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 			}
 		}
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTagAssignmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	assignment := buildTagAssignmentStruct(d)
@@ -143,7 +145,7 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 	}
 	log.Printf("[INFO] Deleting PagerDuty tag assignment with tagID %s for entityID %s", assignment.TagID, assignment.EntityID)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -157,13 +159,13 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 	})
 
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyTagAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 3 {
 		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_tag_assignment. Expecting an importation ID formed as '<entity_type>.<entity_id>.<tag_id>'")

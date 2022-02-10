@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyUserContactMethod() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyUserContactMethodCreate,
-		Read:   resourcePagerDutyUserContactMethodRead,
-		Update: resourcePagerDutyUserContactMethodUpdate,
-		Delete: resourcePagerDutyUserContactMethodDelete,
+		CreateContext: resourcePagerDutyUserContactMethodCreate,
+		ReadContext:   resourcePagerDutyUserContactMethodRead,
+		UpdateContext: resourcePagerDutyUserContactMethodUpdate,
+		DeleteContext: resourcePagerDutyUserContactMethodDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyUserContactMethodImport,
+			StateContext: resourcePagerDutyUserContactMethodImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {
@@ -93,15 +95,15 @@ func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMeth
 	return contactMethod
 }
 
-func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchPagerDutyUserContactMethod(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetContactMethod(userID, d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -116,13 +118,13 @@ func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, h
 		d.Set("type", resp.Type)
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserContactMethodCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID := d.Get("user_id").(string)
@@ -131,22 +133,22 @@ func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta inter
 
 	resp, _, err := client.Users.CreateContactMethod(userID, contactMethod)
 	if err != nil {
-		return fmt.Errorf("error while creating contact method %s: %w", contactMethod.ID, err)
+		return diag.Errorf("error while creating contact method %s: %w", contactMethod.ID, err)
 	}
 
 	d.SetId(resp.ID)
 
-	return fetchPagerDutyUserContactMethod(d, meta, false)
+	return fetchPagerDutyUserContactMethod(ctx, d, meta, false)
 }
 
-func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
-	return fetchPagerDutyUserContactMethod(d, meta, true)
+func resourcePagerDutyUserContactMethodRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return fetchPagerDutyUserContactMethod(ctx, d, meta, true)
 }
 
-func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserContactMethodUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	contactMethod := buildUserContactMethodStruct(d)
@@ -156,23 +158,23 @@ func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta inter
 	userID := d.Get("user_id").(string)
 
 	if _, _, err := client.Users.UpdateContactMethod(userID, d.Id(), contactMethod); err != nil {
-		return fmt.Errorf("error while updating contact method %s: %w", contactMethod.ID, err)
+		return diag.Errorf("error while updating contact method %s: %w", contactMethod.ID, err)
 	}
 
-	return resourcePagerDutyUserContactMethodRead(d, meta)
+	return resourcePagerDutyUserContactMethodRead(ctx, d, meta)
 }
 
-func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserContactMethodDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty user contact method %s", d.Id())
 
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Users.DeleteContactMethod(userID, d.Id()); err != nil {
 			if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 				return checkErr.ReturnVal
@@ -182,10 +184,10 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 		d.SetId("")
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyUserContactMethodImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyUserContactMethodImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err

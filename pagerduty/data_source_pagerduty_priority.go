@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,7 +15,7 @@ import (
 
 func dataSourcePagerDutyPriority() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyPriorityRead,
+		ReadContext: dataSourcePagerDutyPriorityRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -29,17 +31,17 @@ func dataSourcePagerDutyPriority() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyPriorityRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyPriorityRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty priority")
 
 	searchTeam := d.Get("name").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Priorities.List()
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -65,5 +67,5 @@ func dataSourcePagerDutyPriorityRead(d *schema.ResourceData, meta interface{}) e
 		d.Set("description", found.Description)
 
 		return nil
-	})
+	}))
 }

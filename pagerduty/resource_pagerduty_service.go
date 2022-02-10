@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"regexp"
 	"strconv"
@@ -16,10 +17,10 @@ import (
 
 func resourcePagerDutyService() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyServiceCreate,
-		Read:   resourcePagerDutyServiceRead,
-		Update: resourcePagerDutyServiceUpdate,
-		Delete: resourcePagerDutyServiceDelete,
+		CreateContext: resourcePagerDutyServiceCreate,
+		ReadContext:   resourcePagerDutyServiceRead,
+		UpdateContext: resourcePagerDutyServiceUpdate,
+		DeleteContext: resourcePagerDutyServiceDelete,
 		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			in := diff.Get("incident_urgency_rule.#").(int)
 			for i := 0; i <= in; i++ {
@@ -31,7 +32,7 @@ func resourcePagerDutyService() *schema.Resource {
 			return nil
 		},
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -354,13 +355,13 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	return &service, nil
 }
 
-func fetchService(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchService(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -371,68 +372,68 @@ func fetchService(d *schema.ResourceData, meta interface{}, handle404Errors bool
 		}
 		return nil
 
-	})
+	}))
 }
 
-func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Creating PagerDuty service %s", service.Name)
 
 	service, _, err = client.Services.Create(service)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(service.ID)
 
-	return fetchService(d, meta, false)
+	return fetchService(ctx, d, meta, false)
 }
 
-func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Reading PagerDuty service %s", d.Id())
-	return fetchService(d, meta, true)
+	return fetchService(ctx, d, meta, true)
 }
 
-func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
 
 	updatedService, _, err := client.Services.Update(d.Id(), service)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return flattenService(d, updatedService)
+	return diag.FromErr(flattenService(d, updatedService))
 }
 
-func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty service %s", d.Id())
 
 	if _, err := client.Services.Delete(d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

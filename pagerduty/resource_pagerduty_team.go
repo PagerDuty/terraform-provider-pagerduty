@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -11,12 +13,12 @@ import (
 
 func resourcePagerDutyTeam() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyTeamCreate,
-		Read:   resourcePagerDutyTeamRead,
-		Update: resourcePagerDutyTeamUpdate,
-		Delete: resourcePagerDutyTeamDelete,
+		CreateContext: resourcePagerDutyTeamCreate,
+		ReadContext:   resourcePagerDutyTeamRead,
+		UpdateContext: resourcePagerDutyTeamUpdate,
+		DeleteContext: resourcePagerDutyTeamDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -57,17 +59,17 @@ func buildTeamStruct(d *schema.ResourceData) *pagerduty.Team {
 	return team
 }
 
-func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTeamCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	team := buildTeamStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty team %s", team.Name)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if team, _, err := client.Teams.Create(team); err != nil {
 			return resource.RetryableError(err)
 		} else if team != nil {
@@ -77,22 +79,22 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
-	return resourcePagerDutyTeamRead(d, meta)
+	return resourcePagerDutyTeamRead(ctx, d, meta)
 
 }
 
-func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTeamRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty team %s", d.Id())
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		team, _, err := client.Teams.Get(d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -104,20 +106,20 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set("html_url", team.HTMLURL)
 		}
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTeamUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	team := buildTeamStruct(d)
 
 	log.Printf("[INFO] Updating PagerDuty team %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Teams.Update(d.Id(), team); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -125,20 +127,20 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return resourcePagerDutyTeamRead(d, meta)
+	return resourcePagerDutyTeamRead(ctx, d, meta)
 }
 
-func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTeamDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty team %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.Delete(d.Id()); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -146,7 +148,7 @@ func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	d.SetId("")
 

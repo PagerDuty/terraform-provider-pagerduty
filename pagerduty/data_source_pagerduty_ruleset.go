@@ -2,9 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -12,7 +14,7 @@ import (
 
 func dataSourcePagerDutyRuleset() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyRulesetRead,
+		ReadContext: dataSourcePagerDutyRulesetRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -30,17 +32,17 @@ func dataSourcePagerDutyRuleset() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyRulesetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty ruleset")
 
 	searchName := d.Get("name").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Rulesets.List()
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -66,5 +68,5 @@ func dataSourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) er
 		d.Set("routing_keys", found.RoutingKeys)
 
 		return nil
-	})
+	}))
 }

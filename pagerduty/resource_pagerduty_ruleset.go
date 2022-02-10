@@ -2,9 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -12,12 +14,12 @@ import (
 
 func resourcePagerDutyRuleset() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyRulesetCreate,
-		Read:   resourcePagerDutyRulesetRead,
-		Update: resourcePagerDutyRulesetUpdate,
-		Delete: resourcePagerDutyRulesetDelete,
+		CreateContext: resourcePagerDutyRulesetCreate,
+		ReadContext:   resourcePagerDutyRulesetRead,
+		UpdateContext: resourcePagerDutyRulesetUpdate,
+		DeleteContext: resourcePagerDutyRulesetDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -100,13 +102,13 @@ func flattenTeam(v *pagerduty.RulesetObject) []interface{} {
 	return []interface{}{team}
 }
 
-func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchPagerDutyRuleset(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		ruleset, _, err := client.Rulesets.Get(d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -122,20 +124,20 @@ func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, handle404Er
 		d.Set("routing_keys", ruleset.RoutingKeys)
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	ruleset := buildRulesetStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty ruleset: %s", ruleset.Name)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if ruleset, _, err := client.Rulesets.Create(ruleset); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -149,20 +151,20 @@ func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) er
 	})
 
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return fetchPagerDutyRuleset(d, meta, false)
+	return fetchPagerDutyRuleset(ctx, d, meta, false)
 }
 
-func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Reading PagerDuty ruleset: %s", d.Id())
-	return fetchPagerDutyRuleset(d, meta, true)
+	return fetchPagerDutyRuleset(ctx, d, meta, true)
 
 }
-func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	ruleset := buildRulesetStruct(d)
@@ -170,22 +172,22 @@ func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) er
 	log.Printf("[INFO] Updating PagerDuty ruleset: %s", d.Id())
 
 	if _, _, err := client.Rulesets.Update(d.Id(), ruleset); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyRulesetDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyRulesetDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset: %s", d.Id())
 
 	if _, err := client.Rulesets.Delete(d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

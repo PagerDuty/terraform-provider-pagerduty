@@ -2,9 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyEscalationPolicy() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyEscalationPolicyCreate,
-		Read:   resourcePagerDutyEscalationPolicyRead,
-		Update: resourcePagerDutyEscalationPolicyUpdate,
-		Delete: resourcePagerDutyEscalationPolicyDelete,
+		CreateContext: resourcePagerDutyEscalationPolicyCreate,
+		ReadContext:   resourcePagerDutyEscalationPolicyRead,
+		UpdateContext: resourcePagerDutyEscalationPolicyUpdate,
+		DeleteContext: resourcePagerDutyEscalationPolicyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -105,10 +107,10 @@ func buildEscalationPolicyStruct(d *schema.ResourceData) *pagerduty.EscalationPo
 	return escalationPolicy
 }
 
-func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEscalationPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	escalationPolicy := buildEscalationPolicyStruct(d)
@@ -117,25 +119,25 @@ func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interf
 
 	escalationPolicy, _, err = client.EscalationPolicies.Create(escalationPolicy)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(escalationPolicy.ID)
 
-	return resourcePagerDutyEscalationPolicyRead(d, meta)
+	return resourcePagerDutyEscalationPolicyRead(ctx, d, meta)
 }
 
-func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEscalationPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty escalation policy: %s", d.Id())
 
 	o := &pagerduty.GetEscalationPolicyOptions{}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -154,20 +156,20 @@ func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interfac
 		}
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEscalationPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	escalationPolicy := buildEscalationPolicyStruct(d)
 
 	log.Printf("[INFO] Updating PagerDuty escalation policy: %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -175,22 +177,22 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEscalationPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 
 	// Retrying to give other resources (such as services) to delete
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -202,7 +204,7 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	d.SetId("")

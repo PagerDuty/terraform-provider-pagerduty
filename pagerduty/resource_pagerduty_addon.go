@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -11,12 +13,12 @@ import (
 
 func resourcePagerDutyAddon() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyAddonCreate,
-		Read:   resourcePagerDutyAddonRead,
-		Update: resourcePagerDutyAddonUpdate,
-		Delete: resourcePagerDutyAddonDelete,
+		CreateContext: resourcePagerDutyAddonCreate,
+		ReadContext:   resourcePagerDutyAddonRead,
+		UpdateContext: resourcePagerDutyAddonUpdate,
+		DeleteContext: resourcePagerDutyAddonDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -41,13 +43,13 @@ func buildAddonStruct(d *schema.ResourceData) *pagerduty.Addon {
 	return addon
 }
 
-func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchPagerDutyAddon(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		addon, _, err := client.Addons.Get(d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -57,13 +59,13 @@ func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, handle404Erro
 		d.Set("src", addon.Src)
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyAddonCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyAddonCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	addon := buildAddonStruct(d)
@@ -72,23 +74,23 @@ func resourcePagerDutyAddonCreate(d *schema.ResourceData, meta interface{}) erro
 
 	addon, _, err = client.Addons.Install(addon)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(addon.ID)
 	// Retrying on creates incase of eventual consistency on creation
-	return fetchPagerDutyAddon(d, meta, false)
+	return fetchPagerDutyAddon(ctx, d, meta, false)
 }
 
-func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyAddonRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Reading PagerDuty add-on %s", d.Id())
-	return fetchPagerDutyAddon(d, meta, true)
+	return fetchPagerDutyAddon(ctx, d, meta, true)
 }
 
-func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyAddonUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	addon := buildAddonStruct(d)
@@ -96,22 +98,22 @@ func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) erro
 	log.Printf("[INFO] Updating PagerDuty add-on %s", d.Id())
 
 	if _, _, err := client.Addons.Update(d.Id(), addon); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyAddonDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyAddonDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty add-on %s", d.Id())
 
 	if _, err := client.Addons.Delete(d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

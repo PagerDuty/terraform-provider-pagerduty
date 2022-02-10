@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,7 +15,7 @@ import (
 
 func dataSourcePagerDutyExtensionSchema() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyExtensionSchemaRead,
+		ReadContext: dataSourcePagerDutyExtensionSchemaRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -28,17 +30,17 @@ func dataSourcePagerDutyExtensionSchema() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyExtensionSchemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty Extension Schema")
 
 	searchName := d.Get("name").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.ExtensionSchemas.List(&pagerduty.ListExtensionSchemasOptions{Query: searchName})
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -64,5 +66,5 @@ func dataSourcePagerDutyExtensionSchemaRead(d *schema.ResourceData, meta interfa
 		d.Set("type", found.Type)
 
 		return nil
-	})
+	}))
 }

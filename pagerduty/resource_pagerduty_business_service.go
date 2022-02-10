@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -11,12 +13,12 @@ import (
 
 func resourcePagerDutyBusinessService() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyBusinessServiceCreate,
-		Read:   resourcePagerDutyBusinessServiceRead,
-		Update: resourcePagerDutyBusinessServiceUpdate,
-		Delete: resourcePagerDutyBusinessServiceDelete,
+		CreateContext: resourcePagerDutyBusinessServiceCreate,
+		ReadContext:   resourcePagerDutyBusinessServiceRead,
+		UpdateContext: resourcePagerDutyBusinessServiceUpdate,
+		DeleteContext: resourcePagerDutyBusinessServiceDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -92,13 +94,13 @@ func buildBusinessServiceStruct(d *schema.ResourceData) (*pagerduty.BusinessServ
 	return &businessService, nil
 }
 
-func resourcePagerDutyBusinessServiceCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyBusinessServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 
 		businessService, err := buildBusinessServiceStruct(d)
 		if err != nil {
@@ -114,21 +116,21 @@ func resourcePagerDutyBusinessServiceCreate(d *schema.ResourceData, meta interfa
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
-	return resourcePagerDutyBusinessServiceRead(d, meta)
+	return resourcePagerDutyBusinessServiceRead(ctx, d, meta)
 }
 
-func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyBusinessServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty business service %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		businessService, _, err := client.BusinessServices.Get(d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -152,21 +154,21 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyBusinessServiceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyBusinessServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	businessService, err := buildBusinessServiceStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	log.Printf("[DEBUG] poc: %v", businessService.PointOfContact)
 	log.Printf("[DEBUG] point_of_contact: %v", d.Get("point_of_contact"))
@@ -174,22 +176,22 @@ func resourcePagerDutyBusinessServiceUpdate(d *schema.ResourceData, meta interfa
 	log.Printf("[INFO] Updating PagerDuty business service %s", d.Id())
 
 	if _, _, err := client.BusinessServices.Update(d.Id(), businessService); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyBusinessServiceDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyBusinessServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty business service %s", d.Id())
 
 	if _, err := client.BusinessServices.Delete(d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

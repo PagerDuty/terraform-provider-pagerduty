@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyResponsePlay() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyResponsePlayCreate,
-		Read:   resourcePagerDutyResponsePlayRead,
-		Update: resourcePagerDutyResponsePlayUpdate,
-		Delete: resourcePagerDutyResponsePlayDelete,
+		CreateContext: resourcePagerDutyResponsePlayCreate,
+		ReadContext:   resourcePagerDutyResponsePlayRead,
+		UpdateContext: resourcePagerDutyResponsePlayUpdate,
+		DeleteContext: resourcePagerDutyResponsePlayDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyResponsePlayImport,
+			StateContext: resourcePagerDutyResponsePlayImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -226,17 +228,17 @@ func buildResponsePlayStruct(d *schema.ResourceData) *pagerduty.ResponsePlay {
 	return responsePlay
 }
 
-func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyResponsePlayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	responsePlay := buildResponsePlayStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty response play: %s", responsePlay.ID)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if responsePlay, _, err := client.ResponsePlays.Create(responsePlay); err != nil {
 			return resource.RetryableError(err)
 		} else if responsePlay != nil {
@@ -248,21 +250,21 @@ func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return resourcePagerDutyResponsePlayRead(d, meta)
+	return resourcePagerDutyResponsePlayRead(ctx, d, meta)
 }
 
-func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyResponsePlayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	from := d.Get("from").(string)
 	log.Printf("[INFO] Reading PagerDuty response play: %s (from: %s)", d.Id(), from)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		responsePlay, _, err := client.ResponsePlays.Get(d.Id(), from)
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -292,20 +294,20 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 
 		}
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyResponsePlayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	responsePlay := buildResponsePlayStruct(d)
 
 	log.Printf("[INFO] Updating PagerDuty response play: %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.ResponsePlays.Update(d.Id(), responsePlay); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -313,21 +315,21 @@ func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return resourcePagerDutyResponsePlayRead(d, meta)
+	return resourcePagerDutyResponsePlayRead(ctx, d, meta)
 }
 
-func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyResponsePlayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty response play: %s", d.Id())
 	from := d.Get("from").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.ResponsePlays.Delete(d.Id(), from); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -335,7 +337,7 @@ func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	d.SetId("")
 
@@ -474,7 +476,7 @@ func flattenRSTeams(teams []*pagerduty.TeamReference) []interface{} {
 	return flatTeamList
 }
 
-func resourcePagerDutyResponsePlayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyResponsePlayImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err

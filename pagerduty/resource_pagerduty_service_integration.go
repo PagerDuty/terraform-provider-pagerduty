@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
@@ -19,10 +20,10 @@ const (
 
 func resourcePagerDutyServiceIntegration() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyServiceIntegrationCreate,
-		Read:   resourcePagerDutyServiceIntegrationRead,
-		Update: resourcePagerDutyServiceIntegrationUpdate,
-		Delete: resourcePagerDutyServiceIntegrationDelete,
+		CreateContext: resourcePagerDutyServiceIntegrationCreate,
+		ReadContext:   resourcePagerDutyServiceIntegrationRead,
+		UpdateContext: resourcePagerDutyServiceIntegrationUpdate,
+		DeleteContext: resourcePagerDutyServiceIntegrationDelete,
 		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			t := diff.Get("type").(string)
 			if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" && diff.NewValueKnown("integration_email") {
@@ -31,7 +32,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			return nil
 		},
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyServiceIntegrationImport,
+			StateContext: resourcePagerDutyServiceIntegrationImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -123,17 +124,17 @@ func buildServiceIntegrationStruct(d *schema.ResourceData) (*pagerduty.Integrati
 	return serviceIntegration, nil
 }
 
-func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchPagerDutyServiceIntegration(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	service := d.Get("service").(string)
 
 	o := &pagerduty.GetIntegrationOptions{}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -163,25 +164,25 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 		}
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	serviceIntegration, err := buildServiceIntegrationStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Creating PagerDuty service integration %s", serviceIntegration.Name)
 
 	service := d.Get("service").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
 			if isErrCode(err, 400) {
 				time.Sleep(2 * time.Second)
@@ -196,26 +197,26 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 	})
 
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
-	return fetchPagerDutyServiceIntegration(d, meta, false)
+	return fetchPagerDutyServiceIntegration(ctx, d, meta, false)
 }
 
-func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceIntegrationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Reading PagerDuty service integration %s", d.Id())
-	return fetchPagerDutyServiceIntegration(d, meta, true)
+	return fetchPagerDutyServiceIntegration(ctx, d, meta, true)
 }
 
-func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	serviceIntegration, err := buildServiceIntegrationStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	service := d.Get("service").(string)
@@ -223,16 +224,16 @@ func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta inte
 	log.Printf("[INFO] Updating PagerDuty service integration %s", d.Id())
 
 	if _, _, err := client.Services.UpdateIntegration(service, d.Id(), serviceIntegration); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	service := d.Get("service").(string)
@@ -240,7 +241,7 @@ func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta inte
 	log.Printf("[INFO] Removing PagerDuty service integration %s", d.Id())
 
 	if _, err := client.Services.DeleteIntegration(service, d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -248,7 +249,7 @@ func resourcePagerDutyServiceIntegrationDelete(d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyServiceIntegrationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err

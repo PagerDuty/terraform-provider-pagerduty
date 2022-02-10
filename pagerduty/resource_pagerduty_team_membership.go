@@ -2,10 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyTeamMembership() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyTeamMembershipCreate,
-		Read:   resourcePagerDutyTeamMembershipRead,
-		Update: resourcePagerDutyTeamMembershipUpdate,
-		Delete: resourcePagerDutyTeamMembershipDelete,
+		CreateContext: resourcePagerDutyTeamMembershipCreate,
+		ReadContext:   resourcePagerDutyTeamMembershipRead,
+		UpdateContext: resourcePagerDutyTeamMembershipUpdate,
+		DeleteContext: resourcePagerDutyTeamMembershipDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {
@@ -45,15 +47,15 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 	}
 }
 
-func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchPagerDutyTeamMembership(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -73,12 +75,12 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, hand
 		d.SetId("")
 
 		return nil
-	})
+	}))
 }
-func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTeamMembershipCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID := d.Get("user_id").(string)
@@ -87,7 +89,7 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Adding user: %s to team: %s with role: %s", userID, teamID, role)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
 				return resource.RetryableError(err)
@@ -99,22 +101,22 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 		return nil
 	})
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
-	return fetchPagerDutyTeamMembership(d, meta, false)
+	return fetchPagerDutyTeamMembership(ctx, d, meta, false)
 }
 
-func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{}) error {
-	return fetchPagerDutyTeamMembership(d, meta, true)
+func resourcePagerDutyTeamMembershipRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return fetchPagerDutyTeamMembership(ctx, d, meta, true)
 }
 
-func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTeamMembershipUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID := d.Get("user_id").(string)
@@ -124,7 +126,7 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] Updating user: %s to team: %s with role: %s", userID, teamID, role)
 
 	// To update existing membership resource, We can use the same API as creating a new membership.
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
 				return resource.RetryableError(err)
@@ -136,7 +138,7 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 		return nil
 	})
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
@@ -144,10 +146,10 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 	return nil
 }
 
-func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyTeamMembershipDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
@@ -155,7 +157,7 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -167,7 +169,7 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	d.SetId("")

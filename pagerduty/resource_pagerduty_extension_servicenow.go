@@ -3,9 +3,11 @@ package pagerduty
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -23,12 +25,12 @@ type PagerDutyExtensionServiceNowConfig struct {
 
 func resourcePagerDutyExtensionServiceNow() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyExtensionServiceNowCreate,
-		Read:   resourcePagerDutyExtensionServiceNowRead,
-		Update: resourcePagerDutyExtensionServiceNowUpdate,
-		Delete: resourcePagerDutyExtensionServiceNowDelete,
+		CreateContext: resourcePagerDutyExtensionServiceNowCreate,
+		ReadContext:   resourcePagerDutyExtensionServiceNowRead,
+		UpdateContext: resourcePagerDutyExtensionServiceNowUpdate,
+		DeleteContext: resourcePagerDutyExtensionServiceNowDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyExtensionServiceNowImport,
+			StateContext: resourcePagerDutyExtensionServiceNowImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -121,13 +123,13 @@ func buildExtensionServiceNowStruct(d *schema.ResourceData) *pagerduty.Extension
 	return Extension
 }
 
-func fetchPagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchPagerDutyExtensionServiceNowCreate(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		extension, _, err := client.Extensions.Get(d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -153,13 +155,13 @@ func fetchPagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interf
 		d.Set("referer", config.Referer)
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	extension := buildExtensionServiceNowStruct(d)
@@ -168,22 +170,22 @@ func resourcePagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta int
 
 	extension, _, err = client.Extensions.Create(extension)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(extension.ID)
-	return fetchPagerDutyExtensionServiceNowCreate(d, meta, false)
+	return fetchPagerDutyExtensionServiceNowCreate(ctx, d, meta, false)
 }
 
-func resourcePagerDutyExtensionServiceNowRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Reading PagerDuty extension %s", d.Id())
-	return fetchPagerDutyExtensionServiceNowCreate(d, meta, true)
+	return fetchPagerDutyExtensionServiceNowCreate(ctx, d, meta, true)
 }
 
-func resourcePagerDutyExtensionServiceNowUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	extension := buildExtensionServiceNowStruct(d)
@@ -191,16 +193,16 @@ func resourcePagerDutyExtensionServiceNowUpdate(d *schema.ResourceData, meta int
 	log.Printf("[INFO] Updating PagerDuty extension %s", d.Id())
 
 	if _, _, err := client.Extensions.Update(d.Id(), extension); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resourcePagerDutyExtensionServiceNowRead(d, meta)
+	return resourcePagerDutyExtensionServiceNowRead(ctx, d, meta)
 }
 
-func resourcePagerDutyExtensionServiceNowDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyExtensionServiceNowDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty extension %s", d.Id())
@@ -210,7 +212,7 @@ func resourcePagerDutyExtensionServiceNowDelete(d *schema.ResourceData, meta int
 			log.Printf("[WARN] Extension (%s) not found, removing from state", d.Id())
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -218,7 +220,7 @@ func resourcePagerDutyExtensionServiceNowDelete(d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourcePagerDutyExtensionServiceNowImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyExtensionServiceNowImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err

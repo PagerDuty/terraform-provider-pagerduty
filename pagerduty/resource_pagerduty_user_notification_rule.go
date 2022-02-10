@@ -1,7 +1,9 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
@@ -13,12 +15,12 @@ import (
 
 func resourcePagerDutyUserNotificationRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyUserNotificationRuleCreate,
-		Read:   resourcePagerDutyUserNotificationRuleRead,
-		Update: resourcePagerDutyUserNotificationRuleUpdate,
-		Delete: resourcePagerDutyUserNotificationRuleDelete,
+		CreateContext: resourcePagerDutyUserNotificationRuleCreate,
+		ReadContext:   resourcePagerDutyUserNotificationRuleRead,
+		UpdateContext: resourcePagerDutyUserNotificationRuleUpdate,
+		DeleteContext: resourcePagerDutyUserNotificationRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyUserNotificationRuleImport,
+			StateContext: resourcePagerDutyUserNotificationRuleImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {
@@ -82,15 +84,15 @@ func buildUserNotificationRuleStruct(d *schema.ResourceData) (*pagerduty.Notific
 	return notificationRule, nil
 }
 
-func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}, handle404Errors bool) error {
+func fetchPagerDutyUserNotificationRule(ctx context.Context, d *schema.ResourceData, meta interface{}, handle404Errors bool) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
 		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -101,45 +103,45 @@ func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}
 		d.Set("contact_method", flattenContactMethod(resp.ContactMethod))
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserNotificationRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	userID := d.Get("user_id").(string)
 
 	notificationRule, err := buildUserNotificationRuleStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	resp, _, err := client.Users.CreateNotificationRule(userID, notificationRule)
 	if err != nil {
-		return fmt.Errorf("error while creating notification rule %s: %w", notificationRule.ID, err)
+		return diag.Errorf("error while creating notification rule %s: %w", notificationRule.ID, err)
 	}
 
 	d.SetId(resp.ID)
 
-	return fetchPagerDutyUserNotificationRule(d, meta, false)
+	return fetchPagerDutyUserNotificationRule(ctx, d, meta, false)
 }
 
-func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta interface{}) error {
-	return fetchPagerDutyUserNotificationRule(d, meta, true)
+func resourcePagerDutyUserNotificationRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return fetchPagerDutyUserNotificationRule(ctx, d, meta, true)
 }
 
-func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserNotificationRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	notificationRule, err := buildUserNotificationRuleStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Updating PagerDuty user notification rule %s", d.Id())
@@ -147,23 +149,23 @@ func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta in
 	userID := d.Get("user_id").(string)
 
 	if _, _, err := client.Users.UpdateNotificationRule(userID, d.Id(), notificationRule); err != nil {
-		return fmt.Errorf("error while updating notification rule %s: %w", d.Id(), err)
+		return diag.Errorf("error while updating notification rule %s: %w", d.Id(), err)
 	}
 
-	return resourcePagerDutyUserNotificationRuleRead(d, meta)
+	return resourcePagerDutyUserNotificationRuleRead(ctx, d, meta)
 }
 
-func resourcePagerDutyUserNotificationRuleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyUserNotificationRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty user notification rule %s", d.Id())
 
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Users.DeleteNotificationRule(userID, d.Id()); err != nil {
 			if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 				return checkErr.ReturnVal
@@ -172,10 +174,10 @@ func resourcePagerDutyUserNotificationRuleDelete(d *schema.ResourceData, meta in
 		d.SetId("")
 
 		return nil
-	})
+	}))
 }
 
-func resourcePagerDutyUserNotificationRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyUserNotificationRuleImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err
@@ -184,7 +186,7 @@ func resourcePagerDutyUserNotificationRuleImport(d *schema.ResourceData, meta in
 	ids := strings.Split(d.Id(), ":")
 
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_user_notification_rule. Expecting an ID formed as '<user_id>.<notification_rule_id>'")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_user_notification_rule. Expecting an ID formed as '<user_id>.<notification_rule_id>'")
 	}
 	uid, id := ids[0], ids[1]
 

@@ -2,9 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -12,7 +14,7 @@ import (
 
 func dataSourcePagerDutyEscalationPolicy() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyEscalationPolicyRead,
+		ReadContext: dataSourcePagerDutyEscalationPolicyRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -23,10 +25,10 @@ func dataSourcePagerDutyEscalationPolicy() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyEscalationPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty escalation policy")
@@ -37,7 +39,7 @@ func dataSourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interf
 		Query: searchName,
 	}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EscalationPolicies.List(o)
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -62,5 +64,5 @@ func dataSourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interf
 		d.Set("name", found.Name)
 
 		return nil
-	})
+	}))
 }

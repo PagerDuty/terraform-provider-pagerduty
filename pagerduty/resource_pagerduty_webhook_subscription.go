@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
+	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -11,12 +13,12 @@ import (
 
 func resourcePagerDutyWebhookSubscription() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyWebhookSubscriptionCreate,
-		Read:   resourcePagerDutyWebhookSubscriptionRead,
-		Update: resourcePagerDutyWebhookSubscriptionUpdate,
-		Delete: resourcePagerDutyWebhookSubscriptionDelete,
+		CreateContext: resourcePagerDutyWebhookSubscriptionCreate,
+		ReadContext:   resourcePagerDutyWebhookSubscriptionRead,
+		UpdateContext: resourcePagerDutyWebhookSubscriptionUpdate,
+		DeleteContext: resourcePagerDutyWebhookSubscriptionDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"delivery_method": {
@@ -105,17 +107,17 @@ func buildWebhookSubscriptionStruct(d *schema.ResourceData) *pagerduty.WebhookSu
 	return &webhook
 }
 
-func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyWebhookSubscriptionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	webhook := buildWebhookSubscriptionStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty webhook subscription to be delivered to %s", webhook.DeliveryMethod.URL)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Create(webhook); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -129,22 +131,22 @@ func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta int
 	})
 
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
-	return resourcePagerDutyWebhookSubscriptionRead(d, meta)
+	return resourcePagerDutyWebhookSubscriptionRead(ctx, d, meta)
 
 }
 
-func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyWebhookSubscriptionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty webhook subscription %s", d.Id())
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return diag.FromErr(resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		webhook, _, err := client.WebhookSubscriptions.Get(d.Id())
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -154,12 +156,12 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 			setWebhookResourceData(d, webhook)
 		}
 		return nil
-	})
+	}))
 }
-func resourcePagerDutyWebhookSubscriptionUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyWebhookSubscriptionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Updating PagerDuty webhook subscription %s", d.Id())
@@ -167,7 +169,7 @@ func resourcePagerDutyWebhookSubscriptionUpdate(d *schema.ResourceData, meta int
 
 	webhook, _, err := client.WebhookSubscriptions.Update(d.Id(), whStruct)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	} else if webhook != nil {
 		setWebhookResourceData(d, webhook)
 	}
@@ -175,16 +177,16 @@ func resourcePagerDutyWebhookSubscriptionUpdate(d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourcePagerDutyWebhookSubscriptionDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyWebhookSubscriptionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty webhook subscription %s", d.Id())
 
 	if _, err := client.WebhookSubscriptions.Delete(d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

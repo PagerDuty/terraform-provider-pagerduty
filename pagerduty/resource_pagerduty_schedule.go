@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"regexp"
 	"time"
@@ -15,10 +16,10 @@ import (
 
 func resourcePagerDutySchedule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyScheduleCreate,
-		Read:   resourcePagerDutyScheduleRead,
-		Update: resourcePagerDutyScheduleUpdate,
-		Delete: resourcePagerDutyScheduleDelete,
+		CreateContext: resourcePagerDutyScheduleCreate,
+		ReadContext:   resourcePagerDutyScheduleRead,
+		UpdateContext: resourcePagerDutyScheduleUpdate,
+		DeleteContext: resourcePagerDutyScheduleDelete,
 		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			ln := diff.Get("layer.#").(int)
 			for li := 0; li <= ln; li++ {
@@ -37,7 +38,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 			return nil
 		},
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -184,15 +185,15 @@ func buildScheduleStruct(d *schema.ResourceData) (*pagerduty.Schedule, error) {
 	return schedule, nil
 }
 
-func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyScheduleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	schedule, err := buildScheduleStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	o := &pagerduty.CreateScheduleOptions{}
@@ -205,23 +206,23 @@ func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) e
 
 	schedule, _, err = client.Schedules.Create(schedule, o)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(schedule.ID)
 
-	return resourcePagerDutyScheduleRead(d, meta)
+	return resourcePagerDutyScheduleRead(ctx, d, meta)
 }
 
-func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyScheduleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
 		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
 			return checkErr.ReturnVal
@@ -250,21 +251,21 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyScheduleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	schedule, err := buildScheduleStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	opts := &pagerduty.UpdateScheduleOptions{}
@@ -282,12 +283,12 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 
 		osl, err := expandScheduleLayers(oraw.([]interface{}))
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		nsl, err := expandScheduleLayers(nraw.([]interface{}))
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		// Checks to see if new schedule layers (nsl) include all old schedule layers (osl)
@@ -304,7 +305,7 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 			if !found {
 				end, err := timeToUTC(time.Now().Format(time.RFC3339))
 				if err != nil {
-					return err
+					return diag.FromErr(err)
 				}
 				endStr := end.String()
 				o.End = &endStr
@@ -315,7 +316,7 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Updating PagerDuty schedule: %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Schedules.Update(d.Id(), schedule, opts); err != nil {
 			return resource.RetryableError(err)
 		}
@@ -323,22 +324,22 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyScheduleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Schedules.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -350,7 +351,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	d.SetId("")

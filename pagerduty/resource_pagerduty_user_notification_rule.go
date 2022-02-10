@@ -121,7 +121,7 @@ func resourcePagerDutyUserNotificationRuleCreate(ctx context.Context, d *schema.
 
 	resp, _, err := client.Users.CreateNotificationRule(userID, notificationRule)
 	if err != nil {
-		return diag.Errorf("error while creating notification rule %s: %w", notificationRule.ID, err)
+		return diag.FromErr(fmt.Errorf("error while creating notification rule %s: %w", notificationRule.ID, err))
 	}
 
 	d.SetId(resp.ID)
@@ -149,7 +149,7 @@ func resourcePagerDutyUserNotificationRuleUpdate(ctx context.Context, d *schema.
 	userID := d.Get("user_id").(string)
 
 	if _, _, err := client.Users.UpdateNotificationRule(userID, d.Id(), notificationRule); err != nil {
-		return diag.Errorf("error while updating notification rule %s: %w", d.Id(), err)
+		return diag.FromErr(fmt.Errorf("error while updating notification rule %s: %w", d.Id(), err))
 	}
 
 	return resourcePagerDutyUserNotificationRuleRead(ctx, d, meta)

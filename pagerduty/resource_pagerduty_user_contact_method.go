@@ -133,7 +133,7 @@ func resourcePagerDutyUserContactMethodCreate(ctx context.Context, d *schema.Res
 
 	resp, _, err := client.Users.CreateContactMethod(userID, contactMethod)
 	if err != nil {
-		return diag.Errorf("error while creating contact method %s: %w", contactMethod.ID, err)
+		return diag.FromErr(fmt.Errorf("error while creating contact method %s: %w", contactMethod.ID, err))
 	}
 
 	d.SetId(resp.ID)
@@ -158,7 +158,7 @@ func resourcePagerDutyUserContactMethodUpdate(ctx context.Context, d *schema.Res
 	userID := d.Get("user_id").(string)
 
 	if _, _, err := client.Users.UpdateContactMethod(userID, d.Id(), contactMethod); err != nil {
-		return diag.Errorf("error while updating contact method %s: %w", contactMethod.ID, err)
+		return diag.FromErr(fmt.Errorf("error while updating contact method %s: %w", contactMethod.ID, err))
 	}
 
 	return resourcePagerDutyUserContactMethodRead(ctx, d, meta)

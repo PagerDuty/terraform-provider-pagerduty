@@ -37,7 +37,7 @@ func dataSourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interfa
 
 	searchName := d.Get("name").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.BusinessServices.List()
 		if err != nil {
 			if isErrCode(err, 429) {

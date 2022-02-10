@@ -70,7 +70,7 @@ func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta inter
 	searchLabel := d.Get("label").(string)
 	searchType := d.Get("type").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.ListContactMethods(userId)
 		if err != nil {
 			errResp := handleNotFoundError(err, d)

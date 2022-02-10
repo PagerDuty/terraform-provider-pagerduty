@@ -72,7 +72,7 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 
 	log.Printf("[INFO] Creating PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)

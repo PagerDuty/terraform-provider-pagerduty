@@ -94,7 +94,11 @@ func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMeth
 }
 
 func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	userID := d.Get("user_id").(string)
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
@@ -122,7 +126,10 @@ func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, e
 }
 
 func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	userID := d.Get("user_id").(string)
 
@@ -143,7 +150,10 @@ func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	contactMethod := buildUserContactMethodStruct(d)
 
@@ -159,7 +169,10 @@ func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty user contact method %s", d.Id())
 
@@ -175,7 +188,10 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 }
 
 func resourcePagerDutyUserContactMethodImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	ids := strings.Split(d.Id(), ":")
 
@@ -184,7 +200,7 @@ func resourcePagerDutyUserContactMethodImport(d *schema.ResourceData, meta inter
 	}
 	uid, id := ids[0], ids[1]
 
-	_, _, err := client.Users.GetContactMethod(uid, id)
+	_, _, err = client.Users.GetContactMethod(uid, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

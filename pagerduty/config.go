@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -11,6 +12,8 @@ import (
 
 // Config defines the configuration options for the PagerDuty client
 type Config struct {
+	mu sync.Mutex
+
 	// The PagerDuty API URL
 	ApiUrl string
 
@@ -31,6 +34,9 @@ type Config struct {
 
 	// UserAgent for API Client
 	UserAgent string
+
+	client      *pagerduty.Client
+	slackClient *pagerduty.Client
 }
 
 const invalidCreds = `
@@ -40,8 +46,16 @@ Please see https://www.terraform.io/docs/providers/pagerduty/index.html
 for more information on providing credentials for this provider.
 `
 
-// Client returns a new PagerDuty client
+// Client returns a PagerDuty client, initializing when necessary.
 func (c *Config) Client() (*pagerduty.Client, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Return the previously-configured client if available.
+	if c.client != nil {
+		return c.client, nil
+	}
+
 	// Validate that the PagerDuty token is set
 	if c.Token == "" {
 		return nil, fmt.Errorf(invalidCreds)
@@ -77,12 +91,22 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		}
 	}
 
+	c.client = client
+
 	log.Printf("[INFO] PagerDuty client configured")
 
-	return client, nil
+	return c.client, nil
 }
 
 func (c *Config) SlackClient() (*pagerduty.Client, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Return the previously-configured client if available.
+	if c.slackClient != nil {
+		return c.slackClient, nil
+	}
+
 	// Validate that the user level PagerDuty token is set
 	if c.UserToken == "" {
 		return nil, fmt.Errorf(invalidCreds)
@@ -105,7 +129,9 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 		return nil, err
 	}
 
+	c.slackClient = client
+
 	log.Printf("[INFO] PagerDuty client configured for slack")
 
-	return client, nil
+	return c.slackClient, nil
 }

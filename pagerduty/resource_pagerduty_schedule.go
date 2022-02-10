@@ -185,7 +185,10 @@ func buildScheduleStruct(d *schema.ResourceData) (*pagerduty.Schedule, error) {
 }
 
 func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	schedule, err := buildScheduleStruct(d)
 	if err != nil {
@@ -211,7 +214,10 @@ func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
 
@@ -249,7 +255,10 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	schedule, err := buildScheduleStruct(d)
 	if err != nil {
@@ -318,7 +327,10 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", d.Id())
 

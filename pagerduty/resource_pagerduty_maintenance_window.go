@@ -92,8 +92,8 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		window, _, err := client.MaintenanceWindows.Get(d.Id())
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		d.Set("description", window.Description)

@@ -98,8 +98,8 @@ func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		subscriberResponse, _, err := client.BusinessServiceSubscribers.List(businessServiceId)
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		if subscriberResponse != nil {

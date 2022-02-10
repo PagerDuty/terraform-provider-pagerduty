@@ -150,8 +150,8 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id())
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		if slackConn != nil {

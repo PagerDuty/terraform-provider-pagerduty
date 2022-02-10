@@ -223,8 +223,8 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		if schedule != nil {

@@ -49,8 +49,8 @@ func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, handle404Erro
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		addon, _, err := client.Addons.Get(d.Id())
-		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		d.Set("name", addon.Name)

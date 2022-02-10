@@ -362,8 +362,8 @@ func fetchService(d *schema.ResourceData, meta interface{}, handle404Errors bool
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
-		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		if err := flattenService(d, service); err != nil {

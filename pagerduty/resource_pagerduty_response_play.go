@@ -264,8 +264,8 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		responsePlay, _, err := client.ResponsePlays.Get(d.Id(), from)
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		if responsePlay != nil {

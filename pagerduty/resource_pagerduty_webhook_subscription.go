@@ -146,8 +146,8 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		webhook, _, err := client.WebhookSubscriptions.Get(d.Id())
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		if webhook != nil {

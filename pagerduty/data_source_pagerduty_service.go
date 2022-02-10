@@ -43,8 +43,8 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Services.List(o)
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		var found *pagerduty.Service

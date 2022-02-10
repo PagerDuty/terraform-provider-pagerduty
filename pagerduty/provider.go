@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
@@ -11,6 +12,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
 )
+
+type ErrorResponse struct {
+	ShouldReturn bool
+	ReturnVal    *resource.RetryError
+}
 
 // Provider represents a resource provider in Terraform
 func Provider() *schema.Provider {
@@ -106,9 +112,17 @@ func Provider() *schema.Provider {
 }
 
 func isErrCode(err error, code int) bool {
-	if e, ok := err.(*pagerduty.Error); ok && e.ErrorResponse.Response.StatusCode == code {
-		return true
+	currentErr := err
+	for errors.Unwrap(currentErr) != nil {
+		currentErr = errors.Unwrap(currentErr)
+
+		if e, ok := currentErr.(*pagerduty.Error); ok && e.ErrorResponse.Response.StatusCode == code {
+			log.Printf("[INFO] Error code matches expected %d", code)
+			return true
+		}
 	}
+
+	log.Printf("[INFO] Error code doesn't match expected %d", code)
 
 	return false
 }
@@ -125,52 +139,52 @@ func genError(err error, d *schema.ResourceData) error {
 	return fmt.Errorf("error reading: %s: %s", resId, errStr)
 }
 
-func handleGenericErrors(err error, d *schema.ResourceData) *resource.RetryError {
+func handleGenericErrors(err error, d *schema.ResourceData) ErrorResponse {
 	if err == nil {
-		return nil
+		return ErrorResponse{ShouldReturn: false}
 	}
 
 	if isErrCode(err, 429) {
 		// Delaying retry by 30s as recommended by PagerDuty
 		// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 		time.Sleep(30 * time.Second)
-		return resource.RetryableError(err)
+		return ErrorResponse{ShouldReturn: true, ReturnVal: resource.RetryableError(err)}
 	}
 
 	if isErrCode(err, 404) {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")
-		return nil
+		return ErrorResponse{ShouldReturn: true, ReturnVal: nil}
 	}
 
 	generatedError := genError(err, d)
 	if generatedError != nil {
-		return resource.NonRetryableError(generatedError)
+		return ErrorResponse{ShouldReturn: true, ReturnVal: resource.NonRetryableError(generatedError)}
 	}
 
-	return nil
+	return ErrorResponse{ShouldReturn: false}
 }
 
-func handleRateLimitErrors(err error, d *schema.ResourceData) *resource.RetryError {
+func handleRateLimitErrors(err error, d *schema.ResourceData) ErrorResponse {
 	if err == nil {
-		return nil
+		return ErrorResponse{ShouldReturn: false}
 	}
 
 	if isErrCode(err, 429) {
 		// Delaying retry by 30s as recommended by PagerDuty
 		// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 		time.Sleep(30 * time.Second)
-		return resource.RetryableError(err)
+		return ErrorResponse{ShouldReturn: true, ReturnVal: resource.RetryableError(err)}
 	}
 	generatedError := genError(err, d)
 	if generatedError != nil {
-		return resource.NonRetryableError(generatedError)
+		return ErrorResponse{ShouldReturn: true, ReturnVal: resource.NonRetryableError(generatedError)}
 	}
 
-	return nil
+	return ErrorResponse{ShouldReturn: false}
 }
 
-func getErrorHandler(shouldHandle404Errors bool) func(err error, d *schema.ResourceData) *resource.RetryError {
+func getErrorHandler(shouldHandle404Errors bool) func(err error, d *schema.ResourceData) ErrorResponse {
 	if shouldHandle404Errors {
 		return handleGenericErrors
 	}

@@ -103,8 +103,8 @@ func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, h
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetContactMethod(userID, d.Id())
-		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		d.Set("address", resp.Address)
@@ -174,8 +174,8 @@ func resourcePagerDutyUserContactMethodDelete(d *schema.ResourceData, meta inter
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, err := client.Users.DeleteContactMethod(userID, d.Id()); err != nil {
-			if checkErr := handleGenericErrors(err, d); checkErr != nil {
-				return checkErr
+			if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+				return checkErr.ReturnVal
 			}
 		}
 

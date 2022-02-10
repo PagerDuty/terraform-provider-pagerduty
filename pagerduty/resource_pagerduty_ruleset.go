@@ -108,8 +108,8 @@ func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, handle404Er
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		ruleset, _, err := client.Rulesets.Get(d.Id())
-		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		d.Set("name", ruleset.Name)

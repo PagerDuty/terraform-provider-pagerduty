@@ -135,8 +135,8 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
-		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := getErrorHandler(handle404Errors)(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		d.Set("name", serviceIntegration.Name)

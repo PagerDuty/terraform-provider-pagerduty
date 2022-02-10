@@ -306,8 +306,8 @@ github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zx
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJuTMNUDYhXwkmfOly8iTdp5TEcJFWZD2D7SIkUc=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/nordcloud/go-pagerduty v1.2.1 h1:bdVZGNJKAML1EL15YwM3HRK7SZxCLO013W1X59aQTr4=
-github.com/nordcloud/go-pagerduty v1.2.1/go.mod h1:ZB7WAA2rP1b5EGA7zqB2B9lN6a1L9AF6seOEDEr9hlI=
+github.com/nordcloud/go-pagerduty v1.2.3 h1:ZtYGUcmBFW8yLPpp5LTlMCGD3b25PpS5FYm9nNc94J8=
+github.com/nordcloud/go-pagerduty v1.2.3/go.mod h1:ZB7WAA2rP1b5EGA7zqB2B9lN6a1L9AF6seOEDEr9hlI=
 github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce h1:RPclfga2SEJmgMmz2k+Mg7cowZ8yv4Trqw9UsJby758=
 github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce/go.mod h1:uFMI8w+ref4v2r9jz+c9i1IfIttS/OkmLfrk1jne5hs=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=

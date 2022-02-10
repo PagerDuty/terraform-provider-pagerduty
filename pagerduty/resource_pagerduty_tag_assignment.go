@@ -108,8 +108,8 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID)
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		if tagResponse != nil {

@@ -38,8 +38,8 @@ func dataSourcePagerDutyEscalationPoliciesRead(d *schema.ResourceData, meta inte
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EscalationPolicies.List(o)
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		var ids []string

@@ -51,8 +51,8 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Services.List(o)
-		if checkErr := handleGenericErrors(err, d); checkErr != nil {
-			return checkErr
+		if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+			return checkErr.ReturnVal
 		}
 
 		var found *pagerduty.Service
@@ -74,8 +74,8 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 		for _, integration := range found.Integrations {
 			if strings.EqualFold(integration.Summary, integrationSummary) {
 				integrationDetails, _, err := client.Services.GetIntegration(found.ID, integration.ID, &pagerduty.GetIntegrationOptions{})
-				if checkErr := handleGenericErrors(err, d); checkErr != nil {
-					return checkErr
+				if checkErr := handleGenericErrors(err, d); checkErr.ShouldReturn {
+					return checkErr.ReturnVal
 				}
 				d.SetId(integration.ID)
 				d.Set("service_name", found.Name)

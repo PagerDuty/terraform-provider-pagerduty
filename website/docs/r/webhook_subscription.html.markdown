@@ -21,8 +21,13 @@ resource "pagerduty_webhook_subscription" "foo" {
   delivery_method {
     type = "http_delivery_method"
     url = "https://example.com/receive_a_pagerduty_webhook"
-    custom_headers = {
-      example_key = "example_value"
+    custom_headers {
+        name = "X-Foo"
+        value = "foo"
+    }
+    custom_headers {
+        name = "X-Bar"
+        value = "bar"
     }
   }
   description = "%s"

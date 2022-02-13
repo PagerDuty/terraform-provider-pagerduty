@@ -46,7 +46,11 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 }
 
 func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
@@ -78,7 +82,10 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 	})
 }
 func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	userID := d.Get("user_id").(string)
 	teamID := d.Get("team_id").(string)
@@ -111,7 +118,10 @@ func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{
 }
 
 func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	userID := d.Get("user_id").(string)
 	teamID := d.Get("team_id").(string)
@@ -141,7 +151,10 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
 

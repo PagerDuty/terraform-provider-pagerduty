@@ -132,13 +132,16 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 }
 
 func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	user := buildUserStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty user %s", user.Name)
 
-	user, _, err := client.Users.Create(user)
+	user, _, err = client.Users.Create(user)
 	if err != nil {
 		return err
 	}
@@ -149,7 +152,10 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
@@ -188,7 +194,10 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	user := buildUserStruct(d)
 
@@ -254,7 +263,10 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty user %s", d.Id())
 

@@ -24,7 +24,10 @@ func dataSourcePagerDutySchedule() *schema.Resource {
 }
 
 func dataSourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty schedule")
 
@@ -34,7 +37,7 @@ func dataSourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) e
 		Query: searchName,
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Schedules.List(o)
 		if err != nil {
 			if isErrCode(err, 429) {

@@ -106,7 +106,10 @@ func buildWebhookSubscriptionStruct(d *schema.ResourceData) *pagerduty.WebhookSu
 }
 
 func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	webhook := buildWebhookSubscriptionStruct(d)
 
@@ -134,7 +137,10 @@ func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta int
 }
 
 func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty webhook subscription %s", d.Id())
 
@@ -149,7 +155,10 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 	})
 }
 func resourcePagerDutyWebhookSubscriptionUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Updating PagerDuty webhook subscription %s", d.Id())
 	whStruct := buildWebhookSubscriptionStruct(d)
@@ -165,7 +174,10 @@ func resourcePagerDutyWebhookSubscriptionUpdate(d *schema.ResourceData, meta int
 }
 
 func resourcePagerDutyWebhookSubscriptionDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty webhook subscription %s", d.Id())
 

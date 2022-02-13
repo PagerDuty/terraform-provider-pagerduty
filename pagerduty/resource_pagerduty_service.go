@@ -355,7 +355,11 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 }
 
 func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
 		if err != nil {
@@ -378,7 +382,10 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 }
 
 func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
@@ -403,7 +410,10 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
@@ -421,7 +431,10 @@ func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty service %s", d.Id())
 

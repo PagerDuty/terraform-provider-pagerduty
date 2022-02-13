@@ -25,7 +25,10 @@ func dataSourcePagerDutyTag() *schema.Resource {
 }
 
 func dataSourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty tag")
 
@@ -35,7 +38,7 @@ func dataSourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error 
 		Query: searchTag,
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Tags.List(o)
 		if err != nil {
 			if isErrCode(err, 429) {

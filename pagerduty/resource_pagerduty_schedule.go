@@ -361,19 +361,13 @@ func expandScheduleLayers(v interface{}) ([]*pagerduty.ScheduleLayer, error) {
 			return nil, err
 		}
 
-		// If End is null, it means the layer does not end. The type of layer.*.end is schema.TypeString.
+		// The type of layer.*.end is schema.TypeString. If the end is an empty string, it means the layer does not end.
 		// A client should send a payload including `"end": null` to unset the end of layer.
-		var end *string
-		if rsl["end"].(string) != schema.TypeString.Zero().(string) {
-			e := rsl["end"].(string)
-			end = &e
-		}
-
 		scheduleLayer := &pagerduty.ScheduleLayer{
 			ID:                        rsl["id"].(string),
 			Name:                      rsl["name"].(string),
 			Start:                     rsl["start"].(string),
-			End:                       end,
+			End:                       stringTypeToStringPtr(rsl["end"].(string)),
 			RotationVirtualStart:      rvs.String(),
 			RotationTurnLengthSeconds: rsl["rotation_turn_length_seconds"].(int),
 		}

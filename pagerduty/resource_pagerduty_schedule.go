@@ -420,10 +420,9 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		// A schedule layer can never be removed but it can be ended.
 		// Here we check each layer and if it has been ended we don't read it back
 		// because it's not relevant anymore.
-		slEnd := schema.TypeString.Zero().(string)
-		if sl.End != nil {
-			slEnd = *sl.End
-			end, err := timeToUTC(slEnd)
+		endStr := stringPtrToStringType(sl.End)
+		if endStr != "" {
+			end, err := timeToUTC(endStr)
 			if err != nil {
 				return nil, err
 			}
@@ -435,7 +434,7 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		scheduleLayer := map[string]interface{}{
 			"id":                           sl.ID,
 			"name":                         sl.Name,
-			"end":                          slEnd,
+			"end":                          endStr,
 			"start":                        sl.Start,
 			"rotation_virtual_start":       sl.RotationVirtualStart,
 			"rotation_turn_length_seconds": sl.RotationTurnLengthSeconds,

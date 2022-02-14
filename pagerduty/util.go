@@ -132,3 +132,12 @@ func stringTypeToStringPtr(v string) *string {
 	}
 	return &v
 }
+
+// stringPtrToStringType is a helper that returns the string value passed in
+// or an empty string if the given pointer is nil.
+func stringPtrToStringType(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
+}

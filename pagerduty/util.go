@@ -123,3 +123,21 @@ func flattenSlice(v []interface{}) interface{} {
 	}
 	return string(b)
 }
+
+// stringTypeToStringPtr is a helper that returns a pointer to
+// the string value passed in or nil if the string is empty.
+func stringTypeToStringPtr(v string) *string {
+	if v == "" {
+		return nil
+	}
+	return &v
+}
+
+// stringPtrToStringType is a helper that returns the string value passed in
+// or an empty string if the given pointer is nil.
+func stringPtrToStringType(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
+}

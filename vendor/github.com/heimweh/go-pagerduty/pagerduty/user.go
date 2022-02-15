@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // UserService handles the communication with user
@@ -289,13 +290,31 @@ func (s *UserService) ListContactMethods(userID string) (*ListContactMethodsResp
 }
 
 // CreateContactMethod creates a new contact method for a user.
+// If the same contact method already exists, it will fetch the existing one, return a 200 instead of fail. This feature is useful in terraform
+// provider, as when the desired user contact method already exists, terraform will be able to sync it to the state automatically. Otherwise,
+// we need to manually fix the conflicts.
 func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
 	u := fmt.Sprintf("/users/%s/contact_methods", userID)
 	v := new(ContactMethodPayload)
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 	if err != nil {
-		return nil, nil, err
+		if e, ok := err.(*Error); ok && strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") == 0 {
+			resp, _, lErr := s.ListContactMethods(userID)
+			if lErr != nil {
+				return nil, nil, fmt.Errorf("user contact method is not unique and failed to fetch existing ones: %w", lErr)
+			}
+
+			for _, contact := range resp.ContactMethods {
+				if isSameContactMethod(contact, contactMethod) {
+					return s.GetContactMethod(userID, contact.ID)
+				}
+			}
+
+			return nil, nil, fmt.Errorf("user contact method address is used with different attributes (possibly label)")
+		} else {
+			return nil, nil, err
+		}
 	}
 
 	if err = cachePutContactMethod(v.ContactMethod); err != nil {
@@ -305,6 +324,16 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 	}
 
 	return v.ContactMethod, resp, nil
+}
+
+// isSameContactMethod checks if an existing contact method should be taken as the same as a new one users want to create.
+// note new contact method misses some fields like Self, HTMLURL.
+func isSameContactMethod(existingContact, newContact *ContactMethod) bool {
+	return existingContact.Type == newContact.Type &&
+		existingContact.Address == newContact.Address &&
+		existingContact.Label == newContact.Label &&
+		existingContact.CountryCode == newContact.CountryCode &&
+		existingContact.Summary == newContact.Summary
 }
 
 // GetContactMethod retrieves a contact method for a user.

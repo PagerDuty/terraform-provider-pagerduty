@@ -69,4 +69,4 @@ The following arguments are supported:
 * `name` - The name of the found priority.
 * `description` - A description of the found priority.
 
-[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1priorities/get
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODE2NA-list-priorities

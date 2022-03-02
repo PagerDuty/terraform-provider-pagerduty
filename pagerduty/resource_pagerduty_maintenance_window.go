@@ -24,12 +24,14 @@ func resourcePagerDutyMaintenanceWindow() *schema.Resource {
 				Required:         true,
 				ValidateFunc:     validateRFC3339,
 				DiffSuppressFunc: suppressRFC3339Diff,
+				ForceNew:         true,
 			},
 			"end_time": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validateRFC3339,
 				DiffSuppressFunc: suppressRFC3339Diff,
+				ForceNew:         true,
 			},
 
 			"services": {

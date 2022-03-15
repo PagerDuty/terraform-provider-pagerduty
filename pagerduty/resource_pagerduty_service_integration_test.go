@@ -127,13 +127,13 @@ func TestAccPagerDutyServiceIntegrationEmail_Filters(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyServiceIntegrationDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyServiceIntegrationEmailFiltersConfig(username, email, escalationPolicy, service, serviceIntegration),
+				Config: testAccCheckPagerDutyServiceIntegrationEmailFiltersConfig(username, email, escalationPolicy, service, serviceIntegration, testAccGetPagerDutyAccountDomain(t)),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyServiceIntegrationExists("pagerduty_service_integration.foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "name", serviceIntegration),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "integration_email", "s1@pdt-smcallister.pagerduty.com"),
+						"pagerduty_service_integration.foo", "integration_email", fmt.Sprintf("s1@%s", testAccGetPagerDutyAccountDomain(t))),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_incident_creation", "use_rules"),
 					resource.TestCheckResourceAttr(
@@ -243,13 +243,13 @@ func TestAccPagerDutyServiceIntegrationEmail_Filters(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceIntegrationEmailFiltersConfigUpdated(username, email, escalationPolicy, service, serviceIntegrationUpdated),
+				Config: testAccCheckPagerDutyServiceIntegrationEmailFiltersConfigUpdated(username, email, escalationPolicy, service, serviceIntegrationUpdated, testAccGetPagerDutyAccountDomain(t)),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyServiceIntegrationExists("pagerduty_service_integration.foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "name", serviceIntegrationUpdated),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "integration_email", "s11@pdt-smcallister.pagerduty.com"),
+						"pagerduty_service_integration.foo", "integration_email", fmt.Sprintf("s11@%s", testAccGetPagerDutyAccountDomain(t))),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_incident_creation", "use_rules"),
 					resource.TestCheckResourceAttr(
@@ -703,7 +703,7 @@ resource "pagerduty_service_integration" "foo" {
 `, username, email, escalationPolicy, service, serviceIntegration, integrationEmailDomain)
 }
 
-func testAccCheckPagerDutyServiceIntegrationEmailFiltersConfig(username, email, escalationPolicy, service, serviceIntegration string) string {
+func testAccCheckPagerDutyServiceIntegrationEmailFiltersConfig(username, email, escalationPolicy, service, serviceIntegration string, accountDomain string) string {
 	return fmt.Sprintf(`
 data "pagerduty_vendor" "email" {
   name = "Email"
@@ -739,7 +739,7 @@ resource "pagerduty_service_integration" "foo" {
   name    = "%s"
   service = pagerduty_service.foo.id
   vendor  = data.pagerduty_vendor.email.id
-  integration_email       = "s1@pdt-smcallister.pagerduty.com"
+  integration_email       = "s1@%s"
   email_incident_creation = "use_rules"
   email_filter_mode       = "and-rules-email"
   email_filter {
@@ -826,10 +826,10 @@ resource "pagerduty_service_integration" "foo" {
   }
   email_parsing_fallback = "open_new_incident"
 }
-`, username, email, escalationPolicy, service, serviceIntegration)
+`, username, email, escalationPolicy, service, serviceIntegration, accountDomain)
 }
 
-func testAccCheckPagerDutyServiceIntegrationEmailFiltersConfigUpdated(username, email, escalationPolicy, service, serviceIntegration string) string {
+func testAccCheckPagerDutyServiceIntegrationEmailFiltersConfigUpdated(username, email, escalationPolicy, service, serviceIntegration string, accountDomain string) string {
 	return fmt.Sprintf(`
 data "pagerduty_vendor" "email" {
   name = "Email"
@@ -865,7 +865,7 @@ resource "pagerduty_service_integration" "foo" {
   name    = "%s"
   service = pagerduty_service.foo.id
   vendor  = data.pagerduty_vendor.email.id
-  integration_email       = "s11@pdt-smcallister.pagerduty.com"
+  integration_email       = "s11@%s"
   email_incident_creation = "use_rules"
   email_filter_mode       = "and-rules-email"
   email_filter {
@@ -959,5 +959,5 @@ resource "pagerduty_service_integration" "foo" {
   }
   email_parsing_fallback = "open_new_incident"
 }
-`, username, email, escalationPolicy, service, serviceIntegration)
+`, username, email, escalationPolicy, service, serviceIntegration, accountDomain)
 }

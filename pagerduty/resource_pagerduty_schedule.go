@@ -48,6 +48,13 @@ func resourcePagerDutySchedule() *schema.Resource {
 			"time_zone": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					_, err := time.LoadLocation(val.(string))
+					if err != nil {
+						errs = append(errs, err)
+					}
+					return
+				},
 			},
 
 			"overflow": {

@@ -88,6 +88,13 @@ func resourcePagerDutyServiceEventRule() *schema.Resource {
 									"timezone": {
 										Type:     schema.TypeString,
 										Optional: true,
+										ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+											_, err := time.LoadLocation(val.(string))
+											if err != nil {
+												errs = append(errs, err)
+											}
+											return
+										},
 									},
 									"start_time": {
 										Type:     schema.TypeInt,

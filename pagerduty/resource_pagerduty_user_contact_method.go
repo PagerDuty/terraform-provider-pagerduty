@@ -1,6 +1,8 @@
 package pagerduty
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -19,6 +21,14 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 		Delete: resourcePagerDutyUserContactMethodDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyUserContactMethodImport,
+		},
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			a := diff.Get("address").(string)
+			t := diff.Get("type").(string)
+			if t == "sms_contact_method" || t == "phone_contact_method" && strings.HasPrefix(a, "0") {
+				return errors.New("phone numbers starting with a 0 are not supported")
+			}
+			return nil
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {

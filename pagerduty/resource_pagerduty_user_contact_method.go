@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,8 +26,13 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			a := diff.Get("address").(string)
 			t := diff.Get("type").(string)
-			if t == "sms_contact_method" || t == "phone_contact_method" && strings.HasPrefix(a, "0") {
-				return errors.New("phone numbers starting with a 0 are not supported")
+			if t == "sms_contact_method" || t == "phone_contact_method" {
+				if strings.HasPrefix(a, "0") {
+					return errors.New("phone numbers starting with a 0 are not supported")
+				}
+				if _, err := strconv.Atoi(a); err != nil {
+					return errors.New("phone numbers should only contain digits")
+				}
 			}
 			return nil
 		},

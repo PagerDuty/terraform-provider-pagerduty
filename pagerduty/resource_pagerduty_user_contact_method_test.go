@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -52,6 +53,10 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
 				),
+			},
+			{
+				Config:      testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "04153013250"),
+				ExpectError: regexp.MustCompile("phone numbers starting with a 0 are not supported"),
 			},
 			{
 				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(usernameUpdated, emailUpdated, "8019351337"),

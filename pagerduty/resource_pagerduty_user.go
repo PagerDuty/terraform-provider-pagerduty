@@ -81,6 +81,13 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					_, err := time.LoadLocation(val.(string))
+					if err != nil {
+						errs = append(errs, err)
+					}
+					return
+				},
 			},
 
 			"html_url": {

@@ -140,7 +140,11 @@ func resourcePagerDutyMaintenanceWindowDelete(d *schema.ResourceData, meta inter
 	log.Printf("[INFO] Deleting PagerDuty maintenance window %s", d.Id())
 
 	if _, err := client.MaintenanceWindows.Delete(d.Id()); err != nil {
-		return err
+		// 405: The maintenance window can't be deleted because it has already ended. This can be considered deleted
+		// from terraform's perspective.
+		if !isErrCode(err, 405) {
+			return err
+		}
 	}
 
 	d.SetId("")

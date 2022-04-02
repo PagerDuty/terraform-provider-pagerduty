@@ -1,3 +1,14 @@
+## 2.4.0 (April 1, 2022)
+FEATURES:
+* `resource/pagerduty_service_integration`: Add Email Filters to Service Integrations ([#468](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/468))
+
+IMPROVEMENTS:
+* `resource/ruleset_rule`,`resource/schedule`,`resource/service`,`resource/service_event_rule`,`resource/user`: Validate time zones ([#473](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/473))
+* `resource/user_contact_method`: Validate phone numbers starting with 0 are not supported ([#475](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/475))
+* `resource/pagerduty_schedule`: Send `"end": null` when layer end removed([#460](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/460))
+* `resource/maintenance_window`: Ignore error code 405 on delete ([#466](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/466))
+
+
 ## 2.3.0 (February 10, 2022) 
 IMPROVEMENTS:
 * Updated TF SDK to v2.10.1 and added `depends_on` to eventrule tests ([#446](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/446))

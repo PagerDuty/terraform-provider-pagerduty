@@ -203,7 +203,7 @@ func resourcePagerDutyServiceDependencyDisassociate(ctx context.Context, d *sche
 	}
 	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input); err != nil {
-			if isErrCode(err, 404) {
+			if isErrCode(err, 404) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)

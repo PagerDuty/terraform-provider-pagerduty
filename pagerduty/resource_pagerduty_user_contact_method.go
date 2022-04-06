@@ -1,13 +1,15 @@
 package pagerduty
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
-	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/nordcloud/go-pagerduty/pagerduty"
@@ -21,6 +23,19 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 		DeleteContext: resourcePagerDutyUserContactMethodDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePagerDutyUserContactMethodImport,
+		},
+		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			a := diff.Get("address").(string)
+			t := diff.Get("type").(string)
+			if t == "sms_contact_method" || t == "phone_contact_method" {
+				if strings.HasPrefix(a, "0") {
+					return errors.New("phone numbers starting with a 0 are not supported")
+				}
+				if _, err := strconv.Atoi(a); err != nil {
+					return errors.New("phone numbers should only contain digits")
+				}
+			}
+			return nil
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {

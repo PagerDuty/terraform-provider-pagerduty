@@ -49,6 +49,13 @@ func resourcePagerDutySchedule() *schema.Resource {
 			"time_zone": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					_, err := time.LoadLocation(val.(string))
+					if err != nil {
+						errs = append(errs, err)
+					}
+					return
+				},
 			},
 
 			"overflow": {
@@ -376,19 +383,13 @@ func expandScheduleLayers(v interface{}) ([]*pagerduty.ScheduleLayer, error) {
 			return nil, err
 		}
 
-		// If End is null, it means the layer does not end. The type of layer.*.end is schema.TypeString.
+		// The type of layer.*.end is schema.TypeString. If the end is an empty string, it means the layer does not end.
 		// A client should send a payload including `"end": null` to unset the end of layer.
-		var end *string
-		if rsl["end"].(string) != schema.TypeString.Zero().(string) {
-			e := rsl["end"].(string)
-			end = &e
-		}
-
 		scheduleLayer := &pagerduty.ScheduleLayer{
 			ID:                        rsl["id"].(string),
 			Name:                      rsl["name"].(string),
 			Start:                     rsl["start"].(string),
-			End:                       end,
+			End:                       stringTypeToStringPtr(rsl["end"].(string)),
 			RotationVirtualStart:      rvs.String(),
 			RotationTurnLengthSeconds: rsl["rotation_turn_length_seconds"].(int),
 		}
@@ -429,10 +430,9 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		// A schedule layer can never be removed but it can be ended.
 		// Here we check each layer and if it has been ended we don't read it back
 		// because it's not relevant anymore.
-		slEnd := schema.TypeString.Zero().(string)
-		if sl.End != nil {
-			slEnd = *sl.End
-			end, err := timeToUTC(slEnd)
+		endStr := stringPtrToStringType(sl.End)
+		if endStr != "" {
+			end, err := timeToUTC(endStr)
 			if err != nil {
 				return nil, err
 			}
@@ -444,7 +444,7 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		scheduleLayer := map[string]interface{}{
 			"id":                           sl.ID,
 			"name":                         sl.Name,
-			"end":                          slEnd,
+			"end":                          endStr,
 			"start":                        sl.Start,
 			"rotation_virtual_start":       sl.RotationVirtualStart,
 			"rotation_turn_length_seconds": sl.RotationTurnLengthSeconds,

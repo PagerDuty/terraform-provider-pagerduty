@@ -1,3 +1,29 @@
+## 2.4.0 (April 1, 2022)
+FEATURES:
+* `resource/pagerduty_service_integration`: Add Email Filters to Service Integrations ([#468](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/468))
+
+IMPROVEMENTS:
+* `resource/ruleset_rule`,`resource/schedule`,`resource/service`,`resource/service_event_rule`,`resource/user`: Validate time zones ([#473](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/473))
+* `resource/user_contact_method`: Validate phone numbers starting with 0 are not supported ([#475](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/475))
+* `resource/pagerduty_schedule`: Send `"end": null` when layer end removed([#460](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/460))
+* `resource/maintenance_window`: Ignore error code 405 on delete ([#466](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/466))
+
+
+## 2.3.0 (February 10, 2022) 
+IMPROVEMENTS:
+* Updated TF SDK to v2.10.1 and added `depends_on` to eventrule tests ([#446](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/446))
+* `resource/pagerduty_schedule`: Added validation to `duration_seconds` ([#433](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/433))
+* Documentation fix: update code sample on index ([#436](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/436)
+* `resource/pagerduty_escalation_policy`: Validate user and schedule reference in escalation policy targets ([#435](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/435))
+* `resource/pagerduty_service`,`resource/pagerduty_business_service`,`data_source/pagerduty_service`,`data_source/pagerduty_business_service`: Adding computed `type` field to be used in `service_dependencies` ([#364](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/364))
+* `resource/pagerduty_service_integration`: Support emails that are only known after apply ([#425](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/425))
+* Safter HTTP client initialization and usage ([#458](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/458))
+* Increase Retry Time on Data Sources ([#454](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/454))
+
+BUG FIXES:
+* Documentation fix: update broken links to auth docs in PagerDuty ([#449](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/449))
+* Documentation fix: update description of PagerDuty ([#441](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/441))
+
 ## 2.2.1 (December 10, 2021)
 BUG FIX:
 * `resource/pagerduty_user`: Fix in go library for user object ([ref](https://github.com/heimweh/go-pagerduty/pull/74))

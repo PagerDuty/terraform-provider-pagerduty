@@ -62,7 +62,7 @@ func resourcePagerDutyBusinessServiceSubscriberCreate(ctx context.Context, d *sc
 
 	businessServiceId := d.Get("business_service_id").(string)
 
-	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 
 		businessServiceSubscriber, err := buildBusinessServiceSubscriberStruct(d)
 		if err != nil {

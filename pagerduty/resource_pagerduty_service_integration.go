@@ -523,6 +523,7 @@ func flattenEmailParsers(v []*pagerduty.EmailParser) []map[string]interface{} {
 				"type":         ve.Type,
 				"value_name":   ve.ValueName,
 				"part":         ve.Part,
+				"regex":        ve.Regex,
 				"starts_after": ve.StartsAfter,
 				"ends_before":  ve.EndsBefore,
 			}

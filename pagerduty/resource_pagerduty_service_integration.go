@@ -519,12 +519,21 @@ func flattenEmailParsers(v []*pagerduty.EmailParser) []map[string]interface{} {
 		var valueExtractors []map[string]interface{}
 
 		for _, ve := range ef.ValueExtractors {
-			extractor := map[string]interface{}{
-				"type":         ve.Type,
-				"value_name":   ve.ValueName,
-				"part":         ve.Part,
-				"starts_after": ve.StartsAfter,
-				"ends_before":  ve.EndsBefore,
+			if ve.Type == "regex" {
+				extractor := map[string]interface{}{
+					"type":       ve.Type,
+					"value_name": ve.ValueName,
+					"part":       ve.Part,
+					"regex":      ve.Regex,
+				}
+			} else {
+				extractor := map[string]interface{}{
+					"type":         ve.Type,
+					"value_name":   ve.ValueName,
+					"part":         ve.Part,
+					"starts_after": ve.StartsAfter,
+					"ends_before":  ve.EndsBefore,
+				}
 			}
 
 			valueExtractors = append(valueExtractors, extractor)

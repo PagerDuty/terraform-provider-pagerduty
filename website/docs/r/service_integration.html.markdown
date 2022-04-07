@@ -169,8 +169,8 @@ The following arguments are supported:
   * `integration_key` - (Optional) This is the unique key used to route events to this integration when received via the PagerDuty Events API.
   * `integration_email` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.
 
-  * `email_incident_creation` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.
-  * `email_filter_mode` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.
+  * `email_incident_creation` - (Optional) Behaviour of Email Management feature ([explained in PD docs](https://support.pagerduty.com/docs/email-management-filters-and-rules#control-when-a-new-incident-or-alert-is-triggered)). Can be `on_new_email`, `on_new_email_subject`, `only_if_no_open_incidents` or `use_rules`.
+  * `email_filter_mode` - (Optional) Mode of Emails Filters feature ([explained in PD docs](https://support.pagerduty.com/docs/email-management-filters-and-rules#configure-a-regex-filter)). Can be `all-email`, `or-rules-email` or `and-rules-email`.
   * `email_parsing_fallback` - (Optional) Can be `open_new_incident` or `discard`.
 
   Email filters (`email_filter`) supports the following:

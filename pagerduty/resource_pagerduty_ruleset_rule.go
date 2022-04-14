@@ -887,14 +887,32 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
+	rulesetID := d.Get("ruleset").(string)
+
 	// Don't delete catch_all resource
 	if _, ok := d.GetOk(("catch_all")); ok {
+
+		log.Printf("[INFO] Rule %s is a catch_all rule, don't delete it, reset it instead", d.Id())
+
+		rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id())
+
+		if err != nil {
+			return err
+		}
+
+		rule.Actions = nil
+		rule.TimeFrame = nil
+
+		if err := performRulesetRuleUpdate(rulesetID, d.Id(), rule, client); err != nil {
+			return err
+		}
+
 		d.SetId("")
+
 		return nil
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
-	rulesetID := d.Get("ruleset").(string)
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {

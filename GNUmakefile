@@ -6,7 +6,7 @@ PKG_NAME=pagerduty
 default: build
 
 build: fmtcheck
-	go install
+	go install -tags timetzdata
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1

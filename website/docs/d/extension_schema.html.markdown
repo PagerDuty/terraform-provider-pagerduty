@@ -64,4 +64,4 @@ The following arguments are supported:
 * `name` - The short name of the found extension vendor.
 * `type` - The generic service type for this extension vendor.
 
-[1]: https://v2.developer.pagerduty.com/v2/page/api-reference#!/Extension_Schemas/get_extension_schemas
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODEzMA-list-extension-schemas

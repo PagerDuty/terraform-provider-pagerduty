@@ -55,5 +55,5 @@ The following arguments are supported:
   * `enabled` - If true, this phone is capable of receiving SMS messages. (Phone and SMS contact methods only.)
   * `device_type` - Either `ios` or `android`, depending on the type of the device receiving notifications. (Push notification contact method only.)
 
-[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1users~1%7Bid%7D~1contact_methods~1%7Bcontact_method_id%7D/get
-[2]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1users~1%7Bid%7D/get
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIzOQ-list-a-user-s-contact-methods
+[2]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIzMw-list-users

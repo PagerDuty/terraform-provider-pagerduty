@@ -78,6 +78,7 @@ func Provider() *schema.Provider {
 			"pagerduty_event_rule":                  resourcePagerDutyEventRule(),
 			"pagerduty_ruleset":                     resourcePagerDutyRuleset(),
 			"pagerduty_ruleset_rule":                resourcePagerDutyRulesetRule(),
+			"pagerduty_orchestration":               resourcePagerDutyOrchestration(),
 			"pagerduty_business_service":            resourcePagerDutyBusinessService(),
 			"pagerduty_service_dependency":          resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":               resourcePagerDutyResponsePlay(),

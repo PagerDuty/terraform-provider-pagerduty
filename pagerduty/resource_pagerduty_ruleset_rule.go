@@ -868,7 +868,7 @@ func performRulesetRuleUpdate(rulesetID string, id string, rule *pagerduty.Rules
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, id, rule); err != nil {
 			return resource.RetryableError(err)
-		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
+		} else if rule.Position != nil && *updatedRule.Position != *rule.Position && rule.CatchAll != true {
 			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position)
 			return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}

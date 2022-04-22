@@ -22,8 +22,12 @@ func timeToUTC(v string) (time.Time, error) {
 // validateRFC3339 validates that a date string has the correct RFC3339 layout
 func validateRFC3339(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
-	if _, err := time.Parse(time.RFC3339, value); err != nil {
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
 		errors = append(errors, fmt.Errorf("%s is not a valid format for argument: %s. Expected format: %s (RFC3339)", value, k, time.RFC3339))
+	}
+	if t.Second() > 0 {
+		errors = append(errors, fmt.Errorf("please set the time %s to a full minute, e.g. 11:23:00, not 11:23:05", value))
 	}
 
 	return

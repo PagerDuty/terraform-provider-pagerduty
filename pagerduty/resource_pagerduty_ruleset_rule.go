@@ -900,8 +900,15 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 			return err
 		}
 
-		rule.Actions = nil
-		rule.TimeFrame = nil
+		// Reset all available actions back to the default state of the catch_all rule
+		rule.Actions.Annotate = nil
+		rule.Actions.EventAction = nil
+		rule.Actions.Extractions = nil
+		rule.Actions.Priority = nil
+		rule.Actions.Route = nil
+		rule.Actions.Severity = nil
+		rule.Actions.Suppress.Value = true
+		rule.Actions.Suspend = nil
 
 		if err := performRulesetRuleUpdate(rulesetID, d.Id(), rule, client); err != nil {
 			return err

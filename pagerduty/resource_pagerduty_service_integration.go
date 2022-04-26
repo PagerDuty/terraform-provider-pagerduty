@@ -520,9 +520,9 @@ func flattenEmailParsers(v []*pagerduty.EmailParser) []map[string]interface{} {
 
 		for _, ve := range ef.ValueExtractors {
 			extractor := map[string]interface{}{
-					"type":       ve.Type,
-					"value_name": ve.ValueName,
-					"part":       ve.Part,
+				"type":       ve.Type,
+				"value_name": ve.ValueName,
+				"part":       ve.Part,
 			}
 
 			if ve.Type == "regex" {

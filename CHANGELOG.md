@@ -1,3 +1,13 @@
+## 2.4.1 (April 22, 2022)
+IMPROVEMENTS:
+* `resource/pagerduty_user_notification`: Create user/notification rule: allow using existing ones ([#482](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/482))
+* `resource/pagerduty_schedule`: Enforce 0 second time restriction on schedules ([#483](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/483))
+
+BUG FIXES:
+* Embed time zone data into the provider's binary([#478](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/478))
+* Documentation fix: update all broken links pointing to PagerDuty API documentation ([#464](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/464))
+
+
 ## 2.4.0 (April 1, 2022)
 FEATURES:
 * `resource/pagerduty_service_integration`: Add Email Filters to Service Integrations ([#468](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/468))

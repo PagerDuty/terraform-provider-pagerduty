@@ -907,6 +907,7 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 		rule.Actions.Priority = nil
 		rule.Actions.Route = nil
 		rule.Actions.Severity = nil
+		rule.Actions.Suppress = new(pagerduty.RuleActionSuppress)
 		rule.Actions.Suppress.Value = true
 		rule.Actions.Suspend = nil
 

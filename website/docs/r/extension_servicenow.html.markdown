@@ -13,8 +13,8 @@ A special case for [extension](https://developer.pagerduty.com/api-reference/b3A
 ## Example Usage
 
 ```hcl
-data "pagerduty_extension_schema" "webhook" {
-  name = "Generic V2 Webhook"
+data "pagerduty_extension_schema" "servicenow" {
+  name = "ServiceNow (v7)"
 }
 
 resource "pagerduty_user" "example" {
@@ -45,7 +45,7 @@ resource "pagerduty_service" "example" {
 
 resource "pagerduty_extension_servicenow" "snow" {
   name              = "My Web App Extension"
-  extension_schema  = data.pagerduty_extension_schema.webhook.id
+  extension_schema  = data.pagerduty_extension_schema.servicenow.id
   extension_objects = [pagerduty_service.example.id]
   snow_user         = "meeps"
   snow_password     = "zorz"

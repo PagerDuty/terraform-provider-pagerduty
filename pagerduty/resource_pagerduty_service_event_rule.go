@@ -88,6 +88,13 @@ func resourcePagerDutyServiceEventRule() *schema.Resource {
 									"timezone": {
 										Type:     schema.TypeString,
 										Optional: true,
+										ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+											_, err := time.LoadLocation(val.(string))
+											if err != nil {
+												errs = append(errs, err)
+											}
+											return
+										},
 									},
 									"start_time": {
 										Type:     schema.TypeInt,
@@ -323,7 +330,10 @@ func buildServiceEventRuleStruct(d *schema.ResourceData) *pagerduty.ServiceEvent
 	return rule
 }
 func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	rule := buildServiceEventRuleStruct(d)
 
@@ -352,7 +362,10 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
@@ -383,7 +396,10 @@ func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interfac
 }
 
 func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	rule := buildServiceEventRuleStruct(d)
 
@@ -408,7 +424,10 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
@@ -429,7 +448,10 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyServiceEventRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	ids := strings.Split(d.Id(), ".")
 
@@ -438,7 +460,7 @@ func resourcePagerDutyServiceEventRuleImport(d *schema.ResourceData, meta interf
 	}
 	serviceID, ruleID := ids[0], ids[1]
 
-	_, _, err := client.Services.GetEventRule(serviceID, ruleID)
+	_, _, err = client.Services.GetEventRule(serviceID, ruleID)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

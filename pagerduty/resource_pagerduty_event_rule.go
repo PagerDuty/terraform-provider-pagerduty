@@ -57,7 +57,10 @@ func buildEventRuleStruct(d *schema.ResourceData) *pagerduty.EventRule {
 }
 
 func resourcePagerDutyEventRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	eventRule := buildEventRuleStruct(d)
 
@@ -79,7 +82,10 @@ func resourcePagerDutyEventRuleCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty event rule: %s", d.Id())
 
@@ -114,7 +120,10 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 	})
 }
 func resourcePagerDutyEventRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	eventRule := buildEventRuleStruct(d)
 
@@ -128,7 +137,10 @@ func resourcePagerDutyEventRuleUpdate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyEventRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty event rule: %s", d.Id())
 

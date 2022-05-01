@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -30,6 +31,10 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 				Optional: true,
 			},
 			"disabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"catch_all": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
@@ -88,6 +93,13 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 									"timezone": {
 										Type:     schema.TypeString,
 										Optional: true,
+										ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+											_, err := time.LoadLocation(val.(string))
+											if err != nil {
+												errs = append(errs, err)
+											}
+											return
+										},
 									},
 									"start_time": {
 										Type:     schema.TypeInt,
@@ -312,7 +324,14 @@ func buildRulesetRuleStruct(d *schema.ResourceData) *pagerduty.RulesetRule {
 			Type: "ruleset",
 			ID:   d.Get("ruleset").(string),
 		},
-		Conditions: expandConditions(d.Get("conditions").([]interface{})),
+	}
+
+	if _, ok := d.GetOk(("catch_all")); ok {
+		rule.CatchAll = true
+	}
+
+	if attr, ok := d.GetOk(("conditions")); ok {
+		rule.Conditions = expandConditions(attr.([]interface{}))
 	}
 
 	if attr, ok := d.GetOk("actions"); ok {
@@ -729,11 +748,51 @@ func flattenActiveBetween(ab *pagerduty.ActiveBetween) []interface{} {
 }
 
 func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	rule := buildRulesetRuleStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty ruleset rule for ruleset: %s", rule.Ruleset.ID)
+
+	// CatchAll rule is created by default.
+	// Indicating that provided Rule is CatchAll implies modifying it and not creating it
+	if rule.CatchAll {
+
+		log.Printf("[INFO] Found catch_all rule for ruleset: %s", rule.Ruleset.ID)
+
+		rulesetrules, _, err := client.Rulesets.ListRules(rule.Ruleset.ID)
+
+		if err != nil {
+			return err
+		}
+
+		if rulesetrules == nil {
+			return errors.New("No ruleset rule found. Catch-all Resource must exists")
+		}
+
+		var catchallrule *pagerduty.RulesetRule
+		for _, rule := range rulesetrules.Rules {
+			if rule.CatchAll {
+				catchallrule = rule
+				break
+			}
+		}
+
+		if catchallrule == nil {
+			return errors.New("No Catch-all rule found. Catch-all Resource must exists")
+		}
+
+		if err := performRulesetRuleUpdate(rule.Ruleset.ID, catchallrule.ID, rule, client); err != nil {
+			return err
+		}
+
+		d.SetId(catchallrule.ID)
+
+		return resourcePagerDutyRulesetRuleRead(d, meta)
+	}
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.CreateRule(rule.Ruleset.ID, rule); err != nil {
@@ -758,7 +817,10 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
@@ -789,17 +851,24 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	rule := buildRulesetRuleStruct(d)
 
 	log.Printf("[INFO] Updating PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
+	return performRulesetRuleUpdate(rulesetID, d.Id(), rule, client)
+}
+
+func performRulesetRuleUpdate(rulesetID string, id string, rule *pagerduty.RulesetRule, client *pagerduty.Client) error {
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
+		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, id, rule); err != nil {
 			return resource.RetryableError(err)
-		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
+		} else if rule.Position != nil && *updatedRule.Position != *rule.Position && rule.CatchAll != true {
 			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position)
 			return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}
@@ -813,10 +882,45 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
+	rulesetID := d.Get("ruleset").(string)
+
+	// Don't delete catch_all resource
+	if _, ok := d.GetOk(("catch_all")); ok {
+
+		log.Printf("[INFO] Rule %s is a catch_all rule, don't delete it, reset it instead", d.Id())
+
+		rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id())
+
+		if err != nil {
+			return err
+		}
+
+		// Reset all available actions back to the default state of the catch_all rule
+		rule.Actions.Annotate = nil
+		rule.Actions.EventAction = nil
+		rule.Actions.Extractions = nil
+		rule.Actions.Priority = nil
+		rule.Actions.Route = nil
+		rule.Actions.Severity = nil
+		rule.Actions.Suppress = new(pagerduty.RuleActionSuppress)
+		rule.Actions.Suppress.Value = true
+		rule.Actions.Suspend = nil
+
+		if err := performRulesetRuleUpdate(rulesetID, d.Id(), rule, client); err != nil {
+			return err
+		}
+
+		d.SetId("")
+
+		return nil
+	}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
-	rulesetID := d.Get("ruleset").(string)
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {
@@ -834,7 +938,10 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 }
 
 func resourcePagerDutyRulesetRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	ids := strings.Split(d.Id(), ".")
 
@@ -843,7 +950,7 @@ func resourcePagerDutyRulesetRuleImport(d *schema.ResourceData, meta interface{}
 	}
 	rulesetID, ruleID := ids[0], ids[1]
 
-	_, _, err := client.Rulesets.GetRule(rulesetID, ruleID)
+	_, _, err = client.Rulesets.GetRule(rulesetID, ruleID)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

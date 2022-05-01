@@ -2,11 +2,13 @@ package pagerduty
 
 import (
 	"log"
+	"net/url"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 var testAccProviders map[string]*schema.Provider
@@ -89,4 +91,41 @@ func testAccPreCheckPagerDutyAbility(t *testing.T, ability string) {
 	if _, err := client.Abilities.Test(ability); err != nil {
 		t.Skipf("Missing ability: %s. Skipping test", ability)
 	}
+}
+
+// Implementation cribbed from PDPYRAS subdomain function
+// List one user and return the domain from the HTMLURL
+func testAccGetPagerDutyAccountDomain(t *testing.T) string {
+	if v := os.Getenv("PAGERDUTY_TOKEN"); v == "" {
+		t.SkipNow()
+	}
+	if v := os.Getenv("PAGERDUTY_USER_TOKEN"); v == "" {
+		t.SkipNow()
+	}
+
+	config := &Config{
+		Token:     os.Getenv("PAGERDUTY_TOKEN"),
+		UserToken: os.Getenv("PAGERDUTY_USER_TOKEN"),
+	}
+
+	client, err := config.Client()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	o := &pagerduty.ListUsersOptions{
+		Limit: 1,
+	}
+
+	var accountDomain string
+
+	resp, _, _ := client.Users.List(o)
+	for _, user := range resp.Users {
+		u, err := url.Parse(user.HTMLURL)
+		if err != nil {
+			t.Fatal("Unable to determine account domain")
+		}
+		accountDomain = u.Hostname()
+	}
+	return accountDomain
 }

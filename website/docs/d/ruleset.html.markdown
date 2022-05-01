@@ -67,5 +67,5 @@ The following arguments are supported:
 * `routing_keys` - Routing keys routed to this ruleset.
 
 
-[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1rulesets/get
-[2]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1rulesets~1%7Bid%7D~1rules/get
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODE3MQ-list-rulesets
+[2]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODE3Ng-list-event-rules

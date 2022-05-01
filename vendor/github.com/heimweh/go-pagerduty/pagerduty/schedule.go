@@ -58,7 +58,8 @@ type ScheduleLayerEntry struct {
 
 // ScheduleLayer represents a schedule layer in a schedule
 type ScheduleLayer struct {
-	End                        string                  `json:"end,omitempty"`
+	// End should be nullable because if it's null, it means the layer does not end.
+	End                        *string                 `json:"end"`
 	ID                         string                  `json:"id,omitempty"`
 	Name                       string                  `json:"name,omitempty"`
 	RenderedCoveragePercentage float64                 `json:"rendered_coverage_percentage,omitempty"`

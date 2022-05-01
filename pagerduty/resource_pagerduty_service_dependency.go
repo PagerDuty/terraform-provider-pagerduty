@@ -112,7 +112,10 @@ func expandService(v interface{}) *pagerduty.ServiceObj {
 	return so
 }
 func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	serviceDependency, err := buildServiceDependencyStruct(d)
 	if err != nil {
@@ -127,7 +130,7 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 	log.Printf("[INFO] Associating PagerDuty dependency %s", serviceDependency.ID)
 
 	var dependencies *pagerduty.ListServiceDependencies
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if dependencies, _, err = client.ServiceDependencies.AssociateServiceDependencies(&input); err != nil {
 			if isErrCode(err, 404) {
 				return resource.RetryableError(err)
@@ -151,7 +154,10 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 }
 
 func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	dependency, err := buildServiceDependencyStruct(d)
 	if err != nil {
@@ -160,26 +166,30 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Disassociating PagerDuty dependency %s", dependency.DependentService.ID)
 
-	// listServiceRelationships by calling get dependencies using the serviceDependency.DependentService.ID
-	depResp, _, err := client.ServiceDependencies.GetServiceDependenciesForType(dependency.DependentService.ID, dependency.DependentService.Type)
-	if err != nil {
-		return err
-	}
-
 	var foundDep *pagerduty.ServiceDependency
 
-	// loop serviceRelationships until relationship.IDs match
-	for _, rel := range depResp.Relationships {
-		if rel.ID == d.Id() {
-			foundDep = rel
-			break
+	// listServiceRelationships by calling get dependencies using the serviceDependency.DependentService.ID
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(dependency.DependentService.ID, dependency.DependentService.Type); err != nil {
+			if isErrCode(err, 404) || isErrCode(err, 500) || isErrCode(err, 429) {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		} else if dependencies != nil {
+			for _, rel := range dependencies.Relationships {
+				if rel.ID == d.Id() {
+					foundDep = rel
+					break
+				}
+			}
 		}
-	}
-	// check if relationship not found
-	if foundDep == nil {
-		d.SetId("")
 		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(5 * time.Second)
+		return retryErr
 	}
+
 	// convertType is needed because the PagerDuty API returns the 'reference' values in responses but wants the other
 	// values in requests
 	foundDep.SupportingService.Type = convertType(foundDep.SupportingService.Type)
@@ -193,9 +203,9 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	input := pagerduty.ListServiceDependencies{
 		Relationships: r,
 	}
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input); err != nil {
-			if isErrCode(err, 404) {
+			if isErrCode(err, 404) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)
@@ -203,7 +213,7 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 		return nil
 	})
 	if retryErr != nil {
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 		return retryErr
 	}
 
@@ -260,11 +270,14 @@ func convertType(s string) string {
 }
 
 func findDependencySetState(depID, serviceID, serviceType string, d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	// Pausing to let the PD API sync.
 	time.Sleep(1 * time.Second)
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(serviceID, serviceType); err != nil {
 			if isErrCode(err, 404) || isErrCode(err, 500) || isErrCode(err, 429) {
 				return resource.RetryableError(err)

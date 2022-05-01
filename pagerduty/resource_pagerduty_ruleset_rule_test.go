@@ -118,6 +118,103 @@ func TestAccPagerDutyRulesetRule_MultipleRules(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPagerDutyRulesetRule_CatchAllRule(t *testing.T) {
+	ruleset := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	rule1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	catch_all_rule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyRulesetRuleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyRulesetRuleConfigCatchAllRule(team, ruleset, rule1, catch_all_rule),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.foo"),
+					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.catch_all"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "position", "0"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "position", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "disabled", "false"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.operator", "and"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.operator", "contains"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.value", "disk space"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", rule1),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "catch_all", "true"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "actions.0.annotate.0.value", catch_all_rule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "actions.0.suppress.0.value", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyRulesetRule_CatchAllRuleRoute(t *testing.T) {
+	ruleset := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	rule1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	catch_all_rule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyRulesetRuleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyRulesetRuleConfigCatchAllRuleRoute(team, ruleset, rule1, catch_all_rule),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.foo"),
+					testAccCheckPagerDutyRulesetRuleExists("pagerduty_ruleset_rule.catch_all"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "position", "0"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "position", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "disabled", "false"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.operator", "and"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.operator", "contains"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "conditions.0.subconditions.0.parameter.0.value", "disk space"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "actions.0.annotate.0.value", rule1),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "catch_all", "true"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "actions.0.annotate.0.value", catch_all_rule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "actions.0.suppress.0.value", "false"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "actions.0.route.0.value", "P5DTL0K"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.catch_all", "actions.0.severity.0.value", "info"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyRulesetRuleDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -392,4 +489,146 @@ resource "pagerduty_ruleset_rule" "baz" {
 	}
 }
 `, team, ruleset, rule1, rule2, rule3)
+}
+
+func testAccCheckPagerDutyRulesetRuleConfigCatchAllRule(team, ruleset, rule1, catch_all_rule string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+
+resource "pagerduty_ruleset" "foo" {
+	name = "%s"
+	team { 
+		id = pagerduty_team.foo.id
+	}
+}
+resource "pagerduty_ruleset_rule" "foo" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 0
+	disabled = false
+	time_frame {
+		scheduled_weekly {
+			weekdays = [3,7]
+			timezone = "America/Los_Angeles"
+			start_time = "1000000"
+			duration = "3600000"
+
+		}
+	}
+	conditions {
+		operator = "and"
+		subconditions {
+			operator = "contains"
+			parameter {
+				value = "disk space"
+				path = "summary"
+			}
+		}
+	}
+	actions {
+		route {
+			value = "P5DTL0K"
+		}
+		severity  {
+			value = "warning"
+		}
+		annotate {
+			value = "%s"
+		}
+		extractions {
+			target = "dedup_key"
+			source = "source"
+			regex = "(.*)"
+		}
+	}
+}
+resource "pagerduty_ruleset_rule" "catch_all" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 1
+	catch_all = true
+	actions {
+		annotate {
+			value = "%s"
+		}
+		suppress {
+			value = true
+		}
+	}
+}
+`, team, ruleset, rule1, catch_all_rule)
+}
+
+func testAccCheckPagerDutyRulesetRuleConfigCatchAllRuleRoute(team, ruleset, rule1, catch_all_rule string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+
+resource "pagerduty_ruleset" "foo" {
+	name = "%s"
+	team {
+		id = pagerduty_team.foo.id
+	}
+}
+resource "pagerduty_ruleset_rule" "foo" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 0
+	disabled = false
+	time_frame {
+		scheduled_weekly {
+			weekdays = [3,7]
+			timezone = "America/Los_Angeles"
+			start_time = "1000000"
+			duration = "3600000"
+
+		}
+	}
+	conditions {
+		operator = "and"
+		subconditions {
+			operator = "contains"
+			parameter {
+				value = "disk space"
+				path = "summary"
+			}
+		}
+	}
+	actions {
+		route {
+			value = "P5DTL0K"
+		}
+		severity  {
+			value = "warning"
+		}
+		annotate {
+			value = "%s"
+		}
+		extractions {
+			target = "dedup_key"
+			source = "source"
+			regex = "(.*)"
+		}
+	}
+}
+resource "pagerduty_ruleset_rule" "catch_all" {
+	ruleset = pagerduty_ruleset.foo.id
+	position = 1
+	catch_all = true
+	actions {
+		annotate {
+			value = "%s"
+		}
+		suppress {
+			value = false
+		}
+		route {
+			value = "P5DTL0K"
+		}
+		severity  {
+			value = "info"
+		}
+	}
+}
+`, team, ruleset, rule1, catch_all_rule)
 }

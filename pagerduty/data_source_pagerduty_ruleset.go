@@ -31,13 +31,16 @@ func dataSourcePagerDutyRuleset() *schema.Resource {
 }
 
 func dataSourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty ruleset")
 
 	searchName := d.Get("name").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Rulesets.List()
 		if err != nil {
 			if isErrCode(err, 429) {

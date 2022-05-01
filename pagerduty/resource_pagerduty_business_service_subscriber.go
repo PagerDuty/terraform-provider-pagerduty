@@ -53,10 +53,14 @@ func buildBusinessServiceSubscriberStruct(d *schema.ResourceData) (*pagerduty.Bu
 }
 
 func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
 	businessServiceId := d.Get("business_service_id").(string)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 
 		businessServiceSubscriber, err := buildBusinessServiceSubscriberStruct(d)
 		if err != nil {
@@ -82,14 +86,17 @@ func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, me
 }
 
 func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	businessServiceId := d.Get("business_service_id").(string)
 	businessServiceSubscriber, _ := buildBusinessServiceSubscriberStruct(d)
 
 	log.Printf("[INFO] Reading PagerDuty business service %s subscriber %s type %s", businessServiceId, businessServiceSubscriber.ID, businessServiceSubscriber.Type)
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if subscriberResponse, _, err := client.BusinessServiceSubscribers.List(businessServiceId); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
@@ -113,7 +120,10 @@ func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta
 }
 
 func resourcePagerDutyBusinessServiceSubscriberDelete(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	businessServiceId := d.Get("business_service_id").(string)
 	businessServiceSubscriber, _ := buildBusinessServiceSubscriberStruct(d)
@@ -135,7 +145,10 @@ func createSubscriberID(businessServiceId string, subscriberType string, subscri
 
 func resourcePagerDutyBusinessServiceSubscriberImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	ids := strings.Split(d.Id(), ".")
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	if len(ids) != 3 {
 		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_business_service_subscriber. Expecting an importation ID formed as '<business_service_id>.<subscriber_type>.<subscriber_id>'")

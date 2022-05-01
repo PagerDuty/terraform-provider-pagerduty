@@ -36,7 +36,10 @@ func dataSourcePagerDutyServiceIntegration() *schema.Resource {
 }
 
 func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interface{}) error {
-	client, _ := meta.(*Config).Client()
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Reading PagerDuty service")
 
@@ -46,7 +49,7 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 		Query: searchName,
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Services.List(o)
 		if err != nil {
 			return handleError(err)

@@ -95,6 +95,20 @@ resource "pagerduty_ruleset_rule" "foo" {
     }
   }
 }
+
+resource "pagerduty_ruleset_rule" "catch_all" {
+  ruleset  = pagerduty_ruleset.foo.id
+  position = 1
+  catch_all = true
+  actions {
+    annotate {
+      value = "From Terraform"
+    }
+    suppress {
+      value = true
+    }
+  }
+}
 ```
 
 ## Argument Reference
@@ -104,6 +118,7 @@ The following arguments are supported:
 * `ruleset` - (Required) The ID of the ruleset that the rule belongs to.
 * `conditions` - (Required) Conditions evaluated to check if an event matches this event rule. Is always empty for the catch-all rule, though.
 * `position` - (Optional) Position/index of the rule within the ruleset.
+* `catch_all` - (Optional) Indicates whether the Event Rule is the last Event Rule of the Ruleset that serves as a catch-all. It has limited functionality compared to other rules and always matches.
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
 * `time_frame` - (Optional) Settings for [scheduling the rule](https://support.pagerduty.com/docs/rulesets#section-scheduled-event-rules).
 * `actions` - (Optional) Actions to apply to an event if the conditions match.

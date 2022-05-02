@@ -21,7 +21,7 @@ type DeliveryMethod struct {
 	TemporarilyDisabled bool             `json:"temporarily_disabled,omitempty"`
 	Type                string           `json:"type,omitempty"`
 	URL                 string           `json:"url,omitempty"`
-	CustomHeaders       []*CustomHeaders `json:"custom_headers,omitempty"`
+	CustomHeaders       []*CustomHeaders `json:"custom_headers"`
 }
 
 type CustomHeaders struct {

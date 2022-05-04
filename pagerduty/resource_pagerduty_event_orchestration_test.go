@@ -10,67 +10,67 @@ import (
 )
 
 func init() {
-	resource.AddTestSweepers("pagerduty_orchestration", &resource.Sweeper{
-		Name: "pagerduty_orchestration",
-		F:    testSweepOrchestration,
+	resource.AddTestSweepers("pagerduty_event_orchestration", &resource.Sweeper{
+		Name: "pagerduty_event_orchestration",
+		F:    testSweepEventOrchestration,
 	})
 }
 
-func testSweepOrchestration(region string) error {
+func testSweepEventOrchestration(region string) error {
 	// TODO: delete all orchestrations created by the tests
 	return nil
 }
 
-func TestAccPagerDutyOrchestration_Basic(t *testing.T) {
+func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 	orchestration := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyOrchestrationDestroy,
+		CheckDestroy: testAccCheckPagerDutyEventOrchestrationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyOrchestrationConfigNameOnly(orchestration),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyOrchestrationExists("pagerduty_orchestration.nameonly"),
+					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.nameonly"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_orchestration.nameonly", "name", orchestration),
+						"pagerduty_event_orchestration.nameonly", "name", orchestration),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckPagerDutyOrchestrationDestroy(s *terraform.State) error {
+func testAccCheckPagerDutyEventOrchestrationDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_orchestration" {
+		if r.Type != "pagerduty_event_orchestration" {
 			continue
 		}
-		if _, _, err := client.Orchestrations.Get(r.Primary.ID); err == nil {
-			return fmt.Errorf("Orchestration still exists")
+		if _, _, err := client.EventOrchestrations.Get(r.Primary.ID); err == nil {
+			return fmt.Errorf("Event Orchestration still exists")
 		}
 	}
 	return nil
 }
 
-func testAccCheckPagerDutyOrchestrationExists(rn string) resource.TestCheckFunc {
+func testAccCheckPagerDutyEventOrchestrationExists(rn string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		orch, ok := s.RootModule().Resources[rn]
 		if !ok {
 			return fmt.Errorf("Not found: %s", rn)
 		}
 		if orch.Primary.ID == "" {
-			return fmt.Errorf("No Orchestration ID is set")
+			return fmt.Errorf("No Event Orchestration ID is set")
 		}
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.Orchestrations.Get(orch.Primary.ID)
+		found, _, err := client.EventOrchestrations.Get(orch.Primary.ID)
 		if err != nil {
 			return err
 		}
 		if found.ID != orch.Primary.ID {
-			return fmt.Errorf("Orchrestration not found: %v - %v", orch.Primary.ID, found)
+			return fmt.Errorf("Event Orchrestration not found: %v - %v", orch.Primary.ID, found)
 		}
 
 		return nil
@@ -80,7 +80,7 @@ func testAccCheckPagerDutyOrchestrationExists(rn string) resource.TestCheckFunc 
 func testAccCheckPagerDutyOrchestrationConfigNameOnly(n string) string {
 	return fmt.Sprintf(`
 
-resource "pagerduty_orchestration" "nameonly" {
+resource "pagerduty_event_orchestration" "nameonly" {
 	name = "%s"
 }
 `, n)

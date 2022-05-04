@@ -9,12 +9,12 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-func resourcePagerDutyOrchestration() *schema.Resource {
+func resourcePagerDutyEventOrchestration() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyOrchestrationCreate,
-		Read:   resourcePagerDutyOrchestrationRead,
-		Update: resourcePagerDutyOrchestrationUpdate,
-		Delete: resourcePagerDutyOrchestrationDelete,
+		Create: resourcePagerDutyEventOrchestrationCreate,
+		Read:   resourcePagerDutyEventOrchestrationRead,
+		Update: resourcePagerDutyEventOrchestrationUpdate,
+		Delete: resourcePagerDutyEventOrchestrationDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -44,8 +44,8 @@ func resourcePagerDutyOrchestration() *schema.Resource {
 	}
 }
 
-func buildOrchestrationStruct(d *schema.ResourceData) *pagerduty.Orchestration {
-	orchestration := &pagerduty.Orchestration{
+func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrchestration {
+	orchestration := &pagerduty.EventOrchestration{
 		Name: d.Get("name").(string),
 	}
 
@@ -61,28 +61,28 @@ func buildOrchestrationStruct(d *schema.ResourceData) *pagerduty.Orchestration {
 }
 
 // TODO why is "team" a list?
-func expandOrchestrationTeam(v interface{}) *pagerduty.OrchestrationObject {
-	var team *pagerduty.OrchestrationObject
+func expandOrchestrationTeam(v interface{}) *pagerduty.EventOrchestrationObject {
+	var team *pagerduty.EventOrchestrationObject
 	t := v.([]interface{})[0].(map[string]interface{})
-	team = &pagerduty.OrchestrationObject{
+	team = &pagerduty.EventOrchestrationObject{
 		ID: t["id"].(string),
 	}
 
 	return team
 }
 
-func resourcePagerDutyOrchestrationCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationCreate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	orchestration := buildOrchestrationStruct(d)
+	orchestration := buildEventOrchestrationStruct(d)
 
-	log.Printf("[INFO] Creating PagerDuty orchestration: %s", orchestration.Name)
+	log.Printf("[INFO] Creating PagerDuty Event Orchestration: %s", orchestration.Name)
 
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
-		if orchestration, _, err := client.Orchestrations.Create(orchestration); err != nil {
+		if orchestration, _, err := client.EventOrchestrations.Create(orchestration); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
 			}
@@ -98,19 +98,19 @@ func resourcePagerDutyOrchestrationCreate(d *schema.ResourceData, meta interface
 		return retryErr
 	}
 
-	setOrchestrationProps(d, orchestration)
+	setEventOrchestrationProps(d, orchestration)
 
 	return nil
 }
 
-func resourcePagerDutyOrchestrationRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		orch, _, err := client.Orchestrations.Get(d.Id())
+		orch, _, err := client.EventOrchestrations.Get(d.Id())
 		if err != nil {
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
@@ -121,37 +121,37 @@ func resourcePagerDutyOrchestrationRead(d *schema.ResourceData, meta interface{}
 			return nil
 		}
 
-		setOrchestrationProps(d, orch)
+		setEventOrchestrationProps(d, orch)
 
 		return nil
 	})
 }
 
-func resourcePagerDutyOrchestrationUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationUpdate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	orchestration := buildOrchestrationStruct(d)
+	orchestration := buildEventOrchestrationStruct(d)
 
-	log.Printf("[INFO] Updating PagerDuty orchestration: %s", d.Id())
+	log.Printf("[INFO] Updating PagerDuty Event Orchestration: %s", d.Id())
 
-	if _, _, err := client.Orchestrations.Update(d.Id(), orchestration); err != nil {
+	if _, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func resourcePagerDutyOrchestrationDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationDelete(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Deleting PagerDuty orchestration: %s", d.Id())
-	if _, err := client.Orchestrations.Delete(d.Id()); err != nil {
+	log.Printf("[INFO] Deleting PagerDuty Event Orchestration: %s", d.Id())
+	if _, err := client.EventOrchestrations.Delete(d.Id()); err != nil {
 		return err
 	}
 
@@ -160,7 +160,7 @@ func resourcePagerDutyOrchestrationDelete(d *schema.ResourceData, meta interface
 	return nil
 }
 
-func setOrchestrationProps(d *schema.ResourceData, o *pagerduty.Orchestration) error {
+func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrchestration) error {
 	d.Set("name", o.Name)
 	d.Set("description", o.Description)
 	// TODO: set team, number of routes, integrations if exist

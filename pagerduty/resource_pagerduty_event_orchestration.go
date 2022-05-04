@@ -12,7 +12,7 @@ import (
 func resourcePagerDutyOrchestration() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutyOrchestrationCreate,
-		Read: resourcePagerDutyOrchestrationRead,
+		Read:   resourcePagerDutyOrchestrationRead,
 		Update: resourcePagerDutyOrchestrationUpdate,
 		Delete: resourcePagerDutyOrchestrationDelete,
 		Importer: &schema.ResourceImporter{
@@ -120,7 +120,7 @@ func resourcePagerDutyOrchestrationRead(d *schema.ResourceData, meta interface{}
 
 			return nil
 		}
-		
+
 		setOrchestrationProps(d, orch)
 
 		return nil

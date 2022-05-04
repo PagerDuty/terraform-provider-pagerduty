@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_extension\_servicenow
 
-A special case for [extension](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1extensions/post) for ServiceNow.
+A special case for [extension](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODEzMw-create-an-extension) for ServiceNow.
 
 ## Example Usage
 

@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_escalation_policy
 
-An [escalation policy](https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1escalation_policies/get) determines what user or schedule will be notified first, second, and so on when an incident is triggered. Escalation policies are used by one or more services.
+An [escalation policy](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODEyNQ-create-an-escalation-policy) determines what user or schedule will be notified first, second, and so on when an incident is triggered. Escalation policies are used by one or more services.
 
 
 ## Example Usage

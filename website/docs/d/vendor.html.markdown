@@ -63,4 +63,4 @@ The following arguments are supported:
 * `name` - The short name of the found vendor.
 * `type` - The generic service type for this vendor.
 
-[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1vendors/get
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODI1OQ-list-vendors

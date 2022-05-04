@@ -42,4 +42,4 @@ The following arguments are supported:
 * `id` - The ID of the found user.
 * `name` - The short name of the found user.
 
-[1]: https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1users/get
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIzMw-list-users

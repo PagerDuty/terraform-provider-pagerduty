@@ -35,6 +35,10 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"catch_all": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"conditions": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
@@ -321,7 +325,14 @@ func buildRulesetRuleStruct(d *schema.ResourceData) *pagerduty.RulesetRule {
 			Type: "ruleset",
 			ID:   d.Get("ruleset").(string),
 		},
-		Conditions: expandConditions(d.Get("conditions").([]interface{})),
+	}
+
+	if _, ok := d.GetOk(("catch_all")); ok {
+		rule.CatchAll = true
+	}
+
+	if attr, ok := d.GetOk(("conditions")); ok {
+		rule.Conditions = expandConditions(attr.([]interface{}))
 	}
 
 	if attr, ok := d.GetOk("actions"); ok {
@@ -747,6 +758,43 @@ func resourcePagerDutyRulesetRuleCreate(ctx context.Context, d *schema.ResourceD
 
 	log.Printf("[INFO] Creating PagerDuty ruleset rule for ruleset: %s", rule.Ruleset.ID)
 
+	// CatchAll rule is created by default.
+	// Indicating that provided Rule is CatchAll implies modifying it and not creating it
+	if rule.CatchAll {
+
+		log.Printf("[INFO] Found catch_all rule for ruleset: %s", rule.Ruleset.ID)
+
+		rulesetrules, _, err := client.Rulesets.ListRules(rule.Ruleset.ID)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if rulesetrules == nil {
+			return diag.Errorf("No ruleset rule found. Catch-all Resource must exists")
+		}
+
+		var catchallrule *pagerduty.RulesetRule
+		for _, rule := range rulesetrules.Rules {
+			if rule.CatchAll {
+				catchallrule = rule
+				break
+			}
+		}
+
+		if catchallrule == nil {
+			return diag.Errorf("No Catch-all rule found. Catch-all Resource must exists")
+		}
+
+		if err := performRulesetRuleUpdate(ctx, rule.Ruleset.ID, catchallrule.ID, rule, client); err != nil {
+			return err
+		}
+
+		d.SetId(catchallrule.ID)
+
+		return resourcePagerDutyRulesetRuleRead(ctx, d, meta)
+	}
+
 	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.CreateRule(rule.Ruleset.ID, rule); err != nil {
 			return resource.RetryableError(err)
@@ -815,11 +863,14 @@ func resourcePagerDutyRulesetRuleUpdate(ctx context.Context, d *schema.ResourceD
 
 	log.Printf("[INFO] Updating PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
+	return performRulesetRuleUpdate(ctx, rulesetID, d.Id(), rule, client)
+}
 
+func performRulesetRuleUpdate(ctx context.Context, rulesetID string, id string, rule *pagerduty.RulesetRule, client *pagerduty.Client) diag.Diagnostics {
 	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
-		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, d.Id(), rule); err != nil {
+		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, id, rule); err != nil {
 			return resource.RetryableError(err)
-		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
+		} else if rule.Position != nil && *updatedRule.Position != *rule.Position && rule.CatchAll != true {
 			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position)
 			return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}
@@ -838,8 +889,40 @@ func resourcePagerDutyRulesetRuleDelete(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
+
+	// Don't delete catch_all resource
+	if _, ok := d.GetOk(("catch_all")); ok {
+
+		log.Printf("[INFO] Rule %s is a catch_all rule, don't delete it, reset it instead", d.Id())
+
+		rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id())
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Reset all available actions back to the default state of the catch_all rule
+		rule.Actions.Annotate = nil
+		rule.Actions.EventAction = nil
+		rule.Actions.Extractions = nil
+		rule.Actions.Priority = nil
+		rule.Actions.Route = nil
+		rule.Actions.Severity = nil
+		rule.Actions.Suppress = new(pagerduty.RuleActionSuppress)
+		rule.Actions.Suppress.Value = true
+		rule.Actions.Suspend = nil
+
+		if err := performRulesetRuleUpdate(ctx, rulesetID, d.Id(), rule, client); err != nil {
+			return err
+		}
+
+		d.SetId("")
+
+		return nil
+	}
+
+	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 
 	retryErr := resource.RetryContext(ctx, 10*time.Minute, func() *resource.RetryError {
 		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {

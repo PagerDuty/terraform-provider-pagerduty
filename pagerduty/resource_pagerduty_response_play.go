@@ -142,7 +142,7 @@ func resourcePagerDutyResponsePlay() *schema.Resource {
 								},
 							},
 						},
-						"team": {
+						"teams": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
@@ -272,7 +272,7 @@ func resourcePagerDutyResponsePlayRead(ctx context.Context, d *schema.ResourceDa
 
 		if responsePlay != nil {
 			if responsePlay.Team != nil {
-				d.Set("team", []interface{}{responsePlay.Team})
+				d.Set("team", responsePlay.Team.ID)
 			}
 			log.Printf("[INFO] Read PagerDuty response play initial subscribers: %s", d.Get("subscriber"))
 			if err := d.Set("subscriber", flattenSubscribers(responsePlay.Subscribers)); err != nil {

@@ -2,6 +2,8 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -17,24 +19,61 @@ func init() {
 }
 
 func testSweepEventOrchestration(region string) error {
-	// TODO: delete all orchestrations created by the tests
+	config, err := sharedConfigForRegion(region)
+	if err != nil {
+		return err
+	}
+
+	client, err := config.Client()
+	if err != nil {
+		return err
+	}
+
+	resp, _, err := client.EventOrchestrations.List()
+	if err != nil {
+		return err
+	}
+
+	for _, orchestration := range resp.Orchestrations {
+		if strings.HasPrefix(orchestration.Name, "tf-name-") {
+			log.Printf("Destroying Event Orchestration %s (%s)", orchestration.Name, orchestration.ID)
+			if _, err := client.EventOrchestrations.Delete(orchestration.ID); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
 func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
-	orchestration := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	name := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
+	description := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
+	teamName := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationDestroy,
 		Steps: []resource.TestStep{
+			// {
+			// 	Config: testAccCheckPagerDutyEventOrchestrationConfigNameOnly(name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.nameonly"),
+			// 		resource.TestCheckResourceAttr(
+			// 			"pagerduty_event_orchestration.nameonly", "name", name),
+			// 	),
+			// },
 			{
-				Config: testAccCheckPagerDutyOrchestrationConfigNameOnly(orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationConfig(name, description, teamName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.nameonly"),
+					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.foo"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration.nameonly", "name", orchestration),
+						"pagerduty_event_orchestration.foo", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "description", description,
+					),
 				),
 			},
 		},
@@ -77,7 +116,23 @@ func testAccCheckPagerDutyEventOrchestrationExists(rn string) resource.TestCheck
 	}
 }
 
-func testAccCheckPagerDutyOrchestrationConfigNameOnly(n string) string {
+func testAccCheckPagerDutyEventOrchestrationConfig(name, description, team string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+resource "pagerduty_event_orchestration" "foo" {
+	name = "%s"
+	description = "%s"
+	team {
+		id = pagerduty_team.foo.id
+	}
+}
+`, team, name, description)
+}
+
+func testAccCheckPagerDutyEventOrchestrationConfigNameOnly(n string) string {
 	return fmt.Sprintf(`
 
 resource "pagerduty_event_orchestration" "nameonly" {

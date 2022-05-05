@@ -10,7 +10,7 @@ type EventOrchestration struct {
 	ID           string                           `json:"id,omitempty"`
 	Name         string                           `json:"name,omitempty"`
 	Description  string                           `json:"description"`
-	Team         *EventOrchestrationObject        `json:"team"`
+	Team         *EventOrchestrationObject        `json:"team,omitempty"`
 	Routes       int                              `json:"routes,omitempty"`
 	Integrations []*EventOrchestrationIntegration `json:"integrations,omitempty"`
 	// TODO: figure out if we need Updater, Creator / updated_by, created_by, updated_at, created_at, version
@@ -36,10 +36,10 @@ type EventOrchestrationPayload struct {
 }
 
 type ListEventOrchestrationsResponse struct {
-	Total    int        `json:"total,omitempty"`
-	Offset   int        `json:"offset,omitempty"`
-	More     bool       `json:"more,omitempty"`
-	Limit    int        `json:"limit,omitempty"`
+	Total          int                   `json:"total,omitempty"`
+	Offset         int                   `json:"offset,omitempty"`
+	More           bool                  `json:"more,omitempty"`
+	Limit          int                   `json:"limit,omitempty"`
 	Orchestrations []*EventOrchestration `json:"orchestrations,omitempty"`
 }
 

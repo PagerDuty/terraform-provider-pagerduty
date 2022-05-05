@@ -40,6 +40,39 @@ func resourcePagerDutyEventOrchestration() *schema.Resource {
 					},
 				},
 			},
+			"routes": {
+				Type: schema.TypeInt,
+				Computed: true,
+			},
+			"integrations": {
+				Type: schema.TypeList,
+				Computed: true,
+				Optional: true, // Tests keep failing if "Optional: true" is not provided
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"parameters": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"routing_key": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -160,9 +193,48 @@ func resourcePagerDutyEventOrchestrationDelete(d *schema.ResourceData, meta inte
 	return nil
 }
 
+func flattenEventOrchestrationTeam(v *pagerduty.EventOrchestrationObject) []interface{} {
+	team := map[string]interface{}{
+		"id": v.ID,
+	}
+
+	return []interface{}{team}
+}
+
+func flattenEventOrchestrationIntegrations(eoi []*pagerduty.EventOrchestrationIntegration) []interface{} {
+	var result []interface{}
+
+	for _, i := range eoi {
+		integration := map[string]interface{}{
+			"id":   i.ID,
+			"parameters": flattenEventOrchestrationIntegrationParameters(i.Parameters),
+		}
+		result = append(result, integration)
+	}
+	return result
+}
+
+func flattenEventOrchestrationIntegrationParameters(p *pagerduty.EventOrchestrationIntegrationParameters) []interface{} {
+	result := map[string]interface{}{
+		"routing_key": p.RoutingKey,
+		"type": p.Type,
+	}
+
+	return []interface{}{result}
+}
+
 func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrchestration) error {
 	d.Set("name", o.Name)
 	d.Set("description", o.Description)
-	// TODO: set team, number of routes, integrations if exist
+	d.Set("routes", o.Routes)
+	
+	if o.Team != nil {
+		d.Set("team", flattenEventOrchestrationTeam(o.Team))
+	}
+
+	if len(o.Integrations) > 0 {
+		d.Set("integrations", flattenEventOrchestrationIntegrations(o.Integrations))
+	}
+	
 	return nil
 }

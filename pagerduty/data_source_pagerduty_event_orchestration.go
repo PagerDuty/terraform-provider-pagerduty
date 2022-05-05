@@ -19,14 +19,6 @@ func dataSourcePagerDutyEventOrchestration() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"routes": {
-				Type: schema.TypeInt,
-				Computed: true,
-			},
 			"integrations": {
 				Type: schema.TypeList,
 				Computed: true,

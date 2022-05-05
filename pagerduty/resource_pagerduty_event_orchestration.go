@@ -93,7 +93,6 @@ func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrche
 	return orchestration
 }
 
-// TODO why is "team" a list?
 func expandOrchestrationTeam(v interface{}) *pagerduty.EventOrchestrationObject {
 	var team *pagerduty.EventOrchestrationObject
 	t := v.([]interface{})[0].(map[string]interface{})
@@ -110,19 +109,21 @@ func resourcePagerDutyEventOrchestrationCreate(d *schema.ResourceData, meta inte
 		return err
 	}
 
-	orchestration := buildEventOrchestrationStruct(d)
+	payload := buildEventOrchestrationStruct(d)
+	var orchestration *pagerduty.EventOrchestration
 
-	log.Printf("[INFO] Creating PagerDuty Event Orchestration: %s", orchestration.Name)
+	log.Printf("[INFO] Creating PagerDuty Event Orchestration: %s", payload.Name)
 
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
-		if orchestration, _, err := client.EventOrchestrations.Create(orchestration); err != nil {
+		if orch, _, err := client.EventOrchestrations.Create(payload); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
 			}
 
 			return resource.NonRetryableError(err)
-		} else if orchestration != nil {
-			d.SetId(orchestration.ID)
+		} else if orch != nil {
+			d.SetId(orch.ID)
+			orchestration = orch
 		}
 		return nil
 	})
@@ -232,9 +233,9 @@ func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrches
 		d.Set("team", flattenEventOrchestrationTeam(o.Team))
 	}
 
-	if len(o.Integrations) > 0 {
+  if len(o.Integrations) > 0 {
 		d.Set("integrations", flattenEventOrchestrationIntegrations(o.Integrations))
 	}
-	
+
 	return nil
 }

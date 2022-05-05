@@ -47,6 +47,7 @@ var eventOrchestrationBaseUrl = "/event_orchestrations"
 
 func (s *EventOrchestrationService) List() (*ListEventOrchestrationsResponse, *Response, error) {
 	v := new(ListEventOrchestrationsResponse)
+	v.Total = 0
 
 	orchestrations := make([]*EventOrchestration, 0)
 
@@ -59,6 +60,10 @@ func (s *EventOrchestrationService) List() (*ListEventOrchestrationsResponse, *R
 			return ListResp{}, response, err
 		}
 
+		v.Total += result.Total
+		v.Offset = result.Offset
+		v.More = result.More
+		v.Limit = result.Limit
 		orchestrations = append(orchestrations, result.Orchestrations...)
 
 		// Return stats on the current page. Caller can use this information to

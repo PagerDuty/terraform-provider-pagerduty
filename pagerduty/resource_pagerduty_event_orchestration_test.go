@@ -50,20 +50,23 @@ func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
 	description := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
 	teamName := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
+	nameUpdated := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
+	descriptionUpdated := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
+	teamNameUpdated := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationDestroy,
 		Steps: []resource.TestStep{
-			// {
-			// 	Config: testAccCheckPagerDutyEventOrchestrationConfigNameOnly(name),
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.nameonly"),
-			// 		resource.TestCheckResourceAttr(
-			// 			"pagerduty_event_orchestration.nameonly", "name", name),
-			// 	),
-			// },
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationConfigNameOnly(name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.nameonly"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.nameonly", "name", name),
+				),
+			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationConfig(name, description, teamName),
 				Check: resource.ComposeTestCheckFunc(
@@ -73,6 +76,18 @@ func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration.foo", "description", description,
+					),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationConfigUpdated(nameUpdated, descriptionUpdated, teamNameUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "name", nameUpdated,
+					),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "description", descriptionUpdated,
 					),
 				),
 			},
@@ -139,4 +154,20 @@ resource "pagerduty_event_orchestration" "nameonly" {
 	name = "%s"
 }
 `, n)
+}
+
+func testAccCheckPagerDutyEventOrchestrationConfigUpdated(name, description, team string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+resource "pagerduty_event_orchestration" "foo" {
+	name = "%s"
+	description = "%s"
+	team {
+		id = pagerduty_team.foo.id
+	}
+}
+`, team, name, description)
 }

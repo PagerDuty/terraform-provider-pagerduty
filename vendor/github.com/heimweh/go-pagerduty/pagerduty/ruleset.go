@@ -120,14 +120,14 @@ type ListRulesetRulesResponse struct {
 
 // RuleActions represents a rule action
 type RuleActions struct {
-	Suppress    *RuleActionSuppress     `json:"suppress,omitempty"`
-	Annotate    *RuleActionParameter    `json:"annotate,omitempty"`
-	Severity    *RuleActionParameter    `json:"severity,omitempty"`
-	Priority    *RuleActionParameter    `json:"priority,omitempty"`
-	Route       *RuleActionParameter    `json:"route,omitempty"`
-	EventAction *RuleActionParameter    `json:"event_action,omitempty"`
+	Suppress    *RuleActionSuppress     `json:"suppress"`
+	Annotate    *RuleActionParameter    `json:"annotate"`
+	Severity    *RuleActionParameter    `json:"severity"`
+	Priority    *RuleActionParameter    `json:"priority"`
+	Route       *RuleActionParameter    `json:"route"`
+	EventAction *RuleActionParameter    `json:"event_action"`
 	Extractions []*RuleActionExtraction `json:"extractions,omitempty"`
-	Suspend     *RuleActionIntParameter `json:"suspend,omitempty"`
+	Suspend     *RuleActionIntParameter `json:"suspend"`
 }
 
 // RuleActionParameter represents a string parameter object on a rule action

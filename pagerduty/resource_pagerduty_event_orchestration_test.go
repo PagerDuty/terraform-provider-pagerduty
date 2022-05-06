@@ -49,10 +49,10 @@ func testSweepEventOrchestration(region string) error {
 func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
 	description := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
-	teamName := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 	nameUpdated := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
 	descriptionUpdated := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
-	teamNameUpdated := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
+	team1 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
+	team2 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -68,7 +68,7 @@ func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationConfig(name, description, teamName),
+				Config: testAccCheckPagerDutyEventOrchestrationConfig(name, description, team1, team2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.foo"),
 					resource.TestCheckResourceAttr(
@@ -77,10 +77,11 @@ func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration.foo", "description", description,
 					),
+					testAccCheckPagerDutyEventOrchestrationTeamMatch("pagerduty_event_orchestration.foo", "pagerduty_team.foo"),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationConfigUpdated(nameUpdated, descriptionUpdated, teamNameUpdated),
+				Config: testAccCheckPagerDutyEventOrchestrationConfigUpdated(nameUpdated, descriptionUpdated, team1, team2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.foo"),
 					resource.TestCheckResourceAttr(
@@ -89,6 +90,7 @@ func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration.foo", "description", descriptionUpdated,
 					),
+					testAccCheckPagerDutyEventOrchestrationTeamMatch("pagerduty_event_orchestration.foo", "pagerduty_team.bar"),
 				),
 			},
 		},
@@ -131,10 +133,37 @@ func testAccCheckPagerDutyEventOrchestrationExists(rn string) resource.TestCheck
 	}
 }
 
-func testAccCheckPagerDutyEventOrchestrationConfig(name, description, team string) string {
+func testAccCheckPagerDutyEventOrchestrationTeamMatch(orchName, teamName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		o, orchOk := s.RootModule().Resources[orchName]
+
+		if !orchOk {
+			return fmt.Errorf("Not found: %s", orchName)
+		}
+
+		t, tOk := s.RootModule().Resources[teamName]
+		if !tOk {
+			return fmt.Errorf("Not found: %s", teamName)
+		}
+
+		var otId = o.Primary.Attributes["team.0.id"]
+		var tId = t.Primary.Attributes["id"]
+
+		if otId != tId {
+			return fmt.Errorf("Event Orchestration team ID (%v) not matching provided team ID: %v", otId, tId)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyEventOrchestrationConfig(name, description, team1, team2 string) string {
 	return fmt.Sprintf(`
 
 resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+resource "pagerduty_team" "bar" {
 	name = "%s"
 }
 resource "pagerduty_event_orchestration" "foo" {
@@ -144,7 +173,7 @@ resource "pagerduty_event_orchestration" "foo" {
 		id = pagerduty_team.foo.id
 	}
 }
-`, team, name, description)
+`, team1, team2, name, description)
 }
 
 func testAccCheckPagerDutyEventOrchestrationConfigNameOnly(n string) string {
@@ -156,18 +185,21 @@ resource "pagerduty_event_orchestration" "nameonly" {
 `, n)
 }
 
-func testAccCheckPagerDutyEventOrchestrationConfigUpdated(name, description, team string) string {
+func testAccCheckPagerDutyEventOrchestrationConfigUpdated(name, description, team1, team2 string) string {
 	return fmt.Sprintf(`
 
 resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+resource "pagerduty_team" "bar" {
 	name = "%s"
 }
 resource "pagerduty_event_orchestration" "foo" {
 	name = "%s"
 	description = "%s"
 	team {
-		id = pagerduty_team.foo.id
+		id = pagerduty_team.bar.id
 	}
 }
-`, team, name, description)
+`, team1, team2, name, description)
 }

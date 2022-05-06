@@ -115,7 +115,7 @@ func testAccCheckPagerDutyMaintenanceWindowConfig(desc, start, end string) strin
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
-  email       = "%[1]v@foo.com"
+  email       = "%[1]v@foo.test"
   color       = "green"
   role        = "user"
   job_title   = "foo"
@@ -163,7 +163,7 @@ func testAccCheckPagerDutyMaintenanceWindowConfigUpdated(desc, start, end string
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
-  email       = "%[1]v@foo.com"
+  email       = "%[1]v@foo.test"
   color       = "green"
   role        = "user"
   job_title   = "foo"

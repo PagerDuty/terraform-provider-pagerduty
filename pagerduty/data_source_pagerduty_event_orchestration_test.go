@@ -39,11 +39,7 @@ func testAccDataSourcePagerDutyEventOrchestration(src, n string) resource.TestCh
 			return fmt.Errorf("Expected to get an Event Orchestration ID from PagerDuty")
 		}
 
-		testAtts := []string{"id", "name"}
-
-		// TODO: figure out what's the best way to populate integrations.
-		// We store routing keys in Elasticsearch but we don't return them in the API.
-		// We can make a list + get call to retrieve integrations for the "found" orchestration
+		testAtts := []string{"id", "name", "intergations"}
 
 		for _, att := range testAtts {
 			if a[att] != srcA[att] {

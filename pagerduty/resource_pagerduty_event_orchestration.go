@@ -41,11 +41,11 @@ func resourcePagerDutyEventOrchestration() *schema.Resource {
 				},
 			},
 			"routes": {
-				Type: schema.TypeInt,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"integrations": {
-				Type: schema.TypeList,
+				Type:     schema.TypeList,
 				Computed: true,
 				Optional: true, // Tests keep failing if "Optional: true" is not provided
 				Elem: &schema.Resource{
@@ -207,7 +207,7 @@ func flattenEventOrchestrationIntegrations(eoi []*pagerduty.EventOrchestrationIn
 
 	for _, i := range eoi {
 		integration := map[string]interface{}{
-			"id":   i.ID,
+			"id":         i.ID,
 			"parameters": flattenEventOrchestrationIntegrationParameters(i.Parameters),
 		}
 		result = append(result, integration)
@@ -218,7 +218,7 @@ func flattenEventOrchestrationIntegrations(eoi []*pagerduty.EventOrchestrationIn
 func flattenEventOrchestrationIntegrationParameters(p *pagerduty.EventOrchestrationIntegrationParameters) []interface{} {
 	result := map[string]interface{}{
 		"routing_key": p.RoutingKey,
-		"type": p.Type,
+		"type":        p.Type,
 	}
 
 	return []interface{}{result}
@@ -228,12 +228,12 @@ func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrches
 	d.Set("name", o.Name)
 	d.Set("description", o.Description)
 	d.Set("routes", o.Routes)
-	
+
 	if o.Team != nil {
 		d.Set("team", flattenEventOrchestrationTeam(o.Team))
 	}
 
-  if len(o.Integrations) > 0 {
+	if len(o.Integrations) > 0 {
 		d.Set("integrations", flattenEventOrchestrationIntegrations(o.Integrations))
 	}
 

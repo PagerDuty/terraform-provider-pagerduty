@@ -12,7 +12,7 @@ import (
 
 func dataSourcePagerDutyEventOrchestration() *schema.Resource {
 	return &schema.Resource{
-		Read:   dataSourcePagerDutyEventOrchestrationRead,
+		Read: dataSourcePagerDutyEventOrchestrationRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -20,7 +20,7 @@ func dataSourcePagerDutyEventOrchestration() *schema.Resource {
 				Required: true,
 			},
 			"integrations": {
-				Type: schema.TypeList,
+				Type:     schema.TypeList,
 				Computed: true,
 				Optional: true, // Tests keep failing if "Optional: true" is not provided
 				Elem: &schema.Resource{
@@ -103,7 +103,7 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 
 		d.SetId(orch.ID)
 		d.Set("name", orch.Name)
-		
+
 		if len(orch.Integrations) > 0 {
 			d.Set("integrations", flattenEventOrchestrationIntegrations(orch.Integrations))
 		}

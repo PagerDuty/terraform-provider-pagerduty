@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## 2.5.0 (June 1, 2022)
 
 FEATURES:
@@ -27,6 +28,12 @@ BUG FIXES:
 * Docs: `resource/pagerduty_escalation_policy`: Fixed `user` -> `user_reference` in samples ([#497](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/497))
 * Build Process: Include `timezdata` build tag in goreleaser config ([#488](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/488))
 * `data_source/pagerduty_escalation_policy`,`data_source/pagerduty_ruleset`: Changed logic to retry on all errors returned by PD API. Remedies GOAWAY error. ([#507](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/507))
+=======
+## 2.4.2 (Unreleased)
+
+IMPROVEMENTS:
+* Use "@foo.test" email addresses in tests
+>>>>>>> 3037c29 (Switch to always use @foo.test TLD in our tests & documentation)
 
 ## 2.4.1 (April 22, 2022)
 IMPROVEMENTS:

@@ -48,7 +48,7 @@ func testSweepWebhookSubscription(region string) error {
 func TestAccPagerDutyWebhookSubscription_Basic(t *testing.T) {
 	description := fmt.Sprintf("tf-test-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -109,38 +109,38 @@ func testAccCheckPagerDutyWebhookSubscriptionExists(n string) resource.TestCheck
 func testAccCheckPagerDutyWebhookSubscriptionConfig(username, useremail, escalationPolicy, service, description string) string {
 	return fmt.Sprintf(`
 	resource "pagerduty_user" "foo" {
-		name        = "%s"  
+		name        = "%s"
 		email       = "%s"
 	}
-	
+
 	resource "pagerduty_escalation_policy" "foo" {
 		name        = "%s"
 		description = "foo"
 		num_loops   = 1
-		
+
 		rule {
 			escalation_delay_in_minutes = 10
-		
+
 			target {
 				type = "user_reference"
 				id   = pagerduty_user.foo.id
 			}
 		}
 	}
-	
+
 	resource "pagerduty_service" "foo" {
 		name                    = "%s"
 		description             = "foo"
 		auto_resolve_timeout    = 1800
 		acknowledgement_timeout = 1800
 		escalation_policy       = pagerduty_escalation_policy.foo.id
-		
+
 		incident_urgency_rule {
 			type = "constant"
 			urgency = "high"
 		}
 	}
-	
+
 	resource "pagerduty_webhook_subscription" "foo" {
 		delivery_method {
 			type = "http_delivery_method"

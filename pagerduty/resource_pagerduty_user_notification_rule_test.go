@@ -12,7 +12,7 @@ import (
 
 func TestAccPagerDutyUserNotificationRuleContactMethod_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	contactMethodType1 := "email_contact_method"
 	contactMethodType2 := "phone_contact_method"
 	contactMethodType3 := "sms_contact_method"
@@ -46,7 +46,7 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Basic(t *testing.T) {
 
 func TestAccPagerDutyUserNotificationRuleContactMethod_Invalid(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -63,7 +63,7 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Invalid(t *testing.T) {
 
 func TestAccPagerDutyUserNotificationRuleContactMethod_Missing_id(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -80,7 +80,7 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Missing_id(t *testing.T) 
 
 func TestAccPagerDutyUserNotificationRuleContactMethod_Missing_type(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -97,7 +97,7 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Missing_type(t *testing.T
 
 func TestAccPagerDutyUserNotificationRuleContactMethod_Unknown_key(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

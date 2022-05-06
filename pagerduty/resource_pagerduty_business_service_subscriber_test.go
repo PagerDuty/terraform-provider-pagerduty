@@ -13,7 +13,7 @@ import (
 func TestAccPagerDutyBusinessServiceSubscriber_User(t *testing.T) {
 	businessServiceName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -57,7 +57,7 @@ func TestAccPagerDutyBusinessServiceSubscriber_TeamUser(t *testing.T) {
 	businessServiceName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

@@ -24,7 +24,7 @@ func TestAccPagerDutyResponsePlay_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_response_play.foo", "name", name),
 					resource.TestCheckResourceAttr(
-						"pagerduty_response_play.foo", "from", name+"@foo.com"),
+						"pagerduty_response_play.foo", "from", name+"@foo.test"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_response_play.foo", "responder.#", "2"),
 				),
@@ -36,7 +36,7 @@ func TestAccPagerDutyResponsePlay_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_response_play.foo", "name", name),
 					resource.TestCheckResourceAttr(
-						"pagerduty_response_play.foo", "from", name+"@foo.com"),
+						"pagerduty_response_play.foo", "from", name+"@foo.test"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_response_play.foo", "responder.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -96,7 +96,7 @@ func testAccCheckPagerDutyResponsePlayConfig(name string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
-  email       = "%[1]v@foo.com"
+  email       = "%[1]v@foo.test"
   color       = "green"
   role        = "user"
   job_title   = "foo"
@@ -133,7 +133,7 @@ resource "pagerduty_response_play" "foo" {
 	type = "user_reference"
 	id = pagerduty_user.foo.id
   }
-runnability = "services"	
+runnability = "services"
 }
 `, name)
 }
@@ -142,28 +142,28 @@ func testAccCheckPagerDutyResponsePlayConfigUpdated(name string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
 	name        = "%[1]v"
-	email       = "%[1]v@foo.com"
+	email       = "%[1]v@foo.test"
 	color       = "green"
 	role        = "user"
 	job_title   = "foo"
 	description = "foo"
 }
-	
+
 resource "pagerduty_escalation_policy" "foo" {
 	name        = "%[1]v"
 	description = "bar"
 	num_loops   = 2
-	
+
 	rule {
 		escalation_delay_in_minutes = 10
-	
+
 		target {
 			type = "user_reference"
 			id   = pagerduty_user.foo.id
 		}
 	}
 }
-	
+
 resource "pagerduty_response_play" "foo" {
 	name = "%[1]v"
 	from = pagerduty_user.foo.email

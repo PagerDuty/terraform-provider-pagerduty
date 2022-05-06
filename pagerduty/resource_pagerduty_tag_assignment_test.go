@@ -13,7 +13,7 @@ import (
 func TestAccPagerDutyTagAssignment_User(t *testing.T) {
 	tagLabel := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -61,7 +61,7 @@ func TestAccPagerDutyTagAssignment_EP(t *testing.T) {
 	tagLabel := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	ep := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -184,15 +184,15 @@ resource "pagerduty_user" "foo" {
 	name        = "%s"
 	email       = "%s"
 }
-  
+
 resource "pagerduty_escalation_policy" "foo" {
 	name        = "%s"
 	description = "foo"
 	num_loops   = 1
-  
+
 	rule {
 	  escalation_delay_in_minutes = 10
-  
+
 	  target {
 		type = "user_reference"
 		id   = pagerduty_user.foo.id

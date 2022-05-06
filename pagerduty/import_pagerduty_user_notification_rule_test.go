@@ -11,7 +11,7 @@ import (
 
 func TestAccPagerDutyUserNotificationRule_import(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	contactMethodType := "phone_contact_method"
 
 	resource.Test(t, resource.TestCase{

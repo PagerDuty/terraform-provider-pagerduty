@@ -114,7 +114,7 @@ func testAccCheckPagerDutyTeamMembershipConfig(user, team string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name = "%[1]v"
-  email = "%[1]v@foo.com"
+  email = "%[1]v@foo.test"
 }
 
 resource "pagerduty_team" "foo" {
@@ -133,7 +133,7 @@ func testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, role string) 
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name = "%[1]v"
-  email = "%[1]v@foo.com"
+  email = "%[1]v@foo.test"
 }
 
 resource "pagerduty_team" "foo" {

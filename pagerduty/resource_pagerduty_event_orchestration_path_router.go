@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	//"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
@@ -173,19 +173,30 @@ func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData,
 	if err != nil {
 		return err
 	}
-
+	routerPath := buildRouterPathStruct(d)
 	// TODO: figure out a way to get the Type differently
-	log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", d.Id())
+	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		if routerPath, _, err := client.EventOrchestrationPaths.Get(d.Id(), "router"); err != nil {
-			time.Sleep(2 * time.Second)
+	return performRouterPathUpdate(d.Id(), routerPath, client)
+}
+
+func performRouterPathUpdate(orchestrationID string, routerPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, _, err := client.EventOrchestrationPaths.Update(orchestrationID, "router", routerPath); err != nil {
 			return resource.RetryableError(err)
-		} else if routerPath != nil {
-			d.Set("type", routerPath.Type)
 		}
+		//TODO: figure out rule ordering
+		// else if rule.Position != nil && *updatedRouterPath.Position != *rule.Position && rule.CatchAll != true {
+		// 	log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRouterPath.ID, *updatedRouterPath.Position, *rule.Position)
+		// 	return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRouterPath.ID, *updatedRouterPath.Position, *rule.Position))
+		// }
 		return nil
 	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
+	}
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -194,6 +205,30 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData,
 
 func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
+}
+
+func buildRouterPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
+	orchPath := &pagerduty.EventOrchestrationPath{
+		Type: d.Get("type").(string),
+	}
+
+	if attr, ok := d.GetOk("Parent"); ok {
+		orchPath.Parent = expandOrchestrationPathParent(attr)
+	}
+
+	return orchPath
+}
+
+func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationPathReference {
+	var parent *pagerduty.EventOrchestrationPathReference
+	p := v.([]interface{})[0].(map[string]interface{})
+	parent = &pagerduty.EventOrchestrationPathReference{
+		ID:   p["id"].(string),
+		Type: p["type"].(string),
+		Self: p["self"].(string),
+	}
+
+	return parent
 }
 
 // func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrchestration {

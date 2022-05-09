@@ -2,7 +2,6 @@ package pagerduty
 
 import (
 	"fmt"
-	"log"
 	// "strings"
 	"testing"
 
@@ -62,13 +61,13 @@ func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestC
 
 		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.foo"]
 		//TODO: remove logs
-		log.Printf("orchestration is: %v", orch)
+		panic(fmt.Errorf("orchestration: %v", orch))
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
 		found, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "router")
 
 		//TODO: remove logs
-		log.Printf("orchestration path is: %v", found)
+		panic(fmt.Errorf("FOUND: %v", found))
 
 		if err != nil {
 			return fmt.Errorf("Orchestration Path type not found: %v for orchestration %v", "router", orch.Primary.ID)

@@ -11,8 +11,8 @@ import (
 
 func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyEventOrchestrationPathRouterCreate,
 		Read:   resourcePagerDutyEventOrchestrationPathRouterRead,
+		Create: resourcePagerDutyEventOrchestrationPathRouterCreate,
 		Update: resourcePagerDutyEventOrchestrationPathRouterUpdate,
 		Delete: resourcePagerDutyEventOrchestrationPathRouterUpdate,
 		Importer: &schema.ResourceImporter{
@@ -23,27 +23,27 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			// "parent": {
-			// 	Type:     schema.TypeList,
-			// 	Required: true,
-			// 	MaxItems: 1,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"id": {
-			// 				Type:     schema.TypeString,
-			// 				Required: true,
-			// 			},
-			// 			"type": {
-			// 				Type:     schema.TypeString,
-			// 				Required: true,
-			// 			},
-			// 			"self": {
-			// 				Type:     schema.TypeString,
-			// 				Required: true,
-			// 			},
-			// 		},
-			// 	},
-			// },
+			"parent": {
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"self": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 			// "sets": {
 			// 	Type:     schema.TypeList,
 			// 	Required: true, //TODO: is it always going to have a set?
@@ -152,14 +152,15 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 		return err
 	}
 
-	// TODO: figure out a way to get the Type differently
 	log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", d.Id())
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		if routerPath, _, err := client.EventOrchestrationPaths.Get(d.Id(), "router"); err != nil {
+		path := buildRouterPathStruct(d)
+		if routerPath, _, err := client.EventOrchestrationPaths.Get(path.Parent.ID, path.Type); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
+			d.SetId(path.Parent.ID)
 			d.Set("type", routerPath.Type)
 		}
 		return nil
@@ -167,17 +168,26 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 
 }
 
-//TODO: As a temporary fix to get rid of "Inconistency issue - root resource created but not present", made the create to have same logic as read.
 func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
-	routerPath := buildRouterPathStruct(d)
-	// TODO: figure out a way to get the Type differently
-	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", d.Id())
 
-	return performRouterPathUpdate(d.Id(), routerPath, client)
+	log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", d.Id())
+
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		routerPathStruct := buildRouterPathStruct(d)
+		if routerPath, _, err := client.EventOrchestrationPaths.Get(routerPathStruct.Parent.ID, "router"); err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
+		} else if routerPath != nil {
+			d.SetId(routerPathStruct.Parent.ID)
+			d.Set("type", routerPath.Type)
+		}
+		return nil
+	})
+
 }
 
 func performRouterPathUpdate(orchestrationID string, routerPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
@@ -212,7 +222,7 @@ func buildRouterPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestration
 		Type: d.Get("type").(string),
 	}
 
-	if attr, ok := d.GetOk("Parent"); ok {
+	if attr, ok := d.GetOk("parent"); ok {
 		orchPath.Parent = expandOrchestrationPathParent(attr)
 	}
 
@@ -230,166 +240,3 @@ func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationP
 
 	return parent
 }
-
-// func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrchestration {
-// 	orchestration := &pagerduty.EventOrchestration{
-// 		Name: d.Get("name").(string),
-// 	}
-
-// 	if attr, ok := d.GetOk("description"); ok {
-// 		orchestration.Description = attr.(string)
-// 	}
-
-// 	if attr, ok := d.GetOk("team"); ok {
-// 		orchestration.Team = expandOrchestrationTeam(attr)
-// 	}
-
-// 	return orchestration
-// }
-
-// func expandOrchestrationTeam(v interface{}) *pagerduty.EventOrchestrationObject {
-// 	var team *pagerduty.EventOrchestrationObject
-// 	t := v.([]interface{})[0].(map[string]interface{})
-// 	team = &pagerduty.EventOrchestrationObject{
-// 		ID: t["id"].(string),
-// 	}
-
-// 	return team
-// }
-
-// func resourcePagerDutyEventOrchestrationCreate(d *schema.ResourceData, meta interface{}) error {
-// 	client, err := meta.(*Config).Client()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	payload := buildEventOrchestrationStruct(d)
-// 	var orchestration *pagerduty.EventOrchestration
-
-// 	log.Printf("[INFO] Creating PagerDuty Event Orchestration: %s", payload.Name)
-
-// 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
-// 		if orch, _, err := client.EventOrchestrations.Create(payload); err != nil {
-// 			if isErrCode(err, 400) || isErrCode(err, 429) {
-// 				return resource.RetryableError(err)
-// 			}
-
-// 			return resource.NonRetryableError(err)
-// 		} else if orch != nil {
-// 			d.SetId(orch.ID)
-// 			orchestration = orch
-// 		}
-// 		return nil
-// 	})
-
-// 	if retryErr != nil {
-// 		return retryErr
-// 	}
-
-// 	setEventOrchestrationProps(d, orchestration)
-
-// 	return nil
-// }
-
-// func resourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta interface{}) error {
-// 	client, err := meta.(*Config).Client()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-// 		orch, _, err := client.EventOrchestrations.Get(d.Id())
-// 		if err != nil {
-// 			errResp := handleNotFoundError(err, d)
-// 			if errResp != nil {
-// 				time.Sleep(2 * time.Second)
-// 				return resource.RetryableError(errResp)
-// 			}
-
-// 			return nil
-// 		}
-
-// 		setEventOrchestrationProps(d, orch)
-
-// 		return nil
-// 	})
-// }
-
-// func resourcePagerDutyEventOrchestrationUpdate(d *schema.ResourceData, meta interface{}) error {
-// 	client, err := meta.(*Config).Client()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	orchestration := buildEventOrchestrationStruct(d)
-
-// 	log.Printf("[INFO] Updating PagerDuty Event Orchestration: %s", d.Id())
-
-// 	if _, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func resourcePagerDutyEventOrchestrationDelete(d *schema.ResourceData, meta interface{}) error {
-// 	client, err := meta.(*Config).Client()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	log.Printf("[INFO] Deleting PagerDuty Event Orchestration: %s", d.Id())
-// 	if _, err := client.EventOrchestrations.Delete(d.Id()); err != nil {
-// 		return err
-// 	}
-
-// 	d.SetId("")
-
-// 	return nil
-// }
-
-// func flattenEventOrchestrationTeam(v *pagerduty.EventOrchestrationObject) []interface{} {
-// 	team := map[string]interface{}{
-// 		"id": v.ID,
-// 	}
-
-// 	return []interface{}{team}
-// }
-
-// func flattenEventOrchestrationIntegrations(eoi []*pagerduty.EventOrchestrationIntegration) []interface{} {
-// 	var result []interface{}
-
-// 	for _, i := range eoi {
-// 		integration := map[string]interface{}{
-// 			"id":   i.ID,
-// 			"parameters": flattenEventOrchestrationIntegrationParameters(i.Parameters),
-// 		}
-// 		result = append(result, integration)
-// 	}
-// 	return result
-// }
-
-// func flattenEventOrchestrationIntegrationParameters(p *pagerduty.EventOrchestrationIntegrationParameters) []interface{} {
-// 	result := map[string]interface{}{
-// 		"routing_key": p.RoutingKey,
-// 		"type": p.Type,
-// 	}
-
-// 	return []interface{}{result}
-// }
-
-// func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrchestration) error {
-// 	d.Set("name", o.Name)
-// 	d.Set("description", o.Description)
-// 	d.Set("routes", o.Routes)
-
-// 	if o.Team != nil {
-// 		d.Set("team", flattenEventOrchestrationTeam(o.Team))
-// 	}
-
-//   if len(o.Integrations) > 0 {
-// 		d.Set("integrations", flattenEventOrchestrationIntegrations(o.Integrations))
-// 	}
-
-// 	return nil
-// }

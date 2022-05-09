@@ -23,9 +23,9 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathConfig(team, orchestration, orchPathType),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.foo"),
+					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.foo", "type", orchPathType),
+						"pagerduty_event_orchestration_router.router", "type", orchPathType),
 				),
 			},
 		},
@@ -39,7 +39,7 @@ func testAccCheckPagerDutyEventOrchestrationPathDestroy(s *terraform.State) erro
 			continue
 		}
 
-		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.foo"]
+		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 
 		if _, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "router"); err == nil {
 			return fmt.Errorf("Event Orchestration Path still exists")
@@ -54,20 +54,13 @@ func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestC
 		if !ok {
 			return fmt.Errorf("Not found: %s", rn)
 		}
-		// TODO: This needs refactor, also since ID is created, should I look for ID?!
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No Event Orchestration Path Type is set")
 		}
 
-		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.foo"]
-		//TODO: remove logs
-		panic(fmt.Errorf("orchestration: %v", orch))
-
+		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 		client, _ := testAccProvider.Meta().(*Config).Client()
 		found, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "router")
-
-		//TODO: remove logs
-		panic(fmt.Errorf("FOUND: %v", found))
 
 		if err != nil {
 			return fmt.Errorf("Orchestration Path type not found: %v for orchestration %v", "router", orch.Primary.ID)
@@ -86,15 +79,20 @@ resource "pagerduty_team" "foo" {
 	name = "%s"
 }
 
-resource "pagerduty_event_orchestration" "foo" {
+resource "pagerduty_event_orchestration" "orch" {
 	name = "%s"
 	team {
 		id = pagerduty_team.foo.id
 	}
 }
 
-resource "pagerduty_event_orchestration_router" "foo" {
+resource "pagerduty_event_orchestration_router" "router" {
 	type = "%s"
+	parent {
+        id = pagerduty_event_orchestration.orch.id
+		type = "event_orchestration_reference"
+		self = "test"
+    }
 }
 `, t, o, ptype)
 }

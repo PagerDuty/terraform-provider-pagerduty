@@ -26,8 +26,6 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "type", orchPathType),
-					// resource.TestCheckResourceAttr(
-					// 	"pagerduty_event_orchestration_router.router", "self", "https://api.pagerduty.com/event_orchestrations/orch_id/router"),
 				),
 			},
 			{
@@ -36,6 +34,16 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'database'"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(team, orchestration, orchPathType),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'database'"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
 				),
 			},
 		},
@@ -213,6 +221,100 @@ resource "pagerduty_event_orchestration_router" "router" {
 			}
 			conditions {
 				expression = "event.summary matches part 'database'"
+			}
+		}
+	}
+}
+`, t, o, ptype)
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(t string, o string, ptype string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+
+resource "pagerduty_user" "foo" {
+	name        = "user"
+	email       = "user@pagerduty.com"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "test"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "bar" {
+	name = "barService"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+
+	incident_urgency_rule {
+		type = "constant"
+		urgency = "high"
+	}
+}
+
+resource "pagerduty_service" "bar2" {
+	name = "barService2"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+
+	incident_urgency_rule {
+		type = "constant"
+		urgency = "high"
+	}
+}
+
+resource "pagerduty_event_orchestration" "orch" {
+	name = "%s"
+	team {
+		id = pagerduty_team.foo.id
+	}
+}
+
+resource "pagerduty_event_orchestration_router" "router" {
+	type = "%s"
+	parent {
+        id = pagerduty_event_orchestration.orch.id
+		type = "event_orchestration_reference"
+		self = "https://api.pagerduty.com/event_orchestrations/orch_id"
+    }
+	sets {
+		id = "start"
+		rules {
+			disabled = false
+			label = "rule1 label"
+			actions {
+				route_to = pagerduty_service.bar.id
+			}
+			conditions {
+				expression = "event.summary matches part 'database'"
+			}
+			conditions {
+				expression = "event.severity matches part 'critical'"
+			}
+		}
+
+		rules {
+			disabled = false
+			label = "rule2 label"
+			actions {
+				route_to = pagerduty_service.bar2.id
+			}
+			conditions {
+				expression = "event.severity matches part 'critical'"
 			}
 		}
 	}

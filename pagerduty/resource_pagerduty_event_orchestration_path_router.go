@@ -31,14 +31,10 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 					Schema: PagerDutyEventOrchestrationPathParent,
 				},
 			},
-			// "self": {
-			// 	Type:     schema.TypeString,
-			// 	Optional: true,
-			// },
 			"sets": {
 				Type:     schema.TypeList,
-				Required: true, //TODO: is it always going to have a set?
-				//MaxItems: 1,    // TODO:Router can only have 'start' set, but not having max will help repurpose set code snippet
+				Required: true,
+				MaxItems: 1, // Router can only have 'start' set
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -48,7 +44,6 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 						"rules": {
 							Type:     schema.TypeList,
 							Required: true, // even if there are no rules, API returns rules as an empty list
-							// MaxItems: 1000, // TODO: do we need this?! Router allows a max of 1000 rules
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
@@ -131,8 +126,7 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
 			d.SetId(path.Parent.ID)
-			// d.Set("type", routerPath.Type)
-			// d.Set("self", path.Parent.Self+"/"+routerPath.Type)
+
 			if routerPath.Sets != nil {
 				d.Set("sets", flattenSets(routerPath.Sets))
 			}
@@ -213,13 +207,6 @@ func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrch
 		orchPath.Parent = expandOrchestrationPathParent(attr)
 	}
 
-	// build other props
-	// if attr, ok := d.GetOk("self"); ok {
-	// 	orchPath.Self = attr.(string)
-	// } else {
-	// 	orchPath.Self = orchPath.Parent.Self + "/" + orchPath.Type
-	// }
-
 	if attr, ok := d.GetOk("sets"); ok {
 		orchPath.Sets = expandSets(attr.([]interface{}))
 	}
@@ -263,10 +250,9 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 		r := rule.(map[string]interface{})
 
 		ruleInSet := &pagerduty.EventOrchestrationPathRule{
-			ID:       r["id"].(string),
-			Label:    r["label"].(string),
-			Disabled: r["disabled"].(bool),
-			// TODO:
+			ID:         r["id"].(string),
+			Label:      r["label"].(string),
+			Disabled:   r["disabled"].(bool),
 			Conditions: expandRouterConditions(r["conditions"].(interface{})),
 			Actions:    expandRouterActions(r["actions"].([]interface{})),
 		}
@@ -283,8 +269,6 @@ func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleAct
 		am := ai.(map[string]interface{})
 		actions.RouteTo = am["route_to"].(string)
 	}
-	// am := v.([]interface{})
-	// actions.RouteTo = am[0]["route_to"]
 
 	return actions
 }

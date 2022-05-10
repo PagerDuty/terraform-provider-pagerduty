@@ -1,12 +1,12 @@
 package pagerduty
 
 import (
-	"log"
-	"time"
-
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
+	"log"
+	"time"
 )
 
 func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
@@ -44,66 +44,70 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 					},
 				},
 			},
-			// "sets": {
-			// 	Type:     schema.TypeList,
-			// 	Required: true, //TODO: is it always going to have a set?
-			// 	MaxItems: 1,    // Router can only have 'start' set
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"id": {
-			// 				Type:     schema.TypeString,
-			// 				Required: true,
-			// 			},
-			// 			"rules": {
-			// 				Type:     schema.TypeList,
-			// 				Required: true, // even if there are no rules, API returns rules as an empty list
-			// 				MaxItems: 1000, // TODO: do we need this?! Router allows a max of 1000 rules
-			// 				Elem: &schema.Resource{
-			// 					Schema: map[string]*schema.Schema{
-			// 						"id": {
-			// 							Type:     schema.TypeString,
-			// 							Optional: true, // If the start set has no rules, empty list is returned by API for rules. TODO: there is a validation on id
-			// 						},
-			// 						"label": {
-			// 							Type:     schema.TypeString,
-			// 							Optional: true,
-			// 						},
-			// 						"conditions": {
-			// 							Type:     schema.TypeList,
-			// 							Optional: true,
-			// 							Elem: &schema.Resource{
-			// 								Schema: map[string]*schema.Schema{
-			// 									"expression": {
-			// 										Type:     schema.TypeString,
-			// 										Required: true,
-			// 									},
-			// 								},
-			// 							},
-			// 						},
-			// 						"actions": {
-			// 							Type:     schema.TypeList,
-			// 							Optional: true,
-			// 							MaxItems: 1, //there can only be one action for router
-			// 							Elem: &schema.Resource{
-			// 								Schema: map[string]*schema.Schema{
-			// 									"route_to": {
-			// 										Type:     schema.TypeString,
-			// 										Required: true,
-			// 										//TODO: validate func, cannot be unrouted, should be some serviceID
-			// 									},
-			// 								},
-			// 							},
-			// 						},
-			// 						"disabled": {
-			// 							Type:     schema.TypeBool,
-			// 							Optional: true,
-			// 						},
-			// 					},
-			// 				},
-			// 			},
-			// 		},
-			// 	},
+			// "self": {
+			// 	Type:     schema.TypeString,
+			// 	Optional: true,
 			// },
+			"sets": {
+				Type:     schema.TypeList,
+				Required: true, //TODO: is it always going to have a set?
+				//MaxItems: 1,    // TODO:Router can only have 'start' set, but not having max will help repurpose set code snippet
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"rules": {
+							Type:     schema.TypeList,
+							Required: true, // even if there are no rules, API returns rules as an empty list
+							// MaxItems: 1000, // TODO: do we need this?! Router allows a max of 1000 rules
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:     schema.TypeString,
+										Computed: true, // If the start set has no rules, empty list is returned by API for rules. TODO: there is a validation on id
+									},
+									"label": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+									// "conditions": {
+									// 	Type:     schema.TypeList,
+									// 	Optional: true,
+									// 	Elem: &schema.Resource{
+									// 		Schema: map[string]*schema.Schema{
+									// 			"expression": {
+									// 				Type:     schema.TypeString,
+									// 				Required: true,
+									// 			},
+									// 		},
+									// 	},
+									// },
+									"actions": {
+										Type:     schema.TypeList,
+										Required: true,
+										MaxItems: 1, //there can only be one action for router
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"route_to": {
+													Type:     schema.TypeString,
+													Required: true,
+													//TODO: validate func, cannot be unrouted, should be some serviceID
+												},
+											},
+										},
+									},
+									"disabled": {
+										Type:     schema.TypeBool,
+										Optional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			// "catch_all": {
 			// 	Type:     schema.TypeList,
 			// 	Optional: true, //if not supplied, API creates it
@@ -152,16 +156,20 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 		return err
 	}
 
-	log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", d.Id())
-
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		path := buildRouterPathStruct(d)
+		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", path.Parent.ID)
+
 		if routerPath, _, err := client.EventOrchestrationPaths.Get(path.Parent.ID, path.Type); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
 			d.SetId(path.Parent.ID)
-			d.Set("type", routerPath.Type)
+			// d.Set("type", routerPath.Type)
+			// d.Set("self", path.Parent.Self+"/"+routerPath.Type)
+			if routerPath.Sets != nil {
+				d.Set("sets", flattenSets(routerPath.Sets))
+			}
 		}
 		return nil
 	})
@@ -169,32 +177,60 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData, meta interface{}) error {
+	// client, err := meta.(*Config).Client()
+	// if err != nil {
+	// 	return err
+	// }
+
+	// return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	// 	routerPathStruct := buildRouterPathStruct(d)
+	// 	log.Printf("[INFO] Reading PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "router", routerPathStruct.Parent.ID)
+
+	// 	if routerPath, _, err := client.EventOrchestrationPaths.Get(routerPathStruct.Parent.ID, routerPathStruct.Type); err != nil {
+	// 		time.Sleep(2 * time.Second)
+	// 		return resource.RetryableError(err)
+	// 	} else if routerPath != nil {
+	// 		d.SetId(routerPathStruct.Parent.ID)
+	// 		d.Set("type", routerPath.Type)
+	// 	}
+	// 	return nil
+	// })
+	// return resourcePagerDutyEventOrchestrationPathRouterRead(d, meta)
+	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
+}
+
+func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", d.Id())
+	updatePath := buildRouterPathStructForUpdate(d)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		routerPathStruct := buildRouterPathStruct(d)
-		if routerPath, _, err := client.EventOrchestrationPaths.Get(routerPathStruct.Parent.ID, "router"); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if routerPath != nil {
-			d.SetId(routerPathStruct.Parent.ID)
-			d.Set("type", routerPath.Type)
-		}
-		return nil
-	})
+	log.Printf("[INFO] Updating PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "router", updatePath.Parent.ID)
 
+	return performRouterPathUpdate(d, updatePath, client)
 }
 
-func performRouterPathUpdate(orchestrationID string, routerPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
+func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
+	return nil
+}
+
+func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if _, _, err := client.EventOrchestrationPaths.Update(orchestrationID, "router", routerPath); err != nil {
+		updatedPath, _, err := client.EventOrchestrationPaths.Update(routerPath.Parent.ID, "router", routerPath)
+		if err != nil {
 			return resource.RetryableError(err)
 		}
+		if updatedPath == nil {
+			return resource.NonRetryableError(fmt.Errorf("No Event Orchestration Router found."))
+		}
+		// set props
+		d.SetId(routerPath.Parent.ID)
+		if routerPath.Sets != nil {
+			d.Set("sets", flattenSets(routerPath.Sets))
+		}
+
 		//TODO: figure out rule ordering
 		// else if rule.Position != nil && *updatedRouterPath.Position != *rule.Position && rule.CatchAll != true {
 		// 	log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRouterPath.ID, *updatedRouterPath.Position, *rule.Position)
@@ -206,14 +242,6 @@ func performRouterPathUpdate(orchestrationID string, routerPath *pagerduty.Event
 		time.Sleep(2 * time.Second)
 		return retryErr
 	}
-	return nil
-}
-
-func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData, meta interface{}) error {
-	return nil
-}
-
-func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
@@ -229,6 +257,29 @@ func buildRouterPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestration
 	return orchPath
 }
 
+func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
+
+	// get the path-parent
+	orchPath := &pagerduty.EventOrchestrationPath{}
+
+	if attr, ok := d.GetOk("parent"); ok {
+		orchPath.Parent = expandOrchestrationPathParent(attr)
+	}
+
+	// build other props
+	// if attr, ok := d.GetOk("self"); ok {
+	// 	orchPath.Self = attr.(string)
+	// } else {
+	// 	orchPath.Self = orchPath.Parent.Self + "/" + orchPath.Type
+	// }
+
+	if attr, ok := d.GetOk("sets"); ok {
+		orchPath.Sets = expandSets(attr.([]interface{}))
+	}
+
+	return orchPath
+}
+
 func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationPathReference {
 	var parent *pagerduty.EventOrchestrationPathReference
 	p := v.([]interface{})[0].(map[string]interface{})
@@ -239,4 +290,96 @@ func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationP
 	}
 
 	return parent
+}
+
+func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
+	var sets []*pagerduty.EventOrchestrationPathSet
+
+	for _, set := range v.([]interface{}) {
+		s := set.(map[string]interface{})
+
+		orchPathSet := &pagerduty.EventOrchestrationPathSet{
+			ID:    s["id"].(string),
+			Rules: expandRules(s["rules"].(interface{})),
+		}
+
+		sets = append(sets, orchPathSet)
+	}
+
+	return sets
+}
+
+func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
+	var rules []*pagerduty.EventOrchestrationPathRule
+
+	for _, rule := range v.([]interface{}) {
+		r := rule.(map[string]interface{})
+
+		ruleInSet := &pagerduty.EventOrchestrationPathRule{
+			ID:       r["id"].(string),
+			Label:    r["label"].(string),
+			Disabled: r["disabled"].(bool),
+			// TODO:
+			// Conditions: expandConditions(r["conditions"].(interface{})),
+			Actions: expandRouterActions(r["actions"].([]interface{})),
+		}
+
+		rules = append(rules, ruleInSet)
+	}
+
+	return rules
+}
+
+func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
+	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
+	for _, ai := range v.([]interface{}) {
+		am := ai.(map[string]interface{})
+		actions.RouteTo = am["route_to"].(string)
+	}
+	// am := v.([]interface{})
+	// actions.RouteTo = am[0]["route_to"]
+
+	return actions
+}
+
+func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
+	var flattenedSets []interface{}
+
+	for _, set := range orchPathSets {
+		flattenedSet := map[string]interface{}{
+			"id":    set.ID,
+			"rules": flattenRules(set.Rules),
+		}
+		flattenedSets = append(flattenedSets, flattenedSet)
+	}
+	return flattenedSets
+}
+
+func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
+	var flattenedRules []interface{}
+
+	for _, rule := range rules {
+		flattenedRule := map[string]interface{}{
+			"id":       rule.ID,
+			"label":    rule.Label,
+			"disabled": rule.Disabled,
+			// TODO:
+			// "conditions": flattenConditions(rule.Conditions),
+			"actions": flattenRouterActions(rule.Actions),
+		}
+		flattenedRules = append(flattenedRules, flattenedRule)
+	}
+	return flattenedRules
+}
+
+func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
+	var actionsMap []map[string]interface{}
+
+	am := make(map[string]interface{})
+
+	//TODO: test errors, what if the action is not passed? or if they route to a path that doesn't exist etc.
+	am["route_to"] = actions.RouteTo
+	actionsMap = append(actionsMap, am)
+
+	return actionsMap
 }

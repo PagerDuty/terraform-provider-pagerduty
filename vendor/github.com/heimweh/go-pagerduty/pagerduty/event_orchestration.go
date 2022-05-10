@@ -10,15 +10,15 @@ type EventOrchestration struct {
 	ID           string                           `json:"id,omitempty"`
 	Name         string                           `json:"name,omitempty"`
 	Description  string                           `json:"description"`
-	Team         *EventOrchestrationObject        `json:"team,omitempty"`
+	Team         *EventOrchestrationObject        `json:"team"`
 	Routes       int                              `json:"routes,omitempty"`
 	Integrations []*EventOrchestrationIntegration `json:"integrations,omitempty"`
 	// TODO: figure out if we need Updater, Creator / updated_by, created_by, updated_at, created_at, version
 }
 
 type EventOrchestrationObject struct {
-	Type string `json:"type,omitempty"`
-	ID   string `json:"id,omitempty"`
+	Type string  `json:"type,omitempty"`
+	ID   *string `json:"id"`
 }
 
 type EventOrchestrationIntegrationParameters struct {

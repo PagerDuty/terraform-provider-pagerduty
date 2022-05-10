@@ -88,6 +88,11 @@ func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrche
 
 	if attr, ok := d.GetOk("team"); ok {
 		orchestration.Team = expandOrchestrationTeam(attr)
+	} else {
+		var tId *string
+		orchestration.Team = &pagerduty.EventOrchestrationObject{
+			ID: tId,
+		}
 	}
 
 	return orchestration
@@ -97,7 +102,7 @@ func expandOrchestrationTeam(v interface{}) *pagerduty.EventOrchestrationObject 
 	var team *pagerduty.EventOrchestrationObject
 	t := v.([]interface{})[0].(map[string]interface{})
 	team = &pagerduty.EventOrchestrationObject{
-		ID: t["id"].(string),
+		ID: stringTypeToStringPtr(t["id"].(string)),
 	}
 
 	return team
@@ -171,8 +176,19 @@ func resourcePagerDutyEventOrchestrationUpdate(d *schema.ResourceData, meta inte
 
 	log.Printf("[INFO] Updating PagerDuty Event Orchestration: %s", d.Id())
 
-	if _, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
-		return err
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		if _, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
+			if isErrCode(err, 400) || isErrCode(err, 429) {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+
+		return nil
+	})
+
+	if retryErr != nil {
+		return retryErr
 	}
 
 	return nil

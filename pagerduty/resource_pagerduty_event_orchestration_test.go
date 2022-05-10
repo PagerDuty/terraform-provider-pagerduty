@@ -62,9 +62,16 @@ func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationConfigNameOnly(name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.nameonly"),
+					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.foo"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration.nameonly", "name", name),
+						"pagerduty_event_orchestration.foo", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "description", "",
+					),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "team.#", "0",
+					),
 				),
 			},
 			{
@@ -91,6 +98,21 @@ func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
 						"pagerduty_event_orchestration.foo", "description", descriptionUpdated,
 					),
 					testAccCheckPagerDutyEventOrchestrationTeamMatch("pagerduty_event_orchestration.foo", "pagerduty_team.bar"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationConfigDescriptionTeamDeleted(nameUpdated, team1, team2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationExists("pagerduty_event_orchestration.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "name", nameUpdated,
+					),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "description", "",
+					),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "team.#", "0",
+					),
 				),
 			},
 		},
@@ -157,6 +179,15 @@ func testAccCheckPagerDutyEventOrchestrationTeamMatch(orchName, teamName string)
 	}
 }
 
+func testAccCheckPagerDutyEventOrchestrationConfigNameOnly(n string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_event_orchestration" "foo" {
+	name = "%s"
+}
+`, n)
+}
+
 func testAccCheckPagerDutyEventOrchestrationConfig(name, description, team1, team2 string) string {
 	return fmt.Sprintf(`
 
@@ -176,15 +207,6 @@ resource "pagerduty_event_orchestration" "foo" {
 `, team1, team2, name, description)
 }
 
-func testAccCheckPagerDutyEventOrchestrationConfigNameOnly(n string) string {
-	return fmt.Sprintf(`
-
-resource "pagerduty_event_orchestration" "nameonly" {
-	name = "%s"
-}
-`, n)
-}
-
 func testAccCheckPagerDutyEventOrchestrationConfigUpdated(name, description, team1, team2 string) string {
 	return fmt.Sprintf(`
 
@@ -202,4 +224,19 @@ resource "pagerduty_event_orchestration" "foo" {
 	}
 }
 `, team1, team2, name, description)
+}
+
+func testAccCheckPagerDutyEventOrchestrationConfigDescriptionTeamDeleted(name, team1, team2 string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+}
+resource "pagerduty_team" "bar" {
+	name = "%s"
+}
+resource "pagerduty_event_orchestration" "foo" {
+	name = "%s"
+}
+`, team1, team2, name)
 }

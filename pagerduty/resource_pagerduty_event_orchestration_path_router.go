@@ -28,20 +28,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 				Required: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"type": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"self": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
+					Schema: PagerDutyEventOrchestrationPathParent,
 				},
 			},
 			// "self": {

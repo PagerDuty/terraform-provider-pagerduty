@@ -72,18 +72,18 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									// "conditions": {
-									// 	Type:     schema.TypeList,
-									// 	Optional: true,
-									// 	Elem: &schema.Resource{
-									// 		Schema: map[string]*schema.Schema{
-									// 			"expression": {
-									// 				Type:     schema.TypeString,
-									// 				Required: true,
-									// 			},
-									// 		},
-									// 	},
-									// },
+									"conditions": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"expression": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+											},
+										},
+									},
 									"actions": {
 										Type:     schema.TypeList,
 										Required: true,
@@ -320,8 +320,8 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 			Label:    r["label"].(string),
 			Disabled: r["disabled"].(bool),
 			// TODO:
-			// Conditions: expandConditions(r["conditions"].(interface{})),
-			Actions: expandRouterActions(r["actions"].([]interface{})),
+			Conditions: expandRouterConditions(r["conditions"].(interface{})),
+			Actions:    expandRouterActions(r["actions"].([]interface{})),
 		}
 
 		rules = append(rules, ruleInSet)
@@ -342,6 +342,21 @@ func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleAct
 	return actions
 }
 
+func expandRouterConditions(v interface{}) []*pagerduty.EventOrchestrationPathRuleCondition {
+	var conditions []*pagerduty.EventOrchestrationPathRuleCondition
+
+	for _, cond := range v.([]interface{}) {
+		c := cond.(map[string]interface{})
+
+		cx := &pagerduty.EventOrchestrationPathRuleCondition{
+			Expression: c["expression"].(string),
+		}
+
+		conditions = append(conditions, cx)
+	}
+
+	return conditions
+}
 func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
 	var flattenedSets []interface{}
 
@@ -360,15 +375,15 @@ func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 
 	for _, rule := range rules {
 		flattenedRule := map[string]interface{}{
-			"id":       rule.ID,
-			"label":    rule.Label,
-			"disabled": rule.Disabled,
-			// TODO:
-			// "conditions": flattenConditions(rule.Conditions),
-			"actions": flattenRouterActions(rule.Actions),
+			"id":         rule.ID,
+			"label":      rule.Label,
+			"disabled":   rule.Disabled,
+			"conditions": flattenRouterConditions(rule.Conditions),
+			"actions":    flattenRouterActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
 	}
+
 	return flattenedRules
 }
 
@@ -382,4 +397,17 @@ func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) 
 	actionsMap = append(actionsMap, am)
 
 	return actionsMap
+}
+
+func flattenRouterConditions(conditions []*pagerduty.EventOrchestrationPathRuleCondition) []interface{} {
+	var flattendConditions []interface{}
+
+	for _, condition := range conditions {
+		flattendCondition := map[string]interface{}{
+			"expression": condition.Expression,
+		}
+		flattendConditions = append(flattendConditions, flattendCondition)
+	}
+
+	return flattendConditions
 }

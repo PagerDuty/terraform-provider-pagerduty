@@ -44,7 +44,7 @@ func TestAccPagerDutyEventOrchestrationNameOnly_import(t *testing.T) {
 			},
 
 			{
-				ResourceName:      "pagerduty_event_orchestration.nameonly",
+				ResourceName:      "pagerduty_event_orchestration.foo",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},

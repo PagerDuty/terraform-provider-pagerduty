@@ -76,12 +76,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"expression": {
-													Type:     schema.TypeString,
-													Required: true,
-												},
-											},
+											Schema: PagerDutyEventOrchestrationPathConditions,
 										},
 									},
 									"actions": {
@@ -134,22 +129,6 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 	}
 }
 
-// func buildEventOrchestrationRouterStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-// 	orchestrationPath := &pagerduty.EventOrchestrationPath{
-// 		Type: d.Get("type").(string),
-// 		//Self: d.Get("self").(string),
-// 	}
-
-// 	// if attr, ok := d.GetOk("description"); ok {
-// 	// 	orchestration.Description = attr.(string)
-// 	// }
-
-// 	// if attr, ok := d.GetOk("team"); ok {
-// 	// 	orchestration.Team = expandOrchestrationTeam(attr)
-// 	// }
-// 	return orchestrationPath
-// }
-
 func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -177,25 +156,6 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData, meta interface{}) error {
-	// client, err := meta.(*Config).Client()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// return resource.Retry(2*time.Minute, func() *resource.RetryError {
-	// 	routerPathStruct := buildRouterPathStruct(d)
-	// 	log.Printf("[INFO] Reading PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "router", routerPathStruct.Parent.ID)
-
-	// 	if routerPath, _, err := client.EventOrchestrationPaths.Get(routerPathStruct.Parent.ID, routerPathStruct.Type); err != nil {
-	// 		time.Sleep(2 * time.Second)
-	// 		return resource.RetryableError(err)
-	// 	} else if routerPath != nil {
-	// 		d.SetId(routerPathStruct.Parent.ID)
-	// 		d.Set("type", routerPath.Type)
-	// 	}
-	// 	return nil
-	// })
-	// return resourcePagerDutyEventOrchestrationPathRouterRead(d, meta)
 	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
 }
 

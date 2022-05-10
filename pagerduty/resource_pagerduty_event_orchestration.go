@@ -88,6 +88,11 @@ func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrche
 
 	if attr, ok := d.GetOk("team"); ok {
 		orchestration.Team = expandOrchestrationTeam(attr)
+	} else {
+		var tId *string = nil
+		orchestration.Team = &pagerduty.EventOrchestrationObject{
+			ID: tId,
+		}
 	}
 
 	return orchestration
@@ -97,7 +102,7 @@ func expandOrchestrationTeam(v interface{}) *pagerduty.EventOrchestrationObject 
 	var team *pagerduty.EventOrchestrationObject
 	t := v.([]interface{})[0].(map[string]interface{})
 	team = &pagerduty.EventOrchestrationObject{
-		ID: t["id"].(string),
+		ID: stringTypeToStringPtr(t["id"].(string)),
 	}
 
 	return team

@@ -48,7 +48,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"id": {
 										Type:     schema.TypeString,
-										Computed: true, // If the start set has no rules, empty list is returned by API for rules. TODO: there is a validation on id
+										Computed: true,
 									},
 									"label": {
 										Type:     schema.TypeString,
@@ -106,16 +106,6 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 						},
 					},
 				},
-				// DefaultFunc: func() (interface{}, error) {
-				// 	// return []interface{}{}, nil
-				// 	defaultVal := `{
-				// 		"actions": {
-				// 			"route_to": "unrouted"
-				// 		}
-				// 	}`
-				// 	return []interface{}{defaultVal}, nil
-				// },
-				//[]interface{}{map[string]interface{}{"actions": map[string]interface{}{"route_to": "unrouted"}}},
 			},
 		},
 	}
@@ -187,16 +177,9 @@ func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.Event
 		if routerPath.Sets != nil {
 			d.Set("sets", flattenSets(routerPath.Sets))
 		}
-		// TODO: don't have to set it
 		if updatedPath.CatchAll != nil {
 			d.Set("catch_all", flattenCatchAll(updatedPath.CatchAll))
 		}
-
-		//TODO: figure out rule ordering
-		// else if rule.Position != nil && *updatedRouterPath.Position != *rule.Position && rule.CatchAll != true {
-		// 	log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRouterPath.ID, *updatedRouterPath.Position, *rule.Position)
-		// 	return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRouterPath.ID, *updatedRouterPath.Position, *rule.Position))
-		// }
 		return nil
 	})
 	if retryErr != nil {
@@ -356,8 +339,6 @@ func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 			"actions":    flattenRouterActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
-		//panic(fmt.Errorf("rule:%v", flattenedRule))
-		log.Printf("flattened rule:%v", flattenedRule)
 	}
 
 	return flattenedRules
@@ -367,7 +348,6 @@ func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) 
 	var actionsMap []map[string]interface{}
 
 	am := make(map[string]interface{})
-	//TODO: test errors, what if the action is not passed? or if they route to a path that doesn't exist etc.
 	am["route_to"] = actions.RouteTo
 	actionsMap = append(actionsMap, am)
 	return actionsMap

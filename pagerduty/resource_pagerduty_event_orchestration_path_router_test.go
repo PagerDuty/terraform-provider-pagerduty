@@ -2,7 +2,6 @@ package pagerduty
 
 import (
 	"fmt"
-	// "strings"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -29,7 +28,6 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 	escalation_policy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	orchestration := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	orchPathType := fmt.Sprintf("router")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -37,19 +35,19 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationPathDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfig(team, escalation_policy, service, orchestration, orchPathType),
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfig(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "type", orchPathType),
+						"pagerduty_event_orchestration_router.router", "type", "router"),
 					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
-						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", false),
+						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", false), // test for rule action route_to
 					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
-						"pagerduty_event_orchestration_router.router", "unrouted", true),
+						"pagerduty_event_orchestration_router.router", "unrouted", true), //test for catch_all route_to prop, by default it should be unrouted
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(team, escalation_policy, service, orchestration, orchPathType),
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -57,7 +55,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(team, escalation_policy, service, orchestration, orchPathType),
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -67,11 +65,11 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToSvc(team, escalation_policy, service, orchestration, orchPathType),
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToSvc(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
-					// resource.TestCheckResourceAttr(
-					// 	"pagerduty_event_orchestration_router.router", "catch_all.actions.route_to", "unrouted"),
+					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true), //test for catch_all routing to service if provided
 				),
 			},
 		},
@@ -120,126 +118,87 @@ func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestC
 	}
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfig(t string, ep string, s string, o string, ptype string) string {
+func createBaseConfig(t, ep, s, o string) string {
 	return fmt.Sprintf(`
-resource "pagerduty_team" "foo" {
-	name = "%s"
-}
-
-resource "pagerduty_user" "foo" {
-	name        = "user"
-	email       = "user@pagerduty.com"
-	color       = "green"
-	role        = "user"
-	job_title   = "foo"
-	description = "foo"
-}
-
-resource "pagerduty_escalation_policy" "foo" {
-	name        = "%s"
-	description = "bar"
-	num_loops   = 2
-
-	rule {
-		escalation_delay_in_minutes = 10
-		target {
-			type = "user_reference"
-			id   = pagerduty_user.foo.id
-		}
+	resource "pagerduty_team" "foo" {
+		name = "%s"
 	}
-}
 
-resource "pagerduty_service" "bar" {
-	name = "%s"
-	escalation_policy       = pagerduty_escalation_policy.foo.id
-
-	incident_urgency_rule {
-		type = "constant"
-		urgency = "high"
+	resource "pagerduty_user" "foo" {
+		name        = "user"
+		email       = "user@pagerduty.com"
+		color       = "green"
+		role        = "user"
+		job_title   = "foo"
+		description = "foo"
 	}
-}
 
-resource "pagerduty_event_orchestration" "orch" {
-	name = "%s"
-	team {
-		id = pagerduty_team.foo.id
-	}
-}
+	resource "pagerduty_escalation_policy" "foo" {
+		name        = "%s"
+		description = "bar"
+		num_loops   = 2
 
-resource "pagerduty_event_orchestration_router" "router" {
-	type = "%s"
-	parent {
-        id = pagerduty_event_orchestration.orch.id
-		type = "event_orchestration_reference"
-		self = "https://api.pagerduty.com/event_orchestrations/orch_id"
-    }
-	catch_all {
-		actions {
-			route_to = "unrouted"
-		}
-	}
-	sets {
-		id = "start"
-		rules {
-			disabled = false
-			label = "rule1 label"
-			actions {
-				route_to = pagerduty_service.bar.id
+		rule {
+			escalation_delay_in_minutes = 10
+			target {
+				type = "user_reference"
+				id   = pagerduty_user.foo.id
 			}
 		}
 	}
-}
-`, t, ep, s, o, ptype)
-}
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(t string, ep string, s string, o string, ptype string) string {
-	return fmt.Sprintf(`
-resource "pagerduty_team" "foo" {
-	name = "%s"
-}
+	resource "pagerduty_service" "bar" {
+		name = "%s"
+		escalation_policy       = pagerduty_escalation_policy.foo.id
 
-resource "pagerduty_user" "foo" {
-	name        = "user"
-	email       = "user@pagerduty.com"
-	color       = "green"
-	role        = "user"
-	job_title   = "foo"
-	description = "foo"
-}
-
-resource "pagerduty_escalation_policy" "foo" {
-	name        = "%s"
-	description = "bar"
-	num_loops   = 2
-
-	rule {
-		escalation_delay_in_minutes = 10
-		target {
-			type = "user_reference"
-			id   = pagerduty_user.foo.id
+		incident_urgency_rule {
+			type = "constant"
+			urgency = "high"
 		}
 	}
-}
 
-resource "pagerduty_service" "bar" {
-	name = "%s"
-	escalation_policy       = pagerduty_escalation_policy.foo.id
-
-	incident_urgency_rule {
-		type = "constant"
-		urgency = "high"
+	resource "pagerduty_event_orchestration" "orch" {
+		name = "%s"
+		team {
+			id = pagerduty_team.foo.id
+		}
 	}
+	`, t, ep, s, o)
 }
 
-resource "pagerduty_event_orchestration" "orch" {
-	name = "%s"
-	team {
-		id = pagerduty_team.foo.id
+func testAccCheckPagerDutyEventOrchestrationPathConfig(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_router" "router" {
+		type = "router"
+		parent {
+			id = pagerduty_event_orchestration.orch.id
+			type = "event_orchestration_reference"
+			self = "https://api.pagerduty.com/event_orchestrations/orch_id"
+		}
+		catch_all {
+			actions {
+				route_to = "unrouted"
+			}
+		}
+		sets {
+			id = "start"
+			rules {
+				disabled = false
+				label = "rule1 label"
+				actions {
+					route_to = pagerduty_service.bar.id
+				}
+			}
+		}
 	}
+	`)
 }
 
+func testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "%s"
+	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
 		type = "event_orchestration_reference"
@@ -264,48 +223,13 @@ resource "pagerduty_event_orchestration_router" "router" {
 		}
 	}
 }
-`, t, ep, s, o, ptype)
+`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(t string, ep string, s string, o string, ptype string) string {
-	return fmt.Sprintf(`
-resource "pagerduty_team" "foo" {
-	name = "%s"
-}
-
-resource "pagerduty_user" "foo" {
-	name        = "user"
-	email       = "user@pagerduty.com"
-	color       = "green"
-	role        = "user"
-	job_title   = "foo"
-	description = "foo"
-}
-
-resource "pagerduty_escalation_policy" "foo" {
-	name        = "%s"
-	description = "bar"
-	num_loops   = 2
-
-	rule {
-		escalation_delay_in_minutes = 10
-		target {
-			type = "user_reference"
-			id   = pagerduty_user.foo.id
-		}
-	}
-}
-
-resource "pagerduty_service" "bar" {
-	name = "%s"
-	escalation_policy       = pagerduty_escalation_policy.foo.id
-
-	incident_urgency_rule {
-		type = "constant"
-		urgency = "high"
-	}
-}
-
+func testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(t, ep, s, o string) string {
+	return fmt.Sprintf(
+		"%s%s", createBaseConfig(t, ep, s, o),
+		`
 resource "pagerduty_service" "bar2" {
 	name = "barService2"
 	escalation_policy       = pagerduty_escalation_policy.foo.id
@@ -316,15 +240,8 @@ resource "pagerduty_service" "bar2" {
 	}
 }
 
-resource "pagerduty_event_orchestration" "orch" {
-	name = "%s"
-	team {
-		id = pagerduty_team.foo.id
-	}
-}
-
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "%s"
+	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
 		type = "event_orchestration_reference"
@@ -363,67 +280,14 @@ resource "pagerduty_event_orchestration_router" "router" {
 		}
 	}
 }
-`, t, ep, s, o, ptype)
+`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToSvc(t string, ep string, s string, o string, ptype string) string {
-	return fmt.Sprintf(`
-resource "pagerduty_team" "foo" {
-	name = "%s"
-}
-
-resource "pagerduty_user" "foo" {
-	name        = "user"
-	email       = "user@pagerduty.com"
-	color       = "green"
-	role        = "user"
-	job_title   = "foo"
-	description = "foo"
-}
-
-resource "pagerduty_escalation_policy" "foo" {
-	name        = "%s"
-	description = "bar"
-	num_loops   = 2
-
-	rule {
-		escalation_delay_in_minutes = 10
-		target {
-			type = "user_reference"
-			id   = pagerduty_user.foo.id
-		}
-	}
-}
-
-resource "pagerduty_service" "bar" {
-	name = "%s"
-	escalation_policy       = pagerduty_escalation_policy.foo.id
-
-	incident_urgency_rule {
-		type = "constant"
-		urgency = "high"
-	}
-}
-
-resource "pagerduty_service" "bar2" {
-	name = "barService2"
-	escalation_policy       = pagerduty_escalation_policy.foo.id
-
-	incident_urgency_rule {
-		type = "constant"
-		urgency = "high"
-	}
-}
-
-resource "pagerduty_event_orchestration" "orch" {
-	name = "%s"
-	team {
-		id = pagerduty_team.foo.id
-	}
-}
-
+func testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToSvc(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "%s"
+	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
 		type = "event_orchestration_reference"
@@ -448,7 +312,7 @@ resource "pagerduty_event_orchestration_router" "router" {
 		}
 	}
 }
-`, t, ep, s, o, ptype)
+`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(router, service string, catchAll bool) resource.TestCheckFunc {
@@ -464,8 +328,8 @@ func testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(router, service str
 		} else {
 			rRouteToId = r.Primary.Attributes["sets.0.rules.0.actions.0.route_to"]
 		}
-		var sId = ""
 
+		var sId = ""
 		if service == "unrouted" {
 			sId = "unrouted"
 		} else {

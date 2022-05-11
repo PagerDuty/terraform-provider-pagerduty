@@ -85,28 +85,38 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 					},
 				},
 			},
-			// "catch_all": {
-			// 	Type:     schema.TypeList,
-			// 	Optional: true, //if not supplied, API creates it
-			// 	MaxItems: 1,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"actions": {
-			// 				Type:     schema.TypeList,
-			// 				Optional: true, //if not provided, API defaults to unrouted
-			// 				MaxItems: 1,
-			// 				Elem: &schema.Resource{
-			// 					Schema: map[string]*schema.Schema{
-			// 						"route_to": {
-			// 							Type:     schema.TypeString,
-			// 							Optional: true, //if not provided, API defaults to unrouted
-			// 						},
-			// 					},
-			// 				},
-			// 			},
-			// 		},
-			// 	},
-			// },
+			"catch_all": {
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"actions": {
+							Type:     schema.TypeList,
+							Required: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"route_to": {
+										Type:     schema.TypeString,
+										Required: true,
+									},
+								},
+							},
+						},
+					},
+				},
+				// DefaultFunc: func() (interface{}, error) {
+				// 	// return []interface{}{}, nil
+				// 	defaultVal := `{
+				// 		"actions": {
+				// 			"route_to": "unrouted"
+				// 		}
+				// 	}`
+				// 	return []interface{}{defaultVal}, nil
+				// },
+				//[]interface{}{map[string]interface{}{"actions": map[string]interface{}{"route_to": "unrouted"}}},
+			},
 		},
 	}
 }
@@ -130,12 +140,17 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 			if routerPath.Sets != nil {
 				d.Set("sets", flattenSets(routerPath.Sets))
 			}
+
+			if routerPath.CatchAll != nil {
+				d.Set("catch_all", flattenCatchAll(routerPath.CatchAll))
+			}
 		}
 		return nil
 	})
 
 }
 
+// EventOrchestrationPath does not have a create API, only update and read
 func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
 }
@@ -153,6 +168,7 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData,
 	return performRouterPathUpdate(d, updatePath, client)
 }
 
+// EventOrchestrationPath cannot be deleted
 func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
@@ -170,6 +186,10 @@ func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.Event
 		d.SetId(routerPath.Parent.ID)
 		if routerPath.Sets != nil {
 			d.Set("sets", flattenSets(routerPath.Sets))
+		}
+		// TODO: don't have to set it
+		if updatedPath.CatchAll != nil {
+			d.Set("catch_all", flattenCatchAll(updatedPath.CatchAll))
 		}
 
 		//TODO: figure out rule ordering
@@ -209,6 +229,10 @@ func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrch
 
 	if attr, ok := d.GetOk("sets"); ok {
 		orchPath.Sets = expandSets(attr.([]interface{}))
+	}
+
+	if attr, ok := d.GetOk("catch_all"); ok {
+		orchPath.CatchAll = expandCatchAll(attr.([]interface{}))
 	}
 
 	return orchPath
@@ -288,6 +312,25 @@ func expandRouterConditions(v interface{}) []*pagerduty.EventOrchestrationPathRu
 
 	return conditions
 }
+
+func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
+	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
+
+	// if the catch_all is supplied with empty {} then d
+	for _, ca := range v.([]interface{}) {
+		am := ca.(map[string]interface{})
+		catchAll.Actions = expandRouterActions(am["actions"].(interface{}))
+		// if ca == nil {
+		// 	catchAll.Actions = nil
+		// } else {
+		// 	am := ca.(map[string]interface{})
+		// 	catchAll.Actions = expandRouterActions(am["actions"].([]interface{}))
+		// }
+	}
+
+	return catchAll
+}
+
 func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
 	var flattenedSets []interface{}
 
@@ -313,6 +356,8 @@ func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 			"actions":    flattenRouterActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
+		//panic(fmt.Errorf("rule:%v", flattenedRule))
+		log.Printf("flattened rule:%v", flattenedRule)
 	}
 
 	return flattenedRules
@@ -322,11 +367,9 @@ func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) 
 	var actionsMap []map[string]interface{}
 
 	am := make(map[string]interface{})
-
 	//TODO: test errors, what if the action is not passed? or if they route to a path that doesn't exist etc.
 	am["route_to"] = actions.RouteTo
 	actionsMap = append(actionsMap, am)
-
 	return actionsMap
 }
 
@@ -341,4 +384,15 @@ func flattenRouterConditions(conditions []*pagerduty.EventOrchestrationPathRuleC
 	}
 
 	return flattendConditions
+}
+
+func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
+	var caMap []map[string]interface{}
+
+	c := make(map[string]interface{})
+
+	c["actions"] = flattenRouterActions(catchAll.Actions)
+	caMap = append(caMap, c)
+
+	return caMap
 }

@@ -16,7 +16,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 		Update: resourcePagerDutyEventOrchestrationPathRouterUpdate,
 		Delete: resourcePagerDutyEventOrchestrationPathRouterUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough, //TODO: resourcePagerDutyEventOrchestrationPathImport
+			State: resourcePagerDutyEventOrchestrationPathRouterImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"type": {
@@ -70,7 +70,13 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 												"route_to": {
 													Type:     schema.TypeString,
 													Required: true,
-													//TODO: validate func, cannot be unrouted, should be some serviceID
+													ValidateFunc: func(v interface{}, key string) (warns []string, errs []error) {
+														value := v.(string)
+														if value == "unrouted" || value == "" {
+															errs = append(errs, fmt.Errorf("route_to within a set's rule has to be a service_id. Got: %q", v))
+														}
+														return
+													},
 												},
 											},
 										},
@@ -299,16 +305,9 @@ func expandRouterConditions(v interface{}) []*pagerduty.EventOrchestrationPathRu
 func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
 
-	// if the catch_all is supplied with empty {} then d
 	for _, ca := range v.([]interface{}) {
 		am := ca.(map[string]interface{})
 		catchAll.Actions = expandRouterActions(am["actions"].(interface{}))
-		// if ca == nil {
-		// 	catchAll.Actions = nil
-		// } else {
-		// 	am := ca.(map[string]interface{})
-		// 	catchAll.Actions = expandRouterActions(am["actions"].([]interface{}))
-		// }
 	}
 
 	return catchAll
@@ -375,4 +374,23 @@ func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[s
 	caMap = append(caMap, c)
 
 	return caMap
+}
+
+func resourcePagerDutyEventOrchestrationPathRouterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+	// given an orchestration ID import the router orchestration path
+	orchestrationID := d.Id()
+	pathType := "router"
+	_, _, err = client.EventOrchestrationPaths.Get(orchestrationID, pathType)
+
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(orchestrationID)
+
+	return []*schema.ResourceData{d}, nil
 }

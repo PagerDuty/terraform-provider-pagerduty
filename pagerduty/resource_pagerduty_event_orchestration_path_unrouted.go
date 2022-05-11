@@ -87,18 +87,18 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 									},
 									"actions": {
 										Type:     schema.TypeList,
-										Required: true,
-										MaxItems: 5, //TODO check if this is valid
+										Required: true, // even if there are no actions, API returns actions as an empty list
+										MaxItems: 1,    //TODO check if this is valid
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"route_to": {
 													Type:     schema.TypeString,
-													Required: true,
+													Optional: true, // If there is only start set we don't need route_to
 													//TODO: validate func, The ID of a Set from this Unrouted Orchestration whose rules you also want to use with event that match this rule.
 												},
 												"severity": {
 													Type:     schema.TypeString,
-													Required: true,
+													Optional: true,
 													ValidateFunc: validateValueFunc([]string{
 														"info",
 														"error",
@@ -108,49 +108,49 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 												},
 												"event_action": {
 													Type:     schema.TypeString,
-													Required: true,
+													Optional: true,
 													ValidateFunc: validateValueFunc([]string{
 														"trigger",
 														"resolve",
 													}),
 												},
-												// "variables": {
-												// 	Type:     schema.TypeList,
-												// 	Optional: true,
-												// 	Elem: &schema.Resource{
-												// 		Schema: map[string]*schema.Schema{
-												// 			"name": {
-												// 				Type:     schema.TypeString,
-												// 				Required: true,
-												// 			},
-												// 			"path": {
-												// 				Type:     schema.TypeString,
-												// 				Required: true,
-												// 			},
-												// 			"type": {
-												// 				Type:     schema.TypeString,
-												// 				Required: true,
-												// 			},
-												// 			"value": {
-												// 				Type:     schema.TypeString,
-												// 				Required: true,
-												// 			},
-												// 		}}},
-												// "extractions": {
-												// 	Type:     schema.TypeList,
-												// 	Optional: true,
-												// 	Elem: &schema.Resource{
-												// 		Schema: map[string]*schema.Schema{
-												// 			"target": {
-												// 				Type:     schema.TypeString,
-												// 				Required: true,
-												// 			},
-												// 			"template": {
-												// 				Type:     schema.TypeString,
-												// 				Required: true,
-												// 			},
-												// 		}},
-												// },
+												"variables": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"name": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"path": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"type": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"value": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+														}}},
+												"extractions": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"target": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"template": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+														}},
+												},
 											},
 										},
 									},
@@ -166,7 +166,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 			},
 			// "catch_all": {
 			// 	Type:     schema.TypeList,
-			// 	Optional: true, //if not supplied, API creates it
+			// 	Required: true, //if not supplied, API creates it
 			// 	MaxItems: 1,
 			// 	Elem: &schema.Resource{
 			// 		Schema: map[string]*schema.Schema{
@@ -386,21 +386,19 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 	return rules
 }
 
-//TODO: Change this
 func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
 	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
 	for _, ai := range v.([]interface{}) {
-		am := ai.(map[string]interface{})
-		actions.RouteTo = am["route_to"].(string)
-		actions.Severity = am["severity"].(string)
-		actions.EventAction = am["event_action"].(string)
-
-		// TODO: Check if these types are correct
-		// actions.Variables = am["variables"].([]interface{})
-		// actions.Extractions = am["extractions"].([]interface{})
+		// TODO: check if this is the right way to check on actions
+		if ai != nil {
+			am := ai.(map[string]interface{})
+			actions.RouteTo = am["route_to"].(string)
+			actions.Severity = am["severity"].(string)
+			actions.EventAction = am["event_action"].(string)
+			actions.Variables = expandUnroutedActionsVariables(am["variables"])
+			actions.Extractions = expandUnroutedActionsExtractions(am["extractions"])
+		}
 	}
-	// am := v.([]interface{})
-	// actions.RouteTo = am[0]["route_to"]
 
 	return actions
 }
@@ -419,6 +417,39 @@ func expandUnroutedConditions(v interface{}) []*pagerduty.EventOrchestrationPath
 	}
 
 	return conditions
+}
+
+func expandUnroutedActionsExtractions(v interface{}) []*pagerduty.EventOrchestrationPathActionExtractions {
+	var unroutedExtractions []*pagerduty.EventOrchestrationPathActionExtractions
+
+	for _, eai := range v.([]interface{}) {
+		ea := eai.(map[string]interface{})
+		ext := &pagerduty.EventOrchestrationPathActionExtractions{
+			Target:   ea["target"].(string),
+			Template: ea["template"].(string),
+		}
+		unroutedExtractions = append(unroutedExtractions, ext)
+	}
+	return unroutedExtractions
+}
+
+func expandUnroutedActionsVariables(v interface{}) []*pagerduty.EventOrchestrationPathActionVariables {
+	var unroutedVariables []*pagerduty.EventOrchestrationPathActionVariables
+
+	for _, er := range v.([]interface{}) {
+		rer := er.(map[string]interface{})
+
+		unroutedVar := &pagerduty.EventOrchestrationPathActionVariables{
+			Name:  rer["name"].(string),
+			Path:  rer["path"].(string),
+			Type:  rer["type"].(string),
+			Value: rer["value"].(string),
+		}
+
+		unroutedVariables = append(unroutedVariables, unroutedVar)
+	}
+
+	return unroutedVariables
 }
 
 func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
@@ -466,15 +497,48 @@ func flattenUnroutedConditions(conditions []*pagerduty.EventOrchestrationPathRul
 func flattenUnroutedActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
 	var actionsMap []map[string]interface{}
 
-	am := make(map[string]interface{})
+	flattenedAction := map[string]interface{}{
+		"route_to":     actions.RouteTo,
+		"severity":     actions.Severity,
+		"event_action": actions.EventAction,
+	}
 
-	//TODO: test errors, what if the action is not passed? or if they route to a path that doesn't exist etc.
-	am["route_to"] = actions.RouteTo
-	am["severity"] = actions.Severity
-	am["event_action"] = actions.EventAction
-	am["variables"] = actions.Variables
-	am["extractions"] = actions.Extractions
-	actionsMap = append(actionsMap, am)
+	if actions.Variables != nil {
+		flattenedAction["variables"] = flattenUnroutedActionsVariables(actions.Variables)
+	}
+	if actions.Variables != nil {
+		flattenedAction["extractions"] = flattenUnroutedActionsExtractions(actions.Extractions)
+	}
+
+	actionsMap = append(actionsMap, flattenedAction)
 
 	return actionsMap
+}
+
+func flattenUnroutedActionsVariables(v []*pagerduty.EventOrchestrationPathActionVariables) []interface{} {
+	var flatVariablesList []interface{}
+
+	for _, s := range v {
+		flatVariable := map[string]interface{}{
+			"name":  s.Name,
+			"path":  s.Path,
+			"type":  s.Type,
+			"value": s.Value,
+		}
+		flatVariablesList = append(flatVariablesList, flatVariable)
+	}
+	return flatVariablesList
+}
+
+func flattenUnroutedActionsExtractions(e []*pagerduty.EventOrchestrationPathActionExtractions) []interface{} {
+	var flatExtractionsList []interface{}
+
+	for _, s := range e {
+		flatExtraction := map[string]interface{}{
+			"target":   s.Target,
+			"template": s.Template,
+		}
+		flatExtractionsList = append(flatExtractionsList, flatExtraction)
+	}
+	return flatExtractionsList
 }

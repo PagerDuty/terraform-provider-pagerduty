@@ -11,7 +11,7 @@ import (
 func TestAccPagerDutyWebhookSubscription_import(t *testing.T) {
 	description := fmt.Sprintf("tf-test-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 

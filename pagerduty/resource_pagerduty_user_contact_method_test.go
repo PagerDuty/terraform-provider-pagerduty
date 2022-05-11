@@ -13,8 +13,8 @@ import (
 func TestAccPagerDutyUserContactMethodEmail_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
-	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
+	email := fmt.Sprintf("%s@foo.test", username)
+	emailUpdated := fmt.Sprintf("%s@foo.test", usernameUpdated)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -40,8 +40,8 @@ func TestAccPagerDutyUserContactMethodEmail_Basic(t *testing.T) {
 func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
-	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
+	email := fmt.Sprintf("%s@foo.test", username)
+	emailUpdated := fmt.Sprintf("%s@foo.test", usernameUpdated)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -71,8 +71,8 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 func TestAccPagerDutyUserContactMethodSMS_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
-	emailUpdated := fmt.Sprintf("%s@foo.com", usernameUpdated)
+	email := fmt.Sprintf("%s@foo.test", username)
+	emailUpdated := fmt.Sprintf("%s@foo.test", usernameUpdated)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

@@ -22,7 +22,7 @@ var (
 
 func TestAccPagerDutySlackConnection_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -165,32 +165,32 @@ func testAccCheckPagerDutySlackConnectionExists(n string) resource.TestCheckFunc
 func testAccCheckPagerDutySlackConnectionConfig(username, useremail, escalationPolicy, service, workspaceID, channelID string) string {
 	return fmt.Sprintf(`
 	resource "pagerduty_user" "foo" {
-		name        = "%s"  
+		name        = "%s"
 		email       = "%s"
 	}
-	
+
 	resource "pagerduty_escalation_policy" "foo" {
 		name        = "%s"
 		description = "foo"
 		num_loops   = 1
-		
+
 		rule {
 			escalation_delay_in_minutes = 10
-		
+
 			target {
 				type = "user_reference"
 				id   = pagerduty_user.foo.id
 			}
 		}
 	}
-	
+
 	resource "pagerduty_service" "foo" {
 		name                    = "%s"
 		description             = "foo"
 		auto_resolve_timeout    = 1800
 		acknowledgement_timeout = 1800
 		escalation_policy       = pagerduty_escalation_policy.foo.id
-		
+
 		incident_urgency_rule {
 			type = "constant"
 			urgency = "high"
@@ -219,7 +219,7 @@ func testAccCheckPagerDutySlackConnectionConfig(username, useremail, escalationP
 				"incident.responder.added",
 				"incident.responder.replied",
 				"incident.status_update_published",
-				"incident.reopened"		  
+				"incident.reopened"
 			]
 			priorities = [data.pagerduty_priority.p1.id]
 			urgency = "high"
@@ -231,32 +231,32 @@ func testAccCheckPagerDutySlackConnectionConfig(username, useremail, escalationP
 func testAccCheckPagerDutySlackConnectionConfigUpdated(username, email, escalationPolicy, service, workspaceID, channelID string) string {
 	return fmt.Sprintf(`
 	resource "pagerduty_user" "foo" {
-		name        = "%s"  
+		name        = "%s"
 		email       = "%s"
 	}
-	
+
 	resource "pagerduty_escalation_policy" "foo" {
 		name        = "%s"
 		description = "foo"
 		num_loops   = 1
-		
+
 		rule {
 			escalation_delay_in_minutes = 10
-		
+
 			target {
 				type = "user_reference"
 				id   = pagerduty_user.foo.id
 			}
 		}
 	}
-	
+
 	resource "pagerduty_service" "foo" {
 		name                    = "%s"
 		description             = "foo"
 		auto_resolve_timeout    = 1800
 		acknowledgement_timeout = 1800
 		escalation_policy       = pagerduty_escalation_policy.foo.id
-		
+
 		incident_urgency_rule {
 			type = "constant"
 			urgency = "high"
@@ -285,7 +285,7 @@ func testAccCheckPagerDutySlackConnectionConfigUpdated(username, email, escalati
 				"incident.responder.added",
 				"incident.responder.replied",
 				"incident.status_update_published",
-				"incident.reopened"		  
+				"incident.reopened"
 			]
 			priorities = [data.pagerduty_priority.p1.id]
 		}
@@ -318,7 +318,7 @@ func testAccCheckPagerDutySlackConnectionConfigTeam(team, workspaceID, channelID
 					"incident.responder.added",
 					"incident.responder.replied",
 					"incident.status_update_published",
-					"incident.reopened"		  
+					"incident.reopened"
 				]
 			}
 		}
@@ -349,7 +349,7 @@ func testAccCheckPagerDutySlackConnectionConfigTeamUpdated(team, workspaceID, ch
 					"incident.responder.added",
 					"incident.responder.replied",
 					"incident.status_update_published",
-					"incident.reopened"		  
+					"incident.reopened"
 				]
 				urgency = "low"
 			}
@@ -381,7 +381,7 @@ func testAccCheckPagerDutySlackConnectionConfigEnvar(team, channelID string) str
 					"incident.responder.added",
 					"incident.responder.replied",
 					"incident.status_update_published",
-					"incident.reopened"		  
+					"incident.reopened"
 				]
 				urgency = "low"
 			}

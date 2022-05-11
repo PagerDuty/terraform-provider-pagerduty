@@ -13,7 +13,7 @@ import (
 
 func TestAccPagerDutyServiceIntegration_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	serviceIntegration := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -56,7 +56,7 @@ func TestAccPagerDutyServiceIntegration_Basic(t *testing.T) {
 
 func TestAccPagerDutyServiceIntegrationGeneric_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	serviceIntegration := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -115,7 +115,7 @@ func TestAccPagerDutyServiceIntegrationGeneric_Basic(t *testing.T) {
 }
 func TestAccPagerDutyServiceIntegrationEmail_Filters(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	serviceIntegration := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -146,7 +146,7 @@ func TestAccPagerDutyServiceIntegrationEmail_Filters(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_filter.0.from_email_mode", "match"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "email_filter.0.from_email_regex", "(@foo.com*)"),
+						"pagerduty_service_integration.foo", "email_filter.0.from_email_regex", "(@foo.test*)"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_filter.0.subject_mode", "match"),
 					resource.TestCheckResourceAttr(
@@ -262,7 +262,7 @@ func TestAccPagerDutyServiceIntegrationEmail_Filters(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_filter.0.from_email_mode", "match"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "email_filter.0.from_email_regex", "(@foo.com*)"),
+						"pagerduty_service_integration.foo", "email_filter.0.from_email_regex", "(@foo.test*)"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_filter.0.subject_mode", "match"),
 					resource.TestCheckResourceAttr(
@@ -746,7 +746,7 @@ resource "pagerduty_service_integration" "foo" {
     body_mode        = "always"
     body_regex       = null
     from_email_mode  = "match"
-    from_email_regex = "(@foo.com*)"
+    from_email_regex = "(@foo.test*)"
     subject_mode     = "match"
     subject_regex    = "(CRITICAL*)"
   }
@@ -872,7 +872,7 @@ resource "pagerduty_service_integration" "foo" {
     body_mode        = "always"
     body_regex       = null
     from_email_mode  = "match"
-    from_email_regex = "(@foo.com*)"
+    from_email_regex = "(@foo.test*)"
     subject_mode     = "match"
     subject_regex    = "(CRITICAL*)"
   }

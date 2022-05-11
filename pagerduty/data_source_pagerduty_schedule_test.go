@@ -12,7 +12,7 @@ import (
 
 func TestAccDataSourcePagerDutySchedule_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "Europe/Berlin"
 	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)

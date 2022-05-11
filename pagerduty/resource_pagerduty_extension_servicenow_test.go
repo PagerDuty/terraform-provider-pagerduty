@@ -159,7 +159,7 @@ func testAccCheckPagerDutyExtensionServiceNowConfig(name string, extension_name 
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
-  email       = "%[1]v@foo.com"
+  email       = "%[1]v@foo.test"
   color       = "green"
   role        = "user"
   job_title   = "foo"

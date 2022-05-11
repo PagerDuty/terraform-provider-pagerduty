@@ -51,7 +51,7 @@ func testSweepSchedule(region string) error {
 
 func TestAccPagerDutySchedule_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	scheduleUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "America/New_York"
@@ -113,7 +113,7 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 
 func TestAccPagerDutyScheduleWithTeams_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	scheduleUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "America/New_York"
@@ -176,7 +176,7 @@ func TestAccPagerDutyScheduleWithTeams_Basic(t *testing.T) {
 }
 func TestAccPagerDutyScheduleOverflow_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	scheduleUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "America/New_York"
@@ -206,7 +206,7 @@ func TestAccPagerDutyScheduleOverflow_Basic(t *testing.T) {
 
 func TestAccPagerDutySchedule_BasicWeek(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	scheduleUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "Australia/Melbourne"
@@ -268,7 +268,7 @@ func TestAccPagerDutySchedule_BasicWeek(t *testing.T) {
 
 func TestAccPagerDutySchedule_Multi(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "Europe/Berlin"
 	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
@@ -745,7 +745,7 @@ resource "pagerduty_schedule" "foo" {
 
   time_zone   = "%s"
   description = "foo"
-  
+
   teams = [pagerduty_team.foo.id]
 
   layer {
@@ -781,7 +781,7 @@ resource "pagerduty_schedule" "foo" {
 
   time_zone   = "%s"
   description = "Managed by Terraform"
-  
+
   teams = [pagerduty_team.foo.id]
 
   layer {

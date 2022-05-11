@@ -1,3 +1,8 @@
+## 2.4.2 (Unreleased)
+
+IMPROVEMENTS:
+* Use "@foo.test" email addresses in tests
+
 ## 2.4.1 (April 22, 2022)
 IMPROVEMENTS:
 * `resource/pagerduty_user_notification`: Create user/notification rule: allow using existing ones ([#482](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/482))
@@ -19,7 +24,7 @@ IMPROVEMENTS:
 * `resource/maintenance_window`: Ignore error code 405 on delete ([#466](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/466))
 
 
-## 2.3.0 (February 10, 2022) 
+## 2.3.0 (February 10, 2022)
 IMPROVEMENTS:
 * Updated TF SDK to v2.10.1 and added `depends_on` to eventrule tests ([#446](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/446))
 * `resource/pagerduty_schedule`: Added validation to `duration_seconds` ([#433](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/433))
@@ -198,11 +203,11 @@ IMPROVEMENTS:
 * `data_source_pagerduty_ruleset`: Added `routing_keys` field to the `ruleset` object ([#305](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/305))
 
 ## 1.9.3 (February 11, 2021)
-BUG FIXES: 
+BUG FIXES:
 * `resource/pagerduty_service_event_rule`,`resource/pagerduty_ruleset_rule`: Fixed Bug with Event Rule Suppress Action ([#302](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/302))
 
 ## 1.9.2 (February 10, 2021)
-BUG FIXES: 
+BUG FIXES:
 * `resource/pagerduty_service_event_rule`,`resource/pagerduty_ruleset_rule`: Fixed Bug with Event Rule Positioning ([#301](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/301))
 
 ## 1.9.1 (February 8, 2021)
@@ -268,7 +273,7 @@ FEATURES
 * Implement retry logic on all reads ([#208](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/208))
 * Bump golang to v1.14.1 ([#193](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/193))
 
-BUG FIXES: 
+BUG FIXES:
 * data_source_ruleset: add example of Default Global Ruleset in Docs ([#239](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/239))
 
 ## 1.7.2 (June 01, 2020)
@@ -276,7 +281,7 @@ FEATURES
 * **New Data Source:** `pagerduty_ruleset`  ([#237](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/237))
 * Update docs/tests to TF 0.12 syntax ([#223](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/223))
 
-BUG FIXES: 
+BUG FIXES:
 * testing: update sweepers ([#220](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/220))
 * data_source_priority: adding doc to sidebar nav ([#221](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/221))
 
@@ -363,7 +368,7 @@ BUG FIXES:
 IMPROVEMENTS:
 * Switch to standalone Terraform Plugin SDK: ([#158](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/158))
 
-* Add html_url read-only attribute to resource_pagerduty_service, resource_pagerduty_extension, resource_pagerduty_team ([#162](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/162))  
+* Add html_url read-only attribute to resource_pagerduty_service, resource_pagerduty_extension, resource_pagerduty_team ([#162](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/162))
 
 * resource/pagerduty_event_rule: Documentation for `depends_on` field ([#152](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/152)).
 
@@ -397,9 +402,9 @@ BUG FIXES:
 
 BUG FIXES:
 
-* data-source/pagerduty_team: Fix team search issue [[#110](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/110)] 
+* data-source/pagerduty_team: Fix team search issue [[#110](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/110)]
 * resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` ([#116](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/116))
-* resource/pagerduty_service: Set invitation_sent [[#127](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/127)] 
+* resource/pagerduty_service: Set invitation_sent [[#127](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/127)]
 * resource/pagerduty_escalation_policy: Correctly set teams ([#129](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/129))
 
 IMPROVEMENTS:

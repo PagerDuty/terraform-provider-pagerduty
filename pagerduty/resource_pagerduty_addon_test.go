@@ -63,7 +63,7 @@ func TestAccPagerDutyAddon_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_addon.foo", "name", addon),
 					resource.TestCheckResourceAttr(
-						"pagerduty_addon.foo", "src", "https://intranet.foo.com/status"),
+						"pagerduty_addon.foo", "src", "https://intranet.foo.test/status"),
 				),
 			},
 			{
@@ -125,7 +125,7 @@ func testAccCheckPagerDutyAddonConfig(addon string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_addon" "foo" {
   name = "%s"
-  src  = "https://intranet.foo.com/status"
+  src  = "https://intranet.foo.test/status"
 }
 `, addon)
 }

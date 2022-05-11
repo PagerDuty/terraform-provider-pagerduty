@@ -50,7 +50,7 @@ func testSweepService(region string) error {
 
 func TestAccPagerDutyService_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -132,7 +132,7 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 
 func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -199,7 +199,7 @@ func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 
 func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -244,7 +244,7 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 
 func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -446,7 +446,7 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 
 func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -548,7 +548,7 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 
 func TestAccPagerDutyService_SupportHoursChange(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service_id := ""
@@ -759,9 +759,9 @@ resource "pagerduty_service" "foo" {
 	acknowledgement_timeout = 1800
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
-	alert_grouping_parameters { 
+	alert_grouping_parameters {
         type = "content_based"
-        config { 
+        config {
             aggregate = "all"
             fields = ["custom_details.field1"]
         }

@@ -15,7 +15,7 @@ func TestAccPagerDutyBusinessServiceDependency_Basic(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	businessService := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
@@ -152,7 +152,7 @@ func TestAccPagerDutyTechnicalServiceDependency_Basic(t *testing.T) {
 	dependentService := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	supportingService := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{

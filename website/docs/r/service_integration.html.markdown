@@ -96,7 +96,7 @@ resource "pagerduty_service_integration" "email" {
     body_mode        = "always"
     body_regex       = null
     from_email_mode  = "match"
-    from_email_regex = "(@foo.com*)"
+    from_email_regex = "(@foo.test*)"
     subject_mode     = "match"
     subject_regex    = "(CRITICAL*)"
   }
@@ -201,7 +201,7 @@ The following arguments are supported:
   * `type` - (Required) Can be `between`, `entire` or `regex`.
   * `part` - (Required) Can be `subject` or `body`.
   * `value_name` - (Required) First value extractor should have name `incident_key` other value extractors should contain custom names.
-  * `ends_before` - (Optional) 
+  * `ends_before` - (Optional)
   * `starts_after` - (Optional)
   * `regex` - (Optional) If `type` has value `regex` this value should contain valid regex.
 

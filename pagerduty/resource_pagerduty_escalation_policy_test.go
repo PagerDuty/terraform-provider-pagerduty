@@ -52,7 +52,7 @@ func testSweepEscalationPolicy(region string) error {
 
 func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	escalationPolicyUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -102,7 +102,7 @@ func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 
 func TestAccPagerDutyEscalationPolicyWithTeams_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	escalationPolicyUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))

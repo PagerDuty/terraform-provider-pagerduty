@@ -5,7 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"log"
 	"testing"
 )
 
@@ -59,15 +58,19 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "2"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'database'"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToSvc(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToService(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "1"),
 					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true), //test for catch_all routing to service if provided
 				),
@@ -95,7 +98,6 @@ func testAccCheckPagerDutyEventOrchestrationPathDestroy(s *terraform.State) erro
 func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[rn]
-		log.Printf("STATE ORCH PATH:%v", rs.Primary.Attributes)
 		if !ok {
 			return fmt.Errorf("Not found: %s", rn)
 		}
@@ -113,7 +115,6 @@ func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestC
 		if found.Type != "router" {
 			return fmt.Errorf("Event Orchrestration path not found: %v - %v", "router", found)
 		}
-		log.Printf("FOUND ORCH PATH:%v", found)
 		return nil
 	}
 }
@@ -231,7 +232,7 @@ func testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(t, ep, s
 		"%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_service" "bar2" {
-	name = "barService2"
+	name = "tf-barService2"
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 
 	incident_urgency_rule {
@@ -283,7 +284,7 @@ resource "pagerduty_event_orchestration_router" "router" {
 `)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToSvc(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToService(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {

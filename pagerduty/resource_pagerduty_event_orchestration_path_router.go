@@ -14,7 +14,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 		Read:   resourcePagerDutyEventOrchestrationPathRouterRead,
 		Create: resourcePagerDutyEventOrchestrationPathRouterCreate,
 		Update: resourcePagerDutyEventOrchestrationPathRouterUpdate,
-		Delete: resourcePagerDutyEventOrchestrationPathRouterUpdate,
+		Delete: resourcePagerDutyEventOrchestrationPathRouterDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyEventOrchestrationPathRouterImport,
 		},
@@ -124,10 +124,10 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 	}
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		path := buildRouterPathStruct(d)
-		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "router", path.Parent.ID)
+		path := buildRouterPathParent(d)
+		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", path.Parent.ID)
 
-		if routerPath, _, err := client.EventOrchestrationPaths.Get(path.Parent.ID, path.Type); err != nil {
+		if routerPath, _, err := client.EventOrchestrationPaths.Get(path.Parent.ID, "router"); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
@@ -146,8 +146,13 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 
 }
 
-// EventOrchestrationPath does not have a create API, only update and read
+// EventOrchestrationPath cannot be created, use update to add / edit / remove rules and sets
 func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData, meta interface{}) error {
+	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
+}
+
+// EventOrchestrationPath cannot be deleted, use update to add / edit / remove rules and sets
+func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
 	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
 }
 
@@ -159,14 +164,9 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData,
 
 	updatePath := buildRouterPathStructForUpdate(d)
 
-	log.Printf("[INFO] Updating PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "router", updatePath.Parent.ID)
+	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", updatePath.Parent.ID)
 
 	return performRouterPathUpdate(d, updatePath, client)
-}
-
-// EventOrchestrationPath cannot be deleted
-func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
-	return nil
 }
 
 func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
@@ -195,10 +195,8 @@ func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.Event
 	return nil
 }
 
-func buildRouterPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-	orchPath := &pagerduty.EventOrchestrationPath{
-		Type: d.Get("type").(string),
-	}
+func buildRouterPathParent(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
+	orchPath := &pagerduty.EventOrchestrationPath{}
 
 	if attr, ok := d.GetOk("parent"); ok {
 		orchPath.Parent = expandOrchestrationPathParent(attr)
@@ -209,8 +207,7 @@ func buildRouterPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestration
 
 func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
 
-	// get the path-parent
-	orchPath := &pagerduty.EventOrchestrationPath{}
+	orchPath := buildRouterPathParent(d)
 
 	if attr, ok := d.GetOk("parent"); ok {
 		orchPath.Parent = expandOrchestrationPathParent(attr)
@@ -276,16 +273,6 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 	return rules
 }
 
-func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
-	for _, ai := range v.([]interface{}) {
-		am := ai.(map[string]interface{})
-		actions.RouteTo = am["route_to"].(string)
-	}
-
-	return actions
-}
-
 func expandRouterConditions(v interface{}) []*pagerduty.EventOrchestrationPathRuleCondition {
 	var conditions []*pagerduty.EventOrchestrationPathRuleCondition
 
@@ -300,6 +287,16 @@ func expandRouterConditions(v interface{}) []*pagerduty.EventOrchestrationPathRu
 	}
 
 	return conditions
+}
+
+func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
+	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
+	for _, ai := range v.([]interface{}) {
+		am := ai.(map[string]interface{})
+		actions.RouteTo = am["route_to"].(string)
+	}
+
+	return actions
 }
 
 func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
@@ -343,15 +340,6 @@ func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 	return flattenedRules
 }
 
-func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
-	var actionsMap []map[string]interface{}
-
-	am := make(map[string]interface{})
-	am["route_to"] = actions.RouteTo
-	actionsMap = append(actionsMap, am)
-	return actionsMap
-}
-
 func flattenRouterConditions(conditions []*pagerduty.EventOrchestrationPathRuleCondition) []interface{} {
 	var flattendConditions []interface{}
 
@@ -363,6 +351,15 @@ func flattenRouterConditions(conditions []*pagerduty.EventOrchestrationPathRuleC
 	}
 
 	return flattendConditions
+}
+
+func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
+	var actionsMap []map[string]interface{}
+
+	am := make(map[string]interface{})
+	am["route_to"] = actions.RouteTo
+	actionsMap = append(actionsMap, am)
+	return actionsMap
 }
 
 func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {

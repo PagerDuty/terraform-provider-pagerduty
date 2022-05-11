@@ -177,7 +177,6 @@ func testAccCheckPagerDutyEventOrchestrationPathConfig(t string, o string, ptype
 					disabled = false
 					label = "rule2 label"
 					actions {
-						// route_to = pagerduty_service.bar.id
 						severity = "warning"
 						event_action = "resolve"
 						variables {
@@ -193,6 +192,7 @@ func testAccCheckPagerDutyEventOrchestrationPathConfig(t string, o string, ptype
 					}
 				}
 			}
+			catch_all {}
 		}
 	`, t, o, ptype)
 }

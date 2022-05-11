@@ -164,28 +164,79 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 					},
 				},
 			},
-			// "catch_all": {
-			// 	Type:     schema.TypeList,
-			// 	Required: true, //if not supplied, API creates it
-			// 	MaxItems: 1,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"actions": {
-			// 				Type:     schema.TypeList,
-			// 				Optional: true, //if not provided, API defaults to unrouted
-			// 				MaxItems: 1,
-			// 				Elem: &schema.Resource{
-			// 					Schema: map[string]*schema.Schema{
-			// 						"route_to": {
-			// 							Type:     schema.TypeString,
-			// 							Optional: true, //if not provided, API defaults to unrouted
-			// 						},
-			// 					},
-			// 				},
-			// 			},
-			// 		},
-			// 	},
-			// },
+			"catch_all": {
+				Type:     schema.TypeList,
+				Required: true, //if not supplied, API creates it
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"actions": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"severity": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ValidateFunc: validateValueFunc([]string{
+											"info",
+											"error",
+											"warning",
+											"critical",
+										}),
+									},
+									"event_action": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ValidateFunc: validateValueFunc([]string{
+											"trigger",
+											"resolve",
+										}),
+									},
+									"variables": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"name": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+												"path": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+												"type": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+												"value": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+											}}},
+									"extractions": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"target": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+												"template": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+											}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }

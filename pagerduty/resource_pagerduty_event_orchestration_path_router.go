@@ -43,7 +43,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 						},
 						"rules": {
 							Type:     schema.TypeList,
-							Required: true, // even if there are no rules, API returns rules as an empty list
+							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
@@ -72,7 +72,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 													Required: true,
 													ValidateFunc: func(v interface{}, key string) (warns []string, errs []error) {
 														value := v.(string)
-														if value == "unrouted" || value == "" {
+														if value == "unrouted" {
 															errs = append(errs, fmt.Errorf("route_to within a set's rule has to be a service_id. Got: %q", v))
 														}
 														return
@@ -254,9 +254,10 @@ func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 }
 
 func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
-	var rules []*pagerduty.EventOrchestrationPathRule
+	items := v.([]interface{})
+	rules := []*pagerduty.EventOrchestrationPathRule{}
 
-	for _, rule := range v.([]interface{}) {
+	for _, rule := range items {
 		r := rule.(map[string]interface{})
 
 		ruleInSet := &pagerduty.EventOrchestrationPathRule{
@@ -269,7 +270,6 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 
 		rules = append(rules, ruleInSet)
 	}
-
 	return rules
 }
 
@@ -312,7 +312,6 @@ func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 
 func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
 	var flattenedSets []interface{}
-
 	for _, set := range orchPathSets {
 		flattenedSet := map[string]interface{}{
 			"id":    set.ID,
@@ -326,15 +325,17 @@ func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interfac
 func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 	var flattenedRules []interface{}
 
-	for _, rule := range rules {
-		flattenedRule := map[string]interface{}{
-			"id":         rule.ID,
-			"label":      rule.Label,
-			"disabled":   rule.Disabled,
-			"conditions": flattenRouterConditions(rule.Conditions),
-			"actions":    flattenRouterActions(rule.Actions),
+	if rules != nil {
+		for _, rule := range rules {
+			flattenedRule := map[string]interface{}{
+				"id":         rule.ID,
+				"label":      rule.Label,
+				"disabled":   rule.Disabled,
+				"conditions": flattenRouterConditions(rule.Conditions),
+				"actions":    flattenRouterActions(rule.Actions),
+			}
+			flattenedRules = append(flattenedRules, flattenedRule)
 		}
-		flattenedRules = append(flattenedRules, flattenedRule)
 	}
 
 	return flattenedRules

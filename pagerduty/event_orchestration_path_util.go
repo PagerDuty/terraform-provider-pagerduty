@@ -11,11 +11,11 @@ var PagerDutyEventOrchestrationPathParent = map[string]*schema.Schema{
 	},
 	"type": {
 		Type:     schema.TypeString,
-		Required: true,
+		Computed: true,
 	},
 	"self": {
 		Type:     schema.TypeString,
-		Required: true,
+		Computed: true,
 	},
 }
 

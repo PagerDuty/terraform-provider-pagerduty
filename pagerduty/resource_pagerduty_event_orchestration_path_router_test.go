@@ -34,6 +34,18 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationPathDestroy,
 		Steps: []resource.TestStep{
 			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfigNoRules(team, escalation_policy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "type", "router"),
+					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+						"pagerduty_event_orchestration_router.router", "unrouted", true), //test for catch_all route_to prop, by default it should be unrouted
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "0"),
+				),
+			},
+			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathConfig(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
@@ -73,6 +85,16 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "1"),
 					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true), //test for catch_all routing to service if provided
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfigDeleteAllRulesInSet(team, escalation_policy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "0"),
+					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true),
 				),
 			},
 		},
@@ -167,14 +189,31 @@ func createBaseConfig(t, ep, s, o string) string {
 	`, t, ep, s, o)
 }
 
+func testAccCheckPagerDutyEventOrchestrationPathConfigNoRules(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_router" "router" {
+		type = "router"
+		parent {
+			id = pagerduty_event_orchestration.orch.id
+		}
+		catch_all {
+			actions {
+				route_to = "unrouted"
+			}
+		}
+		sets {
+			id = "start"
+		}
+	}
+	`)
+}
+
 func testAccCheckPagerDutyEventOrchestrationPathConfig(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
 		type = "router"
 		parent {
 			id = pagerduty_event_orchestration.orch.id
-			type = "event_orchestration_reference"
-			self = "https://api.pagerduty.com/event_orchestrations/orch_id"
 		}
 		catch_all {
 			actions {
@@ -202,8 +241,6 @@ resource "pagerduty_event_orchestration_router" "router" {
 	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
-		type = "event_orchestration_reference"
-		self = "https://api.pagerduty.com/event_orchestrations/orch_id"
     }
 	catch_all {
 		actions {
@@ -245,8 +282,6 @@ resource "pagerduty_event_orchestration_router" "router" {
 	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
-		type = "event_orchestration_reference"
-		self = "https://api.pagerduty.com/event_orchestrations/orch_id"
     }
 	catch_all {
 		actions {
@@ -291,8 +326,6 @@ resource "pagerduty_event_orchestration_router" "router" {
 	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
-		type = "event_orchestration_reference"
-		self = "https://api.pagerduty.com/event_orchestrations/orch_id"
     }
 	catch_all {
 		actions {
@@ -311,6 +344,26 @@ resource "pagerduty_event_orchestration_router" "router" {
 				expression = "event.severity matches part 'critical'"
 			}
 		}
+	}
+}
+`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathConfigDeleteAllRulesInSet(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`
+resource "pagerduty_event_orchestration_router" "router" {
+	type = "router"
+	parent {
+        id = pagerduty_event_orchestration.orch.id
+    }
+	catch_all {
+		actions {
+			route_to = pagerduty_service.bar.id
+		}
+	}
+	sets {
+		id = "start"
 	}
 }
 `)

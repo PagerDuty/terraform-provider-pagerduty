@@ -109,22 +109,8 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				MaxItems: 1,
-				// TODO: use PagerDutyEventOrchestrationPathParent
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"self": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+					Schema: PagerDutyEventOrchestrationPathParent,
 				},
 			},
 			"sets": {
@@ -138,7 +124,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 						},
 						"rules": {
 							Type:     schema.TypeList,
-							Required: true,
+							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
@@ -149,13 +135,13 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									// "conditions": {
-									// 	Type:     schema.TypeList,
-									// 	Optional: true,
-									// 	Elem: &schema.Resource{
-									// 		Schema: PagerDutyEventOrchestrationPathConditions,
-									// 	},
-									// },
+									"conditions": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: PagerDutyEventOrchestrationPathConditions,
+										},
+									},
 									"actions": {
 										Type:     schema.TypeList,
 										Required: true,
@@ -260,42 +246,41 @@ func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestratio
 // TODO: see if we can reuse expand functions for all orch path sets.
 // Maybe pass in the rule actions and catch-all rule actions expanding function?
 func expandServicePathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
-	var result []*pagerduty.EventOrchestrationPathSet
+	var sets []*pagerduty.EventOrchestrationPathSet
 
-	for _, i := range v.([]interface{}) {
-		s := i.(map[string]interface{})
-		set := &pagerduty.EventOrchestrationPathSet{
+	for _, set := range v.([]interface{}) {
+		s := set.(map[string]interface{})
+
+		orchPathSet := &pagerduty.EventOrchestrationPathSet{
 			ID:    s["id"].(string),
-			Rules: expandServicePathRules(s["rules"]),
+			Rules: expandServicePathRules(s["rules"].(interface{})),
 		}
 
-		result = append(result, set)
+		sets = append(sets, orchPathSet)
 	}
 
-	return result
+	return sets
 }
 
 func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
-	var result []*pagerduty.EventOrchestrationPathRule
+	items := v.([]interface{})
+	rules := []*pagerduty.EventOrchestrationPathRule{}
 
-	for _, i := range v.([]interface{}) {
-		r := i.(map[string]interface{})
-		rule := &pagerduty.EventOrchestrationPathRule{
-			Actions: expandServicePathActions(r["actions"]),
+	for _, rule := range items {
+		r := rule.(map[string]interface{})
+
+		ruleInSet := &pagerduty.EventOrchestrationPathRule{
+			ID:       r["id"].(string),
+			Label:    r["label"].(string),
+			Disabled: r["disabled"].(bool),
+			// TODO: move conditions logic to util
+			Conditions: expandRouterConditions(r["conditions"].(interface{})),
+			Actions:    expandServicePathActions(r["actions"].([]interface{})),
 		}
 
-		if r["label"] != nil {
-			rule.Label = r["label"].(string)
-		}
-
-		if r["disabled"] != nil {
-			rule.Disabled = r["disabled"].(bool)
-		}
-
-		result = append(result, rule)
+		rules = append(rules, ruleInSet)
 	}
-
-	return result
+	return rules
 }
 
 func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
@@ -414,9 +399,9 @@ func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []in
 			"id":       rule.ID,
 			"label":    rule.Label,
 			"disabled": rule.Disabled,
-			// TODO:
-			// "conditions": flattenServicePathConditions(rule.Conditions),
-			"actions": flattenServicePathActions(rule.Actions),
+			// TODO: move conditions logic to util
+			"conditions": flattenRouterConditions(rule.Conditions),
+			"actions":    flattenServicePathActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
 	}

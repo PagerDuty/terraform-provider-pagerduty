@@ -2,57 +2,71 @@ package pagerduty
 
 import (
 	"fmt"
-	// "log"
+	"log"
 	// "strings"
 	"testing"
 
-	// "github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	// "github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
 	resource.AddTestSweepers("pagerduty_event_orchestration_service", &resource.Sweeper{
 		Name: "pagerduty_event_orchestration_service",
 		Dependencies: []string{
+			"pagerduty_user",
+			"pagerduty_escalation_policy",
 			"pagerduty_service",
-			// TODO: EP, Schedule, user
 		},
 	})
 }
 
 func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
-	//name := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
-	// description := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
-	// nameUpdated := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
-	// descriptionUpdated := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
-	// team1 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
-	// team2 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
-	service := "PZ73WUB"
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resourceName := "pagerduty_event_orchestration_service.serviceA"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
+		// TODO:
 		// CheckDestroy: testAccCheckPagerDutyEventOrchestrationDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(service),
+				Config: testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServiceExists("pagerduty_event_orchestration_service.serviceA"),
+					testAccCheckPagerDutyEventOrchestrationServiceExists(resourceName),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_service.serviceA", "sets.#", "1",
+						resourceName, "sets.#", "1",
 					),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration.foo", "sets.0.rules.#", "0",
+						resourceName, "sets.0.rules.#", "0",
 					),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(service),
+				Config: testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServiceExists("pagerduty_event_orchestration_service.serviceA"),
+					testAccCheckPagerDutyEventOrchestrationServiceExists(resourceName),
+					resource.TestCheckResourceAttr(
+						resourceName, "sets.#", "1",
+					),
+					resource.TestCheckResourceAttr(
+						resourceName, "sets.0.rules.#", "1",
+					),
+					testAccCheckPagerDutyEventOrchestrationServiceRuleActions(resourceName, "sets.0.rules.0.actions.0", map[string]interface{}{
+						"pagerduty_automation_actions": map[string]interface{}{"action_id": "SOME_ACTION_ID"},
+					}),
 				),
 			},
+			// update all fields
+			// reset rule action items -> should be default
+			// reset rule actions -> should be []
+			// reset rule conditions -> should be []
+			// reset rules
 		},
 	})
 }
@@ -80,63 +94,114 @@ func testAccCheckPagerDutyEventOrchestrationServiceExists(rn string) resource.Te
 	}
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(sId string) string {
-	return fmt.Sprintf(`
+func testAccCheckPagerDutyEventOrchestrationServiceRuleActions(rn, path string, a map[string]interface{}) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		r, ok := s.RootModule().Resources[rn]
+		if !ok {
+			return fmt.Errorf("Not found: %s", rn)
+		}
 
-resource "pagerduty_event_orchestration_service" "serviceA" {
-	parent {
-		id = "%s"
-	}
+		attr := r.Primary.Attributes[path]
 
-	sets {
-		id = "start"
+		log.Printf(">>> attr: %v", attr)
+		log.Printf(">>> a: %v", a)
+
+		return nil
 	}
 }
-`, sId)
-}
 
-func testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(sId string) string {
+func createBaseServicePathConfig(ep, s string) string {
 	return fmt.Sprintf(`
-
-resource "pagerduty_event_orchestration_service" "serviceA" {
-	parent {
-		id = "%s"
+	resource "pagerduty_user" "foo" {
+		name        = "tf-user"
+		email       = "user@pagerduty.com"
+		color       = "green"
+		role        = "user"
+		job_title   = "foo"
+		description = "foo"
 	}
 
-	sets {
-		id = "start"
-		rules {
-			label = "rule 1"
-			actions {
-					pagerduty_automation_actions {
-						action_id = "SOME_ACTION_ID"
-					}
-					automation_actions {
-						name = "Reboot me"
-						url = "https://test.com"
-						auto_send = true
-						
-						headers {
-							key = "foo"
-							value = "bar"
-						}
-						headers {
-							key = "baz"
-							value = "buz"
-						}
+	resource "pagerduty_escalation_policy" "foo" {
+		name        = "%s"
+		description = "bar"
+		num_loops   = 2
 
-						parameters {
-							key = "source"
-							value = "orch_rule"
-						}
-						parameters {
-							key = "region"
-							value = "us"
-						}
-					}
+		rule {
+			escalation_delay_in_minutes = 10
+			target {
+				type = "user_reference"
+				id   = pagerduty_user.foo.id
 			}
 		}
 	}
+
+	resource "pagerduty_service" "bar" {
+		name = "%s"
+		escalation_policy       = pagerduty_escalation_policy.foo.id
+
+		incident_urgency_rule {
+			type = "constant"
+			urgency = "high"
+		}
+	}
+	`, ep, s)
 }
-`, sId)
+
+func testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			parent {
+				id = "pagerduty_service.bar.id"
+			}
+		
+			sets {
+				id = "start"
+			}
+		}
+	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			parent {
+				id = "pagerduty_service.bar.id"
+			}
+		
+			sets {
+				id = "start"
+				rules {
+					label = "rule 1"
+					actions {
+							pagerduty_automation_actions {
+								action_id = "SOME_ACTION_ID"
+							}
+							automation_actions {
+								name = "Reboot me"
+								url = "https://test.com"
+								auto_send = true
+		
+								headers {
+									key = "foo"
+									value = "bar"
+								}
+								headers {
+									key = "baz"
+									value = "buz"
+								}
+		
+								parameters {
+									key = "source"
+									value = "orch_rule"
+								}
+								parameters {
+									key = "region"
+									value = "us"
+								}
+							}
+					}
+				}
+			}
+		}
+	`)
 }

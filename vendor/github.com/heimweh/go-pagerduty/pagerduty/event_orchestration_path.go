@@ -29,13 +29,13 @@ type EventOrchestrationPathReference struct {
 
 type EventOrchestrationPathSet struct {
 	ID    string                        `json:"id,omitempty"`
-	Rules []*EventOrchestrationPathRule `json:"rules,omitempty"`
+	Rules []*EventOrchestrationPathRule `json:"rules"`
 }
 
 type EventOrchestrationPathRule struct {
 	ID         string                                 `json:"id,omitempty"`
 	Label      string                                 `json:"label,omitempty"`
-	Conditions []*EventOrchestrationPathRuleCondition `json:"conditions,omitempty"`
+	Conditions []*EventOrchestrationPathRuleCondition `json:"conditions"`
 	Actions    *EventOrchestrationPathRuleActions     `json:"actions,omitempty"`
 	Disabled   bool                                   `json:"disabled,omitempty"`
 }

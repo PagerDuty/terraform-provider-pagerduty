@@ -85,7 +85,7 @@ func buildEventOrchestrationPathServiceRuleActions() map[string]*schema.Schema {
 	a := eventOrchestrationPathServiceCatchAllActions
 	a["route_to"] = &schema.Schema{
 		Type:     schema.TypeString,
-		Required: true,
+		Optional: true,
 	}
 
 	return a
@@ -93,7 +93,7 @@ func buildEventOrchestrationPathServiceRuleActions() map[string]*schema.Schema {
 
 func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 	return &schema.Resource{
-		Read:   nil,
+		Read:   resourcePagerDutyEventOrchestrationPathServiceRead,
 		Create: resourcePagerDutyEventOrchestrationPathServiceCreate,
 		Update: resourcePagerDutyEventOrchestrationPathServiceUpdate,
 		Delete: resourcePagerDutyEventOrchestrationPathServiceDelete,
@@ -228,9 +228,10 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, 
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		id := d.Id()
-		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", id)
+		t := "service"
+		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
 
-		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), "router"); err != nil {
+		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if path != nil {
@@ -372,10 +373,11 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 
 func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
 	d.SetId(p.Parent.ID)
+	d.Set("type", p.Type)
 	d.Set("parent", flattenServicePathParent(p.Parent))
 	// TODO: see if we can reuse expand functions for all orch path sets.
 	// Maybe pass in the rule actions and catch-all rule actions expanding function?
-	d.Set("sets", nil)
+	d.Set("sets", flattenServicePathSets(p.Sets))
 	return nil
 }
 
@@ -426,7 +428,7 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 	am := make(map[string]interface{})
 	am["route_to"] = actions.RouteTo
 	am["pagerduty_automation_actions"] = flattenServicePathPagerDutyAutomationActions(actions.PagerdutyAutomationActions)
-	am["automation_actions"] = nil
+	am["automation_actions"] = flattenServicePathAutomationActions(actions.AutomationActions)
 	actionsMap = append(actionsMap, am)
 
 	return actionsMap

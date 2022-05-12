@@ -15,9 +15,9 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 		Read:   resourcePagerDutyEventOrchestrationPathUnroutedRead,
 		Create: resourcePagerDutyEventOrchestrationPathUnroutedCreate,
 		Update: resourcePagerDutyEventOrchestrationPathUnroutedUpdate,
-		Delete: resourcePagerDutyEventOrchestrationPathUnroutedUpdate,
+		Delete: resourcePagerDutyEventOrchestrationPathUnroutedDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough, //TODO: resourcePagerDutyEventOrchestrationPathImport
+			State: resourcePagerDutyEventOrchestrationPathUnroutedImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"type": {
@@ -36,18 +36,14 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 						},
 						"type": {
 							Type:     schema.TypeString,
-							Required: true,
+							Computed: true,
 						},
 						"self": {
 							Type:     schema.TypeString,
-							Required: true,
+							Computed: true,
 						},
 					},
 				},
-			},
-			"self": {
-				Type:     schema.TypeString,
-				Optional: true,
 			},
 			"sets": {
 				Type:     schema.TypeList,
@@ -61,13 +57,12 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 						},
 						"rules": {
 							Type:     schema.TypeList,
-							Required: true, // even if there are no rules, API returns rules as an empty list
+							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
 										Type:     schema.TypeString,
-										Computed: true, // If the start set has no rules, empty list is returned by API for rules.
-										// TODO: there is a validation on id
+										Computed: true,
 									},
 									"label": {
 										Type:     schema.TypeString,
@@ -172,10 +167,14 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"actions": {
 							Type:     schema.TypeList,
-							Optional: true,
+							Required: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"suppress": {
+										Type:     schema.TypeBool,
+										Computed: true,
+									},
 									"severity": {
 										Type:     schema.TypeString,
 										Optional: true,
@@ -241,42 +240,27 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 	}
 }
 
-// func buildEventOrchestrationUnroutedStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-// 	orchestrationPath := &pagerduty.EventOrchestrationPath{
-// 		Type: d.Get("type").(string),
-// 		//Self: d.Get("self").(string),
-// 	}
-
-// 	// if attr, ok := d.GetOk("description"); ok {
-// 	// 	orchestration.Description = attr.(string)
-// 	// }
-
-// 	// if attr, ok := d.GetOk("team"); ok {
-// 	// 	orchestration.Team = expandOrchestrationTeam(attr)
-// 	// }
-// 	return orchestrationPath
-// }
-
 func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	// TODO: Check migration to RetryContext func
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		path := buildUnroutedPathStruct(d)
-		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "unrouted", path.Parent.ID)
 
-		if unroutedPath, _, err := client.EventOrchestrationPaths.Get(path.Parent.ID, path.Type); err != nil {
+		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "unrouted", d.Id())
+
+		if unroutedPath, _, err := client.EventOrchestrationPaths.Get(d.Id(), "unrouted"); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if unroutedPath != nil {
-			d.SetId(path.Parent.ID)
-			// d.Set("type", unroutedPath.Type)
-			// d.Set("self", path.Parent.Self+"/"+unroutedPath.Type)
+
 			if unroutedPath.Sets != nil {
 				d.Set("sets", flattenSets(unroutedPath.Sets))
+			}
+
+			if unroutedPath.CatchAll != nil {
+				d.Set("catch_all", flattenCatchAll(unroutedPath.CatchAll))
 			}
 		}
 		return nil
@@ -284,27 +268,14 @@ func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData,
 
 }
 
+// EventOrchestrationPath cannot be created, use update to add / edit / remove rules and sets
 func resourcePagerDutyEventOrchestrationPathUnroutedCreate(d *schema.ResourceData, meta interface{}) error {
-	// client, err := meta.(*Config).Client()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// return resource.Retry(2*time.Minute, func() *resource.RetryError {
-	// 	unroutedPathStruct := buildUnroutedPathStruct(d)
-	// 	log.Printf("[INFO] Reading PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "unrouted", unroutedPathStruct.Parent.ID)
-
-	// 	if unroutedPath, _, err := client.EventOrchestrationPaths.Get(unroutedPathStruct.Parent.ID, unroutedPathStruct.Type); err != nil {
-	// 		time.Sleep(2 * time.Second)
-	// 		return resource.RetryableError(err)
-	// 	} else if unroutedPath != nil {
-	// 		d.SetId(unroutedPathStruct.Parent.ID)
-	// 		d.Set("type", unroutedPath.Type)
-	// 	}
-	// 	return nil
-	// })
-	// return resourcePagerDutyEventOrchestrationPathUnroutedRead(d, meta)
 	return resourcePagerDutyEventOrchestrationPathUnroutedUpdate(d, meta)
+}
+
+// EventOrchestrationPath cannot be deleted, use update to add / edit / remove rules and sets
+func resourcePagerDutyEventOrchestrationPathUnroutedDelete(d *schema.ResourceData, meta interface{}) error {
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -318,10 +289,6 @@ func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(d *schema.ResourceDat
 	log.Printf("[INFO] Updating PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "unrouted", updatePath.Parent.ID)
 
 	return performUnroutedPathUpdate(d, updatePath, client)
-}
-
-func resourcePagerDutyEventOrchestrationPathUnroutedDelete(d *schema.ResourceData, meta interface{}) error {
-	return nil
 }
 
 func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
@@ -338,12 +305,9 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 		if unroutedPath.Sets != nil {
 			d.Set("sets", flattenSets(unroutedPath.Sets))
 		}
-
-		//TODO: figure out rule ordering
-		// else if rule.Position != nil && *updatedUnroutedPath.Position != *rule.Position && rule.CatchAll != true {
-		// 	log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedUnroutedPath.ID, *updatedUnroutedPath.Position, *rule.Position)
-		// 	return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedUnroutedPath.ID, *updatedUnroutedPath.Position, *rule.Position))
-		// }
+		if updatedPath.CatchAll != nil {
+			d.Set("catch_all", flattenCatchAll(updatedPath.CatchAll))
+		}
 		return nil
 	})
 	if retryErr != nil {
@@ -353,10 +317,8 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 	return nil
 }
 
-func buildUnroutedPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-	orchPath := &pagerduty.EventOrchestrationPath{
-		Type: d.Get("type").(string),
-	}
+func buildUnroutedPathParent(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
+	orchPath := &pagerduty.EventOrchestrationPath{}
 
 	if attr, ok := d.GetOk("parent"); ok {
 		orchPath.Parent = expandOrchestrationPathParent(attr)
@@ -367,22 +329,18 @@ func buildUnroutedPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrati
 
 func buildUnroutedPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
 
-	// get the path-parent
-	orchPath := &pagerduty.EventOrchestrationPath{}
+	orchPath := buildUnroutedPathParent(d)
 
 	if attr, ok := d.GetOk("parent"); ok {
 		orchPath.Parent = expandOrchestrationPathParent(attr)
 	}
 
-	// build other props
-	// if attr, ok := d.GetOk("self"); ok {
-	// 	orchPath.Self = attr.(string)
-	// } else {
-	// 	orchPath.Self = orchPath.Parent.Self + "/" + orchPath.Type
-	// }
-
 	if attr, ok := d.GetOk("sets"); ok {
 		orchPath.Sets = expandSets(attr.([]interface{}))
+	}
+
+	if attr, ok := d.GetOk("catch_all"); ok {
+		orchPath.CatchAll = expandCatchAll(attr.([]interface{}))
 	}
 
 	return orchPath
@@ -418,9 +376,10 @@ func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 }
 
 func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
-	var rules []*pagerduty.EventOrchestrationPathRule
+	items := v.([]interface{})
+	rules := []*pagerduty.EventOrchestrationPathRule{}
 
-	for _, rule := range v.([]interface{}) {
+	for _, rule := range items {
 		r := rule.(map[string]interface{})
 
 		ruleInSet := &pagerduty.EventOrchestrationPathRule{
@@ -433,14 +392,12 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 
 		rules = append(rules, ruleInSet)
 	}
-
 	return rules
 }
 
 func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
 	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
 	for _, ai := range v.([]interface{}) {
-		// TODO: check if this is the right way to check on actions
 		if ai != nil {
 			am := ai.(map[string]interface{})
 			actions.RouteTo = am["route_to"].(string)
@@ -455,9 +412,10 @@ func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleA
 }
 
 func expandUnroutedConditions(v interface{}) []*pagerduty.EventOrchestrationPathRuleCondition {
-	var conditions []*pagerduty.EventOrchestrationPathRuleCondition
+	items := v.([]interface{})
+	conditions := []*pagerduty.EventOrchestrationPathRuleCondition{}
 
-	for _, cond := range v.([]interface{}) {
+	for _, cond := range items {
 		c := cond.(map[string]interface{})
 
 		cx := &pagerduty.EventOrchestrationPathRuleCondition{
@@ -503,6 +461,34 @@ func expandUnroutedActionsVariables(v interface{}) []*pagerduty.EventOrchestrati
 	return unroutedVariables
 }
 
+func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
+	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
+
+	for _, ca := range v.([]interface{}) {
+		if ca != nil {
+			am := ca.(map[string]interface{})
+			catchAll.Actions = expandUnroutedCatchAllActions(am["actions"])
+		}
+	}
+
+	return catchAll
+}
+
+func expandUnroutedCatchAllActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
+	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
+	for _, ai := range v.([]interface{}) {
+		if ai != nil {
+			am := ai.(map[string]interface{})
+			actions.Severity = am["severity"].(string)
+			actions.EventAction = am["event_action"].(string)
+			actions.Variables = expandUnroutedActionsVariables(am["variables"])
+			actions.Extractions = expandUnroutedActionsExtractions(am["extractions"])
+		}
+	}
+
+	return actions
+}
+
 func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
 	var flattenedSets []interface{}
 
@@ -518,16 +504,17 @@ func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interfac
 
 func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 	var flattenedRules []interface{}
-
-	for _, rule := range rules {
-		flattenedRule := map[string]interface{}{
-			"id":         rule.ID,
-			"label":      rule.Label,
-			"disabled":   rule.Disabled,
-			"conditions": flattenUnroutedConditions(rule.Conditions),
-			"actions":    flattenUnroutedActions(rule.Actions),
+	if rules != nil {
+		for _, rule := range rules {
+			flattenedRule := map[string]interface{}{
+				"id":         rule.ID,
+				"label":      rule.Label,
+				"disabled":   rule.Disabled,
+				"conditions": flattenUnroutedConditions(rule.Conditions),
+				"actions":    flattenUnroutedActions(rule.Actions),
+			}
+			flattenedRules = append(flattenedRules, flattenedRule)
 		}
-		flattenedRules = append(flattenedRules, flattenedRule)
 	}
 	return flattenedRules
 }
@@ -592,4 +579,55 @@ func flattenUnroutedActionsExtractions(e []*pagerduty.EventOrchestrationPathActi
 		flatExtractionsList = append(flatExtractionsList, flatExtraction)
 	}
 	return flatExtractionsList
+}
+
+func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
+	var caMap []map[string]interface{}
+
+	c := make(map[string]interface{})
+
+	c["actions"] = flattenUnroutedCatchAllActions(catchAll.Actions)
+	caMap = append(caMap, c)
+
+	return caMap
+}
+
+func flattenUnroutedCatchAllActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
+	var actionsMap []map[string]interface{}
+
+	flattenedAction := map[string]interface{}{
+		"severity":     actions.Severity,
+		"event_action": actions.EventAction,
+		"suppress":     actions.Suppress, // By default suppress is set to "true" by API for unrouted
+	}
+
+	if actions.Variables != nil {
+		flattenedAction["variables"] = flattenUnroutedActionsVariables(actions.Variables)
+	}
+	if actions.Variables != nil {
+		flattenedAction["extractions"] = flattenUnroutedActionsExtractions(actions.Extractions)
+	}
+
+	actionsMap = append(actionsMap, flattenedAction)
+
+	return actionsMap
+}
+
+func resourcePagerDutyEventOrchestrationPathUnroutedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+	// given an orchestration ID import the router orchestration path
+	orchestrationID := d.Id()
+	pathType := "unrouted"
+	_, _, err = client.EventOrchestrationPaths.Get(orchestrationID, pathType)
+
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(orchestrationID)
+
+	return []*schema.ResourceData{d}, nil
 }

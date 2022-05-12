@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-// TODO: Double check if sweeper works as expected
 func init() {
 	resource.AddTestSweepers("pagerduty_event_orchestration_unrouted", &resource.Sweeper{
 		Name: "unrouted",
@@ -27,8 +26,9 @@ func init() {
 
 func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 	team := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
+	escalation_policy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	orchestration := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	orchPathType := "unrouted"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -36,11 +36,11 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationPathDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfig(team, orchestration, orchPathType),
+				Config: testAccCheckPagerDutyEventOrchestrationPathConfig(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "type", orchPathType),
+						"pagerduty_event_orchestration_unrouted.unrouted", "type", "unrouted"),
 					// resource.TestCheckResourceAttr(
 					// 	"pagerduty_event_orchestration_unrouted.unrouted", "self", "https://api.pagerduty.com/event_orchestrations/orch_id/unrouted"),
 				),
@@ -98,23 +98,21 @@ func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestC
 	}
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfig(t string, o string, ptype string) string {
+func createBaseConfig(t, ep, s, o string) string {
 	return fmt.Sprintf(`
 		resource "pagerduty_team" "foo" {
 			name = "%s"
 		}
-
 		resource "pagerduty_user" "foo" {
-			name        = "user"
+			name        = "tf-user"
 			email       = "user@pagerduty.com"
 			color       = "green"
 			role        = "user"
 			job_title   = "foo"
 			description = "foo"
 		}
-
 		resource "pagerduty_escalation_policy" "foo" {
-			name        = "test"
+			name        = "%s"
 			description = "bar"
 			num_loops   = 2
 			rule {
@@ -125,154 +123,177 @@ func testAccCheckPagerDutyEventOrchestrationPathConfig(t string, o string, ptype
 				}
 			}
 		}
-
 		resource "pagerduty_service" "bar" {
-			name = "barService"
+			name = "%s"
 			escalation_policy       = pagerduty_escalation_policy.foo.id
 			incident_urgency_rule {
 				type = "constant"
 				urgency = "high"
 			}
 		}
-
 		resource "pagerduty_event_orchestration" "orch" {
 			name = "%s"
 			team {
 				id = pagerduty_team.foo.id
 			}
 		}
+	`, t, ep, s, o)
+}
 
-		resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-			type = "%s"
+func testAccCheckPagerDutyEventOrchestrationPathConfig(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
+			type = "unrouted"
 			parent {
 				id = pagerduty_event_orchestration.orch.id
-				type = "event_orchestration_reference"
-				self = "https://api.pagerduty.com/event_orchestrations/orch_id"
 			}
 			sets {
 				id = "start"
-				rules {
-					disabled = false
-					label = "rule1 label"
-					actions {
-						route_to = "child-1"
-						severity = "info"
-						event_action = "trigger"
-						variables {
-							name = "server_name"
-							path = "event.summary"
-							type = "regex"
-							value = "High CPU on (.*) server"
-						}
-						extractions {
-							target = "event.summary"
-							template = "High CPU on variables.hostname server"
-						}
-					}
+			}
+			catch_all {
+				actions {
+					
 				}
 			}
-			sets {
-				id = "child-1"
-				rules {
-					disabled = false
-					label = "rule2 label"
-					actions {
-						severity = "warning"
-						event_action = "resolve"
-						variables {
-							name = "server_name"
-							path = "event.summary"
-							type = "regex"
-							value = "High CPU on (.*) server"
-						}
-						extractions {
-							target = "event.summary"
-							template = "High CPU on event.custom_details.hostname server"
-						}
-					}
-				}
-			}
-			catch_all {}
 		}
-	`, t, o, ptype)
+	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(t string, o string, ptype string) string {
-	return fmt.Sprintf(`
-		resource "pagerduty_team" "foo" {
-			name = "%s"
-		}
+// func testAccCheckPagerDutyEventOrchestrationPathConfig(t, ep, s, o string) string {
+// 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+// 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
+// 			type = "unrouted"
+// 			parent {
+// 				id = pagerduty_event_orchestration.orch.id
+// 			}
+// 			sets {
+// 				id = "start"
+// 				rules {
+// 					disabled = false
+// 					label = "rule1 label"
+// 					actions {
+// 						route_to = "child-1"
+// 						severity = "info"
+// 						event_action = "trigger"
+// 						variables {
+// 							name = "server_name"
+// 							path = "event.summary"
+// 							type = "regex"
+// 							value = "High CPU on (.*) server"
+// 						}
+// 						extractions {
+// 							target = "event.summary"
+// 							template = "High CPU on variables.hostname server"
+// 						}
+// 					}
+// 				}
+// 			}
+// 			sets {
+// 				id = "child-1"
+// 				rules {
+// 					disabled = false
+// 					label = "rule2 label"
+// 					actions {
+// 						severity = "warning"
+// 						event_action = "resolve"
+// 						variables {
+// 							name = "server_name"
+// 							path = "event.summary"
+// 							type = "regex"
+// 							value = "High CPU on (.*) server"
+// 						}
+// 						extractions {
+// 							target = "event.summary"
+// 							template = "High CPU on event.custom_details.hostname server"
+// 						}
+// 					}
+// 				}
+// 			}
+// 			catch_all {
+// 				actions {
 
-		resource "pagerduty_user" "foo" {
-			name        = "user"
-			email       = "user@pagerduty.com"
-			color       = "green"
-			role        = "user"
-			job_title   = "foo"
-			description = "foo"
-		}
+// 				}
+// 			}
+// 		}
+// 	`)
+// }
 
-		resource "pagerduty_escalation_policy" "foo" {
-			name        = "test"
-			description = "bar"
-			num_loops   = 2
-			rule {
-				escalation_delay_in_minutes = 10
-				target {
-					type = "user_reference"
-					id   = pagerduty_user.foo.id
-				}
-			}
-		}
+// func testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(t string, o string, ptype string) string {
+// 	return fmt.Sprintf(`
+// 		resource "pagerduty_team" "foo" {
+// 			name = "%s"
+// 		}
 
-		resource "pagerduty_service" "bar" {
-			name = "barService"
-			escalation_policy       = pagerduty_escalation_policy.foo.id
-			incident_urgency_rule {
-				type = "constant"
-				urgency = "high"
-			}
-		}
+// 		resource "pagerduty_user" "foo" {
+// 			name        = "user"
+// 			email       = "user@pagerduty.com"
+// 			color       = "green"
+// 			role        = "user"
+// 			job_title   = "foo"
+// 			description = "foo"
+// 		}
 
-		resource "pagerduty_event_orchestration" "orch" {
-			name = "%s"
-			team {
-				id = pagerduty_team.foo.id
-			}
-		}
+// 		resource "pagerduty_escalation_policy" "foo" {
+// 			name        = "test"
+// 			description = "bar"
+// 			num_loops   = 2
+// 			rule {
+// 				escalation_delay_in_minutes = 10
+// 				target {
+// 					type = "user_reference"
+// 					id   = pagerduty_user.foo.id
+// 				}
+// 			}
+// 		}
 
-		resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-			type = "%s"
-			parent {
-				id = pagerduty_event_orchestration.orch.id
-				type = "event_orchestration_reference"
-				self = "https://api.pagerduty.com/event_orchestrations/orch_id"
-			}
-			sets {
-				id = "start"
-				rules {
-					disabled = false
-					label = "rule1 label"
-					actions {
-						route_to = pagerduty_service.bar.id
-						severity = "info"
-						event_action = "trigger"
-						// variables {
-						// 	name = "foo"
-						// 	path = "foo.foo"
-						// 	type = "foo"
-						// 	value = "foo"
-						// }
-						// extractions {
-						// 	target = "foo"
-						// 	template = "foo"
-						// }
-					}
-					conditions {
-						expression = "event.summary matches part 'database'"
-					}
-				}
-			}
-		}
-	`, t, o, ptype)
-}
+// 		resource "pagerduty_service" "bar" {
+// 			name = "barService"
+// 			escalation_policy       = pagerduty_escalation_policy.foo.id
+// 			incident_urgency_rule {
+// 				type = "constant"
+// 				urgency = "high"
+// 			}
+// 		}
+
+// 		resource "pagerduty_event_orchestration" "orch" {
+// 			name = "%s"
+// 			team {
+// 				id = pagerduty_team.foo.id
+// 			}
+// 		}
+
+// 		resource "pagerduty_event_orchestration_unrouted" "unrouted" {
+// 			type = "%s"
+// 			parent {
+// 				id = pagerduty_event_orchestration.orch.id
+// 				type = "event_orchestration_reference"
+// 				self = "https://api.pagerduty.com/event_orchestrations/orch_id"
+// 			}
+// 			sets {
+// 				id = "start"
+// 				rules {
+// 					disabled = false
+// 					label = "rule1 label"
+// 					actions {
+// 						route_to = pagerduty_service.bar.id
+// 						severity = "info"
+// 						event_action = "trigger"
+// 						// variables {
+// 						// 	name = "foo"
+// 						// 	path = "foo.foo"
+// 						// 	type = "foo"
+// 						// 	value = "foo"
+// 						// }
+// 						// extractions {
+// 						// 	target = "foo"
+// 						// 	template = "foo"
+// 						// }
+// 					}
+// 					conditions {
+// 						expression = "event.summary matches part 'database'"
+// 					}
+// 				}
+// 			}
+// 		}
+// 	`, t, o, ptype)
+// }

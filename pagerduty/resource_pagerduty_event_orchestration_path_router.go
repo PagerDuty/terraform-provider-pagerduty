@@ -73,7 +73,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 													ValidateFunc: func(v interface{}, key string) (warns []string, errs []error) {
 														value := v.(string)
 														if value == "unrouted" {
-															errs = append(errs, fmt.Errorf("route_to within a set's rule has to be a service_id. Got: %q", v))
+															errs = append(errs, fmt.Errorf("route_to within a set's rule has to be a Service ID. Got: %q", v))
 														}
 														return
 													},
@@ -124,14 +124,12 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 	}
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		path := buildRouterPathParent(d)
-		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", path.Parent.ID)
+		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", d.Id())
 
-		if routerPath, _, err := client.EventOrchestrationPaths.Get(path.Parent.ID, "router"); err != nil {
+		if routerPath, _, err := client.EventOrchestrationPaths.Get(d.Id(), "router"); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
-			d.SetId(path.Parent.ID)
 
 			if routerPath.Sets != nil {
 				d.Set("sets", flattenSets(routerPath.Sets))
@@ -151,9 +149,9 @@ func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData,
 	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
 }
 
-// EventOrchestrationPath cannot be deleted, use update to add / edit / remove rules and sets
 func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
-	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
+	d.SetId("")
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -214,11 +212,11 @@ func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrch
 	}
 
 	if attr, ok := d.GetOk("sets"); ok {
-		orchPath.Sets = expandSets(attr.([]interface{}))
+		orchPath.Sets = expandSets(attr)
 	}
 
 	if attr, ok := d.GetOk("catch_all"); ok {
-		orchPath.CatchAll = expandCatchAll(attr.([]interface{}))
+		orchPath.CatchAll = expandCatchAll(attr)
 	}
 
 	return orchPath
@@ -228,9 +226,7 @@ func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationP
 	var parent *pagerduty.EventOrchestrationPathReference
 	p := v.([]interface{})[0].(map[string]interface{})
 	parent = &pagerduty.EventOrchestrationPathReference{
-		ID:   p["id"].(string),
-		Type: p["type"].(string),
-		Self: p["self"].(string),
+		ID: p["id"].(string),
 	}
 
 	return parent
@@ -274,9 +270,10 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 }
 
 func expandRouterConditions(v interface{}) []*pagerduty.EventOrchestrationPathRuleCondition {
-	var conditions []*pagerduty.EventOrchestrationPathRuleCondition
+	items := v.([]interface{})
+	conditions := []*pagerduty.EventOrchestrationPathRuleCondition{}
 
-	for _, cond := range v.([]interface{}) {
+	for _, cond := range items {
 		c := cond.(map[string]interface{})
 
 		cx := &pagerduty.EventOrchestrationPathRuleCondition{

@@ -31,44 +31,44 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyEventOrchestrationPathDestroy,
+		CheckDestroy: testAccCheckPagerDutyEventOrchestrationRouterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigNoRules(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "type", "router"),
-					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "unrouted", true), //test for catch_all route_to prop, by default it should be unrouted
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "0"),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfig(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfig(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "type", "router"),
-					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", false), // test for rule action route_to
-					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "unrouted", true), //test for catch_all route_to prop, by default it should be unrouted
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'database'"),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithMultipleRules(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "2"),
 					resource.TestCheckResourceAttr(
@@ -78,30 +78,46 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToService(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithCatchAllToService(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "1"),
-					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true), //test for catch_all routing to service if provided
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathConfigDeleteAllRulesInSet(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoConditions(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationPathExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.#", "0"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(team, escalation_policy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "0"),
-					testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(team, escalation_policy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationRouterNotExists("pagerduty_event_orchestration_router.router"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathDestroy(s *terraform.State) error {
+func testAccCheckPagerDutyEventOrchestrationRouterDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_event_orchestration_path_router" {
@@ -117,7 +133,7 @@ func testAccCheckPagerDutyEventOrchestrationPathDestroy(s *terraform.State) erro
 	return nil
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestCheckFunc {
+func testAccCheckPagerDutyEventOrchestrationRouterExists(rn string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[rn]
 		if !ok {
@@ -141,6 +157,17 @@ func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestC
 	}
 }
 
+func testAccCheckPagerDutyEventOrchestrationRouterNotExists(rn string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		_, ok := s.RootModule().Resources[rn]
+		if ok {
+			return fmt.Errorf("Event Orchestration Router Path is not deleted: %s", rn)
+		}
+
+		return nil
+	}
+}
+
 func createBaseConfig(t, ep, s, o string) string {
 	return fmt.Sprintf(`
 	resource "pagerduty_team" "foo" {
@@ -148,7 +175,7 @@ func createBaseConfig(t, ep, s, o string) string {
 	}
 
 	resource "pagerduty_user" "foo" {
-		name        = "user"
+		name        = "tf-user"
 		email       = "user@pagerduty.com"
 		color       = "green"
 		role        = "user"
@@ -189,7 +216,7 @@ func createBaseConfig(t, ep, s, o string) string {
 	`, t, ep, s, o)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigNoRules(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
 		type = "router"
@@ -208,7 +235,7 @@ func testAccCheckPagerDutyEventOrchestrationPathConfigNoRules(t, ep, s, o string
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfig(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationRouterConfig(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
 		type = "router"
@@ -234,7 +261,7 @@ func testAccCheckPagerDutyEventOrchestrationPathConfig(t, ep, s, o string) strin
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {
@@ -264,7 +291,7 @@ resource "pagerduty_event_orchestration_router" "router" {
 `)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithMultipleRules(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationRouterConfigWithMultipleRules(t, ep, s, o string) string {
 	return fmt.Sprintf(
 		"%s%s", createBaseConfig(t, ep, s, o),
 		`
@@ -319,7 +346,34 @@ resource "pagerduty_event_orchestration_router" "router" {
 `)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigWithCatchAllToService(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationRouterConfigNoConditions(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`
+resource "pagerduty_event_orchestration_router" "router" {
+	type = "router"
+	parent {
+        id = pagerduty_event_orchestration.orch.id
+    }
+	catch_all {
+		actions {
+			route_to = pagerduty_service.bar.id
+		}
+	}
+	sets {
+		id = "start"
+		rules {
+			disabled = false
+			label = "rule1 label"
+			actions {
+				route_to = pagerduty_service.bar.id
+			}
+		}
+	}
+}
+`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationRouterConfigWithCatchAllToService(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {
@@ -349,7 +403,7 @@ resource "pagerduty_event_orchestration_router" "router" {
 `)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathConfigDeleteAllRulesInSet(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {
@@ -368,8 +422,10 @@ resource "pagerduty_event_orchestration_router" "router" {
 }
 `)
 }
-
-func testAccCheckPagerDutyEventOrchestrationPathRouteToMatch(router, service string, catchAll bool) resource.TestCheckFunc {
+func testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(t, ep, s, o string) string {
+	return fmt.Sprintf(createBaseConfig(t, ep, s, o))
+}
+func testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(router, service string, catchAll bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		r, rOk := s.RootModule().Resources[router]
 		if !rOk {

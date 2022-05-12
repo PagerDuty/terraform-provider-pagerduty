@@ -256,11 +256,11 @@ func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData,
 		} else if unroutedPath != nil {
 
 			if unroutedPath.Sets != nil {
-				d.Set("sets", flattenSets(unroutedPath.Sets))
+				d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
 			}
 
 			if unroutedPath.CatchAll != nil {
-				d.Set("catch_all", flattenCatchAll(unroutedPath.CatchAll))
+				d.Set("catch_all", flattenUnroutedCatchAll(unroutedPath.CatchAll))
 			}
 		}
 		return nil
@@ -303,10 +303,10 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 		// set props
 		d.SetId(unroutedPath.Parent.ID)
 		if unroutedPath.Sets != nil {
-			d.Set("sets", flattenSets(unroutedPath.Sets))
+			d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
 		}
 		if updatedPath.CatchAll != nil {
-			d.Set("catch_all", flattenCatchAll(updatedPath.CatchAll))
+			d.Set("catch_all", flattenUnroutedCatchAll(updatedPath.CatchAll))
 		}
 		return nil
 	})
@@ -321,7 +321,7 @@ func buildUnroutedPathParent(d *schema.ResourceData) *pagerduty.EventOrchestrati
 	orchPath := &pagerduty.EventOrchestrationPath{}
 
 	if attr, ok := d.GetOk("parent"); ok {
-		orchPath.Parent = expandOrchestrationPathParent(attr)
+		orchPath.Parent = expandOrchestrationPathUnroutedParent(attr)
 	}
 
 	return orchPath
@@ -332,21 +332,21 @@ func buildUnroutedPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOr
 	orchPath := buildUnroutedPathParent(d)
 
 	if attr, ok := d.GetOk("parent"); ok {
-		orchPath.Parent = expandOrchestrationPathParent(attr)
+		orchPath.Parent = expandOrchestrationPathUnroutedParent(attr)
 	}
 
 	if attr, ok := d.GetOk("sets"); ok {
-		orchPath.Sets = expandSets(attr.([]interface{}))
+		orchPath.Sets = expandUnroutedSets(attr.([]interface{}))
 	}
 
 	if attr, ok := d.GetOk("catch_all"); ok {
-		orchPath.CatchAll = expandCatchAll(attr.([]interface{}))
+		orchPath.CatchAll = expandUnroutedCatchAll(attr.([]interface{}))
 	}
 
 	return orchPath
 }
 
-func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationPathReference {
+func expandOrchestrationPathUnroutedParent(v interface{}) *pagerduty.EventOrchestrationPathReference {
 	var parent *pagerduty.EventOrchestrationPathReference
 	p := v.([]interface{})[0].(map[string]interface{})
 	parent = &pagerduty.EventOrchestrationPathReference{
@@ -358,7 +358,7 @@ func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationP
 	return parent
 }
 
-func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
+func expandUnroutedSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 	var sets []*pagerduty.EventOrchestrationPathSet
 
 	for _, set := range v.([]interface{}) {
@@ -366,7 +366,7 @@ func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 
 		orchPathSet := &pagerduty.EventOrchestrationPathSet{
 			ID:    s["id"].(string),
-			Rules: expandRules(s["rules"]),
+			Rules: expandUnroutedRules(s["rules"]),
 		}
 
 		sets = append(sets, orchPathSet)
@@ -375,7 +375,7 @@ func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 	return sets
 }
 
-func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
+func expandUnroutedRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 	items := v.([]interface{})
 	rules := []*pagerduty.EventOrchestrationPathRule{}
 
@@ -461,7 +461,7 @@ func expandUnroutedActionsVariables(v interface{}) []*pagerduty.EventOrchestrati
 	return unroutedVariables
 }
 
-func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
+func expandUnroutedCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
 
 	for _, ca := range v.([]interface{}) {
@@ -489,20 +489,20 @@ func expandUnroutedCatchAllActions(v interface{}) *pagerduty.EventOrchestrationP
 	return actions
 }
 
-func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
+func flattenUnroutedSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
 	var flattenedSets []interface{}
 
 	for _, set := range orchPathSets {
 		flattenedSet := map[string]interface{}{
 			"id":    set.ID,
-			"rules": flattenRules(set.Rules),
+			"rules": flattenUnroutedRules(set.Rules),
 		}
 		flattenedSets = append(flattenedSets, flattenedSet)
 	}
 	return flattenedSets
 }
 
-func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
+func flattenUnroutedRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 	var flattenedRules []interface{}
 	if rules != nil {
 		for _, rule := range rules {
@@ -581,7 +581,7 @@ func flattenUnroutedActionsExtractions(e []*pagerduty.EventOrchestrationPathActi
 	return flatExtractionsList
 }
 
-func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
+func flattenUnroutedCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
 	var caMap []map[string]interface{}
 
 	c := make(map[string]interface{})

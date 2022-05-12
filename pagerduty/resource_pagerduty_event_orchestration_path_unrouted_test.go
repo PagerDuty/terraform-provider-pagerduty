@@ -98,7 +98,7 @@ func testAccCheckPagerDutyEventOrchestrationPathExists(rn string) resource.TestC
 	}
 }
 
-func createBaseConfig(t, ep, s, o string) string {
+func createUnroutedBaseConfig(t, ep, s, o string) string {
 	return fmt.Sprintf(`
 		resource "pagerduty_team" "foo" {
 			name = "%s"

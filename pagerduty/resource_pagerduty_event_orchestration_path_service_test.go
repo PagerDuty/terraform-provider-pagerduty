@@ -36,7 +36,19 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 		// CheckDestroy: testAccCheckPagerDutyEventOrchestrationDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceConfig(service),
+				Config: testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationServiceExists("pagerduty_event_orchestration_service.serviceA"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_service.serviceA", "sets.#", "1",
+					),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration.foo", "sets.0.rules.#", "0",
+					),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(service),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationServiceExists("pagerduty_event_orchestration_service.serviceA"),
 				),
@@ -68,7 +80,22 @@ func testAccCheckPagerDutyEventOrchestrationServiceExists(rn string) resource.Te
 	}
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceConfig(sId string) string {
+func testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(sId string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_event_orchestration_service" "serviceA" {
+	parent {
+		id = "%s"
+	}
+
+	sets {
+		id = "start"
+	}
+}
+`, sId)
+}
+
+func testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(sId string) string {
 	return fmt.Sprintf(`
 
 resource "pagerduty_event_orchestration_service" "serviceA" {
@@ -88,6 +115,24 @@ resource "pagerduty_event_orchestration_service" "serviceA" {
 						name = "Reboot me"
 						url = "https://test.com"
 						auto_send = true
+						
+						headers {
+							key = "foo"
+							value = "bar"
+						}
+						headers {
+							key = "baz"
+							value = "buz"
+						}
+
+						parameters {
+							key = "source"
+							value = "orch_rule"
+						}
+						parameters {
+							key = "region"
+							value = "us"
+						}
 					}
 			}
 		}

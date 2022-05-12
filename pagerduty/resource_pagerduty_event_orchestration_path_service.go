@@ -243,7 +243,6 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, 
 }
 
 func resourcePagerDutyEventOrchestrationPathServiceDelete(d *schema.ResourceData, meta interface{}) error {
-	// TODO: figure out what to do here
 	d.SetId("")
 	return nil
 }
@@ -303,6 +302,9 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
 
 	for _, i := range v.([]interface{}) {
+		if i == nil {
+			continue
+		}
 		a := i.(map[string]interface{})
 		// TODO:
 		actions.RouteTo = a["route_to"].(string)

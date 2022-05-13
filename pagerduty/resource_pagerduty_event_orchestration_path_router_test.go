@@ -25,7 +25,7 @@ func init() {
 
 func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 	team := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
-	escalation_policy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	orchestration := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -35,7 +35,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationRouterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -47,7 +47,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfig(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfig(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -59,7 +59,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -67,7 +67,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithMultipleRules(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithMultipleRules(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -79,7 +79,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithCatchAllToService(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithCatchAllToService(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -89,7 +89,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoConditions(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoConditions(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -99,7 +99,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
@@ -109,7 +109,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterNotExists("pagerduty_event_orchestration_router.router"),
 				),

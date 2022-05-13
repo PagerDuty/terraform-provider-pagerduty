@@ -25,7 +25,7 @@ func init() {
 
 func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 	team := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
-	escalation_policy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	orchestration := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
@@ -35,7 +35,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationPathUnroutedDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
@@ -45,7 +45,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithConditions(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithConditions(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
@@ -53,7 +53,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithMultipleRules(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithMultipleRules(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
@@ -67,7 +67,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedWithAllConfig(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedWithAllConfig(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
@@ -160,7 +160,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
@@ -170,7 +170,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigDelete(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigDelete(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedNotExists("pagerduty_event_orchestration_unrouted.unrouted"),
 				),

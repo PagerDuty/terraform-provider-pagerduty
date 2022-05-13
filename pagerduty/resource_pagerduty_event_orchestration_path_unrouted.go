@@ -29,20 +29,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 				Required: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"self": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+					Schema: PagerDutyEventOrchestrationPathParent,
 				},
 			},
 			"sets": {
@@ -72,18 +59,13 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"expression": {
-													Type:     schema.TypeString,
-													Required: true,
-												},
-											},
+											Schema: PagerDutyEventOrchestrationPathConditions,
 										},
 									},
 									"actions": {
 										Type:     schema.TypeList,
 										Required: true, // even if there are no actions, API returns actions as an empty list
-										MaxItems: 1,    //TODO check if this is valid
+										MaxItems: 1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"route_to": {
@@ -161,7 +143,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 			},
 			"catch_all": {
 				Type:     schema.TypeList,
-				Required: true, //if not supplied, API creates it
+				Required: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -275,6 +257,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedCreate(d *schema.ResourceDat
 
 // EventOrchestrationPath cannot be deleted, use update to add / edit / remove rules and sets
 func resourcePagerDutyEventOrchestrationPathUnroutedDelete(d *schema.ResourceData, meta interface{}) error {
+	d.SetId("")
 	return nil
 }
 
@@ -350,9 +333,7 @@ func expandOrchestrationPathUnroutedParent(v interface{}) *pagerduty.EventOrches
 	var parent *pagerduty.EventOrchestrationPathReference
 	p := v.([]interface{})[0].(map[string]interface{})
 	parent = &pagerduty.EventOrchestrationPathReference{
-		ID:   p["id"].(string),
-		Type: p["type"].(string),
-		Self: p["self"].(string),
+		ID: p["id"].(string),
 	}
 
 	return parent
@@ -504,18 +485,18 @@ func flattenUnroutedSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []
 
 func flattenUnroutedRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 	var flattenedRules []interface{}
-	if rules != nil {
-		for _, rule := range rules {
-			flattenedRule := map[string]interface{}{
-				"id":         rule.ID,
-				"label":      rule.Label,
-				"disabled":   rule.Disabled,
-				"conditions": flattenUnroutedConditions(rule.Conditions),
-				"actions":    flattenUnroutedActions(rule.Actions),
-			}
-			flattenedRules = append(flattenedRules, flattenedRule)
+
+	for _, rule := range rules {
+		flattenedRule := map[string]interface{}{
+			"id":         rule.ID,
+			"label":      rule.Label,
+			"disabled":   rule.Disabled,
+			"conditions": flattenUnroutedConditions(rule.Conditions),
+			"actions":    flattenUnroutedActions(rule.Actions),
 		}
+		flattenedRules = append(flattenedRules, flattenedRule)
 	}
+
 	return flattenedRules
 }
 
@@ -618,7 +599,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedImport(d *schema.ResourceDat
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
-	// given an orchestration ID import the router orchestration path
+	// given an orchestration ID import the unrouted orchestration path
 	orchestrationID := d.Id()
 	pathType := "unrouted"
 	_, _, err = client.EventOrchestrationPaths.Get(orchestrationID, pathType)

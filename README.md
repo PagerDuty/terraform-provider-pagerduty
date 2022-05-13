@@ -1,5 +1,7 @@
 # Terraform Provider for PagerDuty
 
+[![Test](https://github.com/PagerDuty/terraform-provider-pagerduty/actions/workflows/test.yml/badge.svg)](https://github.com/PagerDuty/terraform-provider-pagerduty/actions/workflows/test.yml)
+
 - Website: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest
 - Documentation: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs
 - Terraform Gitter: [![Terraform Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)

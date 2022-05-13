@@ -2,11 +2,12 @@ package pagerduty
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
-	"log"
-	"time"
 )
 
 func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
@@ -240,7 +241,7 @@ func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 
 		orchPathSet := &pagerduty.EventOrchestrationPathSet{
 			ID:    s["id"].(string),
-			Rules: expandRules(s["rules"].(interface{})),
+			Rules: expandRules(s["rules"]),
 		}
 
 		sets = append(sets, orchPathSet)
@@ -301,7 +302,7 @@ func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 
 	for _, ca := range v.([]interface{}) {
 		am := ca.(map[string]interface{})
-		catchAll.Actions = expandRouterActions(am["actions"].(interface{}))
+		catchAll.Actions = expandRouterActions(am["actions"])
 	}
 
 	return catchAll
@@ -322,17 +323,15 @@ func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interfac
 func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 	var flattenedRules []interface{}
 
-	if rules != nil {
-		for _, rule := range rules {
-			flattenedRule := map[string]interface{}{
-				"id":         rule.ID,
-				"label":      rule.Label,
-				"disabled":   rule.Disabled,
-				"conditions": flattenRouterConditions(rule.Conditions),
-				"actions":    flattenRouterActions(rule.Actions),
-			}
-			flattenedRules = append(flattenedRules, flattenedRule)
+	for _, rule := range rules {
+		flattenedRule := map[string]interface{}{
+			"id":         rule.ID,
+			"label":      rule.Label,
+			"disabled":   rule.Disabled,
+			"conditions": flattenRouterConditions(rule.Conditions),
+			"actions":    flattenRouterActions(rule.Actions),
 		}
+		flattenedRules = append(flattenedRules, flattenedRule)
 	}
 
 	return flattenedRules

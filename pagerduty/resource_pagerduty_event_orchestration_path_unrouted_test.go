@@ -67,21 +67,106 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigMultipleFull(team, escalation_policy, service, orchestration),
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedWithAllConfig(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.#", "2"),
+					//Set #1
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.id", "start"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.route_to", "child-1"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.0.expression", "event.severity matches part 'info'"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.1.expression", "event.severity matches part 'warning'"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.severity", "info"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.event_action", "trigger"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.0.name", "server_name_cpu"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.0.path", "event.summary"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.0.type", "regex"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.0.value", "High CPU on (.*) server"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.1.name", "server_name_memory"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.1.path", "event.custom_details"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.1.type", "regex"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.1.value", "High memory usage on (.*) server"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.extractions.#", "2"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.extractions.0.target", "event.summary"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.extractions.0.template", "High memory usage on variables.hostname server"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.extractions.1.target", "event.custom_details"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.extractions.1.template", "High memory usage on variables.hostname server"),
+					//Set #2
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.id", "child-1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.0.conditions.0.expression", "event.severity matches part 'warning'"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.0.actions.0.event_action", "resolve"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
+					// Catch All
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.severity", "critical"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.event_action", "trigger"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.0.name", "server_name_cpu"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.0.path", "event.summary"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.0.type", "regex"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.0.value", "High CPU on (.*) server"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.1.name", "server_name_memory"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.1.path", "event.custom_details"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.1.type", "regex"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.1.value", "High memory usage on (.*) server"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.extractions.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.extractions.0.target", "event.summary"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.extractions.0.template", "High memory usage on variables.hostname server"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.extractions.1.target", "event.custom_details"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.extractions.1.template", "High memory usage on variables.hostname server"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(team, escalation_policy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "type", "unrouted"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.#", "0"),
 				),
 			},
 			{
@@ -271,7 +356,7 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithMultipleRules(
 `)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigMultipleFull(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationPathUnroutedWithAllConfig(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createUnroutedBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
 			type = "unrouted"

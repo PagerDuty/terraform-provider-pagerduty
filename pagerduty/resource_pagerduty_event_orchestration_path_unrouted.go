@@ -376,7 +376,11 @@ func expandUnroutedRules(v interface{}) []*pagerduty.EventOrchestrationPathRule 
 }
 
 func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
+	var actions = &pagerduty.EventOrchestrationPathRuleActions{
+		Variables:   []*pagerduty.EventOrchestrationPathActionVariables{},
+		Extractions: []*pagerduty.EventOrchestrationPathActionExtractions{},
+	}
+
 	for _, ai := range v.([]interface{}) {
 		if ai != nil {
 			am := ai.(map[string]interface{})
@@ -409,7 +413,7 @@ func expandUnroutedConditions(v interface{}) []*pagerduty.EventOrchestrationPath
 }
 
 func expandUnroutedActionsExtractions(v interface{}) []*pagerduty.EventOrchestrationPathActionExtractions {
-	var unroutedExtractions []*pagerduty.EventOrchestrationPathActionExtractions
+	unroutedExtractions := []*pagerduty.EventOrchestrationPathActionExtractions{}
 
 	for _, eai := range v.([]interface{}) {
 		ea := eai.(map[string]interface{})
@@ -423,7 +427,7 @@ func expandUnroutedActionsExtractions(v interface{}) []*pagerduty.EventOrchestra
 }
 
 func expandUnroutedActionsVariables(v interface{}) []*pagerduty.EventOrchestrationPathActionVariables {
-	var unroutedVariables []*pagerduty.EventOrchestrationPathActionVariables
+	unroutedVariables := []*pagerduty.EventOrchestrationPathActionVariables{}
 
 	for _, er := range v.([]interface{}) {
 		rer := er.(map[string]interface{})

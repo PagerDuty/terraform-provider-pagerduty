@@ -2,10 +2,11 @@ package pagerduty
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"testing"
 )
 
 func init() {
@@ -423,7 +424,7 @@ resource "pagerduty_event_orchestration_router" "router" {
 `)
 }
 func testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(t, ep, s, o string) string {
-	return fmt.Sprintf(createBaseConfig(t, ep, s, o))
+	return createBaseConfig(t, ep, s, o)
 }
 func testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(router, service string, catchAll bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

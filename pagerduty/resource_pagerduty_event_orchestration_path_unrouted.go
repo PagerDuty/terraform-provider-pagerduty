@@ -71,7 +71,6 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 												"route_to": {
 													Type:     schema.TypeString,
 													Optional: true, // If there is only start set we don't need route_to
-													//TODO: validate func, The ID of a Set from this Unrouted Orchestration whose rules you also want to use with event that match this rule.
 												},
 												"severity": {
 													Type:     schema.TypeString,
@@ -281,7 +280,7 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 			return resource.RetryableError(err)
 		}
 		if updatedPath == nil {
-			return resource.NonRetryableError(fmt.Errorf("No Event Orchestration Unrouted found."))
+			return resource.NonRetryableError(fmt.Errorf("no event orchestration unrouted found"))
 		}
 		// set props
 		d.SetId(unroutedPath.Parent.ID)

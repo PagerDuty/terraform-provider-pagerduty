@@ -66,17 +66,20 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.1.conditions.0.expression", "event.severity matches part 'info'"),
 				),
 			},
-
-			// {
-			// 	Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigDeleteAllRulesInSet(team, escalation_policy, service, orchestration),
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
-			// 		resource.TestCheckResourceAttr(
-			// 			"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.#", "0"),
-			// 		testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
-			// 			"pagerduty_event_orchestration_unrouted.unrouted", "pagerduty_service.bar", true),
-			// 	),
-			// },
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigMultipleFull(team, escalation_policy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.0.expression", "event.severity matches part 'info'"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.1.expression", "event.severity matches part 'warning'"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
+				),
+			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigDelete(team, escalation_policy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
@@ -140,7 +143,7 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedNotExists(rn string) res
 }
 
 func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigDelete(t, ep, s, o string) string {
-	return fmt.Sprintf(createUnroutedBaseConfig(t, ep, s, o))
+	return createUnroutedBaseConfig(t, ep, s, o)
 }
 
 func createUnroutedBaseConfig(t, ep, s, o string) string {
@@ -264,161 +267,122 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithMultipleRules(
 `)
 }
 
-// func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigDeleteAllRulesInSet(t, ep, s, o string) string {
-// 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
-// 		`
-// resource "pagerduty_event_orchestration_router" "router" {
-// 	type = "router"
-// 	parent {
-//         id = pagerduty_event_orchestration.orch.id
-//     }
-// 	catch_all {
-// 		actions {
-// 			route_to = pagerduty_service.bar.id
-// 		}
-// 	}
-// 	sets {
-// 		id = "start"
-// 	}
-// }
-// `)
-// }
-
-// func testAccCheckPagerDutyEventOrchestrationPathConfig(t, ep, s, o string) string {
-// 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
-// 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-// 			type = "unrouted"
-// 			parent {
-// 				id = pagerduty_event_orchestration.orch.id
-// 			}
-// 			sets {
-// 				id = "start"
-// 				rules {
-// 					disabled = false
-// 					label = "rule1 label"
-// 					actions {
-// 						route_to = "child-1"
-// 						severity = "info"
-// 						event_action = "trigger"
-// 						variables {
-// 							name = "server_name"
-// 							path = "event.summary"
-// 							type = "regex"
-// 							value = "High CPU on (.*) server"
-// 						}
-// 						extractions {
-// 							target = "event.summary"
-// 							template = "High CPU on variables.hostname server"
-// 						}
-// 					}
-// 				}
-// 			}
-// 			sets {
-// 				id = "child-1"
-// 				rules {
-// 					disabled = false
-// 					label = "rule2 label"
-// 					actions {
-// 						severity = "warning"
-// 						event_action = "resolve"
-// 						variables {
-// 							name = "server_name"
-// 							path = "event.summary"
-// 							type = "regex"
-// 							value = "High CPU on (.*) server"
-// 						}
-// 						extractions {
-// 							target = "event.summary"
-// 							template = "High CPU on event.custom_details.hostname server"
-// 						}
-// 					}
-// 				}
-// 			}
-// 			catch_all {
-// 				actions {
-
-// 				}
-// 			}
-// 		}
-// 	`)
-// }
-
-// func testAccCheckPagerDutyEventOrchestrationPathConfigWithConditions(t string, o string, ptype string) string {
-// 	return fmt.Sprintf(`
-// 		resource "pagerduty_team" "foo" {
-// 			name = "%s"
-// 		}
-
-// 		resource "pagerduty_user" "foo" {
-// 			name        = "user"
-// 			email       = "user@pagerduty.com"
-// 			color       = "green"
-// 			role        = "user"
-// 			job_title   = "foo"
-// 			description = "foo"
-// 		}
-
-// 		resource "pagerduty_escalation_policy" "foo" {
-// 			name        = "test"
-// 			description = "bar"
-// 			num_loops   = 2
-// 			rule {
-// 				escalation_delay_in_minutes = 10
-// 				target {
-// 					type = "user_reference"
-// 					id   = pagerduty_user.foo.id
-// 				}
-// 			}
-// 		}
-
-// 		resource "pagerduty_service" "bar" {
-// 			name = "barService"
-// 			escalation_policy       = pagerduty_escalation_policy.foo.id
-// 			incident_urgency_rule {
-// 				type = "constant"
-// 				urgency = "high"
-// 			}
-// 		}
-
-// 		resource "pagerduty_event_orchestration" "orch" {
-// 			name = "%s"
-// 			team {
-// 				id = pagerduty_team.foo.id
-// 			}
-// 		}
-
-// 		resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-// 			type = "%s"
-// 			parent {
-// 				id = pagerduty_event_orchestration.orch.id
-// 				type = "event_orchestration_reference"
-// 				self = "https://api.pagerduty.com/event_orchestrations/orch_id"
-// 			}
-// 			sets {
-// 				id = "start"
-// 				rules {
-// 					disabled = false
-// 					label = "rule1 label"
-// 					actions {
-// 						route_to = pagerduty_service.bar.id
-// 						severity = "info"
-// 						event_action = "trigger"
-// 						// variables {
-// 						// 	name = "foo"
-// 						// 	path = "foo.foo"
-// 						// 	type = "foo"
-// 						// 	value = "foo"
-// 						// }
-// 						// extractions {
-// 						// 	target = "foo"
-// 						// 	template = "foo"
-// 						// }
-// 					}
-// 					conditions {
-// 						expression = "event.summary matches part 'database'"
-// 					}
-// 				}
-// 			}
-// 		}
-// 	`, t, o, ptype)
-// }
+func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigMultipleFull(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createUnroutedBaseConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
+			type = "unrouted"
+			parent {
+				id = pagerduty_event_orchestration.orch.id
+			}
+			sets {
+				id = "start"
+				rules {
+					disabled = false
+					label = "rule1 label"
+					conditions {
+						expression = "event.severity matches part 'info'"
+					}
+					conditions {
+						expression = "event.severity matches part 'warning'"
+					}
+					actions {
+						route_to = "child-1"
+						severity = "info"
+						event_action = "trigger"
+						variables {
+							name = "server_name_cpu"
+							path = "event.summary"
+							type = "regex"
+							value = "High CPU on (.*) server"
+						}
+						variables {
+							name = "server_name_memory"
+							path = "event.custom_details"
+							type = "regex"
+							value = "High memory usage on (.*) server"
+						}
+						extractions {
+							target = "event.summary"
+							template = "High memory usage on variables.hostname server"
+						}
+						extractions {
+							target = "event.custom_details"
+							template = "High memory usage on variables.hostname server"
+						}
+					}
+				}
+			}
+			sets {
+				id = "child-1"
+				rules {
+					disabled = false
+					label = "rule2 label1"
+					conditions {
+						expression = "event.severity matches part 'warning'"
+					}
+					actions {
+						severity = "warning"
+						event_action = "resolve"
+						variables {
+							name = "server_name_cpu"
+							path = "event.summary"
+							type = "regex"
+							value = "High CPU on (.*) server"
+						}
+						extractions {
+							target = "event.summary"
+							template = "High CPU on event.custom_details.hostname server"
+						}
+					}
+				}
+				rules {
+					disabled = false
+					label = "rule2 label2"
+					conditions {
+						expression = "event.severity matches part 'critical'"
+					}
+					actions {
+						severity = "warning"
+						event_action = "trigger"
+						variables {
+							name = "server_name_cpu"
+							path = "event.summary"
+							type = "regex"
+							value = "High CPU on (.*) server"
+						}
+						extractions {
+							target = "event.summary"
+							template = "High CPU on event.custom_details.hostname server"
+						}
+					}
+				}
+			}
+			catch_all {
+				actions {
+					severity = "critical"
+					event_action = "trigger"
+					variables {
+						name = "server_name_cpu"
+						path = "event.summary"
+						type = "regex"
+						value = "High CPU on (.*) server"
+					}
+					variables {
+						name = "server_name_memory"
+						path = "event.custom_details"
+						type = "regex"
+						value = "High memory usage on (.*) server"
+					}
+					extractions {
+						target = "event.summary"
+						template = "High memory usage on variables.hostname server"
+					}
+					extractions {
+						target = "event.custom_details"
+						template = "High memory usage on variables.hostname server"
+					}
+				}
+			}
+		}
+	`)
+}

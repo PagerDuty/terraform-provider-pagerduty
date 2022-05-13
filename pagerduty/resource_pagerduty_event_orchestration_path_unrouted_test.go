@@ -78,6 +78,10 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.1.expression", "event.severity matches part 'warning'"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.extractions.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.#", "2"),
 				),
 			},
 			{

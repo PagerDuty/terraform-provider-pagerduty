@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"strconv"
 	// "log"
 	// "strings"
 	"testing"
@@ -47,6 +48,7 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					),
 				),
 			},
+			// set adding/editing/deleting props in a single rule
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
@@ -120,7 +122,7 @@ func testAccCheckPagerDutyEventOrchestrationServiceRuleActions(rn, rloc string, 
 		}
 
 		attr := r.Primary.Attributes
-		path := fmt.Sprintf("%s.actions.0", rloc) // "sets.0.rules.0" + ".actions.0"
+		path := fmt.Sprintf("%s.actions.0", rloc) // "sets.0.rules.0.actions.0"
 
 		// route_to
 		// suppress
@@ -139,9 +141,9 @@ func testAccCheckPagerDutyEventOrchestrationServiceRuleActions(rn, rloc string, 
 		if attr[fmt.Sprintf("%s.automation_actions.0.url", path)] != a.AutomationActions[0].Url {
 			return fmt.Errorf("automation_actions.0.url not matching for %s", rn)
 		}
-		// if attr[fmt.Sprintf("%s.automation_actions.0.auto_send", path)] != a.AutomationActions[0].AutoSend {
-		// 	return fmt.Errorf("automation_actions.0.auto_send not matching for %s", rn)
-		// }
+		if attr[fmt.Sprintf("%s.automation_actions.0.auto_send", path)] != strconv.FormatBool(a.AutomationActions[0].AutoSend) {
+			return fmt.Errorf("automation_actions.0.auto_send not matching for %s", rn)
+		}
 
 		objCheckFn := func(prop string, obj []*pagerduty.EventOrchestrationPathAutomationActionObject) error {
 			for i, h := range obj {

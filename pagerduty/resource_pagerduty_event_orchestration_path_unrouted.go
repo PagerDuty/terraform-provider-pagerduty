@@ -530,7 +530,7 @@ func flattenUnroutedActions(actions *pagerduty.EventOrchestrationPathRuleActions
 	if actions.Variables != nil {
 		flattenedAction["variables"] = flattenUnroutedActionsVariables(actions.Variables)
 	}
-	if actions.Variables != nil {
+	if actions.Extractions != nil {
 		flattenedAction["extractions"] = flattenUnroutedActionsExtractions(actions.Extractions)
 	}
 

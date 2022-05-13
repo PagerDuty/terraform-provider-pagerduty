@@ -20,10 +20,22 @@ var eventOrchestrationAutomationActionObject = map[string]*schema.Schema{
 }
 
 var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
-	// suppress
-	// suspend
-	// priority
-	// annotate
+	"suppress": {
+		Type:     schema.TypeBool,
+		Optional: true,
+	},
+	"suspend": {
+		Type:     schema.TypeInt,
+		Optional: true,
+	},
+	"priority": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"annotate": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
 	"pagerduty_automation_actions": {
 		Type:     schema.TypeList,
 		Optional: true,
@@ -73,10 +85,71 @@ var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
 			},
 		},
 	},
-	// severity
-	// event_action
-	// variables
-	// extractions
+	"severity": {
+		Type:     schema.TypeString,
+		Optional: true,
+		ValidateFunc: validateValueFunc([]string{
+			"info",
+			"error",
+			"warning",
+			"critical",
+		}),
+	},
+	"event_action": {
+		Type:     schema.TypeString,
+		Optional: true,
+		ValidateFunc: validateValueFunc([]string{
+			"trigger",
+			"resolve",
+		}),
+	},
+	"variables": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"name": {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				"path": {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				"type": {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				"value": {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+			}},
+	},
+	// TODO: add source and regex to unrouted
+	"extractions": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"regex": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+				"source": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+				"target": {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				"template": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+			}},
+	},
 }
 
 var eventOrchestrationPathServiceRuleActions = buildEventOrchestrationPathServiceRuleActions()
@@ -284,25 +357,28 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 }
 
 func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
+	var actions = &pagerduty.EventOrchestrationPathRuleActions{
+		Variables:   []*pagerduty.EventOrchestrationPathActionVariables{},
+		Extractions: []*pagerduty.EventOrchestrationPathActionExtractions{},
+	}
 
 	for _, i := range v.([]interface{}) {
 		if i == nil {
 			continue
 		}
 		a := i.(map[string]interface{})
-		// TODO:
 		actions.RouteTo = a["route_to"].(string)
-		// suppress
-		// suspend
-		// priority
-		// annotate
+		actions.Suppress = a["suppress"].(bool)
+		actions.Suspend = a["suspend"].(int)
+		actions.Priority = a["priority"].(string)
+		actions.Annotate = a["annotate"].(string)
+		actions.Severity = a["severity"].(string)
+		actions.EventAction = a["event_action"].(string)
 		actions.PagerdutyAutomationActions = expandServicePathPagerDutyAutomationActions(a["pagerduty_automation_actions"])
 		actions.AutomationActions = expandServicePathAutomationActions(a["automation_actions"])
-		// severity
-		// event_action
-		// variables
-		// extractions
+		// TODO: use shared
+		actions.Variables = expandUnroutedActionsVariables(a["variables"])
+		actions.Extractions = expandUnroutedActionsExtractions(a["extractions"])
 	}
 
 	return actions
@@ -412,11 +488,33 @@ func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []in
 func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
 	var actionsMap []map[string]interface{}
 
-	am := make(map[string]interface{})
-	am["route_to"] = actions.RouteTo
-	am["pagerduty_automation_actions"] = flattenServicePathPagerDutyAutomationActions(actions.PagerdutyAutomationActions)
-	am["automation_actions"] = flattenServicePathAutomationActions(actions.AutomationActions)
-	actionsMap = append(actionsMap, am)
+	flattenedAction := map[string]interface{}{
+		"route_to":     actions.RouteTo,
+		"severity":     actions.Severity,
+		"event_action": actions.EventAction,
+		// suppress
+		// suspend
+		// priority
+		// annotate
+	}
+
+	// TODO: use shared code
+	if actions.Variables != nil {
+		flattenedAction["variables"] = flattenUnroutedActionsVariables(actions.Variables)
+	}
+	// TODO: use shared code
+	if actions.Extractions != nil {
+		flattenedAction["extractions"] = flattenUnroutedActionsExtractions(actions.Extractions)
+	}
+	if actions.PagerdutyAutomationActions != nil {
+
+		flattenedAction["pagerduty_automation_actions"] = flattenServicePathPagerDutyAutomationActions(actions.PagerdutyAutomationActions)
+	}
+	if actions.AutomationActions != nil {
+		flattenedAction["automation_actions"] = flattenServicePathAutomationActions(actions.AutomationActions)
+	}
+
+	actionsMap = append(actionsMap, flattenedAction)
 
 	return actionsMap
 }

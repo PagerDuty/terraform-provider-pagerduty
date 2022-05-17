@@ -358,8 +358,10 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 
 func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
 	var actions = &pagerduty.EventOrchestrationPathRuleActions{
-		Variables:   []*pagerduty.EventOrchestrationPathActionVariables{},
-		Extractions: []*pagerduty.EventOrchestrationPathActionExtractions{},
+		AutomationActions:          []*pagerduty.EventOrchestrationPathAutomationAction{},
+		PagerdutyAutomationActions: []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction{},
+		Variables:                  []*pagerduty.EventOrchestrationPathActionVariables{},
+		Extractions:                []*pagerduty.EventOrchestrationPathActionExtractions{},
 	}
 
 	for _, i := range v.([]interface{}) {
@@ -385,7 +387,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 }
 
 func expandServicePathPagerDutyAutomationActions(v interface{}) []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction {
-	var result []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction
+	result := []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction{}
 
 	for _, i := range v.([]interface{}) {
 		a := i.(map[string]interface{})
@@ -400,7 +402,7 @@ func expandServicePathPagerDutyAutomationActions(v interface{}) []*pagerduty.Eve
 }
 
 func expandServicePathAutomationActions(v interface{}) []*pagerduty.EventOrchestrationPathAutomationAction {
-	var result []*pagerduty.EventOrchestrationPathAutomationAction
+	result := []*pagerduty.EventOrchestrationPathAutomationAction{}
 
 	for _, i := range v.([]interface{}) {
 		a := i.(map[string]interface{})
@@ -419,7 +421,7 @@ func expandServicePathAutomationActions(v interface{}) []*pagerduty.EventOrchest
 }
 
 func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty.EventOrchestrationPathAutomationActionObject {
-	var result []*pagerduty.EventOrchestrationPathAutomationActionObject
+	result := []*pagerduty.EventOrchestrationPathAutomationActionObject{}
 
 	for _, i := range v.([]interface{}) {
 		o := i.(map[string]interface{})
@@ -492,10 +494,10 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 		"route_to":     actions.RouteTo,
 		"severity":     actions.Severity,
 		"event_action": actions.EventAction,
-		// suppress
-		// suspend
-		// priority
-		// annotate
+		"suppress":     actions.Suppress,
+		"suspend":      actions.Suspend,
+		"priority":     actions.Priority,
+		"annotate":     actions.Annotate,
 	}
 
 	// TODO: use shared code

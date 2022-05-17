@@ -2,7 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
-	"strconv"
+	// "strconv"
 	// "log"
 	// "strings"
 	"testing"
@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -46,11 +45,14 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "sets.0.rules.#", "0",
 					),
+					resource.TestCheckResourceAttr(
+						resourceName, "type", "service",
+					),
 				),
 			},
-			// set adding/editing/deleting props in a single rule
+			// Test setting/resetting Automation Actions properties
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(escalationPolicy, service),
+				Config: testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationServiceExists(resourceName),
 					resource.TestCheckResourceAttr(
@@ -59,34 +61,46 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "sets.0.rules.#", "1",
 					),
-					resource.TestCheckTypeSetElemNestedAttrs(
-						resourceName,
-						"sets.0.rules.0.actions.0.pagerduty_automation_actions.*",
-						map[string]string{"action_id": "SOME_ACTION_ID"},
+					resource.TestCheckResourceAttrSet(
+						resourceName, "sets.0.rules.0.id",
 					),
-					// testAccCheckPagerDutyEventOrchestrationServiceRuleActions(resourceName, "sets.0.rules.0", &pagerduty.EventOrchestrationPathRuleActions{
-					// 	PagerdutyAutomationActions: []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction{
-					// 		&pagerduty.EventOrchestrationPathPagerdutyAutomationAction{ActionId: "SOME_ACTION_ID"},
-					// 	},
-					// 	AutomationActions: []*pagerduty.EventOrchestrationPathAutomationAction{
-					// 		&pagerduty.EventOrchestrationPathAutomationAction{
-					// 			Name:     "test",
-					// 			Url:      "https://test.com",
-					// 			AutoSend: true,
-					// 			Headers: []*pagerduty.EventOrchestrationPathAutomationActionObject{
-					// 				&pagerduty.EventOrchestrationPathAutomationActionObject{Key: "foo", Value: "bar"},
-					// 				&pagerduty.EventOrchestrationPathAutomationActionObject{Key: "baz", Value: "buz"},
-					// 			},
-					// 			Parameters: []*pagerduty.EventOrchestrationPathAutomationActionObject{
-					// 				&pagerduty.EventOrchestrationPathAutomationActionObject{Key: "source", Value: "orch"},
-					// 				&pagerduty.EventOrchestrationPathAutomationActionObject{Key: "region", Value: "us"},
-					// 			},
-					// 		},
-					// 	},
-					// }),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsResetConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationServiceExists(resourceName),
+					resource.TestCheckResourceAttr(
+						resourceName, "sets.#", "1",
+					),
+					resource.TestCheckResourceAttr(
+						resourceName, "sets.0.rules.#", "1",
+					),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationServicePDAutomationActionsConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationServiceExists(resourceName),
+					resource.TestCheckResourceAttr(
+						resourceName, "sets.#", "1",
+					),
+					resource.TestCheckResourceAttr(
+						resourceName, "sets.0.rules.#", "1",
+					),
 				),
 			},
 			// update all fields
+			// route_to
+			// suppress
+			// suspend
+			// priority
+			// annotate
+			// pagerduty_automation_actions
+			// severity
+			// event_action
+			// variables
+			// extractions
 			// reset headers/params
 			// reset rule action items -> should be default
 			// reset rule actions -> should be []
@@ -114,68 +128,6 @@ func testAccCheckPagerDutyEventOrchestrationServiceExists(rn string) resource.Te
 		if found.Parent.ID != orch.Primary.ID {
 			return fmt.Errorf("Event Orchrestration Service not found: %v - %v", orch.Primary.ID, found)
 		}
-
-		return nil
-	}
-}
-
-func testAccCheckPagerDutyEventOrchestrationServiceRuleActions(rn, rloc string, a *pagerduty.EventOrchestrationPathRuleActions) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		r, ok := s.RootModule().Resources[rn]
-		if !ok {
-			return fmt.Errorf("Not found: %s", rn)
-		}
-
-		attr := r.Primary.Attributes
-		path := fmt.Sprintf("%s.actions.0", rloc) // "sets.0.rules.0.actions.0"
-
-		// route_to
-		// suppress
-		// suspend
-		// priority
-		// annotate
-		// pagerduty_automation_actions
-		if attr[fmt.Sprintf("%s.pagerduty_automation_actions.0.action_id", path)] != a.PagerdutyAutomationActions[0].ActionId {
-			return fmt.Errorf("pagerduty_automation_actions not matching for %s", rn)
-		}
-
-		// automation_actions
-		if attr[fmt.Sprintf("%s.automation_actions.0.name", path)] != a.AutomationActions[0].Name {
-			return fmt.Errorf("automation_actions.0.name not matching for %s", rn)
-		}
-		if attr[fmt.Sprintf("%s.automation_actions.0.url", path)] != a.AutomationActions[0].Url {
-			return fmt.Errorf("automation_actions.0.url not matching for %s", rn)
-		}
-		if attr[fmt.Sprintf("%s.automation_actions.0.auto_send", path)] != strconv.FormatBool(a.AutomationActions[0].AutoSend) {
-			return fmt.Errorf("automation_actions.0.auto_send not matching for %s", rn)
-		}
-
-		objCheckFn := func(prop string, obj []*pagerduty.EventOrchestrationPathAutomationActionObject) error {
-			for i, h := range obj {
-				kPath := fmt.Sprintf("%s.automation_actions.0.%s.%d.key", path, prop, i)
-				vPath := fmt.Sprintf("%s.automation_actions.0.%s.%d.value", path, prop, i)
-				if k := attr[kPath]; k != h.Key {
-					return fmt.Errorf("%s not matching for %s", kPath, rn)
-				}
-				if v := attr[vPath]; v != h.Value {
-					return fmt.Errorf("%s not matching for %s", kPath, rn)
-				}
-			}
-
-			return nil
-		}
-
-		objCheckFn("headers", a.AutomationActions[0].Headers)
-		objCheckFn("parameters", a.AutomationActions[0].Parameters)
-
-		// severity
-		// event_action
-		// variables
-		// extractions
-
-		// log.Printf(">>> attr path: %v", fmt.Sprintf("%s.pagerduty_automation_actions.0.action_id", path))
-		// log.Printf(">>> attr: %v", attr[fmt.Sprintf("%s.pagerduty_automation_actions.0.action_id", path)])
-		// log.Printf(">>> a: %v", a.PagerdutyAutomationActions[0].ActionId)
 
 		return nil
 	}
@@ -232,7 +184,10 @@ func testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(ep, s st
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(ep, s string) string {
+// pagerduty_automation_actions {
+// 	action_id = "SOME_ACTION_ID"
+// }
+func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -243,10 +198,7 @@ func testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(ep, s string)
 				id = "start"
 				rules {
 					label = "rule 1"
-					actions {
-							pagerduty_automation_actions {
-								action_id = "SOME_ACTION_ID"
-							}
+					actions {							
 							automation_actions {
 								name = "test"
 								url = "https://test.com"
@@ -269,6 +221,51 @@ func testAccCheckPagerDutyEventOrchestrationServiceAllFieldsConfig(ep, s string)
 									key = "region"
 									value = "us"
 								}
+							}
+					}
+				}
+			}
+		}
+	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsResetConfig(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			parent {
+				id = "pagerduty_service.bar.id"
+			}
+		
+			sets {
+				id = "start"
+				rules {
+					label = "rule 1"
+					actions {							
+							automation_actions {
+								name = "test"
+								url = "https://test.com"
+							}
+					}
+				}
+			}
+		}
+	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationServicePDAutomationActionsConfig(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			parent {
+				id = "pagerduty_service.bar.id"
+			}
+		
+			sets {
+				id = "start"
+				rules {
+					label = "rule 1"
+					actions {							
+							pagerduty_automation_actions {
+								action_id = "01CSB5SMOKCKVRI5GN0LJG7SMB"
 							}
 					}
 				}

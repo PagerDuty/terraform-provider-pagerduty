@@ -35,7 +35,7 @@ func testSweepEventOrchestration(region string) error {
 	}
 
 	for _, orchestration := range resp.Orchestrations {
-		if strings.HasPrefix(orchestration.Name, "tf-name-") {
+		if strings.HasPrefix(orchestration.Name, "tf-orchestration-") {
 			log.Printf("Destroying Event Orchestration %s (%s)", orchestration.Name, orchestration.ID)
 			if _, err := client.EventOrchestrations.Delete(orchestration.ID); err != nil {
 				return err

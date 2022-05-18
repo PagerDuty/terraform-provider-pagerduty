@@ -1,11 +1,12 @@
 package pagerduty
 
 import (
+	"log"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
-	"log"
-	"time"
 )
 
 var eventOrchestrationAutomationActionObject = map[string]*schema.Schema{
@@ -308,7 +309,6 @@ func resourcePagerDutyEventOrchestrationPathServiceDelete(d *schema.ResourceData
 
 func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
 	return &pagerduty.EventOrchestrationPath{
-		// TODO: use shared method
 		Parent: &pagerduty.EventOrchestrationPathReference{
 			ID: d.Get("parent.0.id").(string),
 		},
@@ -369,9 +369,10 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 			continue
 		}
 		a := i.(map[string]interface{})
+
 		actions.RouteTo = a["route_to"].(string)
 		actions.Suppress = a["suppress"].(bool)
-		actions.Suspend = a["suspend"].(int)
+		actions.Suspend = intTypeToIntPtr(a["suspend"].(int))
 		actions.Priority = a["priority"].(string)
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)

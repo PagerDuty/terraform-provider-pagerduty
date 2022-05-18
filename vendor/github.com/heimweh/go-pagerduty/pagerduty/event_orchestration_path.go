@@ -51,7 +51,7 @@ type EventOrchestrationPathRuleCondition struct {
 type EventOrchestrationPathRuleActions struct {
 	RouteTo                    string                                             `json:"route_to,omitempty"`
 	Suppress                   bool                                               `json:"suppress"`
-	Suspend                    int                                                `json:"suspend,omitempty"`
+	Suspend                    *int                                               `json:"suspend"`
 	Priority                   string                                             `json:"priority"`
 	Annotate                   string                                             `json:"annotate"`
 	PagerdutyAutomationActions []*EventOrchestrationPathPagerdutyAutomationAction `json:"pagerduty_automation_actions"`

@@ -112,11 +112,11 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 				),
 			},
 
-			// test route to
-			// reset rule action items -> should be default
-			// reset rule actions -> should be []
-			// reset rule conditions -> should be []
-			// reset rules
+			// TODO:
+			// test deleting route_to
+			// test regex extractions
+			// test catch_all
+			// test resetting rules
 		},
 	})
 }

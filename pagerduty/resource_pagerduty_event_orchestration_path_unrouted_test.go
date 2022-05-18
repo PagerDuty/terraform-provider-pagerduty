@@ -12,14 +12,7 @@ import (
 func init() {
 	resource.AddTestSweepers("pagerduty_event_orchestration_unrouted", &resource.Sweeper{
 		Name: "pagerduty_event_orchestration_unrouted",
-		Dependencies: []string{
-			"pagerduty_schedule",
-			"pagerduty_team",
-			"pagerduty_user",
-			"pagerduty_escalation_policy",
-			"pagerduty_service",
-			"pagerduty_event_orchestration",
-		},
+		F:    testSweepEventOrchestration,
 	})
 }
 

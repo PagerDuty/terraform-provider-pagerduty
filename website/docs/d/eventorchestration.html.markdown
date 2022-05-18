@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_event_orchestration
 
-Use this data source to get information about a specific global [Event Orchestration][1]
+Use this data source to get information about a specific Global [Event Orchestration][1]
 
 ## Example Usage
 

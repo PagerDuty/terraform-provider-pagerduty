@@ -53,7 +53,7 @@ $ terraform import pagerduty_event_orchestration.main 19acac92-027a-4ea0-b06c-bb
 
 # pagerduty_event_orchestration_service
 
-When integrations exist on a service, [Service Orchestrations](https://support.pagerduty.com/docs/event-orchestration#service-orchestrations) can be used to evaluate incoming events against each of its rules, beginning with the rules in the "start" set. When a matching rule is found, it can modify and enhance the event and can route the event to another set of rules within this Service Orchestration for further processing.
+When integrations exist on a service, [Service Orchestrations](https://support.pagerduty.com/docs/event-orchestration#service-orchestrations) can be used to evaluate incoming events against each of its rules, beginning with the rules in the "start" set. When a matching rule is found, it can modify and enhance the event and can route the event to another set of rules within this Service Orchestration for further processing. As a prerequisite, please ensure the service is set to evaluate orchestrations using the [Service Orchestration Active status endpoint](https://developer.pagerduty.com/api-reference/855659be83d9e-update-the-service-orchestration-active-status-for-a-service)
 
 ## Example of configuring a Service Orchestration
 

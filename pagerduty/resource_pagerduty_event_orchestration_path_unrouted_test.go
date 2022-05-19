@@ -11,23 +11,16 @@ import (
 
 func init() {
 	resource.AddTestSweepers("pagerduty_event_orchestration_unrouted", &resource.Sweeper{
-		Name: "unrouted",
-		Dependencies: []string{
-			"pagerduty_schedule",
-			"pagerduty_team",
-			"pagerduty_user",
-			"pagerduty_escalation_policy",
-			"pagerduty_service",
-			"pagerduty_event_orchestration",
-		},
+		Name: "pagerduty_event_orchestration_unrouted",
+		F:    testSweepEventOrchestration,
 	})
 }
 
 func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
-	team := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	orchestration := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	orchestration := fmt.Sprintf("tf-orchestration-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

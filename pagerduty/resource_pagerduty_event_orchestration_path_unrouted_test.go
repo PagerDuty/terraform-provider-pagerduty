@@ -280,7 +280,6 @@ func createUnroutedBaseConfig(t, ep, s, o string) string {
 func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createUnroutedBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-			type = "unrouted"
 			parent {
 				id = pagerduty_event_orchestration.orch.id
 			}
@@ -297,7 +296,6 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(t, ep, s, 
 func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithConditions(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createUnroutedBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-			type = "unrouted"
 			parent {
 				id = pagerduty_event_orchestration.orch.id
 			}
@@ -322,7 +320,6 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithConditions(t, 
 func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithMultipleRules(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createUnroutedBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-			type = "unrouted"
 			parent {
 				id = pagerduty_event_orchestration.orch.id
 			}
@@ -359,7 +356,6 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithMultipleRules(
 func testAccCheckPagerDutyEventOrchestrationPathUnroutedWithAllConfig(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createUnroutedBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-			type = "unrouted"
 			parent {
 				id = pagerduty_event_orchestration.orch.id
 			}

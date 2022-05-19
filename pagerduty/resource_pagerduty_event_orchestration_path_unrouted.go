@@ -22,7 +22,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"type": {
 				Type:     schema.TypeString,
-				Required: true,
+				Computed: true,
 			},
 			"parent": {
 				Type:     schema.TypeList,
@@ -235,6 +235,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData,
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if unroutedPath != nil {
+			d.Set("type", unroutedPath.Type)
 
 			if unroutedPath.Sets != nil {
 				d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
@@ -284,6 +285,7 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 		}
 		// set props
 		d.SetId(unroutedPath.Parent.ID)
+		d.Set("type", updatedPath.Type)
 		if unroutedPath.Sets != nil {
 			d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
 		}

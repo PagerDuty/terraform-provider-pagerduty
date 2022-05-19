@@ -22,7 +22,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"type": {
 				Type:     schema.TypeString,
-				Required: true,
+				Computed: true,
 			},
 			"parent": {
 				Type:     schema.TypeList,
@@ -131,6 +131,7 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
+			d.Set("type", routerPath.Type)
 
 			if routerPath.Sets != nil {
 				d.Set("sets", flattenSets(routerPath.Sets))
@@ -179,6 +180,8 @@ func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.Event
 		}
 		// set props
 		d.SetId(routerPath.Parent.ID)
+		d.Set("type", updatedPath.Type)
+
 		if routerPath.Sets != nil {
 			d.Set("sets", flattenSets(routerPath.Sets))
 		}

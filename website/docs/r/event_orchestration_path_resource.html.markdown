@@ -20,7 +20,6 @@ An Orchestration Router allows users to create a set of Event Rules. The Router 
   # The catch_all routes to unrouted path
   # but using the catch_all to route to another service is allowed.
   resource "pagerduty_event_orchestration_router" "router" {
-    type = "router"
     parent {
       # id of the Global Event Orchestrartion
       id = pagerduty_event_orchestration.my_monitor.id
@@ -57,7 +56,6 @@ An Orchestration Router allows users to create a set of Event Rules. The Router 
 
 The following arguments are supported:
 
-* `type` - (Required) Type of the orchestration path. For router path, it is `router`.
 * `parent` - (Required) Parent (Event Orchestration) to which this orchestration path belongs to.
 * `sets` - (Required) The Router contains a single set of rules  (the "start" set)
 * `catch_all` - (Required) When none of the rules match an event, the event will be routed according to the catch_all settings.
@@ -89,6 +87,7 @@ The following arguments are supported:
 ## Attributes Reference
 
 The following attributes are exported:
+* `type` - Type of the orchestration path. For router path, it is `router`.
 * `parent`
   * `type' - Type of the parent (Event Orchestration) reference for this Event Orchestration Path.
   * `self` - The URL at which the parent object (Event Orchestration) is accessible.
@@ -122,7 +121,6 @@ The Unrouted Orchestration evaluates events sent to it against each of its rules
   # The catch_all without actions as in this example will set suppressed action to true.
   # but using the catch_all to set severity, event_action, variables and extractions is allowed.
   resource "pagerduty_event_orchestration_unrouted" "unrouted" {
-    type = "unrouted"
     parent {
       # id of the Global Event Orchestrartion
       id = pagerduty_event_orchestration.my_monitor.id
@@ -160,7 +158,6 @@ The Unrouted Orchestration evaluates events sent to it against each of its rules
 
 The following arguments are supported:
 
-* `type` - (Required) Type of the orchestration path. For unrouted path, it is `unrouted`.
 * `parent` - (Required) Parent (Event Orchestration) to which this orchestration path belongs to.
 * `sets` - (Required) An Unrouted Orchestration must contain at least a "start" set, but can contain any number of additional sets that are routed to by other rules to form a directional graph.
 * `catch_all` - (Required) When none of the rules match an event, the event will be routed according to the catch_all settings.
@@ -203,6 +200,7 @@ The following arguments are supported:
 ## Attributes Reference
 
 The following attributes are exported:
+* `type` - Type of the orchestration path. For unrouted path, it is `unrouted`.
 * `parent`
   * `type` - Type of the parent (Event Orchestration) reference for this Event .Orchestration Path
   * `self` - The URL at which the parent object (Event Orchestration) is accessible.

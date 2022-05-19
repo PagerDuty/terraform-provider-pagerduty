@@ -96,7 +96,6 @@ resource "pagerduty_service" "example" {
 # In this example the user has defined the service orchestration with nested rulesets.
 # The start set rule in this example routes to the second set
 resource "pagerduty_event_orchestration_service" "www" {
-  type = "service"
   parent {
     # id of the Service
     id = pagerduty_service.example.id
@@ -187,7 +186,6 @@ resource "pagerduty_event_orchestration_service" "www" {
 
 The following arguments are supported:
 
-* `type` - (Required) Type of the orchestration. For service orchestrations, it is `service`.
 * `parent` - (Required) Parent (Service) to which this orchestration belongs to.
 * `sets` - (Required) A Service Orchestration must contain at least a "start" set, but can contain any number of additional sets that are routed to by other rules to form a directional graph.
 * `catch_all` - (Required) When none of the rules match an event, the event will be routed according to the catch_all settings.
@@ -247,6 +245,7 @@ The following arguments are supported:
 ## Attributes Reference
 
 The following attributes are exported:
+* `type` - Type of the orchestration. For service orchestrations, it is `service`.
 * `parent`
   * `type` - Type of the parent (Event Orchestration) reference for this Event Orchestration Path
   * `self` - The URL at which the parent object (Event Orchestration) is accessible

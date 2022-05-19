@@ -55,7 +55,11 @@ In order to test the provider, you can simply run `make test`.
 $ make test
 ```
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
+In order to run the full suite of Acceptance tests, run `make testacc`. Running the acceptance tests requires
+that the `PAGERDUTY_TOKEN` environment variable be set to a valid API Token and that the
+`PAGERDUTY_USER_TOKEN` environment variable be set to a valid API User Token. Many tests also
+require that the [Email Domain Restriction](https://support.pagerduty.com/docs/account-settings#email-domain-restriction) feature
+either be disabled *or* be configured to include `foo.test` as an allowed domain.
 
 *Note:* Acceptance tests create real resources, and often cost money to run.
 

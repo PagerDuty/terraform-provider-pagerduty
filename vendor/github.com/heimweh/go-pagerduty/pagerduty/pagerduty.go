@@ -202,6 +202,7 @@ func (c *Client) newRequestDoOptions(method, url string, qryOptions, body, v int
 }
 
 func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
+	log.Printf(">>> req: %v", req)
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err

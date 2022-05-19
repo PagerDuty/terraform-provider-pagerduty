@@ -234,14 +234,23 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 					},
 				},
 			},
-			// "catch_all": {
-			// 	Type:     schema.TypeList,
-			// 	MaxItems: 1,
-			// 	Required: true, // TODO: figure out how to make this optional with a default value
-			// 	Elem: &schema.Resource{
-			// 		Schema: eventOrchestrationPathServiceCatchAllActions,
-			// 	},
-			// },
+			"catch_all": {
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"actions": {
+							Type:     schema.TypeList,
+							Required: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: eventOrchestrationPathServiceRuleActions,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }

@@ -2,8 +2,6 @@ package pagerduty
 
 import (
 	"fmt"
-	// "strconv"
-	// "log"
 	"strings"
 	"testing"
 
@@ -29,99 +27,132 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resourceName := "pagerduty_event_orchestration_service.serviceA"
+	serviceResourceName := "pagerduty_service.bar"
+
+	// Checks that run on every step except the last one. These checks that verify the existance of the resource
+	// and computed/default attributes. We're not checking individual resource attributes because
+	// according to the official docs (https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource#TestCheckResourceAttr)
+	// "State value checking is only recommended for testing Computed attributes and attribute defaults."
+	baseChecks := []resource.TestCheckFunc{
+		testAccCheckPagerDutyEventOrchestrationPathServiceExists(resourceName),
+		testAccCheckPagerDutyEventOrchestrationPathServiceParent(resourceName, serviceResourceName),
+		resource.TestCheckResourceAttr(resourceName, "type", "service"),
+	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		// TODO:
-		// CheckDestroy: testAccCheckPagerDutyEventOrchestrationDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyEventOrchestrationServicePathDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(escalationPolicy, service),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
-					resource.TestCheckResourceAttr(
-						resourceName, "type", "service",
-					),
-				),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
+				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
-			// Test adding/updating/deleting automation_actions properties
+			// Adding/updating/deleting automation_actions properties
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsConfig(escalationPolicy, service),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
-					resource.TestCheckResourceAttrSet(
-						resourceName, "sets.0.rules.0.id",
-					),
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
+					)...,
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsParamsUpdateConfig(escalationPolicy, service),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUpdateConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
-					resource.TestCheckResourceAttr(
-						resourceName, "sets.0.rules.0.actions.0.automation_actions.0.auto_send", "false",
-					),
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(
+							resourceName, "sets.0.rules.0.actions.0.automation_actions.0.auto_send", "false",
+						),
+					)...,
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsParamsDeleteConfig(escalationPolicy, service),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
-				),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDeleteConfig(escalationPolicy, service),
+				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
-			// Test adding/updating extractions/variables
+			// Adding/updating/deleting all actions
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceExtractionsVariablesConfig(escalationPolicy, service),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
-				),
-			},
-			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceExtractionsVariablesUpdatedConfig(escalationPolicy, service),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
-				),
-			},
-			// Test adding/updating/deleting all actions
-			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAllActionsConfig(escalationPolicy, service),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
+					append(
+						baseChecks,
+						[]resource.TestCheckFunc{
+							resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.1.id"),
+						}...,
+					)...,
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAllActionsUpdateConfig(escalationPolicy, service),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
+					append(
+						baseChecks,
+						[]resource.TestCheckFunc{
+							resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.1.id"),
+						}...,
+					)...,
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceAllActionsDeleteConfig(escalationPolicy, service),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyEventOrchestrationServicePathExists(resourceName),
-					testAccCheckPagerDutyEventOrchestrationServicePathParent(resourceName, "pagerduty_service.bar"),
+					append(
+						baseChecks,
+						[]resource.TestCheckFunc{
+							resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.1.id"),
+						}...,
+					)...,
+				),
+			},
+			// Deleting sets and the service path resource
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceOneSetNoActionsConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
+					)...,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceResourceDeleteConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationServicePathNotExists(resourceName),
 				),
 			},
 
 			// TODO:
-			// test deleting route_to
 			// test regex extractions
-			// test catch_all
-			// test resetting rules
 		},
 	})
 }
 
-func testAccCheckPagerDutyEventOrchestrationServicePathExists(rn string) resource.TestCheckFunc {
+func testAccCheckPagerDutyEventOrchestrationServicePathDestroy(s *terraform.State) error {
+	client, _ := testAccProvider.Meta().(*Config).Client()
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "pagerduty_event_orchestration_path_service" {
+			continue
+		}
+
+		srv := s.RootModule().Resources["pagerduty_service.bar"]
+
+		if _, _, err := client.EventOrchestrationPaths.Get(srv.Primary.ID, "service"); err == nil {
+			return fmt.Errorf("Event Orchestration Service Path still exists")
+		}
+	}
+	return nil
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathServiceExists(rn string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		orch, ok := s.RootModule().Resources[rn]
 		if !ok {
@@ -146,7 +177,18 @@ func testAccCheckPagerDutyEventOrchestrationServicePathExists(rn string) resourc
 	}
 }
 
-func testAccCheckPagerDutyEventOrchestrationServicePathParent(rn, sn string) resource.TestCheckFunc {
+func testAccCheckPagerDutyEventOrchestrationServicePathNotExists(rn string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		_, ok := s.RootModule().Resources[rn]
+		if ok {
+			return fmt.Errorf("Event Orchestration Service Path is not deleted from the state: %s", rn)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathServiceParent(rn, sn string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p, _ := s.RootModule().Resources[rn]
 		srv, ok := s.RootModule().Resources[sn]
@@ -212,7 +254,7 @@ func createBaseServicePathConfig(ep, s string) string {
 	`, ep, s)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -222,11 +264,15 @@ func testAccCheckPagerDutyEventOrchestrationServiceRequiredFieldsConfig(ep, s st
 			sets {
 				id = "start"
 			}
+
+			catch_all {
+				actions { }
+			}
 		}
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -264,11 +310,39 @@ func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsConfig(ep, s
 					}
 				}
 			}
+
+			catch_all {
+				actions {
+					automation_actions {
+						name = "catch-all test"
+						url = "https://catch-all-test.com"
+						auto_send = true
+
+						headers {
+							key = "foo1"
+							value = "bar1"
+						}
+						headers {
+							key = "baz1"
+							value = "buz1"
+						}
+
+						parameters {
+							key = "source1"
+							value = "orch1"
+						}
+						parameters {
+							key = "region1"
+							value = "us1"
+						}
+					}
+				}
+			}
 		}
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsParamsUpdateConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUpdateConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -296,11 +370,30 @@ func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsParamsUpdate
 					}
 				}
 			}
+
+			catch_all {
+				actions {
+					automation_actions {
+						name = "catch-all test upd"
+						url = "https://catch-all-test-upd.com"
+
+						headers {
+							key = "baz2"
+							value = "buz2"
+						}
+
+						parameters {
+							key = "source2"
+							value = "orch2"
+						}
+					}
+				}
+			}
 		}
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsParamsDeleteConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDeleteConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -319,42 +412,12 @@ func testAccCheckPagerDutyEventOrchestrationServiceAutomationActionsParamsDelete
 					}
 				}
 			}
-		}
-	`)
-}
 
-func testAccCheckPagerDutyEventOrchestrationServiceExtractionsVariablesConfig(ep, s string) string {
-	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
-		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
-		
-			sets {
-				id = "start"
-				rules {
-					label = "rule 1"
-					actions {							
-						variables {
-							name = "server_name_cpu"
-							path = "event.summary"
-							type = "regex"
-							value = "High CPU on (.*) server"
-						}
-						variables {
-							name = "server_name_memory"
-							path = "event.custom_details"
-							type = "regex"
-							value = "High memory usage on (.*) server"
-						}
-						extractions {
-							target = "event.summary"
-							template = "High memory usage on variables.hostname server"
-						}
-						extractions {
-							target = "event.custom_details"
-							template = "High memory usage on variables.hostname server"
-						}
+			catch_all {
+				actions {
+					automation_actions {
+						name = "catch-all test upd"
+						url = "https://catch-all-test-upd.com"
 					}
 				}
 			}
@@ -362,7 +425,7 @@ func testAccCheckPagerDutyEventOrchestrationServiceExtractionsVariablesConfig(ep
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceExtractionsVariablesUpdatedConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceExtractionsVariablesUpdatedConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -387,11 +450,15 @@ func testAccCheckPagerDutyEventOrchestrationServiceExtractionsVariablesUpdatedCo
 					}
 				}
 			}
+
+			catch_all {
+				actions { }
+			}
 		}
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceAllActionsConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -417,6 +484,26 @@ func testAccCheckPagerDutyEventOrchestrationServiceAllActionsConfig(ep, s string
 						}
 						severity = "critical"
 						event_action = "trigger"
+						variables {
+							name = "hostname"
+							path = "event.source"
+							type = "regex"
+							value = "Source host: (.*)"
+						}
+						variables {
+							name = "cpu_val"
+							path = "event.custom_details.cpu"
+							type = "regex"
+							value = "(.*)"
+						}
+						extractions {
+							target = "event.summary"
+							template = "High CPU usage on {{variables.hostname}}"
+						}
+						extractions {
+							target = "event.custom_details.message"
+							template = "High CPU usage on {{variables.hostname}}: {{variables.cpu_val}}"
+						}
 					}
 				}
 			}
@@ -438,11 +525,44 @@ func testAccCheckPagerDutyEventOrchestrationServiceAllActionsConfig(ep, s string
 					}
 				}
 			}
+
+			catch_all {
+				actions {
+					suspend = 120
+					priority = "P0IN2KW"
+					annotate = "Routed through an event orchestration - catch-all rule"
+					pagerduty_automation_actions {
+						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMC"
+					}
+					severity = "warning"
+					event_action = "trigger"
+					variables {
+						name = "user_id"
+						path = "event.custom_details.user_id"
+						type = "regex"
+						value = "Source host: (.*)"
+					}
+					variables {
+						name = "updated_at"
+						path = "event.custom_details.updated_at"
+						type = "regex"
+						value = "(.*)"
+					}
+					extractions {
+						target = "event.custom_details.message"
+						template = "Last modified by {{variables.user_id}} on {{variables.updated_at}}"
+					}
+					extractions {
+						target = "event.group"
+						template = "{{variables.region}}"
+					}
+				}
+			}
 		}
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceAllActionsUpdateConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -465,6 +585,16 @@ func testAccCheckPagerDutyEventOrchestrationServiceAllActionsUpdateConfig(ep, s 
 						}
 						severity = "warning"
 						event_action = "resolve"
+						variables {
+							name = "cpu_val_upd"
+							path = "event.custom_details.cpu_upd"
+							type = "regex"
+							value = "CPU:(.*)"
+						}
+						extractions {
+							target = "event.custom_details.message_upd"
+							template = "[UPD] High CPU usage on {{variables.hostname}}: {{variables.cpu_val}}"
+						}
 					}
 				}
 			}
@@ -496,11 +626,35 @@ func testAccCheckPagerDutyEventOrchestrationServiceAllActionsUpdateConfig(ep, s 
 					}
 				}
 			}
+
+			catch_all {
+				actions {
+					suspend = 360
+					suppress = true
+					priority = "P0IN2KX"
+					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
+					pagerduty_automation_actions {
+						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMD"
+					}
+					severity = "info"
+					event_action = "resolve"
+					variables {
+						name = "updated_at_upd"
+						path = "event.custom_details.updated_at"
+						type = "regex"
+						value = "UPD (.*)"
+					}
+					extractions {
+						target = "event.source"
+						template = "[UPD] {{variables.region}}"
+					}
+				}
+			}
 		}
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationServiceAllActionsDeleteConfig(ep, s string) string {
+func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			parent {
@@ -527,6 +681,36 @@ func testAccCheckPagerDutyEventOrchestrationServiceAllActionsDeleteConfig(ep, s 
 					actions { }
 				}
 			}
+
+			catch_all {
+				actions { }
+			}
 		}
 	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathServiceOneSetNoActionsConfig(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			parent {
+				id = pagerduty_service.bar.id
+			}
+		
+			sets {
+				id = "start"
+				rules {
+					label = "rule 1 updated"
+					actions {}
+				}
+			}
+
+			catch_all {
+				actions { }
+			}
+		}
+	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathServiceResourceDeleteConfig(ep, s string) string {
+	return createBaseServicePathConfig(ep, s)
 }

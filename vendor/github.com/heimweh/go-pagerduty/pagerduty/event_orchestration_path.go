@@ -49,7 +49,7 @@ type EventOrchestrationPathRuleCondition struct {
 // Service: https://developer.pagerduty.com/api-reference/179537b835e2d-get-the-service-orchestration-for-a-service
 // Unrouted: https://developer.pagerduty.com/api-reference/70aa1139e1013-get-the-unrouted-orchestration-for-a-global-event-orchestration
 type EventOrchestrationPathRuleActions struct {
-	RouteTo                    string                                             `json:"route_to,omitempty"`
+	RouteTo                    string                                             `json:"route_to"`
 	Suppress                   bool                                               `json:"suppress"`
 	Suspend                    *int                                               `json:"suspend"`
 	Priority                   string                                             `json:"priority"`

@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -73,6 +74,50 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDeleteConfig(escalationPolicy, service),
 				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
+			// Providing invalid extractions attributes for set rules
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
+					escalationPolicy, service, invalidExtractionRegexTemplateNilConfig(), "",
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: regex and template cannot both be null"),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
+					escalationPolicy, service, invalidExtractionRegexTemplateValConfig(), "",
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: regex and template cannot both have values"),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
+					escalationPolicy, service, invalidExtractionRegexNilSourceConfig(), "",
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: source can't be blank"),
+			},
+			// Providing invalid extractions attributes for the catch_all rule
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
+					escalationPolicy, service, "", invalidExtractionRegexTemplateNilConfig(),
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: regex and template cannot both be null"),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
+					escalationPolicy, service, "", invalidExtractionRegexTemplateValConfig(),
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: regex and template cannot both have values"),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
+					escalationPolicy, service, "", invalidExtractionRegexNilSourceConfig(),
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: source can't be blank"),
+			},
 			// Adding/updating/deleting all actions
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(escalationPolicy, service),
@@ -129,9 +174,6 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					testAccCheckPagerDutyEventOrchestrationServicePathNotExists(resourceName),
 				),
 			},
-
-			// TODO:
-			// test regex extractions
 		},
 	})
 }
@@ -425,37 +467,54 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDe
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathServiceExtractionsVariablesUpdatedConfig(ep, s string) string {
-	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
-		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
-		
-			sets {
-				id = "start"
-				rules {
-					label = "rule 1"
-					actions {
-						variables {
-							name = "host_name"
-							path = "event.custom_details.memory"
-							type = "regex"
-							value = "High memory usage on (.*) server"
-						}
-						extractions {
-							target = "event.custom_details.info"
-							template = "High memory usage on {{variables.hostname}} server: {{event.custom_details.max_memory}}"
+func testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(ep, s, re, cae string) string {
+	return fmt.Sprintf(
+		"%s%s",
+		createBaseServicePathConfig(ep, s),
+		fmt.Sprintf(`resource "pagerduty_event_orchestration_service" "serviceA" {
+				parent {
+					id = pagerduty_service.bar.id
+				}			
+				sets {
+					id = "start"
+					rules {
+						actions {
+							%s
 						}
 					}
 				}
+				catch_all {
+					actions {
+						%s
+					}
+				}
 			}
+		`, re, cae),
+	)
+}
 
-			catch_all {
-				actions { }
-			}
-		}
-	`)
+func invalidExtractionRegexTemplateNilConfig() string {
+	return `
+		extractions {
+			target = "event.summary"
+		}`
+}
+
+func invalidExtractionRegexTemplateValConfig() string {
+	return `
+		extractions {
+			regex = ".*"
+			template = "hi"
+			target = "event.summary"
+		}`
+}
+
+func invalidExtractionRegexNilSourceConfig() string {
+	return `
+		extractions {
+			regex = ".*"
+			target = "event.summary"
+		}`
 }
 
 func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s string) string {
@@ -501,8 +560,9 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 							template = "High CPU usage on {{variables.hostname}}"
 						}
 						extractions {
+							regex = ".*"
+							source = "event.group"
 							target = "event.custom_details.message"
-							template = "High CPU usage on {{variables.hostname}}: {{variables.cpu_val}}"
 						}
 					}
 				}
@@ -553,8 +613,9 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 						template = "Last modified by {{variables.user_id}} on {{variables.updated_at}}"
 					}
 					extractions {
+						regex = ".*"
+						source = "event.custom_details.region"
 						target = "event.group"
-						template = "{{variables.region}}"
 					}
 				}
 			}
@@ -592,6 +653,11 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 							value = "CPU:(.*)"
 						}
 						extractions {
+							regex = ".*"
+							source = "event.custom_details.region_upd"
+							target = "event.source"
+						}
+						extractions {
 							target = "event.custom_details.message_upd"
 							template = "[UPD] High CPU usage on {{variables.hostname}}: {{variables.cpu_val}}"
 						}
@@ -623,6 +689,16 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 							target = "event.summary"
 							template = "High memory usage on {{variables.hostname}} server: {{event.custom_details.max_memory}}"
 						}
+						extractions {
+							regex = ".*"
+							source = "event.custom_details.region"
+							target = "event.group"
+						}
+						extractions {
+							regex = ".*"
+							source = "event.custom_details.hostname"
+							target = "event.source"
+						}
 					}
 				}
 			}
@@ -643,10 +719,11 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 						path = "event.custom_details.updated_at"
 						type = "regex"
 						value = "UPD (.*)"
-					}
+					}					
 					extractions {
-						target = "event.source"
-						template = "[UPD] {{variables.region}}"
+						regex = ".*"
+						source = "event.custom_details.region_upd"
+						target = "event.class"
 					}
 				}
 			}

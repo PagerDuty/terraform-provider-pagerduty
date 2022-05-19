@@ -127,7 +127,6 @@ var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
 				},
 			}},
 	},
-	// TODO: add source and regex to unrouted
 	"extractions": {
 		Type:     schema.TypeList,
 		Optional: true,
@@ -172,8 +171,9 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 		Update: resourcePagerDutyEventOrchestrationPathServiceUpdate,
 		Delete: resourcePagerDutyEventOrchestrationPathServiceDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough, //TODO: resourcePagerDutyEventOrchestrationPathServiceImport
+			State: resourcePagerDutyEventOrchestrationPathServiceImport,
 		},
+		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
 			"type": {
 				Type:     schema.TypeString,
@@ -255,6 +255,28 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 	}
 }
 
+func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, meta interface{}) error {
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		id := d.Id()
+		t := "service"
+		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
+
+		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
+		} else if path != nil {
+			setEventOrchestrationPathServiceProps(d, path)
+		}
+		return nil
+	})
+
+}
+
 func resourcePagerDutyEventOrchestrationPathServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourcePagerDutyEventOrchestrationPathServiceUpdate(d, meta)
 }
@@ -289,31 +311,28 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(d *schema.ResourceData
 	return nil
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, meta interface{}) error {
-	client, err := meta.(*Config).Client()
-	if err != nil {
-		return err
-	}
-
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		id := d.Id()
-		t := "service"
-		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
-
-		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if path != nil {
-			setEventOrchestrationPathServiceProps(d, path)
-		}
-		return nil
-	})
-
-}
-
 func resourcePagerDutyEventOrchestrationPathServiceDelete(d *schema.ResourceData, meta interface{}) error {
 	d.SetId("")
 	return nil
+}
+
+func resourcePagerDutyEventOrchestrationPathServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	id := d.Id()
+
+	p, _, pErr := client.EventOrchestrationPaths.Get(id, "service")
+	if pErr != nil {
+		return []*schema.ResourceData{}, pErr
+	}
+
+	d.SetId(id)
+	d.Set("parent", flattenServicePathParent(p.Parent))
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
@@ -321,7 +340,8 @@ func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestratio
 		Parent: &pagerduty.EventOrchestrationPathReference{
 			ID: d.Get("parent.0.id").(string),
 		},
-		Sets: expandServicePathSets(d.Get("sets")),
+		Sets:     expandServicePathSets(d.Get("sets")),
+		CatchAll: expandServicePathCatchAll(d.Get("catch_all")),
 	}
 }
 
@@ -365,6 +385,19 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 	return rules
 }
 
+func expandServicePathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
+	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
+
+	for _, ca := range v.([]interface{}) {
+		if ca != nil {
+			am := ca.(map[string]interface{})
+			catchAll.Actions = expandServicePathActions(am["actions"])
+		}
+	}
+
+	return catchAll
+}
+
 func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
 	var actions = &pagerduty.EventOrchestrationPathRuleActions{
 		AutomationActions:          []*pagerduty.EventOrchestrationPathAutomationAction{},
@@ -388,9 +421,8 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.EventAction = a["event_action"].(string)
 		actions.PagerdutyAutomationActions = expandServicePathPagerDutyAutomationActions(a["pagerduty_automation_actions"])
 		actions.AutomationActions = expandServicePathAutomationActions(a["automation_actions"])
-		// TODO: use shared
-		actions.Variables = expandUnroutedActionsVariables(a["variables"])
-		actions.Extractions = expandUnroutedActionsExtractions(a["extractions"])
+		actions.Variables = expandEventOrchestrationPathVariables(a["variables"])
+		actions.Extractions = expandEventOrchestrationPathExtractions(a["extractions"])
 	}
 
 	return actions
@@ -453,6 +485,7 @@ func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.
 	// TODO: see if we can reuse expand functions for all orch path sets.
 	// Maybe pass in the rule actions and catch-all rule actions expanding function?
 	d.Set("sets", flattenServicePathSets(p.Sets))
+	d.Set("catch_all", flattenServicePathCatchAll(p.CatchAll))
 	return nil
 }
 
@@ -477,6 +510,17 @@ func flattenServicePathSets(orchPathSets []*pagerduty.EventOrchestrationPathSet)
 		flattenedSets = append(flattenedSets, flattenedSet)
 	}
 	return flattenedSets
+}
+
+func flattenServicePathCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
+	var caMap []map[string]interface{}
+
+	c := make(map[string]interface{})
+
+	c["actions"] = flattenServicePathActions(catchAll.Actions)
+	caMap = append(caMap, c)
+
+	return caMap
 }
 
 func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
@@ -510,13 +554,11 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 		"annotate":     actions.Annotate,
 	}
 
-	// TODO: use shared code
 	if actions.Variables != nil {
-		flattenedAction["variables"] = flattenUnroutedActionsVariables(actions.Variables)
+		flattenedAction["variables"] = flattenEventOrchestrationPathVariables(actions.Variables)
 	}
-	// TODO: use shared code
 	if actions.Extractions != nil {
-		flattenedAction["extractions"] = flattenUnroutedActionsExtractions(actions.Extractions)
+		flattenedAction["extractions"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
 	if actions.PagerdutyAutomationActions != nil {
 

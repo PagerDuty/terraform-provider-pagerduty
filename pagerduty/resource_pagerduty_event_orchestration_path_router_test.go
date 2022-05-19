@@ -220,7 +220,6 @@ func createBaseConfig(t, ep, s, o string) string {
 func testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
-		type = "router"
 		parent {
 			id = pagerduty_event_orchestration.orch.id
 		}
@@ -239,7 +238,6 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(t, ep, s, o stri
 func testAccCheckPagerDutyEventOrchestrationRouterConfig(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
-		type = "router"
 		parent {
 			id = pagerduty_event_orchestration.orch.id
 		}
@@ -266,7 +264,6 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(t, ep, s,
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
     }
@@ -307,7 +304,6 @@ resource "pagerduty_service" "bar2" {
 }
 
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
     }
@@ -351,7 +347,6 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigNoConditions(t, ep, s, o
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
     }
@@ -378,7 +373,6 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigWithCatchAllToService(t,
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
     }
@@ -408,7 +402,6 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(t, e
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`
 resource "pagerduty_event_orchestration_router" "router" {
-	type = "router"
 	parent {
         id = pagerduty_event_orchestration.orch.id
     }

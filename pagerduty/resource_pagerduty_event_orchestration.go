@@ -28,17 +28,8 @@ func resourcePagerDutyEventOrchestration() *schema.Resource {
 				Optional: true,
 			},
 			"team": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeString,
 				Optional: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
 			},
 			"routes": {
 				Type:     schema.TypeInt,
@@ -87,7 +78,9 @@ func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrche
 	}
 
 	if attr, ok := d.GetOk("team"); ok {
-		orchestration.Team = expandOrchestrationTeam(attr)
+		orchestration.Team = &pagerduty.EventOrchestrationObject{
+			ID: stringTypeToStringPtr(attr.(string)),
+		}
 	} else {
 		var tId *string
 		orchestration.Team = &pagerduty.EventOrchestrationObject{
@@ -96,16 +89,6 @@ func buildEventOrchestrationStruct(d *schema.ResourceData) *pagerduty.EventOrche
 	}
 
 	return orchestration
-}
-
-func expandOrchestrationTeam(v interface{}) *pagerduty.EventOrchestrationObject {
-	var team *pagerduty.EventOrchestrationObject
-	t := v.([]interface{})[0].(map[string]interface{})
-	team = &pagerduty.EventOrchestrationObject{
-		ID: stringTypeToStringPtr(t["id"].(string)),
-	}
-
-	return team
 }
 
 func resourcePagerDutyEventOrchestrationCreate(d *schema.ResourceData, meta interface{}) error {
@@ -246,7 +229,7 @@ func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrches
 	d.Set("routes", o.Routes)
 
 	if o.Team != nil {
-		d.Set("team", flattenEventOrchestrationTeam(o.Team))
+		d.Set("team", o.Team.ID)
 	}
 
 	if len(o.Integrations) > 0 {

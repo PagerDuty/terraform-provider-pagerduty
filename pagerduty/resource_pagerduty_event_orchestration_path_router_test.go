@@ -207,205 +207,195 @@ func createBaseConfig(t, ep, s, o string) string {
 func testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
-		parent {
-			id = pagerduty_event_orchestration.orch.id
-		}
-		catch_all {
-			actions {
-				route_to = "unrouted"
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = "unrouted"
+				}
+			}
+			sets {
+				id = "start"
 			}
 		}
-		sets {
-			id = "start"
-		}
-	}
 	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfig(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
-		parent {
-			id = pagerduty_event_orchestration.orch.id
-		}
-		catch_all {
-			actions {
-				route_to = "unrouted"
-			}
-		}
-		sets {
-			id = "start"
-			rules {
-				disabled = false
-				label = "rule1 label"
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
 				actions {
-					route_to = pagerduty_service.bar.id
+					route_to = "unrouted"
+				}
+			}
+			sets {
+				id = "start"
+				rules {
+					disabled = false
+					label = "rule1 label"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
 				}
 			}
 		}
-	}
 	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
-		`
-resource "pagerduty_event_orchestration_router" "router" {
-	parent {
-        id = pagerduty_event_orchestration.orch.id
-    }
-	catch_all {
-		actions {
-			route_to = "unrouted"
-		}
-	}
-	sets {
-		id = "start"
-		rules {
-			disabled = false
-			label = "rule1 label"
-			actions {
-				route_to = pagerduty_service.bar.id
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = "unrouted"
+				}
 			}
-			conditions {
-				expression = "event.summary matches part 'database'"
+			sets {
+				id = "start"
+				rules {
+					disabled = false
+					label = "rule1 label"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+					conditions {
+						expression = "event.summary matches part 'database'"
+					}
+				}
 			}
 		}
-	}
-}
-`)
+	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfigWithMultipleRules(t, ep, s, o string) string {
 	return fmt.Sprintf(
 		"%s%s", createBaseConfig(t, ep, s, o),
-		`
-resource "pagerduty_service" "bar2" {
-	name = "tf-barService2"
-	escalation_policy       = pagerduty_escalation_policy.foo.id
+		`resource "pagerduty_service" "bar2" {
+			name = "tf-barService2"
+			escalation_policy       = pagerduty_escalation_policy.foo.id
 
-	incident_urgency_rule {
-		type = "constant"
-		urgency = "high"
-	}
-}
-
-resource "pagerduty_event_orchestration_router" "router" {
-	parent {
-        id = pagerduty_event_orchestration.orch.id
-    }
-	catch_all {
-		actions {
-			route_to = "unrouted"
-		}
-	}
-	sets {
-		id = "start"
-		rules {
-			disabled = false
-			label = "rule1 label"
-			actions {
-				route_to = pagerduty_service.bar.id
-			}
-			conditions {
-				expression = "event.summary matches part 'database'"
-			}
-			conditions {
-				expression = "event.severity matches part 'critical'"
+			incident_urgency_rule {
+				type = "constant"
+				urgency = "high"
 			}
 		}
 
-		rules {
-			disabled = false
-			label = "rule2 label"
-			actions {
-				route_to = pagerduty_service.bar2.id
+		resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = "unrouted"
+				}
 			}
-			conditions {
-				expression = "event.severity matches part 'critical'"
+			sets {
+				id = "start"
+				rules {
+					disabled = false
+					label = "rule1 label"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+					conditions {
+						expression = "event.summary matches part 'database'"
+					}
+					conditions {
+						expression = "event.severity matches part 'critical'"
+					}
+				}
+
+				rules {
+					disabled = false
+					label = "rule2 label"
+					actions {
+						route_to = pagerduty_service.bar2.id
+					}
+					conditions {
+						expression = "event.severity matches part 'critical'"
+					}
+				}
 			}
 		}
-	}
-}
-`)
+	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfigNoConditions(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
-		`
-resource "pagerduty_event_orchestration_router" "router" {
-	parent {
-        id = pagerduty_event_orchestration.orch.id
-    }
-	catch_all {
-		actions {
-			route_to = pagerduty_service.bar.id
-		}
-	}
-	sets {
-		id = "start"
-		rules {
-			disabled = false
-			label = "rule1 label"
-			actions {
-				route_to = pagerduty_service.bar.id
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = pagerduty_service.bar.id
+				}
+			}
+			sets {
+				id = "start"
+				rules {
+					disabled = false
+					label = "rule1 label"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+				}
 			}
 		}
-	}
-}
-`)
+	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfigWithCatchAllToService(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
-		`
-resource "pagerduty_event_orchestration_router" "router" {
-	parent {
-        id = pagerduty_event_orchestration.orch.id
-    }
-	catch_all {
-		actions {
-			route_to = pagerduty_service.bar.id
-		}
-	}
-	sets {
-		id = "start"
-		rules {
-			disabled = false
-			label = "rule1 label"
-			actions {
-				route_to = pagerduty_service.bar.id
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+			
+			catch_all {
+				actions {
+					route_to = pagerduty_service.bar.id
+				}
 			}
-			conditions {
-				expression = "event.severity matches part 'critical'"
+			sets {
+				id = "start"
+				rules {
+					disabled = false
+					label = "rule1 label"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+					conditions {
+						expression = "event.severity matches part 'critical'"
+					}
+				}
 			}
 		}
-	}
-}
-`)
+		`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
-		`
-resource "pagerduty_event_orchestration_router" "router" {
-	parent {
-        id = pagerduty_event_orchestration.orch.id
-    }
-	catch_all {
-		actions {
-			route_to = pagerduty_service.bar.id
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+			
+			catch_all {
+				actions {
+					route_to = pagerduty_service.bar.id
+				}
+			}
+			sets {
+				id = "start"
+			}
 		}
-	}
-	sets {
-		id = "start"
-	}
+		`)
 }
-`)
-}
+
 func testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(t, ep, s, o string) string {
 	return createBaseConfig(t, ep, s, o)
 }
+
 func testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(router, service string, catchAll bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		r, rOk := s.RootModule().Resources[router]

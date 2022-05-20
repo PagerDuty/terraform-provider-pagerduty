@@ -359,6 +359,7 @@ func resourcePagerDutyEventOrchestrationPathRouterImport(d *schema.ResourceData,
 	}
 
 	d.SetId(orchestrationID)
+	d.Set("event_orchestration", orchestrationID)
 
 	return []*schema.ResourceData{d}, nil
 }

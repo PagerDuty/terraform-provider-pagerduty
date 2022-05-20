@@ -175,7 +175,7 @@ func testAccCheckPagerDutyEventOrchestrationTeamMatch(orchName, teamName string)
 			return fmt.Errorf("Not found: %s", teamName)
 		}
 
-		var otId = o.Primary.Attributes["team.0.id"]
+		var otId = o.Primary.Attributes["team"]
 		var tId = t.Primary.Attributes["id"]
 
 		if otId != tId {
@@ -207,9 +207,7 @@ resource "pagerduty_team" "bar" {
 resource "pagerduty_event_orchestration" "foo" {
 	name = "%s"
 	description = "%s"
-	team {
-		id = pagerduty_team.foo.id
-	}
+	team = pagerduty_team.foo.id
 }
 `, team1, team2, name, description)
 }
@@ -226,9 +224,7 @@ resource "pagerduty_team" "bar" {
 resource "pagerduty_event_orchestration" "foo" {
 	name = "%s"
 	description = "%s"
-	team {
-		id = pagerduty_team.bar.id
-	}
+	team = pagerduty_team.bar.id
 }
 `, team1, team2, name, description)
 }

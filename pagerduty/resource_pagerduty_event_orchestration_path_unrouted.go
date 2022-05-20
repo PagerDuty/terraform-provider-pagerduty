@@ -20,10 +20,6 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 			State: resourcePagerDutyEventOrchestrationPathUnroutedImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"type": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"parent": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -251,8 +247,6 @@ func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData,
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if unroutedPath != nil {
-			d.Set("type", unroutedPath.Type)
-
 			if unroutedPath.Sets != nil {
 				d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
 			}
@@ -299,9 +293,7 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 		if updatedPath == nil {
 			return resource.NonRetryableError(fmt.Errorf("no event orchestration unrouted found"))
 		}
-		// set props
 		d.SetId(unroutedPath.Parent.ID)
-		d.Set("type", updatedPath.Type)
 		if unroutedPath.Sets != nil {
 			d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
 		}

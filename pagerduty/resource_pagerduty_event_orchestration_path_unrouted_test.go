@@ -32,8 +32,6 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "type", "unrouted"),
-					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.#", "0"),
 				),
 			},
@@ -157,8 +155,6 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "type", "unrouted"),
-					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.#", "0"),
 				),
 			},
@@ -195,18 +191,15 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedExists(rn string) resour
 			return fmt.Errorf("Not found: %s", rn)
 		}
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Event Orchestration Path Type is set")
+			return fmt.Errorf("No Event Orchestration Unrouted Path is set")
 		}
 
 		orch := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "unrouted")
+		_, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "unrouted")
 
 		if err != nil {
-			return fmt.Errorf("Orchestration Path type not found: %v for orchestration %v", "unrouted", orch.Primary.ID)
-		}
-		if found.Type != "unrouted" {
-			return fmt.Errorf("Event Orchrestration path not found: %v - %v", "unrouted", found)
+			return fmt.Errorf("Event Orchestration Unrouted Path not found: %v for orchestration %v", "unrouted", orch.Primary.ID)
 		}
 
 		return nil

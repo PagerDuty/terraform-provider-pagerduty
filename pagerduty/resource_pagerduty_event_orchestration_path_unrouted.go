@@ -65,22 +65,14 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 													Optional: true, // If there is only start set we don't need route_to
 												},
 												"severity": {
-													Type:     schema.TypeString,
-													Optional: true,
-													ValidateFunc: validateValueFunc([]string{
-														"info",
-														"error",
-														"warning",
-														"critical",
-													}),
+													Type:         schema.TypeString,
+													Optional:     true,
+													ValidateFunc: validateEventOrchestrationPathSeverity(),
 												},
 												"event_action": {
-													Type:     schema.TypeString,
-													Optional: true,
-													ValidateFunc: validateValueFunc([]string{
-														"trigger",
-														"resolve",
-													}),
+													Type:         schema.TypeString,
+													Optional:     true,
+													ValidateFunc: validateEventOrchestrationPathEventAction(),
 												},
 												"variables": {
 													Type:     schema.TypeList,

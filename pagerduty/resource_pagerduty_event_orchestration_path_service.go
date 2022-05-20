@@ -87,22 +87,14 @@ var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
 		},
 	},
 	"severity": {
-		Type:     schema.TypeString,
-		Optional: true,
-		ValidateFunc: validateValueFunc([]string{
-			"info",
-			"error",
-			"warning",
-			"critical",
-		}),
+		Type:         schema.TypeString,
+		Optional:     true,
+		ValidateFunc: validateEventOrchestrationPathSeverity(),
 	},
 	"event_action": {
-		Type:     schema.TypeString,
-		Optional: true,
-		ValidateFunc: validateValueFunc([]string{
-			"trigger",
-			"resolve",
-		}),
+		Type:         schema.TypeString,
+		Optional:     true,
+		ValidateFunc: validateEventOrchestrationPathEventAction(),
 	},
 	"variables": {
 		Type:     schema.TypeList,

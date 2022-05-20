@@ -29,6 +29,22 @@ var PagerDutyEventOrchestrationPathConditions = map[string]*schema.Schema{
 	},
 }
 
+func validateEventOrchestrationPathSeverity() schema.SchemaValidateFunc {
+	return validateValueFunc([]string{
+		"info",
+		"error",
+		"warning",
+		"critical",
+	})
+}
+
+func validateEventOrchestrationPathEventAction() schema.SchemaValidateFunc {
+	return validateValueFunc([]string{
+		"trigger",
+		"resolve",
+	})
+}
+
 func checkExtractions(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 	sn := diff.Get("sets.#").(int)
 

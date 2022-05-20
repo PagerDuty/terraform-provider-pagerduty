@@ -27,9 +27,7 @@ resource "pagerduty_team" "engineering" {
 resource "pagerduty_event_orchestration" "my_monitor" {
   name = "My Monitoring Orchestration"
   description = "Send events to a pair of services"
-  team {
-    id = pagerduty_team.foo.id
-  }
+  team = pagerduty_team.foo.id
 }
 ```
 

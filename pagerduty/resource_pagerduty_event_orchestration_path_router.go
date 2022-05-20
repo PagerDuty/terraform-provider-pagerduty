@@ -20,17 +20,9 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 			State: resourcePagerDutyEventOrchestrationPathRouterImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"type": {
+			"event_orchestration": {
 				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"parent": {
-				Type:     schema.TypeList,
 				Required: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: PagerDutyEventOrchestrationPathParent,
-				},
 			},
 			"sets": {
 				Type:     schema.TypeList,
@@ -131,7 +123,7 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
-			d.Set("type", routerPath.Type)
+			d.Set("event_orchestration", routerPath.Parent.ID)
 
 			if routerPath.Sets != nil {
 				d.Set("sets", flattenSets(routerPath.Sets))
@@ -178,9 +170,8 @@ func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.Event
 		if updatedPath == nil {
 			return resource.NonRetryableError(fmt.Errorf("No Event Orchestration Router found."))
 		}
-		// set props
 		d.SetId(routerPath.Parent.ID)
-		d.Set("type", updatedPath.Type)
+		d.Set("event_orchestration", routerPath.Parent.ID)
 
 		if routerPath.Sets != nil {
 			d.Set("sets", flattenSets(routerPath.Sets))
@@ -197,22 +188,12 @@ func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.Event
 	return nil
 }
 
-func buildRouterPathParent(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-	orchPath := &pagerduty.EventOrchestrationPath{}
-
-	if attr, ok := d.GetOk("parent"); ok {
-		orchPath.Parent = expandOrchestrationPathParent(attr)
-	}
-
-	return orchPath
-}
-
 func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
 
-	orchPath := buildRouterPathParent(d)
-
-	if attr, ok := d.GetOk("parent"); ok {
-		orchPath.Parent = expandOrchestrationPathParent(attr)
+	orchPath := &pagerduty.EventOrchestrationPath{
+		Parent: &pagerduty.EventOrchestrationPathReference{
+			ID: d.Get("event_orchestration").(string),
+		},
 	}
 
 	if attr, ok := d.GetOk("sets"); ok {
@@ -224,16 +205,6 @@ func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrch
 	}
 
 	return orchPath
-}
-
-func expandOrchestrationPathParent(v interface{}) *pagerduty.EventOrchestrationPathReference {
-	var parent *pagerduty.EventOrchestrationPathReference
-	p := v.([]interface{})[0].(map[string]interface{})
-	parent = &pagerduty.EventOrchestrationPathReference{
-		ID: p["id"].(string),
-	}
-
-	return parent
 }
 
 func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
@@ -388,6 +359,7 @@ func resourcePagerDutyEventOrchestrationPathRouterImport(d *schema.ResourceData,
 	}
 
 	d.SetId(orchestrationID)
+	d.Set("event_orchestration", orchestrationID)
 
 	return []*schema.ResourceData{d}, nil
 }

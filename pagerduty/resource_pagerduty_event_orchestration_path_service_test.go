@@ -3,7 +3,6 @@ package pagerduty
 import (
 	"fmt"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -31,8 +30,7 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 	// "State value checking is only recommended for testing Computed attributes and attribute defaults."
 	baseChecks := []resource.TestCheckFunc{
 		testAccCheckPagerDutyEventOrchestrationPathServiceExists(resourceName),
-		testAccCheckPagerDutyEventOrchestrationPathServiceParent(resourceName, serviceResourceName),
-		resource.TestCheckResourceAttr(resourceName, "type", "service"),
+		testAccCheckPagerDutyEventOrchestrationPathServiceServiceID(resourceName, serviceResourceName),
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -223,7 +221,7 @@ func testAccCheckPagerDutyEventOrchestrationServicePathNotExists(rn string) reso
 	}
 }
 
-func testAccCheckPagerDutyEventOrchestrationPathServiceParent(rn, sn string) resource.TestCheckFunc {
+func testAccCheckPagerDutyEventOrchestrationPathServiceServiceID(rn, sn string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p, _ := s.RootModule().Resources[rn]
 		srv, ok := s.RootModule().Resources[sn]
@@ -232,20 +230,10 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceParent(rn, sn string) res
 			return fmt.Errorf("Service not found: %s", sn)
 		}
 
-		var pId = p.Primary.Attributes["parent.0.id"]
+		var pId = p.Primary.Attributes["service"]
 		var sId = srv.Primary.Attributes["id"]
 		if pId != sId {
-			return fmt.Errorf("Event Orchestration Service path parent ID (%v) not matching provided service ID: %v", pId, sId)
-		}
-
-		var t = p.Primary.Attributes["parent.0.type"]
-		if t != "service_reference" {
-			return fmt.Errorf("Event Orchestration Service path parent type (%v) not matching expected type: 'service_reference'", t)
-		}
-
-		var self = p.Primary.Attributes["parent.0.self"]
-		if !strings.HasSuffix(self, sId) {
-			return fmt.Errorf("Event Orchestration Service path parent self URL (%v) not containing expected service ID", self)
+			return fmt.Errorf("Event Orchestration Service path service ID (%v) not matching provided service ID: %v", pId, sId)
 		}
 
 		return nil
@@ -292,9 +280,7 @@ func createBaseServicePathConfig(ep, s string) string {
 func testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"
@@ -310,9 +296,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(ep, s strin
 func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"
@@ -380,9 +364,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(e
 func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUpdateConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"
@@ -431,9 +413,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUp
 func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDeleteConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"
@@ -465,9 +445,8 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 		"%s%s",
 		createBaseServicePathConfig(ep, s),
 		fmt.Sprintf(`resource "pagerduty_event_orchestration_service" "serviceA" {
-				parent {
-					id = pagerduty_service.bar.id
-				}			
+				service = pagerduty_service.bar.id
+						
 				sets {
 					id = "start"
 					rules {
@@ -513,9 +492,7 @@ func invalidExtractionRegexNilSourceConfig() string {
 func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"
@@ -619,9 +596,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"
@@ -727,9 +702,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"
@@ -762,9 +735,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(ep
 func testAccCheckPagerDutyEventOrchestrationPathServiceOneSetNoActionsConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			parent {
-				id = pagerduty_service.bar.id
-			}
+			service = pagerduty_service.bar.id
 		
 			sets {
 				id = "start"

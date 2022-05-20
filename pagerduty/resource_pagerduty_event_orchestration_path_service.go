@@ -175,17 +175,9 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 		},
 		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
-			"type": {
+			"service": {
 				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"parent": {
-				Type:     schema.TypeList,
 				Required: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: PagerDutyEventOrchestrationPathParent,
-				},
 			},
 			"sets": {
 				Type:     schema.TypeList,
@@ -324,13 +316,13 @@ func resourcePagerDutyEventOrchestrationPathServiceImport(d *schema.ResourceData
 
 	id := d.Id()
 
-	p, _, pErr := client.EventOrchestrationPaths.Get(id, "service")
+	_, _, pErr := client.EventOrchestrationPaths.Get(id, "service")
 	if pErr != nil {
 		return []*schema.ResourceData{}, pErr
 	}
 
 	d.SetId(id)
-	d.Set("parent", flattenServicePathParent(p.Parent))
+	d.Set("service", id)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -338,7 +330,7 @@ func resourcePagerDutyEventOrchestrationPathServiceImport(d *schema.ResourceData
 func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
 	return &pagerduty.EventOrchestrationPath{
 		Parent: &pagerduty.EventOrchestrationPathReference{
-			ID: d.Get("parent.0.id").(string),
+			ID: d.Get("service").(string),
 		},
 		Sets:     expandServicePathSets(d.Get("sets")),
 		CatchAll: expandServicePathCatchAll(d.Get("catch_all")),
@@ -480,23 +472,12 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 
 func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
 	d.SetId(p.Parent.ID)
-	d.Set("type", p.Type)
-	d.Set("parent", flattenServicePathParent(p.Parent))
+	d.Set("service", p.Parent.ID)
 	// TODO: see if we can reuse expand functions for all orch path sets.
 	// Maybe pass in the rule actions and catch-all rule actions expanding function?
 	d.Set("sets", flattenServicePathSets(p.Sets))
 	d.Set("catch_all", flattenServicePathCatchAll(p.CatchAll))
 	return nil
-}
-
-func flattenServicePathParent(p *pagerduty.EventOrchestrationPathReference) []interface{} {
-	var parent = map[string]interface{}{
-		"id":   p.ID,
-		"type": p.Type,
-		"self": p.Self,
-	}
-
-	return []interface{}{parent}
 }
 
 func flattenServicePathSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {

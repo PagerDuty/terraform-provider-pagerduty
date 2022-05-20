@@ -1,82 +1,37 @@
 ---
 layout: "pagerduty"
-page_title: "PagerDuty: pagerduty_event_orchestration"
-sidebar_current: "docs-pagerduty-resource-event-orchestration"
+page_title: "PagerDuty: pagerduty_event_orchestration_service"
+sidebar_current: "docs-pagerduty-resource-event-orchestration-service"
 description: |-
-  Creates and manages a Global Event Orchestration / Service Orchestration in PagerDuty.
+  Creates and manages a Service Orchestration for a Service.
 ---
-
-
-
-# pagerduty_event_orchestration
-
-[Event Orchestrations](https://support.pagerduty.com/docs/event-orchestration) allows users to route events to an endpoint and create nested rules, which define sets of actions to take based on event content.
-
-## Example of configuring a Global Event Orchestration
-
-```hcl
-resource "pagerduty_team" "engineering" {
-  name = "Engineering"
-}
-
-resource "pagerduty_event_orchestration" "my_monitor" {
-  name = "My Monitoring Orchestration"
-  description = "Send events to a pair of services"
-  team {
-    id = pagerduty_team.engineering.id
-  }
-}
-```
-
-## Argument Reference
-
-The following arguments are supported:
-
-* `name` - (Required) Name of the Event Orchestration.
-* `description` - (Optional) A human-friendly description of the Event Orchestration.
-* `team` - (Optional) Reference to the team that owns the Event Orchestration. If none is specified, only admins have access.
-
-## Attributes Reference
-
-The following attributes are exported:
-
-* `id` - The ID of the Event Orchestration.
-* `integrations` - Routing keys routed to this Event Orchestration.
-
-## Import
-
-EventOrchestrations can be imported using the `id`, e.g.
-
-```
-$ terraform import pagerduty_event_orchestration.main 19acac92-027a-4ea0-b06c-bbf516519601
-```
 
 # pagerduty_event_orchestration_service
 
-When integrations exist on a service, [Service Orchestrations](https://support.pagerduty.com/docs/event-orchestration#service-orchestrations) can be used to evaluate incoming events against each of its rules, beginning with the rules in the "start" set. When a matching rule is found, it can modify and enhance the event and can route the event to another set of rules within this Service Orchestration for further processing. As a prerequisite, please ensure the service is set to evaluate orchestrations using the [Service Orchestration Active status endpoint](https://developer.pagerduty.com/api-reference/855659be83d9e-update-the-service-orchestration-active-status-for-a-service)
+When integrations exist on a service, [Service Orchestrations](https://support.pagerduty.com/docs/event-orchestration#service-orchestrations) can be used to evaluate incoming events against each of its rules, beginning with the rules in the `"start"` set. When a matching rule is found, it can modify and enhance the event and can route the event to another set of rules within this Service Orchestration for further processing. As a prerequisite, please ensure the service is set to evaluate orchestrations using the [Service Orchestration Active Status endpoint](https://developer.pagerduty.com/api-reference/855659be83d9e-update-the-service-orchestration-active-status-for-a-service)
 
 ## Example of configuring a Service Orchestration
+ This example shows creating `team`, `user`, `escalation policy` and `service` resources followed by the `service orchestration` resource. In this example the user has defined the service orchestration with nested rulesets.
+ The `start` set rule in this example routes to another set.
+ `catch_all` with empty `actions` block suppresses the alerts that do not match any rules. Other `actions` like `annotate`, `severity`, `priority`, `variables`, `extractions`, `webhooks`, `process automation` can be set in `catch_all` block.
 
 ```hcl
-  # user, escalation policy are required for a service.
-  # a service orchestration is required to point to an existing service.
-  # This example shows creating the prerequisite resources for a Service Orchestration (team, user, escalationpolicy and service)
-  resource "pagerduty_team" "engineering" {
-  name = "Engineering"
+resource "pagerduty_team" "engineering" {
+name = "Engineering"
 }
 
-  resource "pagerduty_user" "example" {
-  name  = "Earline Greenholt"
-  email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.engineering.id]
+resource "pagerduty_user" "example" {
+name  = "Earline Greenholt"
+email = "125.greenholt.earline@graham.name"
+teams = [pagerduty_team.engineering.id]
 }
 
 resource "pagerduty_escalation_policy" "foo" {
-  name      = "Engineering Escalation Policy"
-  num_loops = 2
+name      = "Engineering Escalation Policy"
+num_loops = 2
 
   rule {
-    escalation_delay_in_minutes = 10
+  escalation_delay_in_minutes = 10
 
     target {
       type = "user"
@@ -86,20 +41,15 @@ resource "pagerduty_escalation_policy" "foo" {
 }
 
 resource "pagerduty_service" "example" {
-  name                    = "My Web App"
-  auto_resolve_timeout    = 14400
-  acknowledgement_timeout = 600
-  escalation_policy       = pagerduty_escalation_policy.example.id
-  alert_creation          = "create_alerts_and_incidents"
+name                    = "My Web App"
+auto_resolve_timeout    = 14400
+acknowledgement_timeout = 600
+escalation_policy       = pagerduty_escalation_policy.example.id
+alert_creation          = "create_alerts_and_incidents"
 }
 
-# In this example the user has defined the service orchestration with nested rulesets.
-# The start set rule in this example routes to the second set
 resource "pagerduty_event_orchestration_service" "www" {
-  parent {
-    # id of the Service
-    id = pagerduty_service.example.id
-  }
+  service = pagerduty_service.example.id
   sets {
     id = "start"
     rules {
@@ -128,55 +78,53 @@ resource "pagerduty_event_orchestration_service" "www" {
     }
   }
   sets {
-     id = "step-two"
-     rules {
-       label = "All critical alerts should be treated as P1 incident"
-       conditions {
-         expression = "event.severity matches 'critical'"
-       }
-       actions {
-         annotate = "Please use our P1 runbook: https://docs.test/p1-runbook"
-         priority = "P0IN2KQ"
-         suppress = false
-       }
-     }
-     rules {
-       label = "If there's something wrong on the canary let the team know about it in our deployments Slack channel"
-       conditions {
-         expression = "event.custom_details.hostname matches part 'canary'"
-       }
-       # create webhook action with parameters and headers
-       actions {
-         automation_actions {
-           name = "Canary Slack Notification"
-           url = "https://our-slack-listerner.test/canary-notification"
-           auto_send = true
-           parameters {
-             key = "channel"
-             value = "#my-team-channel"
-           }
-           parameters {
-             key = "message"
-             value = "something is wrong with the canary deployment"
-           }
-           headers {
-             key = "X-Notification-Source"
-             value = "PagerDuty Incident Webhook"
-           }
-         }
-       }
-     }
-     rules {
-       label = "Never bother the on-call for info-level events outside of work hours"
-       conditions {
-         expression = "event.severity matches 'info' and not (now in Mon,Tue,Wed,Thu,Fri 09:00:00 to 17:00:00 America/Los_Angeles)"
-       }
-       actions {
-         suppress = true
-       }
-     }
+    id = "step-two"
+    rules {
+      label = "All critical alerts should be treated as P1 incident"
+      conditions {
+        expression = "event.severity matches 'critical'"
+      }
+      actions {
+        annotate = "Please use our P1 runbook: https://docs.test/p1-runbook"
+        priority = "P0IN2KQ"
+      }
+    }
+    rules {
+      label = "If there's something wrong on the canary let the team know about it in our deployments Slack channel"
+      conditions {
+        expression = "event.custom_details.hostname matches part 'canary'"
+      }
+      # create webhook action with parameters and headers
+      actions {
+        automation_actions {
+          name = "Canary Slack Notification"
+          url = "https://our-slack-listerner.test/canary-notification"
+          auto_send = true
+          parameters {
+            key = "channel"
+            value = "#my-team-channel"
+          }
+          parameters {
+            key = "message"
+            value = "something is wrong with the canary deployment"
+          }
+          headers {
+            key = "X-Notification-Source"
+            value = "PagerDuty Incident Webhook"
+          }
+        }
+      }
+    }
+    rules {
+      label = "Never bother the on-call for info-level events outside of work hours"
+      conditions {
+        expression = "event.severity matches 'info' and not (now in Mon,Tue,Wed,Thu,Fri 09:00:00 to 17:00:00 America/Los_Angeles)"
+      }
+      actions {
+        suppress = true
+      }
+    }
   }
-  # catch_all always sets suppressed action to true. Other actions like annotate, severity, priority, variables and extractions, webhooks can be set as well
   catch_all {
     actions { }
   }
@@ -186,13 +134,9 @@ resource "pagerduty_event_orchestration_service" "www" {
 
 The following arguments are supported:
 
-* `parent` - (Required) Parent (Service) to which this orchestration belongs to.
+* `service` - (Required) ID of the Service to which this Service Orchestration belongs to.
 * `sets` - (Required) A Service Orchestration must contain at least a "start" set, but can contain any number of additional sets that are routed to by other rules to form a directional graph.
 * `catch_all` - (Required) When none of the rules match an event, the event will be routed according to the catch_all settings.
-
-
-### Parent (`parent`) supports the following:
-* `id` - (Required) ID of the Service to which this service orchestration belongs to.
 
 ### Sets (`sets`) supports the following:
 * `id` - (Required) The ID of this set of rules. Rules in other sets can route events into this set using the rule's `route_to` property.
@@ -205,10 +149,10 @@ The following arguments are supported:
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
 
 ### Conditions (`conditions`) supports the following:
-* `expression`- (Required) A [PCL condition] (https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) string.
+* `expression`- (Required) A [PCL condition](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) string.
 
 ### Actions (`actions`) supports the following:
-* `route_to` - (Required) The ID of the target Service for the resulting alert. You can find the service you want to route to by calling the [Services API endpoint](https://developer.pagerduty.com/api-reference/e960cca205c0f-list-services).
+* `route_to` - (Required) The ID of the target Service for the resulting alert.
 * `suppress` - (Optional) Set whether the resulting alert is suppressed. Suppressed alerts will not trigger an incident.
 * `suspend` - (Optional) The number of seconds to suspend the resulting alert before triggering. This effectively pauses incident notifications. If a `resolve` event arrives before the alert triggers then PagerDuty won't create an incident for this the resulting alert.
 * `priority` - (Optional) The ID of the priority you want to set on resulting incident. You can find the list of priority IDs for your account by calling the priorities endpoint.
@@ -239,26 +183,19 @@ The following arguments are supported:
   * `source` - (Optional) Field where the data is being copied from. Must be a PagerDuty Common Event Format [PD-CEF](https://support.pagerduty.com/docs/pd-cef) field. This field can be ignored for `template` based replacements.
 
 ### Catch All (`catch_all`) supports the following:
-* `actions` - (Required) These are the actions that will be taken to change the resulting alert and incident. `catch_all` supports all actions described above for rules except `route_to` action.
+* `actions` - (Required) These are the actions that will be taken to change the resulting alert and incident. `catch_all` supports all actions described above for `rules` _except_ `route_to` action.
 
 
 ## Attributes Reference
 
 The following attributes are exported:
-* `type` - Type of the orchestration. For service orchestrations, it is `service`.
-* `parent`
-  * `type` - Type of the parent (Event Orchestration) reference for this Event Orchestration Path
-  * `self` - The URL at which the parent object (Event Orchestration) is accessible
-* `self` - The URL at which the Service Orchestration path is accessible
+* `self` - The URL at which the Service Orchestration is accessible.
 * `rules`
   * `id` - The ID of the rule within the `start` set.
-* `catch_all`
-  * `actions`
-    * `suppress` - The suppress action for catch_all rule. This is always True.
 
 ## Import
 
-Service Orchestrations can be imported using the `id` of the service, e.g.
+Service Orchestration can be imported using the `id` of the Service, e.g.
 
 ```
 $ terraform import pagerduty_event_orchestration_service PFEODA7

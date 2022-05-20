@@ -117,13 +117,21 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 													Optional: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
+															"regex": {
+																Type:     schema.TypeString,
+																Optional: true,
+															},
+															"source": {
+																Type:     schema.TypeString,
+																Optional: true,
+															},
 															"target": {
 																Type:     schema.TypeString,
 																Required: true,
 															},
 															"template": {
 																Type:     schema.TypeString,
-																Required: true,
+																Optional: true,
 															},
 														}},
 												},
@@ -201,13 +209,21 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 										Optional: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
+												"regex": {
+													Type:     schema.TypeString,
+													Optional: true,
+												},
+												"source": {
+													Type:     schema.TypeString,
+													Optional: true,
+												},
 												"target": {
 													Type:     schema.TypeString,
 													Required: true,
 												},
 												"template": {
 													Type:     schema.TypeString,
-													Required: true,
+													Optional: true,
 												},
 											}},
 									},
@@ -389,8 +405,8 @@ func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleA
 			actions.RouteTo = am["route_to"].(string)
 			actions.Severity = am["severity"].(string)
 			actions.EventAction = am["event_action"].(string)
-			actions.Variables = expandUnroutedActionsVariables(am["variables"])
-			actions.Extractions = expandUnroutedActionsExtractions(am["extractions"])
+			actions.Variables = expandEventOrchestrationPathVariables(am["variables"])
+			actions.Extractions = expandEventOrchestrationPathExtractions(am["extractions"])
 		}
 	}
 
@@ -414,39 +430,6 @@ func expandUnroutedConditions(v interface{}) []*pagerduty.EventOrchestrationPath
 	return conditions
 }
 
-func expandUnroutedActionsExtractions(v interface{}) []*pagerduty.EventOrchestrationPathActionExtractions {
-	unroutedExtractions := []*pagerduty.EventOrchestrationPathActionExtractions{}
-
-	for _, eai := range v.([]interface{}) {
-		ea := eai.(map[string]interface{})
-		ext := &pagerduty.EventOrchestrationPathActionExtractions{
-			Target:   ea["target"].(string),
-			Template: ea["template"].(string),
-		}
-		unroutedExtractions = append(unroutedExtractions, ext)
-	}
-	return unroutedExtractions
-}
-
-func expandUnroutedActionsVariables(v interface{}) []*pagerduty.EventOrchestrationPathActionVariables {
-	unroutedVariables := []*pagerduty.EventOrchestrationPathActionVariables{}
-
-	for _, er := range v.([]interface{}) {
-		rer := er.(map[string]interface{})
-
-		unroutedVar := &pagerduty.EventOrchestrationPathActionVariables{
-			Name:  rer["name"].(string),
-			Path:  rer["path"].(string),
-			Type:  rer["type"].(string),
-			Value: rer["value"].(string),
-		}
-
-		unroutedVariables = append(unroutedVariables, unroutedVar)
-	}
-
-	return unroutedVariables
-}
-
 func expandUnroutedCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
 
@@ -467,8 +450,8 @@ func expandUnroutedCatchAllActions(v interface{}) *pagerduty.EventOrchestrationP
 			am := ai.(map[string]interface{})
 			actions.Severity = am["severity"].(string)
 			actions.EventAction = am["event_action"].(string)
-			actions.Variables = expandUnroutedActionsVariables(am["variables"])
-			actions.Extractions = expandUnroutedActionsExtractions(am["extractions"])
+			actions.Variables = expandEventOrchestrationPathVariables(am["variables"])
+			actions.Extractions = expandEventOrchestrationPathExtractions(am["extractions"])
 		}
 	}
 
@@ -528,43 +511,15 @@ func flattenUnroutedActions(actions *pagerduty.EventOrchestrationPathRuleActions
 	}
 
 	if actions.Variables != nil {
-		flattenedAction["variables"] = flattenUnroutedActionsVariables(actions.Variables)
+		flattenedAction["variables"] = flattenEventOrchestrationPathVariables(actions.Variables)
 	}
-	if actions.Variables != nil {
-		flattenedAction["extractions"] = flattenUnroutedActionsExtractions(actions.Extractions)
+	if actions.Extractions != nil {
+		flattenedAction["extractions"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)
 
 	return actionsMap
-}
-
-func flattenUnroutedActionsVariables(v []*pagerduty.EventOrchestrationPathActionVariables) []interface{} {
-	var flatVariablesList []interface{}
-
-	for _, s := range v {
-		flatVariable := map[string]interface{}{
-			"name":  s.Name,
-			"path":  s.Path,
-			"type":  s.Type,
-			"value": s.Value,
-		}
-		flatVariablesList = append(flatVariablesList, flatVariable)
-	}
-	return flatVariablesList
-}
-
-func flattenUnroutedActionsExtractions(e []*pagerduty.EventOrchestrationPathActionExtractions) []interface{} {
-	var flatExtractionsList []interface{}
-
-	for _, s := range e {
-		flatExtraction := map[string]interface{}{
-			"target":   s.Target,
-			"template": s.Template,
-		}
-		flatExtractionsList = append(flatExtractionsList, flatExtraction)
-	}
-	return flatExtractionsList
 }
 
 func flattenUnroutedCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
@@ -588,10 +543,10 @@ func flattenUnroutedCatchAllActions(actions *pagerduty.EventOrchestrationPathRul
 	}
 
 	if actions.Variables != nil {
-		flattenedAction["variables"] = flattenUnroutedActionsVariables(actions.Variables)
+		flattenedAction["variables"] = flattenEventOrchestrationPathVariables(actions.Variables)
 	}
 	if actions.Variables != nil {
-		flattenedAction["extractions"] = flattenUnroutedActionsExtractions(actions.Extractions)
+		flattenedAction["extractions"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)

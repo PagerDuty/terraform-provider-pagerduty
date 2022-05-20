@@ -32,7 +32,11 @@ The following arguments are supported:
 
 * `id` - The ID of the found Event Orchestration.
 * `name` - The name of the found Event Orchestration.
-* `integrations` - Routing keys routed to this Event Orchestration.
+* `integrations` - List of integrations for the Event Orchestration.
+  * `id` - ID of the integration
+  * `parameters`
+    * `routing_key` - Routing key that routes to this Orchestration.
+    * `type` - Type of the routing key. `global` is the default type.
 
 
 [1]: https://developer.pagerduty.com/api-reference/7ba0fe7bdb26a-list-event-orchestrations

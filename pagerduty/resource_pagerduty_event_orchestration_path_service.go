@@ -165,7 +165,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
-											Schema: PagerDutyEventOrchestrationPathConditions,
+											Schema: eventOrchestrationPathConditionsSchema,
 										},
 									},
 									"actions": {
@@ -297,8 +297,6 @@ func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestratio
 	}
 }
 
-// TODO: see if we can reuse expand functions for all orch path sets.
-// Maybe pass in the rule actions and catch-all rule actions expanding function?
 func expandServicePathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 	var sets []*pagerduty.EventOrchestrationPathSet
 
@@ -324,12 +322,11 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 		r := rule.(map[string]interface{})
 
 		ruleInSet := &pagerduty.EventOrchestrationPathRule{
-			ID:       r["id"].(string),
-			Label:    r["label"].(string),
-			Disabled: r["disabled"].(bool),
-			// TODO: move conditions logic to util
-			Conditions: expandRouterConditions(r["conditions"].(interface{})),
-			Actions:    expandServicePathActions(r["actions"].([]interface{})),
+			ID:         r["id"].(string),
+			Label:      r["label"].(string),
+			Disabled:   r["disabled"].(bool),
+			Conditions: expandEventOrchestrationPathConditions(r["conditions"]),
+			Actions:    expandServicePathActions(r["actions"]),
 		}
 
 		rules = append(rules, ruleInSet)
@@ -433,8 +430,6 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
 	d.SetId(p.Parent.ID)
 	d.Set("service", p.Parent.ID)
-	// TODO: see if we can reuse expand functions for all orch path sets.
-	// Maybe pass in the rule actions and catch-all rule actions expanding function?
 	d.Set("sets", flattenServicePathSets(p.Sets))
 	d.Set("catch_all", flattenServicePathCatchAll(p.CatchAll))
 	return nil
@@ -469,11 +464,10 @@ func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []in
 
 	for _, rule := range rules {
 		flattenedRule := map[string]interface{}{
-			"id":       rule.ID,
-			"label":    rule.Label,
-			"disabled": rule.Disabled,
-			// TODO: move conditions logic to util
-			"conditions": flattenRouterConditions(rule.Conditions),
+			"id":         rule.ID,
+			"label":      rule.Label,
+			"disabled":   rule.Disabled,
+			"conditions": flattenEventOrchestrationPathConditions(rule.Conditions),
 			"actions":    flattenServicePathActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)

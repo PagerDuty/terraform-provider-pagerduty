@@ -51,7 +51,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
-											Schema: PagerDutyEventOrchestrationPathConditions,
+											Schema: eventOrchestrationPathConditionsSchema,
 										},
 									},
 									"actions": {
@@ -283,8 +283,8 @@ func expandUnroutedRules(v interface{}) []*pagerduty.EventOrchestrationPathRule 
 			ID:         r["id"].(string),
 			Label:      r["label"].(string),
 			Disabled:   r["disabled"].(bool),
-			Conditions: expandUnroutedConditions(r["conditions"]),
-			Actions:    expandUnroutedActions(r["actions"].([]interface{})),
+			Conditions: expandEventOrchestrationPathConditions(r["conditions"]),
+			Actions:    expandUnroutedActions(r["actions"]),
 		}
 
 		rules = append(rules, ruleInSet)
@@ -310,23 +310,6 @@ func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleA
 	}
 
 	return actions
-}
-
-func expandUnroutedConditions(v interface{}) []*pagerduty.EventOrchestrationPathRuleCondition {
-	items := v.([]interface{})
-	conditions := []*pagerduty.EventOrchestrationPathRuleCondition{}
-
-	for _, cond := range items {
-		c := cond.(map[string]interface{})
-
-		cx := &pagerduty.EventOrchestrationPathRuleCondition{
-			Expression: c["expression"].(string),
-		}
-
-		conditions = append(conditions, cx)
-	}
-
-	return conditions
 }
 
 func expandUnroutedCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
@@ -378,26 +361,13 @@ func flattenUnroutedRules(rules []*pagerduty.EventOrchestrationPathRule) []inter
 			"id":         rule.ID,
 			"label":      rule.Label,
 			"disabled":   rule.Disabled,
-			"conditions": flattenUnroutedConditions(rule.Conditions),
+			"conditions": flattenEventOrchestrationPathConditions(rule.Conditions),
 			"actions":    flattenUnroutedActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
 	}
 
 	return flattenedRules
-}
-
-func flattenUnroutedConditions(conditions []*pagerduty.EventOrchestrationPathRuleCondition) []interface{} {
-	var flattendConditions []interface{}
-
-	for _, condition := range conditions {
-		flattendCondition := map[string]interface{}{
-			"expression": condition.Expression,
-		}
-		flattendConditions = append(flattendConditions, flattendCondition)
-	}
-
-	return flattendConditions
 }
 
 func flattenUnroutedActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {

@@ -7,22 +7,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-var PagerDutyEventOrchestrationPathParent = map[string]*schema.Schema{
-	"id": {
-		Type:     schema.TypeString,
-		Required: true,
-	},
-	"type": {
-		Type:     schema.TypeString,
-		Computed: true,
-	},
-	"self": {
-		Type:     schema.TypeString,
-		Computed: true,
-	},
-}
-
-var PagerDutyEventOrchestrationPathConditions = map[string]*schema.Schema{
+var eventOrchestrationPathConditionsSchema = map[string]*schema.Schema{
 	"expression": {
 		Type:     schema.TypeString,
 		Required: true,
@@ -118,6 +103,35 @@ func checkExtractionAttributes(diff *schema.ResourceDiff, loc string) error {
 		}
 	}
 	return nil
+}
+
+func expandEventOrchestrationPathConditions(v interface{}) []*pagerduty.EventOrchestrationPathRuleCondition {
+	conditions := []*pagerduty.EventOrchestrationPathRuleCondition{}
+
+	for _, cond := range v.([]interface{}) {
+		c := cond.(map[string]interface{})
+
+		cx := &pagerduty.EventOrchestrationPathRuleCondition{
+			Expression: c["expression"].(string),
+		}
+
+		conditions = append(conditions, cx)
+	}
+
+	return conditions
+}
+
+func flattenEventOrchestrationPathConditions(conditions []*pagerduty.EventOrchestrationPathRuleCondition) []interface{} {
+	var flattendConditions []interface{}
+
+	for _, condition := range conditions {
+		flattendCondition := map[string]interface{}{
+			"expression": condition.Expression,
+		}
+		flattendConditions = append(flattendConditions, flattendCondition)
+	}
+
+	return flattendConditions
 }
 
 func expandEventOrchestrationPathVariables(v interface{}) []*pagerduty.EventOrchestrationPathActionVariables {

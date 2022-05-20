@@ -31,8 +31,6 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "type", "router"),
 					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "unrouted", true), //test for catch_all route_to prop, by default it should be unrouted
 					resource.TestCheckResourceAttr(
@@ -43,8 +41,6 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyEventOrchestrationRouterConfig(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "type", "router"),
 					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", false), // test for rule action route_to
 					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
@@ -134,19 +130,17 @@ func testAccCheckPagerDutyEventOrchestrationRouterExists(rn string) resource.Tes
 			return fmt.Errorf("Not found: %s", rn)
 		}
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Event Orchestration Path Type is set")
+			return fmt.Errorf("No Event Orchestration Router is set")
 		}
 
 		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "router")
+		_, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "router")
 
 		if err != nil {
 			return fmt.Errorf("Orchestration Path type not found: %v for orchestration %v", "router", orch.Primary.ID)
 		}
-		if found.Type != "router" {
-			return fmt.Errorf("Event Orchrestration path not found: %v - %v", "router", found)
-		}
+
 		return nil
 	}
 }

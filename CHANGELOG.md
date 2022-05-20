@@ -1,7 +1,16 @@
-## 2.4.2 (Unreleased)
+## 2.4.2 (May 20, 2022)
 
 IMPROVEMENTS:
-* Use "@foo.test" email addresses in tests
+* Acceptance Test Improvements: Use "@foo.test" email addresses in tests. ([#491](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/491))
+* Acceptance Test Improvements: Adding better notes to README on running ACC ([#503](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/503)) 
+* `resource/pagerduty_ruleset_rule`: Introduce support for `catch_all` rules. ([#481](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/481))
+* Docs: `resource/pagerduty_slack_connection`: Improved notes on resource supporting Slack V2 Next Generation ([#496](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/496))
+
+BUG FIXES:
+* Documentation: Fixed all broken links to the PagerDuty API documentation ([#464](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/464))
+* Docs: `resource/pagerduty_escalation_policy`: Fixed `user` -> `user_reference` in samples ([#497](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/497))
+* Build Process: Include `timezdata` build tag in goreleaser config ([#488](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/488))
+* `data_source/pagerduty_escalation_policy`,`data_source/pagerduty_ruleset`: Changed logic to retry on all errors returned by PD API. Remedies GOAWAY error. ([#507](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/507))
 
 ## 2.4.1 (April 22, 2022)
 IMPROVEMENTS:

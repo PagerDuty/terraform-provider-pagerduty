@@ -7,26 +7,65 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-var PagerDutyEventOrchestrationPathParent = map[string]*schema.Schema{
-	"id": {
+var eventOrchestrationPathConditionsSchema = map[string]*schema.Schema{
+	"expression": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+}
+
+var eventOrchestrationPathVariablesSchema = map[string]*schema.Schema{
+	"name": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"path": {
 		Type:     schema.TypeString,
 		Required: true,
 	},
 	"type": {
 		Type:     schema.TypeString,
-		Computed: true,
+		Required: true,
 	},
-	"self": {
-		Type:     schema.TypeString,
-		Computed: true,
-	},
-}
-
-var PagerDutyEventOrchestrationPathConditions = map[string]*schema.Schema{
-	"expression": {
+	"value": {
 		Type:     schema.TypeString,
 		Required: true,
 	},
+}
+
+var eventOrchestrationPathExtractionsSchema = map[string]*schema.Schema{
+	"regex": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"source": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"target": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"template": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+}
+
+func validateEventOrchestrationPathSeverity() schema.SchemaValidateFunc {
+	return validateValueFunc([]string{
+		"info",
+		"error",
+		"warning",
+		"critical",
+	})
+}
+
+func validateEventOrchestrationPathEventAction() schema.SchemaValidateFunc {
+	return validateValueFunc([]string{
+		"trigger",
+		"resolve",
+	})
 }
 
 func checkExtractions(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
@@ -64,6 +103,35 @@ func checkExtractionAttributes(diff *schema.ResourceDiff, loc string) error {
 		}
 	}
 	return nil
+}
+
+func expandEventOrchestrationPathConditions(v interface{}) []*pagerduty.EventOrchestrationPathRuleCondition {
+	conditions := []*pagerduty.EventOrchestrationPathRuleCondition{}
+
+	for _, cond := range v.([]interface{}) {
+		c := cond.(map[string]interface{})
+
+		cx := &pagerduty.EventOrchestrationPathRuleCondition{
+			Expression: c["expression"].(string),
+		}
+
+		conditions = append(conditions, cx)
+	}
+
+	return conditions
+}
+
+func flattenEventOrchestrationPathConditions(conditions []*pagerduty.EventOrchestrationPathRuleCondition) []interface{} {
+	var flattendConditions []interface{}
+
+	for _, condition := range conditions {
+		flattendCondition := map[string]interface{}{
+			"expression": condition.Expression,
+		}
+		flattendConditions = append(flattendConditions, flattendCondition)
+	}
+
+	return flattendConditions
 }
 
 func expandEventOrchestrationPathVariables(v interface{}) []*pagerduty.EventOrchestrationPathActionVariables {

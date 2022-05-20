@@ -256,9 +256,7 @@ func createUnroutedBaseConfig(t, ep, s, o string) string {
 		}
 		resource "pagerduty_event_orchestration" "orch" {
 			name = "%s"
-			team {
-				id = pagerduty_team.foo.id
-			}
+			team = pagerduty_team.foo.id
 		}
 	`, t, ep, s, o)
 }

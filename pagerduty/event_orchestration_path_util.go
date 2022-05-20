@@ -29,6 +29,44 @@ var PagerDutyEventOrchestrationPathConditions = map[string]*schema.Schema{
 	},
 }
 
+var eventOrchestrationPathVariablesSchema = map[string]*schema.Schema{
+	"name": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"path": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"type": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"value": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+}
+
+var eventOrchestrationPathExtractionsSchema = map[string]*schema.Schema{
+	"regex": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"source": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"target": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"template": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+}
+
 func validateEventOrchestrationPathSeverity() schema.SchemaValidateFunc {
 	return validateValueFunc([]string{
 		"info",

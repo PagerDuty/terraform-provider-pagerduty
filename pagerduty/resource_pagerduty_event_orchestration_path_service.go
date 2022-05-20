@@ -9,7 +9,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-var eventOrchestrationAutomationActionObject = map[string]*schema.Schema{
+var eventOrchestrationAutomationActionObjectSchema = map[string]*schema.Schema{
 	"key": {
 		Type:     schema.TypeString,
 		Required: true,
@@ -20,7 +20,7 @@ var eventOrchestrationAutomationActionObject = map[string]*schema.Schema{
 	},
 }
 
-var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
+var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Schema{
 	"suppress": {
 		Type:     schema.TypeBool,
 		Optional: true,
@@ -73,14 +73,14 @@ var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem: &schema.Resource{
-						Schema: eventOrchestrationAutomationActionObject,
+						Schema: eventOrchestrationAutomationActionObjectSchema,
 					},
 				},
 				"parameters": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem: &schema.Resource{
-						Schema: eventOrchestrationAutomationActionObject,
+						Schema: eventOrchestrationAutomationActionObjectSchema,
 					},
 				},
 			},
@@ -100,54 +100,22 @@ var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"name": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"path": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"type": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"value": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-			}},
+			Schema: eventOrchestrationPathVariablesSchema,
+		},
 	},
 	"extractions": {
 		Type:     schema.TypeList,
 		Optional: true,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"regex": {
-					Type:     schema.TypeString,
-					Optional: true,
-				},
-				"source": {
-					Type:     schema.TypeString,
-					Optional: true,
-				},
-				"target": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"template": {
-					Type:     schema.TypeString,
-					Optional: true,
-				},
-			}},
+			Schema: eventOrchestrationPathExtractionsSchema,
+		},
 	},
 }
 
-var eventOrchestrationPathServiceRuleActions = buildEventOrchestrationPathServiceRuleActions()
+var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPathServiceRuleActionsSchema()
 
-func buildEventOrchestrationPathServiceRuleActions() map[string]*schema.Schema {
-	a := eventOrchestrationPathServiceCatchAllActions
+func buildEventOrchestrationPathServiceRuleActionsSchema() map[string]*schema.Schema {
+	a := eventOrchestrationPathServiceCatchAllActionsSchema
 	a["route_to"] = &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
@@ -205,7 +173,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 										Required: true,
 										MaxItems: 1,
 										Elem: &schema.Resource{
-											Schema: eventOrchestrationPathServiceRuleActions,
+											Schema: eventOrchestrationPathServiceRuleActionsSchema,
 										},
 									},
 									"disabled": {
@@ -229,7 +197,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 							Required: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
-								Schema: eventOrchestrationPathServiceRuleActions,
+								Schema: eventOrchestrationPathServiceRuleActionsSchema,
 							},
 						},
 					},

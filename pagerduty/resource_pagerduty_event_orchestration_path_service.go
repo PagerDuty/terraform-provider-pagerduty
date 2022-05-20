@@ -9,7 +9,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-var eventOrchestrationAutomationActionObject = map[string]*schema.Schema{
+var eventOrchestrationAutomationActionObjectSchema = map[string]*schema.Schema{
 	"key": {
 		Type:     schema.TypeString,
 		Required: true,
@@ -20,7 +20,7 @@ var eventOrchestrationAutomationActionObject = map[string]*schema.Schema{
 	},
 }
 
-var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
+var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Schema{
 	"suppress": {
 		Type:     schema.TypeBool,
 		Optional: true,
@@ -73,89 +73,49 @@ var eventOrchestrationPathServiceCatchAllActions = map[string]*schema.Schema{
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem: &schema.Resource{
-						Schema: eventOrchestrationAutomationActionObject,
+						Schema: eventOrchestrationAutomationActionObjectSchema,
 					},
 				},
 				"parameters": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem: &schema.Resource{
-						Schema: eventOrchestrationAutomationActionObject,
+						Schema: eventOrchestrationAutomationActionObjectSchema,
 					},
 				},
 			},
 		},
 	},
 	"severity": {
-		Type:     schema.TypeString,
-		Optional: true,
-		ValidateFunc: validateValueFunc([]string{
-			"info",
-			"error",
-			"warning",
-			"critical",
-		}),
+		Type:         schema.TypeString,
+		Optional:     true,
+		ValidateFunc: validateEventOrchestrationPathSeverity(),
 	},
 	"event_action": {
-		Type:     schema.TypeString,
-		Optional: true,
-		ValidateFunc: validateValueFunc([]string{
-			"trigger",
-			"resolve",
-		}),
+		Type:         schema.TypeString,
+		Optional:     true,
+		ValidateFunc: validateEventOrchestrationPathEventAction(),
 	},
 	"variables": {
 		Type:     schema.TypeList,
 		Optional: true,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"name": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"path": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"type": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"value": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-			}},
+			Schema: eventOrchestrationPathVariablesSchema,
+		},
 	},
 	"extractions": {
 		Type:     schema.TypeList,
 		Optional: true,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"regex": {
-					Type:     schema.TypeString,
-					Optional: true,
-				},
-				"source": {
-					Type:     schema.TypeString,
-					Optional: true,
-				},
-				"target": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"template": {
-					Type:     schema.TypeString,
-					Optional: true,
-				},
-			}},
+			Schema: eventOrchestrationPathExtractionsSchema,
+		},
 	},
 }
 
-var eventOrchestrationPathServiceRuleActions = buildEventOrchestrationPathServiceRuleActions()
+var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPathServiceRuleActionsSchema()
 
-func buildEventOrchestrationPathServiceRuleActions() map[string]*schema.Schema {
-	a := eventOrchestrationPathServiceCatchAllActions
+func buildEventOrchestrationPathServiceRuleActionsSchema() map[string]*schema.Schema {
+	a := eventOrchestrationPathServiceCatchAllActionsSchema
 	a["route_to"] = &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
@@ -205,7 +165,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
-											Schema: PagerDutyEventOrchestrationPathConditions,
+											Schema: eventOrchestrationPathConditionsSchema,
 										},
 									},
 									"actions": {
@@ -213,7 +173,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 										Required: true,
 										MaxItems: 1,
 										Elem: &schema.Resource{
-											Schema: eventOrchestrationPathServiceRuleActions,
+											Schema: eventOrchestrationPathServiceRuleActionsSchema,
 										},
 									},
 									"disabled": {
@@ -237,7 +197,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 							Required: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
-								Schema: eventOrchestrationPathServiceRuleActions,
+								Schema: eventOrchestrationPathServiceRuleActionsSchema,
 							},
 						},
 					},
@@ -337,8 +297,6 @@ func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestratio
 	}
 }
 
-// TODO: see if we can reuse expand functions for all orch path sets.
-// Maybe pass in the rule actions and catch-all rule actions expanding function?
 func expandServicePathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 	var sets []*pagerduty.EventOrchestrationPathSet
 
@@ -364,12 +322,11 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 		r := rule.(map[string]interface{})
 
 		ruleInSet := &pagerduty.EventOrchestrationPathRule{
-			ID:       r["id"].(string),
-			Label:    r["label"].(string),
-			Disabled: r["disabled"].(bool),
-			// TODO: move conditions logic to util
-			Conditions: expandRouterConditions(r["conditions"].(interface{})),
-			Actions:    expandServicePathActions(r["actions"].([]interface{})),
+			ID:         r["id"].(string),
+			Label:      r["label"].(string),
+			Disabled:   r["disabled"].(bool),
+			Conditions: expandEventOrchestrationPathConditions(r["conditions"]),
+			Actions:    expandServicePathActions(r["actions"]),
 		}
 
 		rules = append(rules, ruleInSet)
@@ -473,8 +430,6 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
 	d.SetId(p.Parent.ID)
 	d.Set("service", p.Parent.ID)
-	// TODO: see if we can reuse expand functions for all orch path sets.
-	// Maybe pass in the rule actions and catch-all rule actions expanding function?
 	d.Set("sets", flattenServicePathSets(p.Sets))
 	d.Set("catch_all", flattenServicePathCatchAll(p.CatchAll))
 	return nil
@@ -509,11 +464,10 @@ func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []in
 
 	for _, rule := range rules {
 		flattenedRule := map[string]interface{}{
-			"id":       rule.ID,
-			"label":    rule.Label,
-			"disabled": rule.Disabled,
-			// TODO: move conditions logic to util
-			"conditions": flattenRouterConditions(rule.Conditions),
+			"id":         rule.ID,
+			"label":      rule.Label,
+			"disabled":   rule.Disabled,
+			"conditions": flattenEventOrchestrationPathConditions(rule.Conditions),
 			"actions":    flattenServicePathActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)

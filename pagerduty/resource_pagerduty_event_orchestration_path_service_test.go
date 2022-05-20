@@ -32,7 +32,6 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 	baseChecks := []resource.TestCheckFunc{
 		testAccCheckPagerDutyEventOrchestrationPathServiceExists(resourceName),
 		testAccCheckPagerDutyEventOrchestrationPathServiceParent(resourceName, serviceResourceName),
-		resource.TestCheckResourceAttr(resourceName, "type", "service"),
 	}
 
 	resource.Test(t, resource.TestCase{

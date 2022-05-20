@@ -175,10 +175,6 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 		},
 		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
-			"type": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"parent": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -480,7 +476,6 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 
 func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
 	d.SetId(p.Parent.ID)
-	d.Set("type", p.Type)
 	d.Set("parent", flattenServicePathParent(p.Parent))
 	// TODO: see if we can reuse expand functions for all orch path sets.
 	// Maybe pass in the rule actions and catch-all rule actions expanding function?

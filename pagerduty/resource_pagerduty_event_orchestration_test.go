@@ -54,7 +54,7 @@ func testSweepEventOrchestration(region string) error {
 }
 
 func TestAccPagerDutyEventOrchestration_Basic(t *testing.T) {
-	name := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
+	name := fmt.Sprintf("tf-orchestration-%s", acctest.RandString(5))
 	description := fmt.Sprintf("tf-description-%s", acctest.RandString(5))
 	nameUpdated := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
 	descriptionUpdated := fmt.Sprintf("tf-description-%s", acctest.RandString(5))

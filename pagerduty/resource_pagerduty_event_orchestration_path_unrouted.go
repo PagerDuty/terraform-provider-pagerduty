@@ -20,13 +20,9 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 			State: resourcePagerDutyEventOrchestrationPathUnroutedImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"parent": {
-				Type:     schema.TypeList,
+			"event_orchestration": {
+				Type:     schema.TypeString,
 				Required: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: PagerDutyEventOrchestrationPathParent,
-				},
 			},
 			"sets": {
 				Type:     schema.TypeList,
@@ -294,6 +290,7 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 			return resource.NonRetryableError(fmt.Errorf("no event orchestration unrouted found"))
 		}
 		d.SetId(unroutedPath.Parent.ID)
+		d.Set("event_orchestration", unroutedPath.Parent.ID)
 		if unroutedPath.Sets != nil {
 			d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
 		}
@@ -309,22 +306,12 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 	return nil
 }
 
-func buildUnroutedPathParent(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-	orchPath := &pagerduty.EventOrchestrationPath{}
-
-	if attr, ok := d.GetOk("parent"); ok {
-		orchPath.Parent = expandOrchestrationPathUnroutedParent(attr)
-	}
-
-	return orchPath
-}
-
 func buildUnroutedPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
 
-	orchPath := buildUnroutedPathParent(d)
-
-	if attr, ok := d.GetOk("parent"); ok {
-		orchPath.Parent = expandOrchestrationPathUnroutedParent(attr)
+	orchPath := &pagerduty.EventOrchestrationPath{
+		Parent: &pagerduty.EventOrchestrationPathReference{
+			ID: d.Get("event_orchestration").(string),
+		},
 	}
 
 	if attr, ok := d.GetOk("sets"); ok {
@@ -336,16 +323,6 @@ func buildUnroutedPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOr
 	}
 
 	return orchPath
-}
-
-func expandOrchestrationPathUnroutedParent(v interface{}) *pagerduty.EventOrchestrationPathReference {
-	var parent *pagerduty.EventOrchestrationPathReference
-	p := v.([]interface{})[0].(map[string]interface{})
-	parent = &pagerduty.EventOrchestrationPathReference{
-		ID: p["id"].(string),
-	}
-
-	return parent
 }
 
 func expandUnroutedSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
@@ -561,6 +538,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedImport(d *schema.ResourceDat
 	}
 
 	d.SetId(orchestrationID)
+	d.Set("event_orchestration", orchestrationID)
 
 	return []*schema.ResourceData{d}, nil
 }

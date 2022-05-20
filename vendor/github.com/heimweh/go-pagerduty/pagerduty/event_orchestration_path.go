@@ -4,7 +4,6 @@ import (
 	"fmt"
 )
 
-// TODO: Check omitempty for all structs
 type EventOrchestrationPathService service
 
 type EventOrchestrationPath struct {
@@ -29,13 +28,13 @@ type EventOrchestrationPathReference struct {
 
 type EventOrchestrationPathSet struct {
 	ID    string                        `json:"id,omitempty"`
-	Rules []*EventOrchestrationPathRule `json:"rules,omitempty"`
+	Rules []*EventOrchestrationPathRule `json:"rules"`
 }
 
 type EventOrchestrationPathRule struct {
 	ID         string                                 `json:"id,omitempty"`
 	Label      string                                 `json:"label,omitempty"`
-	Conditions []*EventOrchestrationPathRuleCondition `json:"conditions,omitempty"`
+	Conditions []*EventOrchestrationPathRuleCondition `json:"conditions"`
 	Actions    *EventOrchestrationPathRuleActions     `json:"actions,omitempty"`
 	Disabled   bool                                   `json:"disabled,omitempty"`
 }
@@ -50,17 +49,17 @@ type EventOrchestrationPathRuleCondition struct {
 // Service: https://developer.pagerduty.com/api-reference/179537b835e2d-get-the-service-orchestration-for-a-service
 // Unrouted: https://developer.pagerduty.com/api-reference/70aa1139e1013-get-the-unrouted-orchestration-for-a-global-event-orchestration
 type EventOrchestrationPathRuleActions struct {
-	RouteTo                    string                                             `json:"route_to,omitempty"`
-	Suppress                   bool                                               `json:"suppress,omitempty"`
-	Suspend                    int                                                `json:"suspend,omitempty"`
-	Priority                   string                                             `json:"priority,omitempty"`
-	Annotate                   string                                             `json:"annotate,omitempty"`
-	PagerdutyAutomationActions []*EventOrchestrationPathPagerdutyAutomationAction `json:"pagerduty_automation_actions,omitempty"`
-	AutomationActions          []*EventOrchestrationPathAutomationAction          `json:"automation_actions,omitempty"`
-	Severity                   string                                             `json:"severity,omitempty"`
-	EventAction                string                                             `json:"event_action,omitempty"`
-	Variables                  []*EventOrchestrationPathActionVariables           `json:"variables,omitempty"`
-	Extractions                []*EventOrchestrationPathActionExtractions         `json:"extractions,omitempty"`
+	RouteTo                    string                                             `json:"route_to"`
+	Suppress                   bool                                               `json:"suppress"`
+	Suspend                    *int                                               `json:"suspend"`
+	Priority                   string                                             `json:"priority"`
+	Annotate                   string                                             `json:"annotate"`
+	PagerdutyAutomationActions []*EventOrchestrationPathPagerdutyAutomationAction `json:"pagerduty_automation_actions"`
+	AutomationActions          []*EventOrchestrationPathAutomationAction          `json:"automation_actions"`
+	Severity                   string                                             `json:"severity"`
+	EventAction                string                                             `json:"event_action"`
+	Variables                  []*EventOrchestrationPathActionVariables           `json:"variables"`
+	Extractions                []*EventOrchestrationPathActionExtractions         `json:"extractions"`
 }
 
 type EventOrchestrationPathPagerdutyAutomationAction struct {
@@ -71,8 +70,8 @@ type EventOrchestrationPathAutomationAction struct {
 	Name       string                                          `json:"name,omitempty"`
 	Url        string                                          `json:"url,omitempty"`
 	AutoSend   bool                                            `json:"auto_send,omitempty"`
-	Headers    []*EventOrchestrationPathAutomationActionObject `json:"headers,omitempty"`
-	Parameters []*EventOrchestrationPathAutomationActionObject `json:"parameters,omitempty"`
+	Headers    []*EventOrchestrationPathAutomationActionObject `json:"headers"`
+	Parameters []*EventOrchestrationPathAutomationActionObject `json:"parameters"`
 }
 
 type EventOrchestrationPathAutomationActionObject struct {
@@ -89,7 +88,9 @@ type EventOrchestrationPathActionVariables struct {
 
 type EventOrchestrationPathActionExtractions struct {
 	Target   string `json:"target,omitempty"`
+	Regex string `json:"regex,omitempty"`
 	Template string `json:"template,omitempty"`
+	Source string `json:"source,omitempty"`
 }
 
 type EventOrchestrationPathCatchAll struct {

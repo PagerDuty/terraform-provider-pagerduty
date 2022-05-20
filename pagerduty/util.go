@@ -145,3 +145,10 @@ func stringPtrToStringType(v *string) string {
 	}
 	return *v
 }
+
+func intTypeToIntPtr(v int) *int {
+	if v == 0 {
+		return nil
+	}
+	return &v
+}

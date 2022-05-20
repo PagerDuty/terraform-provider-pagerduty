@@ -561,7 +561,6 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 		flattenedAction["extractions"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
 	if actions.PagerdutyAutomationActions != nil {
-
 		flattenedAction["pagerduty_automation_actions"] = flattenServicePathPagerDutyAutomationActions(actions.PagerdutyAutomationActions)
 	}
 	if actions.AutomationActions != nil {

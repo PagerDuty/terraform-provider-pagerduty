@@ -15,11 +15,6 @@ func init() {
 	resource.AddTestSweepers("pagerduty_event_orchestration_service", &resource.Sweeper{
 		Name: "pagerduty_event_orchestration_service",
 		F:    testSweepEventOrchestration,
-		Dependencies: []string{
-			"pagerduty_user",
-			"pagerduty_escalation_policy",
-			"pagerduty_service",
-		},
 	})
 }
 
@@ -212,8 +207,6 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceExists(rn string) resourc
 		if found.Parent.ID != orch.Primary.ID {
 			return fmt.Errorf("Event Orchrestration Service not found: %v - %v", orch.Primary.ID, found)
 		}
-
-		// return fmt.Errorf(">>> attr: %v", orch.Primary.Attributes)
 
 		return nil
 	}

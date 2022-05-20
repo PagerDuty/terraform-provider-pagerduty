@@ -19,7 +19,7 @@ func TestAccPagerDutyEventOrchestrationPathService_import(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationServicePathDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(escalationPolicy, service),
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(escalationPolicy, service),
 			},
 			{
 				ResourceName:      "pagerduty_event_orchestration_service.serviceA",

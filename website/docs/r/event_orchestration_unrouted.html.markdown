@@ -12,14 +12,11 @@ An Unrouted Orchestration allows users to create a set of Event Rules that will 
 
 The Unrouted Orchestration evaluates events sent to it against each of its rules, beginning with the rules in the "start" set. When a matching rule is found, it can modify and enhance the event and can route the event to another set of rules within this Unrouted Orchestration for further processing.
 
-## Example of configuring a Unrouted Rules for an Orchestration
+## Example of configuring Unrouted Rules for an Orchestration
 
-  In this example the user has defined the unrouted orchestration with two rules, each routing to a different service.This example assumes services used in the route_to configuration already exists. So it does not show creation of service resource.As there is a single set, route_to is not defined for the rules.
-
-  If there are more than one set, the rules in start set must define route_to with id of the next set
-  The first rule matches only if the condition is matched. The second rule matches always as there are no conditions.
-
-  `catch_all` with empty `actions` block suppresses the alerts that do not match any rules. Using the `catch_all` to set severity, event_action, variables and extractions is also allowed.
+In this example of an Unrouted Orchestration, the rule matches only if the condition is matched.
+Alerts created for events that do not match the rule will have severity level set to `info` as defined in `catch_all` block.
+`catch_all` for Unrouted Orchestration always suppressess the alert so it is not required to define the `suppress` action.
 
 ```hcl
 resource "pagerduty_event_orchestration_unrouted" "unrouted" {
@@ -32,22 +29,18 @@ resource "pagerduty_event_orchestration_unrouted" "unrouted" {
         expression = "event.severity matches 'critical'"
       }
       actions {
-        severity = "info"
+        severity = "critical"
         extractions {
-            target = "event.summary"
-            template = "[Critical Unrouted] {{event.summary}}"
+          target = "event.summary"
+          template = "[Critical Unrouted] {{event.summary}}"
         }
-      }
-    }
-    rules {
-      label = "Reduce the severity of all other unrouted events"
-      actions {
-        severity = "info"
       }
     }
   }
   catch_all {
-    actions { }
+    actions {
+      severity = "info"
+    }
   }
 }
 ```
@@ -58,11 +51,11 @@ The following arguments are supported:
 
 * `event_orchestration` - (Required) The Event Orchestration to which this Unrouted Orchestration belongs to.
 * `sets` - (Required) An Unrouted Orchestration must contain at least a "start" set, but can contain any number of additional sets that are routed to by other rules to form a directional graph.
-* `catch_all` - (Required) When none of the rules match an event, the event will be routed according to the catch_all settings.
+* `catch_all` - (Required) the `catch_all` actions will be applied if an Event reaches the end of any set without matching any rules in that set.
 
 ### Sets (`sets`) supports the following:
 * `id` - (Required) The ID of this set of rules. Rules in other sets can route events into this set using the rule's `route_to` property.
-* `rules` - (Optional) The Unrouted Orchestration evaluates Events against these Rules, one at a time, and routes each Event based on the first rule that matches. If no rules are provided as part of Terraform configuration, the API returns empty list of rules.
+* `rules` - (Optional) The Unrouted Orchestration evaluates Events against these Rules, one at a time, and applies all the actions for first rule it finds where the event matches the rule's conditions. If no rules are provided as part of Terraform configuration, the API returns empty list of rules.
 
 ### Rules (`rules`) supports the following:
 * `label` - (Optional) A description of this rule's purpose.
@@ -74,19 +67,22 @@ The following arguments are supported:
 * `expression`- (Required) A [PCL condition](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) string.
 
 ### Actions (`actions`) supports the following:
-* `route_to` - (Required) The ID of the target Service for the resulting alert.
+* `route_to` - (Optional) The ID of a Set from this Unrouted Orchestration whose rules you also want to use with event that match this rule.
 * `severity` - (Optional) sets Severity of the resulting alert. Allowed values are: `info`, `error`, `warning`, `critical`
 * `event_action` - (Optional) sets whether the resulting alert status is trigger or resolve. Allowed values are: `trigger`, `resolve`
 * `variables` - (Optional) Populate variables from event payloads and use those variables in other event actions.
   * `name` - (Required) The name of the variable
-  * `path` - (Required) Path to a field in an event, in dot-notation. This supports both [PD-CEF](https://support.pagerduty.com/docs/pd-cef) and non-CEF fields. Eg: Use `event.summary` for the `summary` CEF field. Use raw_event.fieldname to read from the original event `fieldname` data.
+  * `path` - (Required) Path to a field in an event, in dot-notation. This supports both [PD-CEF](https://support.pagerduty.com/docs/pd-cef) and non-CEF fields. Eg: Use `event.summary` for the `summary` CEF field. Use `raw_event.fieldname` to read from the original event `fieldname` data.
   * `type` - (Required) Only `regex` is supported
   * `value` - (Required) The Regex expression to match against. Must use valid [RE2 regular expression](https://github.com/google/re2/wiki/Syntax) syntax.
 * `extractions` - (Optional) Replace any CEF field or Custom Details object field using custom variables.
-  * `template` - (Optional) A value that will be used to populate the `target` field. The configuration can include variables extracted from the payload by using string interpolation. Eg: If you have defined a variable called `hostname` you can set extraction `template` to `High CPU on variables.hostname server` to use the variable in extraction.  This field can be ignored for `regex` based replacements.
   * `target` - (Required) The PagerDuty Common Event Format [PD-CEF](https://support.pagerduty.com/docs/pd-cef) field that will be set with the value from the `template` or based on `regex` and `source` fields.
-  * `regex` - (Optional) The conditions that need to be met for the extraction to happen. Must use valid [RE2 regular expression](https://github.com/google/re2/wiki/Syntax) syntax. This field can be ignored for `template` based replacements.
-  * `source` - (Optional) Field where the data is being copied from. Must be a PagerDuty Common Event Format [PD-CEF](https://support.pagerduty.com/docs/pd-cef) field. This field can be ignored for `template` based replacements.
+  * `template` - (Optional) A string that will be used to populate the `target` field. You can reference variables or event data within your template using double curly braces. For example:
+    * Use variables named `ip` and `subnet` with a template like: `{{variables.ip}}/{{variables.subnet}}`
+    * Combine the event severity & summary with template like: `{{event.severity}}:{{event.summary}}`
+  * `target` - (Required) The PagerDuty Common Event Format [PD-CEF](https://support.pagerduty.com/docs/pd-cef) field that will be set with the value from the `template` or based on `regex` and `source` fields.
+  * `regex` - (Optional) A [RE2 regular expression](https://github.com/google/re2/wiki/Syntax) that will be matched against field specified via the `source` argument. If the regex contains one or more capture groups, their values will be extracted and appended together. If it contains no capture groups, the whole match is used. This field can be ignored for `template` based extractions.
+  * `source` - (Optional) The path to the event field where the `regex` will be applied to extract a value. You can use any valid [PCL path](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview#paths) like `event.summary` and you can reference previously-defined variables using a path like `variables.hostname`. This field can be ignored for `template` based extractions.
 
 ### Catch All (`catch_all`) supports the following:
 * `actions` - (Required) These are the actions that will be taken to change the resulting alert and incident. `catch_all` supports all actions described above for `rules` _except_ `route_to` action.
@@ -96,7 +92,7 @@ The following arguments are supported:
 The following attributes are exported:
 * `self` - The URL at which the Unrouted Event Orchestration is accessible.
 * `rules`
-  * `id` - The ID of the rule within the `start` set.
+  * `id` - The ID of the rule within the set.
 
 ## Import
 

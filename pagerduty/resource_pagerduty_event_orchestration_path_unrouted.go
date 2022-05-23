@@ -19,6 +19,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyEventOrchestrationPathUnroutedImport,
 		},
+		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
 				Type:     schema.TypeString,

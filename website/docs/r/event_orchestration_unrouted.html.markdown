@@ -16,7 +16,6 @@ The Unrouted Orchestration evaluates events sent to it against each of its rules
 
 In this example of an Unrouted Orchestration, the rule matches only if the condition is matched.
 Alerts created for events that do not match the rule will have severity level set to `info` as defined in `catch_all` block.
-`catch_all` for Unrouted Orchestration always suppressess the alert so it is not required to define the `suppress` action.
 
 ```hcl
 resource "pagerduty_event_orchestration_unrouted" "unrouted" {

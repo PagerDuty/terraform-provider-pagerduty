@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -50,6 +51,30 @@ var eventOrchestrationPathExtractionsSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
+}
+
+func invalidExtractionRegexTemplateNilConfig() string {
+	return `
+		extractions {
+			target = "event.summary"
+		}`
+}
+
+func invalidExtractionRegexTemplateValConfig() string {
+	return `
+		extractions {
+			regex = ".*"
+			template = "hi"
+			target = "event.summary"
+		}`
+}
+
+func invalidExtractionRegexNilSourceConfig() string {
+	return `
+		extractions {
+			regex = ".*"
+			target = "event.summary"
+		}`
 }
 
 func validateEventOrchestrationPathSeverity() schema.SchemaValidateFunc {

@@ -465,30 +465,6 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 	)
 }
 
-func invalidExtractionRegexTemplateNilConfig() string {
-	return `
-		extractions {
-			target = "event.summary"
-		}`
-}
-
-func invalidExtractionRegexTemplateValConfig() string {
-	return `
-		extractions {
-			regex = ".*"
-			template = "hi"
-			target = "event.summary"
-		}`
-}
-
-func invalidExtractionRegexNilSourceConfig() string {
-	return `
-		extractions {
-			regex = ".*"
-			target = "event.summary"
-		}`
-}
-
 func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s string) string {
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {

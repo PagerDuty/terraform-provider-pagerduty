@@ -11,14 +11,32 @@ description: |-
 Use this data source to get information about a specific Global [Event Orchestration][1]
 
 ## Example Usage
-
 ```hcl
-data "pagerduty_event_orchestration" "example" {
-  name = "My Global Event Orchestration"
+resource "pagerduty_event_orchestration" "tf_orch_a" {
+  name = "Test Event Orchestration"
 }
 
-resource "pagerduty_event_orchestration" "foo" {
-  name = data.pagerduty_event_orchestration.example.name
+data "pagerduty_event_orchestration" "tf_my_monitor" {
+  name = pagerduty_event_orchestration.tf_orch_a.name
+}
+
+resource "pagerduty_event_orchestration_router" "router" {
+  parent {
+    id = data.pagerduty_event_orchestration.tf_my_monitor.id
+  }
+  catch_all {
+    actions {
+      route_to = "unrouted"
+    }
+  }
+  sets {
+    id = "start"
+    rules {
+      actions {
+        route_to = pagerduty_service.db.id
+      }
+    }
+  }
 }
 ```
 

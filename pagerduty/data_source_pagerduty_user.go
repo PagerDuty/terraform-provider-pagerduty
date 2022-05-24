@@ -42,7 +42,7 @@ func dataSourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error
 	}
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
-		resp, _, err := client.Users.List(o)
+		resp, err := client.Users.ListAll(o)
 		if err != nil {
 			if isErrCode(err, 429) {
 				// Delaying retry by 30s as recommended by PagerDuty
@@ -54,9 +54,9 @@ func dataSourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error
 			return resource.NonRetryableError(err)
 		}
 
-		var found *pagerduty.User
+		var found *pagerduty.FullUser
 
-		for _, user := range resp.Users {
+		for _, user := range resp {
 			if user.Email == searchEmail {
 				found = user
 				break

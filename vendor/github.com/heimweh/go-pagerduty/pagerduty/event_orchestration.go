@@ -13,7 +13,6 @@ type EventOrchestration struct {
 	Team         *EventOrchestrationObject        `json:"team"`
 	Routes       int                              `json:"routes,omitempty"`
 	Integrations []*EventOrchestrationIntegration `json:"integrations,omitempty"`
-	// TODO: figure out if we need Updater, Creator / updated_by, created_by, updated_at, created_at, version
 }
 
 type EventOrchestrationObject struct {

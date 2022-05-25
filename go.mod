@@ -11,6 +11,3 @@ require (
 	google.golang.org/genproto v0.0.0-20201109203340-2640f1f9cdfb // indirect
 	google.golang.org/grpc v1.33.2 // indirect
 )
-
-// providing a relative path as "../../alenapan/go-pagerduty" doesn't work for some reason, leaving the path as is for now
-replace github.com/heimweh/go-pagerduty v0.0.0-20220428180718-5a69bb821163 => /Users/apantuzenko/Documents/workspace/go/src/github.com/alenapan/go-pagerduty

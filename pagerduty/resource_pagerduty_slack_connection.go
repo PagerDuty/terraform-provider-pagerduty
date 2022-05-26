@@ -108,6 +108,39 @@ func buildSlackConnectionStruct(d *schema.ResourceData) (*pagerduty.SlackConnect
 	return &slackConn, nil
 }
 
+func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interface{}) error {
+	client, err := meta.(*Config).SlackClient()
+	if err != nil {
+		return err
+	}
+
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+
+		slackConn, err := buildSlackConnectionStruct(d)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		log.Printf("[INFO] Creating PagerDuty slack connection for source %s and slack channel %s", slackConn.SourceID, slackConn.ChannelID)
+
+		if slackConn, _, err = client.SlackConnections.Create(slackConn.WorkspaceID, slackConn); err != nil {
+			return resource.RetryableError(err)
+		} else if slackConn != nil {
+			d.SetId(slackConn.ID)
+			d.Set("workspace_id", slackConn.WorkspaceID)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
+	}
+	return resourcePagerDutySlackConnectionRead(d, meta)
+}
+
+func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface{}) error {
+	return fetchSlackConnection(d, meta, handleNotFoundError)
+}
+
 func fetchSlackConnection(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {
@@ -147,39 +180,6 @@ func flattenSlackConnection(d *schema.ResourceData, slackConn *pagerduty.SlackCo
 	d.Set("notification_type", slackConn.NotificationType)
 	d.Set("config", flattenConnectionConfig(slackConn.Config))
 	return nil
-}
-
-func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interface{}) error {
-	client, err := meta.(*Config).SlackClient()
-	if err != nil {
-		return err
-	}
-
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
-
-		slackConn, err := buildSlackConnectionStruct(d)
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-		log.Printf("[INFO] Creating PagerDuty slack connection for source %s and slack channel %s", slackConn.SourceID, slackConn.ChannelID)
-
-		if slackConn, _, err = client.SlackConnections.Create(slackConn.WorkspaceID, slackConn); err != nil {
-			return resource.RetryableError(err)
-		} else if slackConn != nil {
-			d.SetId(slackConn.ID)
-			d.Set("workspace_id", slackConn.WorkspaceID)
-		}
-		return nil
-	})
-	if retryErr != nil {
-		time.Sleep(2 * time.Second)
-		return retryErr
-	}
-	return resourcePagerDutySlackConnectionRead(d, meta)
-}
-
-func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface{}) error {
-	return fetchSlackConnection(d, meta, handleNotFoundError)
 }
 
 func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interface{}) error {

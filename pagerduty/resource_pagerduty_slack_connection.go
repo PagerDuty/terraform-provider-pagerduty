@@ -147,6 +147,8 @@ func fetchSlackConnection(d *schema.ResourceData, meta interface{}, errCallback 
 		return err
 	}
 
+	log.Printf("[INFO] Reading PagerDuty slack connection %s", d.Id())
+
 	workspaceID := d.Get("workspace_id").(string)
 	log.Printf("[DEBUG] Read Slack Connection: workspace_id %s", workspaceID)
 

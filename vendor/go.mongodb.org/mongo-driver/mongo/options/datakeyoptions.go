@@ -22,7 +22,7 @@ func DataKey() *DataKeyOptions {
 // If being used with a local KMS provider, this option is not applicable and should not be specified.
 //
 // For the AWS, Azure, and GCP KMS providers, this option is required and must be a document. For each, the value of the
-// "endpoint" or "keyVaultEndpoint" must be a host name with an optional port number (e.g. "foo.test" or "foo.test:443").
+// "endpoint" or "keyVaultEndpoint" must be a host name with an optional port number (e.g. "foo.com" or "foo.com:443").
 //
 // When using AWS, the document must have the format:
 // {

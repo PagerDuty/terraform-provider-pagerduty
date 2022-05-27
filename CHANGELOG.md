@@ -1,3 +1,12 @@
+## 2.5.0 (Unreleased)
+
+FEATURES:
+* Support for Event Orchestration via several new resources. ([#512](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/512))
+    * `resource/pagerduty_event_orchestration`
+    * `resource/pagerduty_event_orchestration_router`
+    * `resource/pagerduty_event_orchestration_unrouted`
+    * `resource/pagerduty_event_orchestration_service`
+
 ## 2.4.2 (May 20, 2022)
 
 IMPROVEMENTS:

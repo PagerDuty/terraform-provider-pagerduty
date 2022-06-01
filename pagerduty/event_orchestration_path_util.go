@@ -55,14 +55,14 @@ var eventOrchestrationPathExtractionsSchema = map[string]*schema.Schema{
 
 func invalidExtractionRegexTemplateNilConfig() string {
 	return `
-		extractions {
+		extraction {
 			target = "event.summary"
 		}`
 }
 
 func invalidExtractionRegexTemplateValConfig() string {
 	return `
-		extractions {
+		extraction {
 			regex = ".*"
 			template = "hi"
 			target = "event.summary"
@@ -71,7 +71,7 @@ func invalidExtractionRegexTemplateValConfig() string {
 
 func invalidExtractionRegexNilSourceConfig() string {
 	return `
-		extractions {
+		extraction {
 			regex = ".*"
 			target = "event.summary"
 		}`
@@ -94,18 +94,18 @@ func validateEventOrchestrationPathEventAction() schema.SchemaValidateFunc {
 }
 
 func checkExtractions(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
-	sn := diff.Get("sets.#").(int)
+	sn := diff.Get("set.#").(int)
 
 	for si := 0; si < sn; si++ {
-		rn := diff.Get(fmt.Sprintf("sets.%d.rules.#", si)).(int)
+		rn := diff.Get(fmt.Sprintf("set.%d.rule.#", si)).(int)
 		for ri := 0; ri < rn; ri++ {
-			res := checkExtractionAttributes(diff, fmt.Sprintf("sets.%d.rules.%d.actions.0.extractions", si, ri))
+			res := checkExtractionAttributes(diff, fmt.Sprintf("set.%d.rule.%d.actions.0.extraction", si, ri))
 			if res != nil {
 				return res
 			}
 		}
 	}
-	return checkExtractionAttributes(diff, "catch_all.0.actions.0.extractions")
+	return checkExtractionAttributes(diff, "catch_all.0.actions.0.extraction")
 }
 
 func checkExtractionAttributes(diff *schema.ResourceDiff, loc string) error {

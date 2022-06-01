@@ -33,7 +33,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.#", "0"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.#", "0"),
 				),
 			},
 			{
@@ -41,7 +41,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'rds'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.condition.0.expression", "event.summary matches part 'rds'"),
 				),
 			},
 			{
@@ -49,13 +49,13 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.#", "2"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'rds'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.condition.0.expression", "event.summary matches part 'rds'"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.1.expression", "event.severity matches part 'warning'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.condition.1.expression", "event.severity matches part 'warning'"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.1.conditions.0.expression", "event.severity matches part 'info'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.1.condition.0.expression", "event.severity matches part 'info'"),
 				),
 			},
 			{
@@ -63,27 +63,27 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.#", "2"),
 					//Set #1
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.id", "start"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.id", "start"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.condition.#", "2"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.route_to", "child-1"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.actions.0.route_to", "child-1"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.0.expression", "event.severity matches part 'info'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.condition.0.expression", "event.severity matches part 'info'"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.conditions.1.expression", "event.severity matches part 'warning'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.condition.1.expression", "event.severity matches part 'warning'"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.severity", "info"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.actions.0.severity", "info"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.event_action", "trigger"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.actions.0.event_action", "trigger"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.variables.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.actions.0.variable.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"sets.0.rules.0.actions.0.variables.*",
+						"set.0.rule.0.actions.0.variable.*",
 						map[string]string{
 							"name":  "server_name_cpu",
 							"path":  "event.summary",
@@ -93,7 +93,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"sets.0.rules.0.actions.0.variables.*",
+						"set.0.rule.0.actions.0.variable.*",
 						map[string]string{
 							"name":  "server_name_memory",
 							"path":  "event.custom_details",
@@ -102,11 +102,11 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 						},
 					),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.0.actions.0.extractions.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.0.actions.0.extraction.#", "2"),
 
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"sets.0.rules.0.actions.0.extractions.*",
+						"set.0.rule.0.actions.0.extraction.*",
 						map[string]string{
 							"target":   "event.summary",
 							"template": "High memory usage on {{variables.hostname}} server",
@@ -114,7 +114,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"sets.0.rules.0.actions.0.extractions.*",
+						"set.0.rule.0.actions.0.extraction.*",
 						map[string]string{
 							"target":   "event.custom_details",
 							"template": "High memory usage on {{variables.hostname}} server",
@@ -122,23 +122,23 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 					),
 					//Set #2
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.id", "child-1"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.1.id", "child-1"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.0.conditions.0.expression", "event.severity matches part 'warning'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.1.rule.0.condition.0.expression", "event.severity matches part 'warning'"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.0.actions.0.event_action", "resolve"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.1.rule.0.actions.0.event_action", "resolve"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.1.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.1.rule.1.condition.0.expression", "event.severity matches part 'critical'"),
 					// Catch All
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.severity", "critical"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.event_action", "trigger"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variables.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.variable.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"catch_all.0.actions.0.variables.*",
+						"catch_all.0.actions.0.variable.*",
 						map[string]string{
 							"name":  "server_name_cpu",
 							"path":  "event.summary",
@@ -148,7 +148,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"catch_all.0.actions.0.variables.*",
+						"catch_all.0.actions.0.variable.*",
 						map[string]string{
 							"name":  "server_name_memory",
 							"path":  "event.custom_details",
@@ -157,11 +157,11 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 						},
 					),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.extractions.#", "2"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "catch_all.0.actions.0.extraction.#", "2"),
 
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"catch_all.0.actions.0.extractions.*",
+						"catch_all.0.actions.0.extraction.*",
 						map[string]string{
 							"target":   "event.summary",
 							"template": "High memory usage on {{variables.hostname}} server",
@@ -169,7 +169,7 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"pagerduty_event_orchestration_unrouted.unrouted",
-						"catch_all.0.actions.0.extractions.*",
+						"catch_all.0.actions.0.extraction.*",
 						map[string]string{
 							"target":   "event.custom_details",
 							"template": "High memory usage on {{variables.hostname}} server",
@@ -183,21 +183,21 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 					team, escalationPolicy, service, orchestration, invalidExtractionRegexTemplateValConfig(), "",
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: regex and template cannot both have values"),
+				ExpectError: regexp.MustCompile("Invalid configuration in set.0.rule.0.actions.0.extraction.0: regex and template cannot both have values"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedInvalidExtractionsConfig(
 					team, escalationPolicy, service, orchestration, invalidExtractionRegexTemplateValConfig(), "",
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: regex and template cannot both have values"),
+				ExpectError: regexp.MustCompile("Invalid configuration in set.0.rule.0.actions.0.extraction.0: regex and template cannot both have values"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedInvalidExtractionsConfig(
 					team, escalationPolicy, service, orchestration, invalidExtractionRegexNilSourceConfig(), "",
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: source can't be blank"),
+				ExpectError: regexp.MustCompile("Invalid configuration in set.0.rule.0.actions.0.extraction.0: source can't be blank"),
 			},
 			// Providing invalid extractions attributes for the catch_all rule
 			{
@@ -205,28 +205,28 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_Basic(t *testing.T) {
 					team, escalationPolicy, service, orchestration, "", invalidExtractionRegexTemplateNilConfig(),
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: regex and template cannot both be null"),
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extraction.0: regex and template cannot both be null"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedInvalidExtractionsConfig(
 					team, escalationPolicy, service, orchestration, "", invalidExtractionRegexTemplateValConfig(),
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: regex and template cannot both have values"),
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extraction.0: regex and template cannot both have values"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedInvalidExtractionsConfig(
 					team, escalationPolicy, service, orchestration, "", invalidExtractionRegexNilSourceConfig(),
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: source can't be blank"),
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extraction.0: source can't be blank"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationPathUnroutedExists("pagerduty_event_orchestration_unrouted.unrouted"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_unrouted.unrouted", "sets.0.rules.#", "0"),
+						"pagerduty_event_orchestration_unrouted.unrouted", "set.0.rule.#", "0"),
 				),
 			},
 			{
@@ -337,7 +337,7 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigNoRules(t, ep, s, 
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
 
-			sets {
+			set {
 				id = "start"
 			}
 			catch_all {
@@ -352,13 +352,13 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithConditions(t, 
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
 
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
 					actions { }
-					conditions {
+					condition {
 						expression = "event.summary matches part 'rds'"
 					}
 				}
@@ -375,25 +375,25 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedConfigWithMultipleRules(
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
 
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
 					actions { }
-					conditions {
+					condition {
 						expression = "event.summary matches part 'rds'"
 					}
-					conditions {
+					condition {
 						expression = "event.severity matches part 'warning'"
 					}
 				}
 
-				rules {
+				rule {
 					disabled = false
 					label = "rule2 label"
 					actions { }
-					conditions {
+					condition {
 						expression = "event.severity matches part 'info'"
 					}
 				}
@@ -410,83 +410,83 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedWithAllConfig(t, ep, s, 
 		`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
 			
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
-					conditions {
+					condition {
 						expression = "event.severity matches part 'info'"
 					}
-					conditions {
+					condition {
 						expression = "event.severity matches part 'warning'"
 					}
 					actions {
 						route_to = "child-1"
 						severity = "info"
 						event_action = "trigger"
-						variables {
+						variable {
 							name = "server_name_cpu"
 							path = "event.summary"
 							type = "regex"
 							value = "High CPU on (.*) server"
 						}
-						variables {
+						variable {
 							name = "server_name_memory"
 							path = "event.custom_details"
 							type = "regex"
 							value = "High memory usage on (.*) server"
 						}
-						extractions {
+						extraction {
 							target = "event.summary"
 							template = "High memory usage on {{variables.hostname}} server"
 						}
-						extractions {
+						extraction {
 							target = "event.custom_details"
 							template = "High memory usage on {{variables.hostname}} server"
 						}
 					}
 				}
 			}
-			sets {
+			set {
 				id = "child-1"
-				rules {
+				rule {
 					disabled = false
 					label = "rule2 label1"
-					conditions {
+					condition {
 						expression = "event.severity matches part 'warning'"
 					}
 					actions {
 						severity = "warning"
 						event_action = "resolve"
-						variables {
+						variable {
 							name = "server_name_cpu"
 							path = "event.summary"
 							type = "regex"
 							value = "High CPU on (.*) server"
 						}
-						extractions {
+						extraction {
 							target = "event.summary"
 							template = "High CPU on {{event.custom_details.hostname}} server"
 						}
 					}
 				}
-				rules {
+				rule {
 					disabled = false
 					label = "rule2 label2"
-					conditions {
+					condition {
 						expression = "event.severity matches part 'critical'"
 					}
 					actions {
 						severity = "warning"
 						event_action = "trigger"
-						variables {
+						variable {
 							name = "server_name_cpu"
 							path = "event.summary"
 							type = "regex"
 							value = "High CPU on (.*) server"
 						}
-						extractions {
+						extraction {
 							target = "event.summary"
 							template = "High CPU on {{event.custom_details.hostname}} server"
 						}
@@ -497,23 +497,23 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedWithAllConfig(t, ep, s, 
 				actions {
 					severity = "critical"
 					event_action = "trigger"
-					variables {
+					variable {
 						name = "server_name_cpu"
 						path = "event.summary"
 						type = "regex"
 						value = "High CPU on (.*) server"
 					}
-					variables {
+					variable {
 						name = "server_name_memory"
 						path = "event.custom_details"
 						type = "regex"
 						value = "High memory usage on (.*) server"
 					}
-					extractions {
+					extraction {
 						target = "event.summary"
 						template = "High memory usage on {{variables.hostname}} server"
 					}
-					extractions {
+					extraction {
 						target = "event.custom_details"
 						template = "High memory usage on {{variables.hostname}} server"
 					}
@@ -530,9 +530,9 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedInvalidExtractionsConfig
 		fmt.Sprintf(`resource "pagerduty_event_orchestration_unrouted" "unrouted" {
 				event_orchestration = pagerduty_event_orchestration.orch.id
 						
-				sets {
+				set {
 					id = "start"
-					rules {
+					rule {
 						actions {
 							%s
 						}

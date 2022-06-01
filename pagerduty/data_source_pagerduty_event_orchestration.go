@@ -65,14 +65,7 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EventOrchestrations.List()
 		if err != nil {
-			if isErrCode(err, 429) {
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
-				return resource.RetryableError(err)
-			}
-
-			return resource.NonRetryableError(err)
+			return resource.RetryableError(err)
 		}
 
 		var found *pagerduty.EventOrchestration

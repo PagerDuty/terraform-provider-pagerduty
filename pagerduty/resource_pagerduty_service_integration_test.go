@@ -357,13 +357,11 @@ func TestAccPagerDutyServiceIntegrationEmail_Filters(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.1.value_name", "FieldName11"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.2.ends_before", "end"),
-					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.2.part", "subject"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.2.starts_after", "start"),
+						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.2.regex", "(bar*)"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.2.type", "between"),
+						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.2.type", "regex"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "email_parser.1.value_extractor.2.value_name", "FieldName2"),
 				),
@@ -949,12 +947,11 @@ resource "pagerduty_service_integration" "foo" {
       type         = "between"
       value_name   = "FieldName11"
     }
-	value_extractor {
-      ends_before  = "end"
-      part         = "subject"
-      starts_after = "start"
-      type         = "between"
-      value_name   = "FieldName2"
+    value_extractor {
+      part       = "subject"
+      regex      = "(bar*)"
+      type       = "regex"
+      value_name = "FieldName2"
     }
   }
   email_parsing_fallback = "open_new_incident"

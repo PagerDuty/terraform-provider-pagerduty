@@ -24,7 +24,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"sets": {
+			"set": {
 				Type:     schema.TypeList,
 				Required: true,
 				MaxItems: 1, // Router can only have 'start' set
@@ -34,7 +34,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"rules": {
+						"rule": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
@@ -47,7 +47,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"conditions": {
+									"condition": {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
@@ -126,7 +126,7 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 			d.Set("event_orchestration", routerPath.Parent.ID)
 
 			if routerPath.Sets != nil {
-				d.Set("sets", flattenSets(routerPath.Sets))
+				d.Set("set", flattenSets(routerPath.Sets))
 			}
 
 			if routerPath.CatchAll != nil {
@@ -174,7 +174,7 @@ func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.Event
 		d.Set("event_orchestration", routerPath.Parent.ID)
 
 		if routerPath.Sets != nil {
-			d.Set("sets", flattenSets(routerPath.Sets))
+			d.Set("set", flattenSets(routerPath.Sets))
 		}
 		if updatedPath.CatchAll != nil {
 			d.Set("catch_all", flattenCatchAll(updatedPath.CatchAll))
@@ -196,7 +196,7 @@ func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrch
 		},
 	}
 
-	if attr, ok := d.GetOk("sets"); ok {
+	if attr, ok := d.GetOk("set"); ok {
 		orchPath.Sets = expandSets(attr)
 	}
 
@@ -215,7 +215,7 @@ func expandSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 
 		orchPathSet := &pagerduty.EventOrchestrationPathSet{
 			ID:    s["id"].(string),
-			Rules: expandRules(s["rules"]),
+			Rules: expandRules(s["rule"]),
 		}
 
 		sets = append(sets, orchPathSet)
@@ -235,7 +235,7 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 			ID:         r["id"].(string),
 			Label:      r["label"].(string),
 			Disabled:   r["disabled"].(bool),
-			Conditions: expandEventOrchestrationPathConditions(r["conditions"]),
+			Conditions: expandEventOrchestrationPathConditions(r["condition"]),
 			Actions:    expandRouterActions(r["actions"]),
 		}
 
@@ -269,8 +269,8 @@ func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interfac
 	var flattenedSets []interface{}
 	for _, set := range orchPathSets {
 		flattenedSet := map[string]interface{}{
-			"id":    set.ID,
-			"rules": flattenRules(set.Rules),
+			"id":   set.ID,
+			"rule": flattenRules(set.Rules),
 		}
 		flattenedSets = append(flattenedSets, flattenedSet)
 	}
@@ -282,11 +282,11 @@ func flattenRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 
 	for _, rule := range rules {
 		flattenedRule := map[string]interface{}{
-			"id":         rule.ID,
-			"label":      rule.Label,
-			"disabled":   rule.Disabled,
-			"conditions": flattenEventOrchestrationPathConditions(rule.Conditions),
-			"actions":    flattenRouterActions(rule.Actions),
+			"id":        rule.ID,
+			"label":     rule.Label,
+			"disabled":  rule.Disabled,
+			"condition": flattenEventOrchestrationPathConditions(rule.Conditions),
+			"actions":   flattenRouterActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
 	}

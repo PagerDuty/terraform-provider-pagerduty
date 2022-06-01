@@ -42,13 +42,13 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
 				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
-			// Adding/updating/deleting automation_actions properties
+			// Adding/updating/deleting automation_action properties
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
 					append(
 						baseChecks,
-						resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
+						resource.TestCheckResourceAttrSet(resourceName, "set.0.rule.0.id"),
 					)...,
 				),
 			},
@@ -58,7 +58,7 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					append(
 						baseChecks,
 						resource.TestCheckResourceAttr(
-							resourceName, "sets.0.rules.0.actions.0.automation_actions.0.auto_send", "false",
+							resourceName, "set.0.rule.0.actions.0.automation_action.0.auto_send", "false",
 						),
 					)...,
 				),
@@ -73,21 +73,21 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					escalationPolicy, service, invalidExtractionRegexTemplateNilConfig(), "",
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: regex and template cannot both be null"),
+				ExpectError: regexp.MustCompile("Invalid configuration in set.0.rule.0.actions.0.extraction.0: regex and template cannot both be null"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 					escalationPolicy, service, invalidExtractionRegexTemplateValConfig(), "",
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: regex and template cannot both have values"),
+				ExpectError: regexp.MustCompile("Invalid configuration in set.0.rule.0.actions.0.extraction.0: regex and template cannot both have values"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 					escalationPolicy, service, invalidExtractionRegexNilSourceConfig(), "",
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in sets.0.rules.0.actions.0.extractions.0: source can't be blank"),
+				ExpectError: regexp.MustCompile("Invalid configuration in set.0.rule.0.actions.0.extraction.0: source can't be blank"),
 			},
 			// Providing invalid extractions attributes for the catch_all rule
 			{
@@ -95,21 +95,21 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					escalationPolicy, service, "", invalidExtractionRegexTemplateNilConfig(),
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: regex and template cannot both be null"),
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extraction.0: regex and template cannot both be null"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 					escalationPolicy, service, "", invalidExtractionRegexTemplateValConfig(),
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: regex and template cannot both have values"),
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extraction.0: regex and template cannot both have values"),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 					escalationPolicy, service, "", invalidExtractionRegexNilSourceConfig(),
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extractions.0: source can't be blank"),
+				ExpectError: regexp.MustCompile("Invalid configuration in catch_all.0.actions.0.extraction.0: source can't be blank"),
 			},
 			// Adding/updating/deleting all actions
 			{
@@ -118,9 +118,9 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					append(
 						baseChecks,
 						[]resource.TestCheckFunc{
-							resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
-							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.0.id"),
-							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.1.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.0.rule.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.1.id"),
 						}...,
 					)...,
 				),
@@ -131,9 +131,9 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					append(
 						baseChecks,
 						[]resource.TestCheckFunc{
-							resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
-							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.0.id"),
-							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.1.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.0.rule.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.1.id"),
 						}...,
 					)...,
 				),
@@ -144,9 +144,9 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					append(
 						baseChecks,
 						[]resource.TestCheckFunc{
-							resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
-							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.0.id"),
-							resource.TestCheckResourceAttrSet(resourceName, "sets.1.rules.1.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.0.rule.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.0.id"),
+							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.1.id"),
 						}...,
 					)...,
 				),
@@ -157,7 +157,7 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					append(
 						baseChecks,
-						resource.TestCheckResourceAttrSet(resourceName, "sets.0.rules.0.id"),
+						resource.TestCheckResourceAttrSet(resourceName, "set.0.rule.0.id"),
 					)...,
 				),
 			},
@@ -282,7 +282,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(ep, s strin
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
 			}
 
@@ -298,30 +298,30 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(e
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					label = "rule 1"
 					actions {							
-							automation_actions {
+							automation_action {
 								name = "test"
 								url = "https://test.com"
 								auto_send = true
 		
-								headers {
+								header {
 									key = "foo"
 									value = "bar"
 								}
-								headers {
+								header {
 									key = "baz"
 									value = "buz"
 								}
 		
-								parameters {
+								parameter {
 									key = "source"
 									value = "orch"
 								}
-								parameters {
+								parameter {
 									key = "region"
 									value = "us"
 								}
@@ -332,25 +332,25 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(e
 
 			catch_all {
 				actions {
-					automation_actions {
+					automation_action {
 						name = "catch-all test"
 						url = "https://catch-all-test.com"
 						auto_send = true
 
-						headers {
+						header {
 							key = "foo1"
 							value = "bar1"
 						}
-						headers {
+						header {
 							key = "baz1"
 							value = "buz1"
 						}
 
-						parameters {
+						parameter {
 							key = "source1"
 							value = "orch1"
 						}
-						parameters {
+						parameter {
 							key = "region1"
 							value = "us1"
 						}
@@ -366,20 +366,20 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUp
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					label = "rule 1"
 					actions {							
-							automation_actions {
+							automation_action {
 								name = "test1"
 								url = "https://test1.com"
 		
-								headers {
+								header {
 									key = "foo1"
 									value = "bar1"
 								}
-								parameters {
+								parameter {
 									key = "source_region"
 									value = "eu"
 								}
@@ -390,16 +390,16 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUp
 
 			catch_all {
 				actions {
-					automation_actions {
+					automation_action {
 						name = "catch-all test upd"
 						url = "https://catch-all-test-upd.com"
 
-						headers {
+						header {
 							key = "baz2"
 							value = "buz2"
 						}
 
-						parameters {
+						parameter {
 							key = "source2"
 							value = "orch2"
 						}
@@ -415,12 +415,12 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDe
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					label = "rule 1"
 					actions {							
-							automation_actions {
+							automation_action {
 								name = "test"
 								url = "https://test.com"
 							}
@@ -430,7 +430,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDe
 
 			catch_all {
 				actions {
-					automation_actions {
+					automation_action {
 						name = "catch-all test upd"
 						url = "https://catch-all-test-upd.com"
 					}
@@ -447,9 +447,9 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 		fmt.Sprintf(`resource "pagerduty_event_orchestration_service" "serviceA" {
 				service = pagerduty_service.bar.id
 						
-				sets {
+				set {
 					id = "start"
-					rules {
+					rule {
 						actions {
 							%s
 						}
@@ -470,42 +470,42 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					label = "rule 1"
-					conditions {
+					condition {
 						expression = "event.summary matches part 'timeout'"
 					}
-					conditions {
+					condition {
 						expression = "event.custom_details.timeout_err exists"
 					}
 					actions {
 						route_to = "set-1"
 						priority = "P0IN2KQ"
 						annotate = "Routed through an event orchestration"
-						pagerduty_automation_actions {
+						pagerduty_automation_action {
 							action_id = "01CSB5SMOKCKVRI5GN0LJG7SMB"
 						}
 						severity = "critical"
 						event_action = "trigger"
-						variables {
+						variable {
 							name = "hostname"
 							path = "event.source"
 							type = "regex"
 							value = "Source host: (.*)"
 						}
-						variables {
+						variable {
 							name = "cpu_val"
 							path = "event.custom_details.cpu"
 							type = "regex"
 							value = "(.*)"
 						}
-						extractions {
+						extraction {
 							target = "event.summary"
 							template = "High CPU usage on {{variables.hostname}}"
 						}
-						extractions {
+						extraction {
 							regex = ".*"
 							source = "event.group"
 							target = "event.custom_details.message"
@@ -513,17 +513,17 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 					}
 				}
 			}
-			sets {
+			set {
 				id = "set-1"
-				rules {
+				rule {
 					label = "set-1 rule 1"
 					actions {
 						suspend = 300
 					}
 				}
-				rules {
+				rule {
 					label = "set-1 rule 2"
-					conditions {
+					condition {
 						expression = "event.source matches part 'stg-'"
 					}
 					actions {
@@ -537,28 +537,28 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 					suspend = 120
 					priority = "P0IN2KW"
 					annotate = "Routed through an event orchestration - catch-all rule"
-					pagerduty_automation_actions {
+					pagerduty_automation_action {
 						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMC"
 					}
 					severity = "warning"
 					event_action = "trigger"
-					variables {
+					variable {
 						name = "user_id"
 						path = "event.custom_details.user_id"
 						type = "regex"
 						value = "Source host: (.*)"
 					}
-					variables {
+					variable {
 						name = "updated_at"
 						path = "event.custom_details.updated_at"
 						type = "regex"
 						value = "(.*)"
 					}
-					extractions {
+					extraction {
 						target = "event.custom_details.message"
 						template = "Last modified by {{variables.user_id}} on {{variables.updated_at}}"
 					}
-					extractions {
+					extraction {
 						regex = ".*"
 						source = "event.custom_details.region"
 						target = "event.group"
@@ -574,71 +574,71 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					label = "rule 1 updated"
-					conditions {
+					condition {
 						expression = "event.custom_details.timeout_err matches part 'timeout'"
 					}
 					actions {
 						route_to = "set-2"
 						priority = "P0IN2KR"
 						annotate = "Routed through a service orchestration!"
-						pagerduty_automation_actions {
+						pagerduty_automation_action {
 							action_id = "01CSB5SMOKCKVRI5GN0LJG7SMBUPDATED"
 						}
 						severity = "warning"
 						event_action = "resolve"
-						variables {
+						variable {
 							name = "cpu_val_upd"
 							path = "event.custom_details.cpu_upd"
 							type = "regex"
 							value = "CPU:(.*)"
 						}
-						extractions {
+						extraction {
 							regex = ".*"
 							source = "event.custom_details.region_upd"
 							target = "event.source"
 						}
-						extractions {
+						extraction {
 							target = "event.custom_details.message_upd"
 							template = "[UPD] High CPU usage on {{variables.hostname}}: {{variables.cpu_val}}"
 						}
 					}
 				}
 			}
-			sets {
+			set {
 				id = "set-2"
-				rules {
+				rule {
 					label = "set-2 rule 1"
 					actions {
 						suspend = 15
 					}
 				}
-				rules {
+				rule {
 					label = "set-2 rule 2"
-					conditions {
+					condition {
 						expression = "event.source matches part 'test-'"
 					}
 					actions {
 						annotate = "Matched set-2 rule 2"
-						variables {
+						variable {
 							name = "host_name"
 							path = "event.custom_details.memory"
 							type = "regex"
 							value = "High memory usage on (.*) server"
 						}
-						extractions {
+						extraction {
 							target = "event.summary"
 							template = "High memory usage on {{variables.hostname}} server: {{event.custom_details.max_memory}}"
 						}
-						extractions {
+						extraction {
 							regex = ".*"
 							source = "event.custom_details.region"
 							target = "event.group"
 						}
-						extractions {
+						extraction {
 							regex = ".*"
 							source = "event.custom_details.hostname"
 							target = "event.source"
@@ -653,18 +653,18 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 					suppress = true
 					priority = "P0IN2KX"
 					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
-					pagerduty_automation_actions {
+					pagerduty_automation_action {
 						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMD"
 					}
 					severity = "info"
 					event_action = "resolve"
-					variables {
+					variable {
 						name = "updated_at_upd"
 						path = "event.custom_details.updated_at"
 						type = "regex"
 						value = "UPD (.*)"
 					}					
-					extractions {
+					extraction {
 						regex = ".*"
 						source = "event.custom_details.region_upd"
 						target = "event.class"
@@ -680,22 +680,22 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(ep
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					label = "rule 1 updated"
 					actions {
 						route_to = "set-2"
 					}
 				}
 			}
-			sets {
+			set {
 				id = "set-2"
-				rules {
+				rule {
 					label = "set-2 rule 1"
 					actions { }
 				}
-				rules {
+				rule {
 					label = "set-2 rule 2"
 					actions { }
 				}
@@ -713,9 +713,9 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceOneSetNoActionsConfig(ep,
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
 		
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					label = "rule 1 updated"
 					actions {}
 				}

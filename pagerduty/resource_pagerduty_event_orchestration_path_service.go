@@ -37,7 +37,7 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 		Type:     schema.TypeString,
 		Optional: true,
 	},
-	"pagerduty_automation_actions": {
+	"pagerduty_automation_action": {
 		Type:     schema.TypeList,
 		Optional: true,
 		MaxItems: 1,
@@ -50,7 +50,7 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 			},
 		},
 	},
-	"automation_actions": {
+	"automation_action": {
 		Type:     schema.TypeList,
 		Optional: true,
 		MaxItems: 1,
@@ -69,14 +69,14 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 					Optional: true,
 					Default:  false,
 				},
-				"headers": {
+				"header": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem: &schema.Resource{
 						Schema: eventOrchestrationAutomationActionObjectSchema,
 					},
 				},
-				"parameters": {
+				"parameter": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem: &schema.Resource{
@@ -96,14 +96,14 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 		Optional:     true,
 		ValidateFunc: validateEventOrchestrationPathEventAction(),
 	},
-	"variables": {
+	"variable": {
 		Type:     schema.TypeList,
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: eventOrchestrationPathVariablesSchema,
 		},
 	},
-	"extractions": {
+	"extraction": {
 		Type:     schema.TypeList,
 		Optional: true,
 		Elem: &schema.Resource{
@@ -139,7 +139,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"sets": {
+			"set": {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
@@ -148,7 +148,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"rules": {
+						"rule": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
@@ -161,7 +161,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"conditions": {
+									"condition": {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
@@ -292,7 +292,7 @@ func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestratio
 		Parent: &pagerduty.EventOrchestrationPathReference{
 			ID: d.Get("service").(string),
 		},
-		Sets:     expandServicePathSets(d.Get("sets")),
+		Sets:     expandServicePathSets(d.Get("set")),
 		CatchAll: expandServicePathCatchAll(d.Get("catch_all")),
 	}
 }
@@ -305,7 +305,7 @@ func expandServicePathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet
 
 		orchPathSet := &pagerduty.EventOrchestrationPathSet{
 			ID:    s["id"].(string),
-			Rules: expandServicePathRules(s["rules"].(interface{})),
+			Rules: expandServicePathRules(s["rule"].(interface{})),
 		}
 
 		sets = append(sets, orchPathSet)
@@ -325,7 +325,7 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 			ID:         r["id"].(string),
 			Label:      r["label"].(string),
 			Disabled:   r["disabled"].(bool),
-			Conditions: expandEventOrchestrationPathConditions(r["conditions"]),
+			Conditions: expandEventOrchestrationPathConditions(r["condition"]),
 			Actions:    expandServicePathActions(r["actions"]),
 		}
 
@@ -368,10 +368,10 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)
-		actions.PagerdutyAutomationActions = expandServicePathPagerDutyAutomationActions(a["pagerduty_automation_actions"])
-		actions.AutomationActions = expandServicePathAutomationActions(a["automation_actions"])
-		actions.Variables = expandEventOrchestrationPathVariables(a["variables"])
-		actions.Extractions = expandEventOrchestrationPathExtractions(a["extractions"])
+		actions.PagerdutyAutomationActions = expandServicePathPagerDutyAutomationActions(a["pagerduty_automation_action"])
+		actions.AutomationActions = expandServicePathAutomationActions(a["automation_action"])
+		actions.Variables = expandEventOrchestrationPathVariables(a["variable"])
+		actions.Extractions = expandEventOrchestrationPathExtractions(a["extraction"])
 	}
 
 	return actions
@@ -401,8 +401,8 @@ func expandServicePathAutomationActions(v interface{}) []*pagerduty.EventOrchest
 			Name:       a["name"].(string),
 			Url:        a["url"].(string),
 			AutoSend:   a["auto_send"].(bool),
-			Headers:    expandEventOrchestrationAutomationActionObjects(a["headers"]),
-			Parameters: expandEventOrchestrationAutomationActionObjects(a["parameters"]),
+			Headers:    expandEventOrchestrationAutomationActionObjects(a["header"]),
+			Parameters: expandEventOrchestrationAutomationActionObjects(a["parameter"]),
 		}
 
 		result = append(result, aa)
@@ -430,7 +430,7 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
 	d.SetId(p.Parent.ID)
 	d.Set("service", p.Parent.ID)
-	d.Set("sets", flattenServicePathSets(p.Sets))
+	d.Set("set", flattenServicePathSets(p.Sets))
 	d.Set("catch_all", flattenServicePathCatchAll(p.CatchAll))
 	return nil
 }
@@ -440,8 +440,8 @@ func flattenServicePathSets(orchPathSets []*pagerduty.EventOrchestrationPathSet)
 
 	for _, set := range orchPathSets {
 		flattenedSet := map[string]interface{}{
-			"id":    set.ID,
-			"rules": flattenServicePathRules(set.Rules),
+			"id":   set.ID,
+			"rule": flattenServicePathRules(set.Rules),
 		}
 		flattenedSets = append(flattenedSets, flattenedSet)
 	}
@@ -464,11 +464,11 @@ func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []in
 
 	for _, rule := range rules {
 		flattenedRule := map[string]interface{}{
-			"id":         rule.ID,
-			"label":      rule.Label,
-			"disabled":   rule.Disabled,
-			"conditions": flattenEventOrchestrationPathConditions(rule.Conditions),
-			"actions":    flattenServicePathActions(rule.Actions),
+			"id":        rule.ID,
+			"label":     rule.Label,
+			"disabled":  rule.Disabled,
+			"condition": flattenEventOrchestrationPathConditions(rule.Conditions),
+			"actions":   flattenServicePathActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
 	}
@@ -490,16 +490,16 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 	}
 
 	if actions.Variables != nil {
-		flattenedAction["variables"] = flattenEventOrchestrationPathVariables(actions.Variables)
+		flattenedAction["variable"] = flattenEventOrchestrationPathVariables(actions.Variables)
 	}
 	if actions.Extractions != nil {
-		flattenedAction["extractions"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
+		flattenedAction["extraction"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
 	if actions.PagerdutyAutomationActions != nil {
-		flattenedAction["pagerduty_automation_actions"] = flattenServicePathPagerDutyAutomationActions(actions.PagerdutyAutomationActions)
+		flattenedAction["pagerduty_automation_action"] = flattenServicePathPagerDutyAutomationActions(actions.PagerdutyAutomationActions)
 	}
 	if actions.AutomationActions != nil {
-		flattenedAction["automation_actions"] = flattenServicePathAutomationActions(actions.AutomationActions)
+		flattenedAction["automation_action"] = flattenServicePathAutomationActions(actions.AutomationActions)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)
@@ -526,11 +526,11 @@ func flattenServicePathAutomationActions(v []*pagerduty.EventOrchestrationPathAu
 
 	for _, i := range v {
 		pdaa := map[string]interface{}{
-			"name":       i.Name,
-			"url":        i.Url,
-			"auto_send":  i.AutoSend,
-			"headers":    flattenServicePathAutomationActionObjects(i.Headers),
-			"parameters": flattenServicePathAutomationActionObjects(i.Parameters),
+			"name":      i.Name,
+			"url":       i.Url,
+			"auto_send": i.AutoSend,
+			"header":    flattenServicePathAutomationActionObjects(i.Headers),
+			"parameter": flattenServicePathAutomationActionObjects(i.Parameters),
 		}
 
 		result = append(result, pdaa)

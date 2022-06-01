@@ -19,7 +19,7 @@ func dataSourcePagerDutyEventOrchestration() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"integrations": {
+			"integration": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Optional: true, // Tests keep failing if "Optional: true" is not provided
@@ -105,7 +105,7 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 		d.Set("name", orch.Name)
 
 		if len(orch.Integrations) > 0 {
-			d.Set("integrations", flattenEventOrchestrationIntegrations(orch.Integrations))
+			d.Set("integration", flattenEventOrchestrationIntegrations(orch.Integrations))
 		}
 
 		return nil

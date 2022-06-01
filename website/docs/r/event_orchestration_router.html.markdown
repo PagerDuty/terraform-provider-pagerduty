@@ -19,21 +19,21 @@ This example assumes services used in the `route_to` configuration already exist
 ```hcl
 resource "pagerduty_event_orchestration_router" "router" {
   event_orchestration = pagerduty_event_orchestration.my_monitor.id
-  sets {
-    rules {
+  set {
+    rule {
       label = "Events relating to our relational database"
-      conditions {
+      condition {
         expression = "event.summary matches part 'database'"
       }
-      conditions {
+      condition {
         expression = "event.source matches regex 'db[0-9]+-server'"
       }
       actions {
         route_to = pageduty_service.database.id
       }
     }
-    rules {
-      conditions {
+    rule {
+      condition {
         expression = "event.summary matches part 'www'"
       }
       actions {
@@ -53,21 +53,21 @@ resource "pagerduty_event_orchestration_router" "router" {
 
 The following arguments are supported:
 
-* `event_orchestration` - (Required) ID of the Event Orchestration to which the Router belongs to.
-* `sets` - (Required) The Router contains a single set of rules  (the "start" set).
+* `event_orchestration` - (Required) ID of the Event Orchestration to which the Router belongs.
+* `set` - (Required) The Router contains a single set of rules  (the "start" set).
 * `catch_all` - (Required) When none of the rules match an event, the event will be routed according to the catch_all settings.
 
-### Sets (`sets`) supports the following:
+### Set (`set`) supports the following:
 * `id` - (Required) ID of the `start` set. Router supports only one set and it's id has to be `start`
-* `rules` - (Optional) The Router evaluates Events against these Rules, one at a time, and routes each Event to a specific Service based on the first rule that matches. If no rules are provided as part of Terraform configuration, the API returns empty list of rules.
+* `rule` - (Optional) The Router evaluates Events against these Rules, one at a time, and routes each Event to a specific Service based on the first rule that matches. If no rules are provided as part of Terraform configuration, the API returns empty list of rules.
 
-### Rules (`rules`) supports the following:
+### Rule (`rule`) supports the following:
 * `label` - (Optional) A description of this rule's purpose.
-* `conditions` - (Optional) Each of these conditions is evaluated to check if an event matches this rule. The rule is considered a match if any of these conditions match. If none are provided, the event will _always_ match against the rule.
+* `condition` - (Optional) Each of these conditions is evaluated to check if an event matches this rule. The rule is considered a match if any of these conditions match. If none are provided, the event will _always_ match against the rule.
 * `actions` - (Required) Actions that will be taken to change the resulting alert and incident, when an event matches this rule.
 * `disabled` - (Optional) Indicates whether the rule is disabled and would therefore not be evaluated.
 
-### Conditions (`conditions`) supports the following:
+### Condition (`condition`) supports the following:
 * `expression`- (Required) A [PCL condition](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) string.
 
 ### Actions (`actions`) supports the following:
@@ -81,7 +81,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 * `self` - The URL at which the Router Orchestration is accessible.
-* `rules`
+* `rule`
   * `id` - The ID of the rule within the `start` set.
 
 ## Import

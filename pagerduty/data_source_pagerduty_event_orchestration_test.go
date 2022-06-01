@@ -39,7 +39,7 @@ func testAccDataSourcePagerDutyEventOrchestration(src, n string) resource.TestCh
 			return fmt.Errorf("Expected to get an Event Orchestration ID from PagerDuty")
 		}
 
-		testAtts := []string{"id", "name", "intergations"}
+		testAtts := []string{"id", "name", "integration"}
 
 		for _, att := range testAtts {
 			if a[att] != srcA[att] {

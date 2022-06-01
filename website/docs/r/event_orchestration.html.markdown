@@ -37,7 +37,7 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The ID of the Event Orchestration.
-* `integrations` - List of integrations for the Event Orchestration.
+* `integration` - An integration for the Event Orchestration.
   * `id` - ID of the integration
   * `parameters`
     * `routing_key` - Routing key that routes to this Orchestration.

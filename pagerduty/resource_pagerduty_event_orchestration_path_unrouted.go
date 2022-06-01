@@ -25,7 +25,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"sets": {
+			"set": {
 				Type:     schema.TypeList,
 				Required: true,
 				MinItems: 1, // An Unrouted Orchestration must contain at least a "start" set
@@ -35,7 +35,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"rules": {
+						"rule": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
@@ -48,7 +48,7 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"conditions": {
+									"condition": {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
@@ -75,14 +75,14 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 													Optional:     true,
 													ValidateFunc: validateEventOrchestrationPathEventAction(),
 												},
-												"variables": {
+												"variable": {
 													Type:     schema.TypeList,
 													Optional: true,
 													Elem: &schema.Resource{
 														Schema: eventOrchestrationPathVariablesSchema,
 													},
 												},
-												"extractions": {
+												"extraction": {
 													Type:     schema.TypeList,
 													Optional: true,
 													Elem: &schema.Resource{
@@ -136,14 +136,14 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 											"resolve",
 										}),
 									},
-									"variables": {
+									"variable": {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
 											Schema: eventOrchestrationPathVariablesSchema,
 										},
 									},
-									"extractions": {
+									"extraction": {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Resource{
@@ -175,7 +175,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData,
 			return resource.RetryableError(err)
 		} else if unroutedPath != nil {
 			if unroutedPath.Sets != nil {
-				d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
+				d.Set("set", flattenUnroutedSets(unroutedPath.Sets))
 			}
 
 			if unroutedPath.CatchAll != nil {
@@ -223,7 +223,7 @@ func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.E
 		d.SetId(unroutedPath.Parent.ID)
 		d.Set("event_orchestration", unroutedPath.Parent.ID)
 		if unroutedPath.Sets != nil {
-			d.Set("sets", flattenUnroutedSets(unroutedPath.Sets))
+			d.Set("set", flattenUnroutedSets(unroutedPath.Sets))
 		}
 		if updatedPath.CatchAll != nil {
 			d.Set("catch_all", flattenUnroutedCatchAll(updatedPath.CatchAll))
@@ -245,7 +245,7 @@ func buildUnroutedPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOr
 		},
 	}
 
-	if attr, ok := d.GetOk("sets"); ok {
+	if attr, ok := d.GetOk("set"); ok {
 		orchPath.Sets = expandUnroutedSets(attr.([]interface{}))
 	}
 
@@ -264,7 +264,7 @@ func expandUnroutedSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 
 		orchPathSet := &pagerduty.EventOrchestrationPathSet{
 			ID:    s["id"].(string),
-			Rules: expandUnroutedRules(s["rules"]),
+			Rules: expandUnroutedRules(s["rule"]),
 		}
 
 		sets = append(sets, orchPathSet)
@@ -284,7 +284,7 @@ func expandUnroutedRules(v interface{}) []*pagerduty.EventOrchestrationPathRule 
 			ID:         r["id"].(string),
 			Label:      r["label"].(string),
 			Disabled:   r["disabled"].(bool),
-			Conditions: expandEventOrchestrationPathConditions(r["conditions"]),
+			Conditions: expandEventOrchestrationPathConditions(r["condition"]),
 			Actions:    expandUnroutedActions(r["actions"]),
 		}
 
@@ -305,8 +305,8 @@ func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleA
 			actions.RouteTo = am["route_to"].(string)
 			actions.Severity = am["severity"].(string)
 			actions.EventAction = am["event_action"].(string)
-			actions.Variables = expandEventOrchestrationPathVariables(am["variables"])
-			actions.Extractions = expandEventOrchestrationPathExtractions(am["extractions"])
+			actions.Variables = expandEventOrchestrationPathVariables(am["variable"])
+			actions.Extractions = expandEventOrchestrationPathExtractions(am["extraction"])
 		}
 	}
 
@@ -333,8 +333,8 @@ func expandUnroutedCatchAllActions(v interface{}) *pagerduty.EventOrchestrationP
 			am := ai.(map[string]interface{})
 			actions.Severity = am["severity"].(string)
 			actions.EventAction = am["event_action"].(string)
-			actions.Variables = expandEventOrchestrationPathVariables(am["variables"])
-			actions.Extractions = expandEventOrchestrationPathExtractions(am["extractions"])
+			actions.Variables = expandEventOrchestrationPathVariables(am["variable"])
+			actions.Extractions = expandEventOrchestrationPathExtractions(am["extraction"])
 		}
 	}
 
@@ -346,8 +346,8 @@ func flattenUnroutedSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []
 
 	for _, set := range orchPathSets {
 		flattenedSet := map[string]interface{}{
-			"id":    set.ID,
-			"rules": flattenUnroutedRules(set.Rules),
+			"id":   set.ID,
+			"rule": flattenUnroutedRules(set.Rules),
 		}
 		flattenedSets = append(flattenedSets, flattenedSet)
 	}
@@ -359,11 +359,11 @@ func flattenUnroutedRules(rules []*pagerduty.EventOrchestrationPathRule) []inter
 
 	for _, rule := range rules {
 		flattenedRule := map[string]interface{}{
-			"id":         rule.ID,
-			"label":      rule.Label,
-			"disabled":   rule.Disabled,
-			"conditions": flattenEventOrchestrationPathConditions(rule.Conditions),
-			"actions":    flattenUnroutedActions(rule.Actions),
+			"id":        rule.ID,
+			"label":     rule.Label,
+			"disabled":  rule.Disabled,
+			"condition": flattenEventOrchestrationPathConditions(rule.Conditions),
+			"actions":   flattenUnroutedActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
 	}
@@ -381,10 +381,10 @@ func flattenUnroutedActions(actions *pagerduty.EventOrchestrationPathRuleActions
 	}
 
 	if actions.Variables != nil {
-		flattenedAction["variables"] = flattenEventOrchestrationPathVariables(actions.Variables)
+		flattenedAction["variable"] = flattenEventOrchestrationPathVariables(actions.Variables)
 	}
 	if actions.Extractions != nil {
-		flattenedAction["extractions"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
+		flattenedAction["extraction"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)
@@ -413,10 +413,10 @@ func flattenUnroutedCatchAllActions(actions *pagerduty.EventOrchestrationPathRul
 	}
 
 	if actions.Variables != nil {
-		flattenedAction["variables"] = flattenEventOrchestrationPathVariables(actions.Variables)
+		flattenedAction["variable"] = flattenEventOrchestrationPathVariables(actions.Variables)
 	}
 	if actions.Variables != nil {
-		flattenedAction["extractions"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
+		flattenedAction["extraction"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)

@@ -94,11 +94,7 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 		// since the list ndpoint does not return it
 		orch, _, err := client.EventOrchestrations.Get(found.ID)
 		if err != nil {
-			if isErrCode(err, 429) {
-				return resource.RetryableError(err)
-			}
-
-			return resource.NonRetryableError(err)
+			return resource.RetryableError(err)
 		}
 
 		d.SetId(orch.ID)

@@ -1,4 +1,4 @@
-## 2.5.0 (Unreleased)
+## 2.5.0 (June 1, 2022)
 
 FEATURES:
 * Support for Event Orchestration via several new resources. ([#512](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/512))

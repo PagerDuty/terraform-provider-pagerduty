@@ -35,7 +35,7 @@ func resourcePagerDutyEventOrchestration() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"integrations": {
+			"integration": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Optional: true, // Tests keep failing if "Optional: true" is not provided
@@ -233,7 +233,7 @@ func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrches
 	}
 
 	if len(o.Integrations) > 0 {
-		d.Set("integrations", flattenEventOrchestrationIntegrations(o.Integrations))
+		d.Set("integration", flattenEventOrchestrationIntegrations(o.Integrations))
 	}
 
 	return nil

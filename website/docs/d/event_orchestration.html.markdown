@@ -29,9 +29,9 @@ resource "pagerduty_event_orchestration_router" "router" {
       route_to = "unrouted"
     }
   }
-  sets {
+  set {
     id = "start"
-    rules {
+    rule {
       actions {
         route_to = pagerduty_service.db.id
       }
@@ -50,7 +50,7 @@ The following arguments are supported:
 
 * `id` - The ID of the found Event Orchestration.
 * `name` - The name of the found Event Orchestration.
-* `integrations` - List of integrations for the Event Orchestration.
+* `integration` - An integration for the Event Orchestration.
   * `id` - ID of the integration
   * `parameters`
     * `routing_key` - Routing key that routes to this Orchestration.

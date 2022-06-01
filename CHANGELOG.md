@@ -6,6 +6,13 @@ FEATURES:
     * `resource/pagerduty_event_orchestration_router`
     * `resource/pagerduty_event_orchestration_unrouted`
     * `resource/pagerduty_event_orchestration_service`
+    * `data_source/pagerduty_event_orchestration`
+
+IMPROVEMENTS:
+* `data_source/pagerduty_user`: Add support for pagination. Gets all users. ([#511](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/511))
+
+BUG FIXES: 
+* `resource/pagerduty_service_integration`: Fix permadiff in email_parser with type regex & minor docs update ([#479](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/479))
 
 ## 2.4.2 (May 20, 2022)
 

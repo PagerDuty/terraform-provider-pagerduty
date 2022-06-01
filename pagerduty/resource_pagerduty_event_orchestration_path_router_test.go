@@ -34,7 +34,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "unrouted", true), //test for catch_all route_to prop, by default it should be unrouted
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "0"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.#", "0"),
 				),
 			},
 			{
@@ -52,7 +52,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'database'"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.0.condition.0.expression", "event.summary matches part 'database'"),
 				),
 			},
 			{
@@ -60,11 +60,11 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "2"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.#", "2"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.0.expression", "event.summary matches part 'database'"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.0.condition.0.expression", "event.summary matches part 'database'"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.1.conditions.0.expression", "event.severity matches part 'critical'"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.1.condition.0.expression", "event.severity matches part 'critical'"),
 				),
 			},
 			{
@@ -72,7 +72,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "1"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.#", "1"),
 					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true), //test for catch_all routing to service if provided
 				),
@@ -82,9 +82,9 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "1"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.#", "1"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.0.conditions.#", "0"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.0.condition.#", "0"),
 				),
 			},
 			{
@@ -92,7 +92,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_event_orchestration_router.router", "sets.0.rules.#", "0"),
+						"pagerduty_event_orchestration_router.router", "set.0.rule.#", "0"),
 					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
 						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", true),
 				),
@@ -212,7 +212,7 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(t, ep, s, o stri
 					route_to = "unrouted"
 				}
 			}
-			sets {
+			set {
 				id = "start"
 			}
 		}
@@ -229,9 +229,9 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfig(t, ep, s, o string) str
 					route_to = "unrouted"
 				}
 			}
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
 					actions {
@@ -253,15 +253,15 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(t, ep, s,
 					route_to = "unrouted"
 				}
 			}
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
 					actions {
 						route_to = pagerduty_service.bar.id
 					}
-					conditions {
+					condition {
 						expression = "event.summary matches part 'database'"
 					}
 				}
@@ -291,29 +291,29 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigWithMultipleRules(t, ep,
 					route_to = "unrouted"
 				}
 			}
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
 					actions {
 						route_to = pagerduty_service.bar.id
 					}
-					conditions {
+					condition {
 						expression = "event.summary matches part 'database'"
 					}
-					conditions {
+					condition {
 						expression = "event.severity matches part 'critical'"
 					}
 				}
 
-				rules {
+				rule {
 					disabled = false
 					label = "rule2 label"
 					actions {
 						route_to = pagerduty_service.bar2.id
 					}
-					conditions {
+					condition {
 						expression = "event.severity matches part 'critical'"
 					}
 				}
@@ -332,9 +332,9 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigNoConditions(t, ep, s, o
 					route_to = pagerduty_service.bar.id
 				}
 			}
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
 					actions {
@@ -356,15 +356,15 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigWithCatchAllToService(t,
 					route_to = pagerduty_service.bar.id
 				}
 			}
-			sets {
+			set {
 				id = "start"
-				rules {
+				rule {
 					disabled = false
 					label = "rule1 label"
 					actions {
 						route_to = pagerduty_service.bar.id
 					}
-					conditions {
+					condition {
 						expression = "event.severity matches part 'critical'"
 					}
 				}
@@ -383,7 +383,7 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(t, e
 					route_to = pagerduty_service.bar.id
 				}
 			}
-			sets {
+			set {
 				id = "start"
 			}
 		}
@@ -405,7 +405,7 @@ func testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(router, servi
 		if catchAll == true {
 			rRouteToId = r.Primary.Attributes["catch_all.0.actions.0.route_to"]
 		} else {
-			rRouteToId = r.Primary.Attributes["sets.0.rules.0.actions.0.route_to"]
+			rRouteToId = r.Primary.Attributes["set.0.rule.0.actions.0.route_to"]
 		}
 
 		var sId = ""

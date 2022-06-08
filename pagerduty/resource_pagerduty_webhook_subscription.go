@@ -41,7 +41,7 @@ func resourcePagerDutyWebhookSubscription() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"custom_headers": {
+						"custom_header": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
@@ -223,19 +223,18 @@ func expandDeliveryMethod(v interface{}) pagerduty.DeliveryMethod {
 
 	// convert interface to []*pagerduty.CustomHeaders
 	var headers []*pagerduty.CustomHeaders
-	for _, raw := range dmMap["custom_headers"].([]interface{}) {
+	for _, raw := range dmMap["custom_header"].([]interface{}) {
 		headers = append(headers, &pagerduty.CustomHeaders{
 			Name:  raw.(map[string]interface{})["name"].(string),
 			Value: raw.(map[string]interface{})["value"].(string),
 		})
 	}
 
-
 	method = pagerduty.DeliveryMethod{
 		TemporarilyDisabled: dmMap["temporarily_disabled"].(bool),
 		Type:                dmMap["type"].(string),
 		URL:                 dmMap["url"].(string),
-		CustomHeaders: 		 headers,
+		CustomHeaders:       headers,
 	}
 	return method
 }
@@ -257,7 +256,7 @@ func flattenDeliveryMethod(method pagerduty.DeliveryMethod) []map[string]interfa
 		"temporarily_disabled": method.TemporarilyDisabled,
 		"type":                 method.Type,
 		"url":                  method.URL,
-		"custom_headers":		method.CustomHeaders,
+		"custom_header":        method.CustomHeaders,
 	}
 	methods = append(methods, methodMap)
 	return methods

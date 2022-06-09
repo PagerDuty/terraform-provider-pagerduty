@@ -54,6 +54,14 @@ func resourcePagerDutyWebhookSubscription() *schema.Resource {
 									"value": {
 										Type:     schema.TypeString,
 										Required: true,
+										ForceNew: true,
+										// Suppress the diff shown if the base_image name are equal when both compared in lower case.
+										DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+											if old == "-- redacted --" {
+												return true
+											}
+											return false
+										},
 									},
 								},
 							},
@@ -256,7 +264,7 @@ func flattenDeliveryMethod(method pagerduty.DeliveryMethod) []map[string]interfa
 		"temporarily_disabled": method.TemporarilyDisabled,
 		"type":                 method.Type,
 		"url":                  method.URL,
-		"custom_header":        method.CustomHeaders,
+		"custom_header":        flattenCustomHeader(method.CustomHeaders),
 	}
 	methods = append(methods, methodMap)
 	return methods
@@ -270,4 +278,17 @@ func flattenFilter(filter pagerduty.Filter) []map[string]interface{} {
 	}
 	filters = append(filters, filterMap)
 	return filters
+}
+
+func flattenCustomHeader(customHeaders []*pagerduty.CustomHeaders) []map[string]interface{} {
+	var headers []map[string]interface{}
+
+	for _, ch := range customHeaders {
+		headerMap := map[string]interface{}{
+			"name":  ch.Name,
+			"value": ch.Value,
+		}
+		headers = append(headers, headerMap)
+	}
+	return headers
 }

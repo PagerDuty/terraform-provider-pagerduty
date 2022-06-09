@@ -103,6 +103,41 @@ func TestAccPagerDutySlackConnection_Envar(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutySlackConnection_NonAndAnyPriorities(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutySlackConnectionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutySlackConnectionConfigNonAndAnyPriorities(username, email, escalationPolicy, service, workspaceID, channelID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutySlackConnectionExists("pagerduty_slack_connection.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_slack_connection.foo", "source_name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_slack_connection.foo", "config.0.priorities.#", "0"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutySlackConnectionConfigNonAndAnyPrioritiesUpdated(username, email, escalationPolicy, service, workspaceID, channelID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutySlackConnectionExists("pagerduty_slack_connection.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_slack_connection.foo", "config.0.priorities.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_slack_connection.foo", "config.0.priorities.0", "*"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutySlackConnectionDestroy(s *terraform.State) error {
 	config := &pagerduty.Config{
 		Token:   os.Getenv("PAGERDUTY_USER_TOKEN"),
@@ -387,4 +422,130 @@ func testAccCheckPagerDutySlackConnectionConfigEnvar(team, channelID string) str
 			}
 		}
 		`, team, channelID)
+}
+
+func testAccCheckPagerDutySlackConnectionConfigNonAndAnyPriorities(username, useremail, escalationPolicy, service, workspaceID, channelID string) string {
+	return fmt.Sprintf(`
+  resource "pagerduty_user" "foo" {
+    name        = "%s"
+    email       = "%s"
+  }
+
+  resource "pagerduty_escalation_policy" "foo" {
+    name        = "%s"
+    description = "foo"
+    num_loops   = 1
+
+    rule {
+      escalation_delay_in_minutes = 10
+
+      target {
+        type = "user_reference"
+        id   = pagerduty_user.foo.id
+      }
+    }
+  }
+
+  resource "pagerduty_service" "foo" {
+    name                    = "%s"
+    description             = "foo"
+    auto_resolve_timeout    = 1800
+    acknowledgement_timeout = 1800
+    escalation_policy       = pagerduty_escalation_policy.foo.id
+
+    incident_urgency_rule {
+      type = "constant"
+      urgency = "high"
+    }
+  }
+  resource "pagerduty_slack_connection" "foo" {
+    source_id = pagerduty_service.foo.id
+    source_type = "service_reference"
+    workspace_id = "%s"
+    channel_id = "%s"
+    notification_type = "responder"
+    config {
+      events = [
+        "incident.triggered",
+        "incident.acknowledged",
+        "incident.escalated",
+        "incident.resolved",
+        "incident.reassigned",
+        "incident.annotated",
+        "incident.unacknowledged",
+        "incident.delegated",
+        "incident.priority_updated",
+        "incident.responder.added",
+        "incident.responder.replied",
+        "incident.status_update_published",
+        "incident.reopened"
+      ]
+      priorities = []
+      urgency = "high"
+    }
+  }
+  `, username, useremail, escalationPolicy, service, workspaceID, channelID)
+}
+
+func testAccCheckPagerDutySlackConnectionConfigNonAndAnyPrioritiesUpdated(username, email, escalationPolicy, service, workspaceID, channelID string) string {
+	return fmt.Sprintf(`
+  resource "pagerduty_user" "foo" {
+    name        = "%s"
+    email       = "%s"
+  }
+
+  resource "pagerduty_escalation_policy" "foo" {
+    name        = "%s"
+    description = "foo"
+    num_loops   = 1
+
+    rule {
+      escalation_delay_in_minutes = 10
+
+      target {
+        type = "user_reference"
+        id   = pagerduty_user.foo.id
+      }
+    }
+  }
+
+  resource "pagerduty_service" "foo" {
+    name                    = "%s"
+    description             = "foo"
+    auto_resolve_timeout    = 1800
+    acknowledgement_timeout = 1800
+    escalation_policy       = pagerduty_escalation_policy.foo.id
+
+    incident_urgency_rule {
+      type = "constant"
+      urgency = "high"
+    }
+  }
+  resource "pagerduty_slack_connection" "foo" {
+    source_id = pagerduty_service.foo.id
+    source_type = "service_reference"
+    workspace_id = "%s"
+    channel_id = "%s"
+    notification_type = "responder"
+    config {
+      events = [
+        "incident.triggered",
+        "incident.acknowledged",
+        "incident.escalated",
+        "incident.resolved",
+        "incident.reassigned",
+        "incident.annotated",
+        "incident.unacknowledged",
+        "incident.delegated",
+        "incident.priority_updated",
+        "incident.responder.added",
+        "incident.responder.replied",
+        "incident.status_update_published",
+        "incident.reopened"
+      ]
+      priorities = ["*"]
+      urgency = "high"
+    }
+  }
+  `, username, email, escalationPolicy, service, workspaceID, channelID)
 }

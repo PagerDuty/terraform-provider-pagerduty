@@ -145,6 +145,10 @@ func testAccCheckPagerDutyWebhookSubscriptionConfig(username, useremail, escalat
 		delivery_method {
 			type = "http_delivery_method"
 			url = "https://example.com/receive_a_pagerduty_webhook"
+			custom_header {
+				name = "X-Foo"
+				value = "foo"
+			}
 		}
 		description = "%s"
 		events = [

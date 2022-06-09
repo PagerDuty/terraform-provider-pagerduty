@@ -12,6 +12,7 @@ import (
 )
 
 const AppBaseUrl = "https://app.pagerduty.com"
+const StarWildcardConfig = "*"
 
 func resourcePagerDutySlackConnection() *schema.Resource {
 	return &schema.Resource{
@@ -215,7 +216,7 @@ func expandConnectionConfig(v interface{}) pagerduty.ConnectionConfig {
 
 	config = pagerduty.ConnectionConfig{
 		Events:     expandConfigList(c["events"].([]interface{})),
-		Priorities: expandConfigList(c["priorities"].([]interface{})),
+		Priorities: expandStarWildcardConfig(expandConfigList(c["priorities"].([]interface{}))),
 		Urgency:    nil,
 	}
 	if val, ok := c["urgency"]; ok {
@@ -228,18 +229,30 @@ func expandConnectionConfig(v interface{}) pagerduty.ConnectionConfig {
 }
 
 func expandConfigList(v interface{}) []string {
-	var items []string
+	items := []string{}
 	for _, i := range v.([]interface{}) {
 		items = append(items, i.(string))
 	}
 	return items
 }
 
+//Expands the use of star wildcard ("*") configuration for an attribute to its
+//matching expected value by PagerDuty's API, which is nil. This is necessary
+//when the API accepts and interprets nil and empty configurations as valid
+//settings. The state produced by this kind of config can be reverted to the API
+//expected values with sibbling function `flattenStarWildcardConfig`.
+func expandStarWildcardConfig(c []string) []string {
+	if isUsingStarWildcardConfig := len(c) == 1 && c[0] == StarWildcardConfig; isUsingStarWildcardConfig {
+		c = nil
+	}
+	return c
+}
+
 func flattenConnectionConfig(config pagerduty.ConnectionConfig) []map[string]interface{} {
 	var configs []map[string]interface{}
 	configMap := map[string]interface{}{
 		"events":     flattenConfigList(config.Events),
-		"priorities": flattenConfigList(config.Priorities),
+		"priorities": flattenConfigList(flattenStarWildcardConfig(config.Priorities)),
 	}
 	if config.Urgency != nil {
 		configMap["urgency"] = *config.Urgency
@@ -256,6 +269,17 @@ func flattenConfigList(list []string) interface{} {
 	}
 
 	return items
+}
+
+// Flattens a `nil` configuration to its corresponding star wildcard ("*")
+// configuration value for an attribute which is meant to be accepting this kind
+// of configuration, with the only purpose to match the config stored in the
+// Terraform's state.
+func flattenStarWildcardConfig(c []string) []string {
+	if hasStarWildcardConfigSet := c[:] == nil; hasStarWildcardConfigSet {
+		c = append(c, StarWildcardConfig)
+	}
+	return c
 }
 
 func resourcePagerDutySlackConnectionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

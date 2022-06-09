@@ -41,6 +41,31 @@ func resourcePagerDutyWebhookSubscription() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"custom_header": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:     schema.TypeString,
+										Required: true,
+									},
+
+									"value": {
+										Type:     schema.TypeString,
+										Required: true,
+										ForceNew: true,
+										// Suppress the diff shown if the base_image name are equal when both compared in lower case.
+										DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+											if old == "-- redacted --" {
+												return true
+											}
+											return false
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -204,10 +229,20 @@ func expandDeliveryMethod(v interface{}) pagerduty.DeliveryMethod {
 
 	var method pagerduty.DeliveryMethod
 
+	// convert interface to []*pagerduty.CustomHeaders
+	var headers []*pagerduty.CustomHeaders
+	for _, raw := range dmMap["custom_header"].([]interface{}) {
+		headers = append(headers, &pagerduty.CustomHeaders{
+			Name:  raw.(map[string]interface{})["name"].(string),
+			Value: raw.(map[string]interface{})["value"].(string),
+		})
+	}
+
 	method = pagerduty.DeliveryMethod{
 		TemporarilyDisabled: dmMap["temporarily_disabled"].(bool),
 		Type:                dmMap["type"].(string),
 		URL:                 dmMap["url"].(string),
+		CustomHeaders:       headers,
 	}
 	return method
 }
@@ -229,6 +264,7 @@ func flattenDeliveryMethod(method pagerduty.DeliveryMethod) []map[string]interfa
 		"temporarily_disabled": method.TemporarilyDisabled,
 		"type":                 method.Type,
 		"url":                  method.URL,
+		"custom_header":        flattenCustomHeader(method.CustomHeaders),
 	}
 	methods = append(methods, methodMap)
 	return methods
@@ -242,4 +278,17 @@ func flattenFilter(filter pagerduty.Filter) []map[string]interface{} {
 	}
 	filters = append(filters, filterMap)
 	return filters
+}
+
+func flattenCustomHeader(customHeaders []*pagerduty.CustomHeaders) []map[string]interface{} {
+	var headers []map[string]interface{}
+
+	for _, ch := range customHeaders {
+		headerMap := map[string]interface{}{
+			"name":  ch.Name,
+			"value": ch.Value,
+		}
+		headers = append(headers, headerMap)
+	}
+	return headers
 }

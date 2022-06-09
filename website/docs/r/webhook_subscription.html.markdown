@@ -21,6 +21,14 @@ resource "pagerduty_webhook_subscription" "foo" {
   delivery_method {
     type = "http_delivery_method"
     url = "https://example.com/receive_a_pagerduty_webhook"
+    custom_header {
+        name = "X-Foo"
+        value = "foo"
+    }
+    custom_header {
+        name = "X-Bar"
+        value = "bar"
+    }
   }
   description = "%s"
   events = [
@@ -77,6 +85,7 @@ The following arguments are supported:
 * `temporarily_disabled` - (Required) Whether this webhook subscription is temporarily disabled. Becomes true if the delivery method URL is repeatedly rejected by the server.
 * `type` - (Required) Indicates the type of the delivery method. Allowed and default value: `http_delivery_method`.
 * `url` - (Required) The destination URL for webhook delivery.
+* `custom_header` - (Optional) The custom_header of a webhook subscription define any optional headers that will be passed along with the payload to the destination URL.
 
 ### Webhook filter (`filter`) supports the following:
 

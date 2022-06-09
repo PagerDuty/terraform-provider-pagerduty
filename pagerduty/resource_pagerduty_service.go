@@ -510,10 +510,16 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 }
 
 func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParameters {
-	riur := v.([]interface{})[0].(map[string]interface{})
 	alertGroupingParameters := &pagerduty.AlertGroupingParameters{
 		Config: &pagerduty.AlertGroupingConfig{},
 	}
+	// First We capture a possible nil value for the interface to avoid the a
+	// panic
+	pre := v.([]interface{})[0]
+	if isNilFunc(pre) {
+		return nil
+	}
+	riur := pre.(map[string]interface{})
 	if len(riur["type"].(string)) > 0 {
 		gt := riur["type"].(string)
 		alertGroupingParameters.Type = &gt

@@ -333,7 +333,6 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 	if err != nil {
-<<<<<<< HEAD
 		if e, ok := err.(*Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") != 0 {
 			return nil, nil, err
 		}
@@ -344,24 +343,6 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 		}
 		v.ContactMethod = sContact
 		resp = sResp
-=======
-		if e, ok := err.(*Error); ok && strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") == 0 {
-			resp, _, lErr := s.ListContactMethods(userID)
-			if lErr != nil {
-				return nil, nil, fmt.Errorf("user contact method is not unique and failed to fetch existing ones: %w", lErr)
-			}
-
-			for _, contact := range resp.ContactMethods {
-				if isSameContactMethod(contact, contactMethod) {
-					return s.GetContactMethod(userID, contact.ID)
-				}
-			}
-
-			return nil, nil, fmt.Errorf("user contact method address is used with different attributes (possibly label)")
-		} else {
-			return nil, nil, err
-		}
->>>>>>> a246bf7 (Updated the dependancy hash and example usage)
 	}
 
 	if err = cachePutContactMethod(v.ContactMethod); err != nil {
@@ -373,7 +354,6 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 	return v.ContactMethod, resp, nil
 }
 
-<<<<<<< HEAD
 func (s *UserService) findExistingContactMethod(userID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
 	lResp, _, lErr := s.ListContactMethods(userID)
 	if lErr != nil {
@@ -389,20 +369,12 @@ func (s *UserService) findExistingContactMethod(userID string, contactMethod *Co
 	return nil, nil, fmt.Errorf("[User Contact method must be unique]")
 }
 
-=======
->>>>>>> a246bf7 (Updated the dependancy hash and example usage)
 // isSameContactMethod checks if an existing contact method should be taken as the same as a new one users want to create.
 // note new contact method misses some fields like Self, HTMLURL.
 func isSameContactMethod(existingContact, newContact *ContactMethod) bool {
 	return existingContact.Type == newContact.Type &&
 		existingContact.Address == newContact.Address &&
-<<<<<<< HEAD
 		existingContact.CountryCode == newContact.CountryCode
-=======
-		existingContact.Label == newContact.Label &&
-		existingContact.CountryCode == newContact.CountryCode &&
-		existingContact.Summary == newContact.Summary
->>>>>>> a246bf7 (Updated the dependancy hash and example usage)
 }
 
 // GetContactMethod retrieves a contact method for a user.

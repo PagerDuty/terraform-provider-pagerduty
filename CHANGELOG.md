@@ -1,3 +1,12 @@
+## 2.5.1 (June 9, 2022)
+FEATURES:
+* `resource/pagerduty_webhook_subscription`: Adding custom_header to delivery_method ([#455](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/455))
+
+BUG FIXES:
+* `resource/pagerduty_slack_connection`: Addressing pagerduty_slack_connection unable to set "No Priority" vs "Any Priority"([#519](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/519))
+* `data_source/pagerduty_user`,`data_source/pagerduty_schedule`,`data_source/pagerduty_vendor`: Changed logic to retry on all errors returned by PD API. Remedies GOAWAY error. ([#521](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/521))
+
+
 ## 2.5.0 (June 1, 2022)
 
 FEATURES:

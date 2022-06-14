@@ -80,6 +80,10 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.0.start", start),
 					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.rendered_coverage_percentage", "0.00"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "final_schedule.0.rendered_coverage_percentage", "0.00"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.0.rotation_virtual_start", rotationVirtualStart),
 				),
 			},

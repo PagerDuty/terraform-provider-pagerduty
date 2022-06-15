@@ -89,5 +89,5 @@ The following attributes are exported:
 Router can be imported using the `id` of the Event Orchestration, e.g.
 
 ```
-$ terraform import pagerduty_event_orchestration_router 1b49abe7-26db-4439-a715-c6d883acfb3e
+$ terraform import pagerduty_event_orchestration_router.router 1b49abe7-26db-4439-a715-c6d883acfb3e
 ```

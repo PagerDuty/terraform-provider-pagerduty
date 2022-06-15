@@ -98,5 +98,5 @@ The following attributes are exported:
 Unrouted Orchestration can be imported using the `id` of the Event Orchestration, e.g.
 
 ```
-$ terraform import pagerduty_event_orchestration_unrouted 1b49abe7-26db-4439-a715-c6d883acfb3e
+$ terraform import pagerduty_event_orchestration_unrouted.unrouted 1b49abe7-26db-4439-a715-c6d883acfb3e
 ```

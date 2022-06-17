@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -151,4 +152,17 @@ func intTypeToIntPtr(v int) *int {
 		return nil
 	}
 	return &v
+}
+
+// isNilFunc is a helper which verifies if an empty interface expecting a
+// nullable value indeed has a `nil` type assigned or it's just empty.
+func isNilFunc(i interface{}) bool {
+	if i == nil {
+		return true
+	}
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		return reflect.ValueOf(i).IsNil()
+	}
+	return false
 }

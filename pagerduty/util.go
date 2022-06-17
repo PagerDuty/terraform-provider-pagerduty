@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -152,6 +153,13 @@ func intTypeToIntPtr(v int) *int {
 		return nil
 	}
 	return &v
+}
+
+// renderRoundedPercentage is a helper function to render percentanges
+// represented as float64 numbers, by its round with two decimals string
+// representation.
+func renderRoundedPercentage(p float64) string {
+	return fmt.Sprintf("%.2f", math.Round(p*100))
 }
 
 // isNilFunc is a helper which verifies if an empty interface expecting a

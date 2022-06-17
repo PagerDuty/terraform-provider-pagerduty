@@ -120,6 +120,11 @@ func resourcePagerDutySchedule() *schema.Resource {
 							},
 						},
 
+						"rendered_coverage_percentage": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
 						"restriction": {
 							Optional: true,
 							Type:     schema.TypeList,
@@ -162,6 +167,23 @@ func resourcePagerDutySchedule() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
+				},
+			},
+
+			"final_schedule": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"rendered_coverage_percentage": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
 				},
 			},
 		},
@@ -247,6 +269,9 @@ func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) err
 			}
 			if err := d.Set("teams", flattenShedTeams(schedule.Teams)); err != nil {
 				return resource.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
+			}
+			if err := d.Set("final_schedule", flattenScheFinalSchedule(schedule.FinalSchedule)); err != nil {
+				return resource.NonRetryableError(fmt.Errorf("error setting final_schedule: %s", err))
 			}
 
 		}
@@ -445,6 +470,7 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 			"start":                        sl.Start,
 			"rotation_virtual_start":       sl.RotationVirtualStart,
 			"rotation_turn_length_seconds": sl.RotationTurnLengthSeconds,
+			"rendered_coverage_percentage": renderRoundedPercentage(sl.RenderedCoveragePercentage),
 		}
 
 		var users []string
@@ -507,6 +533,16 @@ func flattenShedTeams(teams []*pagerduty.TeamReference) []string {
 	for i, t := range teams {
 		res[i] = t.ID
 	}
+
+	return res
+}
+
+func flattenScheFinalSchedule(finalSche *pagerduty.SubSchedule) []map[string]interface{} {
+	var res []map[string]interface{}
+	elem := make(map[string]interface{})
+	elem["name"] = finalSche.Name
+	elem["rendered_coverage_percentage"] = renderRoundedPercentage(finalSche.RenderedCoveragePercentage)
+	res = append(res, elem)
 
 	return res
 }

@@ -39,28 +39,39 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 
 	o := &pagerduty.ListServicesOptions{
 		Query: searchName,
+		Limit: 100,
 	}
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
-		resp, _, err := client.Services.List(o)
-		if err != nil {
-			if isErrCode(err, 429) {
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
-				return resource.RetryableError(err)
-			}
-
-			return resource.NonRetryableError(err)
-		}
-
 		var found *pagerduty.Service
 
-		for _, service := range resp.Services {
-			if service.Name == searchName {
-				found = service
+		for {
+			resp, _, err := client.Services.List(o)
+			if err != nil {
+				if isErrCode(err, 429) {
+					// Delaying retry by 30s as recommended by PagerDuty
+					// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+					time.Sleep(30 * time.Second)
+					return resource.RetryableError(err)
+				}
+
+				return resource.NonRetryableError(err)
+			}
+
+			for _, service := range resp.Services {
+				if service.Name == searchName {
+					found = service
+					break
+				}
+			}
+
+			if found != nil {
 				break
 			}
+			if !resp.More {
+				break
+			}
+			o.Offset += 100
 		}
 
 		if found == nil {

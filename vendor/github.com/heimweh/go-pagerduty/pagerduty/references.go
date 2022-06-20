@@ -19,6 +19,9 @@ type UserReference resourceReference
 // EscalationPolicyReference represents a reference to an escalation policy.
 type EscalationPolicyReference resourceReference
 
+// ResponsePlayReference represents a reference to a response play.
+type ResponsePlayReference resourceReference
+
 // ScheduleReference represents a reference to a schedule.
 type ScheduleReference resourceReference
 

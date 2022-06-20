@@ -88,9 +88,9 @@ type EventOrchestrationPathActionVariables struct {
 
 type EventOrchestrationPathActionExtractions struct {
 	Target   string `json:"target,omitempty"`
-	Regex string `json:"regex,omitempty"`
+	Regex    string `json:"regex,omitempty"`
 	Template string `json:"template,omitempty"`
-	Source string `json:"source,omitempty"`
+	Source   string `json:"source,omitempty"`
 }
 
 type EventOrchestrationPathCatchAll struct {

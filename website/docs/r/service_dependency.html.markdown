@@ -52,7 +52,7 @@ The following arguments are supported:
 Dependency supporting and dependent service supports the following:
 
 * `id` - (Required) The ID of the service dependency.
-* `type` - (Required) Can be `business_service` or `service`.
+* `type` - (Required) Can be `business_service`,  `service`, `business_service_reference` or `technical_service_reference`.
 
 ## Attributes Reference
 

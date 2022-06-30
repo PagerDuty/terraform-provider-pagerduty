@@ -73,7 +73,6 @@ func dataSourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{
 
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
-		d.Set("from", found.FromEmail)
 
 		return nil
 	})

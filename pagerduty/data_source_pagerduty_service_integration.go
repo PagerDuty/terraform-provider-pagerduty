@@ -92,10 +92,6 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 }
 
 func handleError(err error) *resource.RetryError {
-	if isErrCode(err, 429) {
-		time.Sleep(30 * time.Second)
-		return resource.RetryableError(err)
-	}
-
-	return resource.NonRetryableError(err)
+	time.Sleep(30 * time.Second)
+	return resource.RetryableError(err)
 }

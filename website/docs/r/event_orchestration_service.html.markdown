@@ -211,5 +211,5 @@ The following attributes are exported:
 Service Orchestration can be imported using the `id` of the Service, e.g.
 
 ```
-$ terraform import pagerduty_event_orchestration_service PFEODA7
+$ terraform import pagerduty_event_orchestration_service.service PFEODA7
 ```

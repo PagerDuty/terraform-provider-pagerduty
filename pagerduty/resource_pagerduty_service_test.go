@@ -256,8 +256,8 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 						"pagerduty_service.foo", "alert_grouping", "rules"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping_parameters.0.config"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_grouping_parameters.0.type", ""),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_parameters.0.type"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -265,7 +265,6 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})

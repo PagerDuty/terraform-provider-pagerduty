@@ -554,7 +554,13 @@ func expandAlertGroupingConfig(v interface{}) *pagerduty.AlertGroupingConfig {
 	return alertGroupingConfig
 }
 func flattenAlertGroupingParameters(v *pagerduty.AlertGroupingParameters) interface{} {
-	alertGroupingParameters := map[string]interface{}{"type": "", "config": []map[string]interface{}{{"aggregate": nil, "fields": nil, "timeout": nil}}}
+	alertGroupingParameters := map[string]interface{}{}
+
+	if v.Config == nil && v.Type == nil {
+		return []interface{}{alertGroupingParameters}
+	} else {
+		alertGroupingParameters = map[string]interface{}{"type": "", "config": []map[string]interface{}{{"aggregate": nil, "fields": nil, "timeout": nil}}}
+	}
 
 	if v.Type != nil {
 		alertGroupingParameters["type"] = v.Type

@@ -1,5 +1,6 @@
 ## 2.5.2 (July 12, 2022)
 IMPROVEMENTS:
+* `goreleaser`: update to go-version 1.17 ([#543]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/543](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/543)))
 * `resource/pagerduty_schedule`: Addressing output not showing rendered_coverage_percentage ([#528]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/528](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/528)))
 * Docs: `resource/pagerduty_event_orchestration_router`: Fix typos in the event orchestration router docs ([#536]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/536](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/536)))
 * Docs: `resource/pagerduty_event_orchestration_router`, `resource/pagerduty_event_orchestration_service`, `resource/pagerduty_event_orchestration_unrouted`: Fix docs for event_orchestration resources import ([#529]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/529](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/529)))

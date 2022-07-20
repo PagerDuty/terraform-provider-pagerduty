@@ -12,11 +12,11 @@ import (
 func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 	teamname1 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 	teamname2 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
-	username1 := fmt.Sprintf("tf-user-%s", acctest.RandString(5))
+	username1 := fmt.Sprintf("tf-user1-%s", acctest.RandString(5))
 	email1 := fmt.Sprintf("%s@foo.test", username1)
-	username2 := fmt.Sprintf("tf-user-%s", acctest.RandString(5))
+	username2 := fmt.Sprintf("tf-user2-%s", acctest.RandString(5))
 	email2 := fmt.Sprintf("%s@foo.test", username2)
-	username3 := fmt.Sprintf("tf-user-%s", acctest.RandString(5))
+	username3 := fmt.Sprintf("tf-user3-%s", acctest.RandString(5))
 	email3 := fmt.Sprintf("%s@foo.test", username3)
 
 	resource.Test(t, resource.TestCase{
@@ -31,6 +31,24 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 					testAccDataSourcePagerDutyUsersExists("data.pagerduty_users.test_by_2_team"),
 					resource.TestCheckResourceAttrSet(
 						"data.pagerduty_users.test_all_users", "users.#"),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"data.pagerduty_users.test_all_users",
+						"users.*",
+						map[string]string{
+							"name": username1,
+						}),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"data.pagerduty_users.test_all_users",
+						"users.*",
+						map[string]string{
+							"name": username2,
+						}),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"data.pagerduty_users.test_all_users",
+						"users.*",
+						map[string]string{
+							"name": username3,
+						}),
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_1_team", "users.#", "1"),
 					resource.TestCheckResourceAttrSet(

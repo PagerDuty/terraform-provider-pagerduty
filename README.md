@@ -10,7 +10,7 @@
 ## Requirements
 
 -	[Terraform](https://www.terraform.io/downloads.html) 0.12.x
--	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.17 (to build the provider plugin)
 
 ## Building The Provider
 
@@ -73,4 +73,37 @@ Run a specific subset of tests by name use the `TESTARGS="-run TestName"` option
 
 ```sh
 $ make testacc TESTARGS="-run TestAccPagerDutyTeam"
+```
+
+### Installing Locally
+
+> This does not work on Windows.
+
+To test a local build of the provider, you will need the following:
+* [Goreleaser](https://goreleaser.com/)
+* [jq](https://stedolan.github.io/jq/)
+
+With these install, you can run
+
+```sh
+$ make local-install
+```
+
+This will output text like
+
+```sh
+installed as version 2.5.2-SNAPSHOT-6e85453
+```
+
+That version can then be used as the provider version, e.g.
+
+```terraform
+terraform {
+  required_providers {
+    pagerduty = {
+      source  = "pagerduty/pagerduty"
+      version = "2.5.2-SNAPSHOT-6e85453"
+    }
+  }
+}
 ```

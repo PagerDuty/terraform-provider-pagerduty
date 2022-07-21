@@ -57,5 +57,17 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website website-test
+local-install: build
+	goreleaser build --single-target --snapshot --rm-dist
+	set -e ;\
+	VERSION=$$(jq -r '.version' dist/metadata.json) ;\
+	OS=$$(jq -r '.runtime.goos' dist/metadata.json) ;\
+	ARCH=$$(jq -r '.runtime.goarch' dist/metadata.json) ;\
+	BIN_PATH=$$(jq -r '.[0].path' dist/artifacts.json) ;\
+	BIN_ID=$$(jq -r '.[0].extra.ID' dist/artifacts.json) ;\
+	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/${PKG_NAME}/${PKG_NAME}/$${VERSION}/$${OS}_$${ARCH} ;\
+	mv $${BIN_PATH} ~/.terraform.d/plugins/registry.terraform.io/${PKG_NAME}/${PKG_NAME}/$${VERSION}/$${OS}_$${ARCH}/$${BIN_ID} ;\
+	echo "installed as version $${VERSION}" ;\
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website website-test local-install
 

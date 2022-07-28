@@ -3,11 +3,15 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"runtime"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
 )
 
 // Provider represents a resource provider in Terraform
@@ -97,13 +101,26 @@ func Provider() *schema.Provider {
 	}
 
 	p.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
-		terraformVersion := p.TerraformVersion
-		if terraformVersion == "" {
-			// Terraform 0.12 introduced this field to the protocol
-			// We can therefore assume that if it's missing it's 0.10 or 0.11
-			terraformVersion = "0.11+compatible"
+		var ServiceRegion = strings.ToLower(d.Get("service_region").(string))
+
+		if ServiceRegion == "us" || ServiceRegion == "" {
+			ServiceRegion = ""
+		} else {
+			ServiceRegion = ServiceRegion + "."
 		}
-		return providerConfigure(d, terraformVersion)
+
+		config := Config{
+			ApiUrl:              "https://api." + ServiceRegion + "pagerduty.com",
+			AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
+			SkipCredsValidation: d.Get("skip_credentials_validation").(bool),
+			Token:               d.Get("token").(string),
+			UserToken:           d.Get("user_token").(string),
+			UserAgent:           p.UserAgent("terraform-provider-pagerduty", version),
+			ApiUrlOverride:      d.Get("api_url_override").(string),
+		}
+
+		log.Println("[INFO] Initializing PagerDuty client")
+		return &config, nil
 	}
 
 	return p
@@ -128,27 +145,4 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 		return nil
 	}
 	return genError(err, d)
-}
-
-func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
-	var ServiceRegion = strings.ToLower(data.Get("service_region").(string))
-
-	if ServiceRegion == "us" || ServiceRegion == "" {
-		ServiceRegion = ""
-	} else {
-		ServiceRegion = ServiceRegion + "."
-	}
-
-	config := Config{
-		ApiUrl:              "https://api." + ServiceRegion + "pagerduty.com",
-		AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
-		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
-		Token:               data.Get("token").(string),
-		UserToken:           data.Get("user_token").(string),
-		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
-		ApiUrlOverride:      data.Get("api_url_override").(string),
-	}
-
-	log.Println("[INFO] Initializing PagerDuty client")
-	return &config, nil
 }

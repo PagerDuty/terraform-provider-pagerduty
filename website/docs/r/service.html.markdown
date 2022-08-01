@@ -17,7 +17,6 @@ A [service](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODE5Nw-create-
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_escalation_policy" "foo" {
@@ -28,7 +27,7 @@ resource "pagerduty_escalation_policy" "foo" {
     escalation_delay_in_minutes = 10
 
     target {
-      type = "user"
+      type = "user_reference"
       id   = pagerduty_user.example.id
     }
   }
@@ -38,7 +37,7 @@ resource "pagerduty_service" "example" {
   name                    = "My Web App"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
-  escalation_policy       = pagerduty_escalation_policy.example.id
+  escalation_policy       = pagerduty_escalation_policy.foo.id
   alert_creation          = "create_alerts_and_incidents"
 }
 ```

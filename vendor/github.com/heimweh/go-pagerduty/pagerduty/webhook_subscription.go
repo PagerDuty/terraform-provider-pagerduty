@@ -22,6 +22,7 @@ type DeliveryMethod struct {
 	Type                string           `json:"type,omitempty"`
 	URL                 string           `json:"url,omitempty"`
 	CustomHeaders       []*CustomHeaders `json:"custom_headers"`
+	Secret              string           `json:"secret,omitempty"`
 }
 
 type CustomHeaders struct {

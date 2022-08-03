@@ -333,7 +333,6 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 	if err != nil {
-
 		if e, ok := err.(*Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") != 0 {
 			return nil, nil, err
 		}
@@ -344,7 +343,6 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 		}
 		v.ContactMethod = sContact
 		resp = sResp
-
 	}
 
 	if err = cachePutContactMethod(v.ContactMethod); err != nil {
@@ -355,7 +353,6 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 
 	return v.ContactMethod, resp, nil
 }
-
 
 func (s *UserService) findExistingContactMethod(userID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
 	lResp, _, lErr := s.ListContactMethods(userID)

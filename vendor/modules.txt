@@ -125,7 +125,7 @@ github.com/hashicorp/terraform-svchost
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 github.com/hashicorp/yamux
 
-# github.com/heimweh/go-pagerduty v0.0.0-20220527195341-4e587aa9b58e
+# github.com/heimweh/go-pagerduty v0.0.0-20220725143723-43e3d8b57ee7
 ## explicit
 github.com/heimweh/go-pagerduty/pagerduty
 # github.com/klauspost/compress v1.11.2

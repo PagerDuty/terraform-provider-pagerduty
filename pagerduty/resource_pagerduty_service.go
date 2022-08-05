@@ -280,6 +280,10 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"response_play": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -357,6 +361,13 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("support_hours"); ok {
 		service.SupportHours = expandSupportHours(attr)
+	}
+
+	if attr, ok := d.GetOk("response_play"); ok {
+		service.ResponsePlay = &pagerduty.ResponsePlayReference{
+			ID:   attr.(string),
+			Type: "response_play_reference",
+		}
 	}
 	return &service, nil
 }
@@ -505,6 +516,9 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 		if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
 			return err
 		}
+	}
+	if service.ResponsePlay != nil {
+		d.Set("response_play", service.ResponsePlay.ID)
 	}
 	return nil
 }

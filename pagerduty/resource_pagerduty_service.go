@@ -474,7 +474,6 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
-	d.Set("response_play", service.ResponsePlay.ID)
 	d.Set("description", service.Description)
 	if service.AutoResolveTimeout == nil {
 		d.Set("auto_resolve_timeout", "null")
@@ -517,6 +516,9 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 		if err := d.Set("scheduled_actions", flattenScheduledActions(service.ScheduledActions)); err != nil {
 			return err
 		}
+	}
+	if service.ResponsePlay != nil {
+		d.Set("response_play", service.ResponsePlay.ID)
 	}
 	return nil
 }

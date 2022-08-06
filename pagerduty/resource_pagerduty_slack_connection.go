@@ -236,11 +236,11 @@ func expandConfigList(v interface{}) []string {
 	return items
 }
 
-//Expands the use of star wildcard ("*") configuration for an attribute to its
-//matching expected value by PagerDuty's API, which is nil. This is necessary
-//when the API accepts and interprets nil and empty configurations as valid
-//settings. The state produced by this kind of config can be reverted to the API
-//expected values with sibbling function `flattenStarWildcardConfig`.
+// Expands the use of star wildcard ("*") configuration for an attribute to its
+// matching expected value by PagerDuty's API, which is nil. This is necessary
+// when the API accepts and interprets nil and empty configurations as valid
+// settings. The state produced by this kind of config can be reverted to the API
+// expected values with sibbling function `flattenStarWildcardConfig`.
 func expandStarWildcardConfig(c []string) []string {
 	if isUsingStarWildcardConfig := len(c) == 1 && c[0] == StarWildcardConfig; isUsingStarWildcardConfig {
 		c = nil

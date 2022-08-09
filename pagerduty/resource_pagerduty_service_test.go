@@ -277,7 +277,7 @@ func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		// PreCheck:     func() { testAccPreCheck(t); testAccPreCheckPagerDutyAbility(t, "XXX") }, // FIXME: not sure which ability this feature is depending on https://developer.pagerduty.com/api-reference/9def78ed82b74-list-abilities
+		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{

@@ -123,6 +123,27 @@ func resourcePagerDutyService() *schema.Resource {
 					},
 				},
 			},
+			"auto_pause_notifications_parameters": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+						"timeout": {
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Computed:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntInSlice([]int{120, 180, 300, 600, 900})),
+						},
+					},
+				},
+			},
 			"auto_resolve_timeout": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -280,6 +301,10 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"response_play": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -336,6 +361,9 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 			}
 		}
 	}
+	if attr, ok := d.GetOk("auto_pause_notifications_parameters"); ok {
+		service.AutoPauseNotificationsParameters = expandAutoPauseNotificationsParameters(attr)
+	}
 
 	if attr, ok := d.GetOk("escalation_policy"); ok {
 		service.EscalationPolicy = &pagerduty.EscalationPolicyReference{
@@ -357,6 +385,13 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("support_hours"); ok {
 		service.SupportHours = expandSupportHours(attr)
+	}
+
+	if attr, ok := d.GetOk("response_play"); ok {
+		service.ResponsePlay = &pagerduty.ResponsePlayReference{
+			ID:   attr.(string),
+			Type: "response_play_reference",
+		}
 	}
 	return &service, nil
 }
@@ -489,6 +524,12 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 			return err
 		}
 	}
+	if service.AutoPauseNotificationsParameters != nil {
+		if err := d.Set("auto_pause_notifications_parameters", flattenAutoPauseNotificationsParameters(service.AutoPauseNotificationsParameters)); err != nil {
+			return err
+		}
+	}
+
 	if service.IncidentUrgencyRule != nil {
 		if err := d.Set("incident_urgency_rule", flattenIncidentUrgencyRule(service.IncidentUrgencyRule)); err != nil {
 			return err
@@ -506,14 +547,23 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 			return err
 		}
 	}
+	if service.ResponsePlay != nil {
+		d.Set("response_play", service.ResponsePlay.ID)
+	}
 	return nil
 }
 
 func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParameters {
-	riur := v.([]interface{})[0].(map[string]interface{})
 	alertGroupingParameters := &pagerduty.AlertGroupingParameters{
 		Config: &pagerduty.AlertGroupingConfig{},
 	}
+	// First We capture a possible nil value for the interface to avoid the a
+	// panic
+	pre := v.([]interface{})[0]
+	if isNilFunc(pre) {
+		return nil
+	}
+	riur := pre.(map[string]interface{})
 	if len(riur["type"].(string)) > 0 {
 		gt := riur["type"].(string)
 		alertGroupingParameters.Type = &gt
@@ -523,6 +573,18 @@ func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParame
 		alertGroupingParameters.Config = expandAlertGroupingConfig(val)
 	}
 	return alertGroupingParameters
+}
+
+func expandAutoPauseNotificationsParameters(v interface{}) *pagerduty.AutoPauseNotificationsParameters {
+	riur := v.([]interface{})[0].(map[string]interface{})
+	autoPauseNotificationsParameters := &pagerduty.AutoPauseNotificationsParameters{
+		Enabled: riur["enabled"].(bool),
+	}
+	if autoPauseNotificationsParameters.Enabled {
+		timeout := riur["timeout"].(int)
+		autoPauseNotificationsParameters.Timeout = &timeout
+	}
+	return autoPauseNotificationsParameters
 }
 
 func expandAlertGroupingConfig(v interface{}) *pagerduty.AlertGroupingConfig {
@@ -548,7 +610,13 @@ func expandAlertGroupingConfig(v interface{}) *pagerduty.AlertGroupingConfig {
 	return alertGroupingConfig
 }
 func flattenAlertGroupingParameters(v *pagerduty.AlertGroupingParameters) interface{} {
-	alertGroupingParameters := map[string]interface{}{"type": "", "config": []map[string]interface{}{{"aggregate": nil, "fields": nil, "timeout": nil}}}
+	alertGroupingParameters := map[string]interface{}{}
+
+	if v.Config == nil && v.Type == nil {
+		return []interface{}{alertGroupingParameters}
+	} else {
+		alertGroupingParameters = map[string]interface{}{"type": "", "config": []map[string]interface{}{{"aggregate": nil, "fields": nil, "timeout": nil}}}
+	}
 
 	if v.Type != nil {
 		alertGroupingParameters["type"] = v.Type
@@ -570,6 +638,18 @@ func flattenAlertGroupingConfig(v *pagerduty.AlertGroupingConfig) interface{} {
 
 	return []interface{}{alertGroupingConfig}
 }
+
+func flattenAutoPauseNotificationsParameters(v *pagerduty.AutoPauseNotificationsParameters) []interface{} {
+	autoPauseNotificationsParameters := map[string]interface{}{
+		"enabled": v.Enabled,
+	}
+	if v.Enabled {
+		autoPauseNotificationsParameters["timeout"] = v.Timeout
+	}
+
+	return []interface{}{autoPauseNotificationsParameters}
+}
+
 func expandIncidentUrgencyRule(v interface{}) *pagerduty.IncidentUrgencyRule {
 	riur := v.([]interface{})[0].(map[string]interface{})
 	incidentUrgencyRule := &pagerduty.IncidentUrgencyRule{

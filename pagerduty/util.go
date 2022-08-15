@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
+	"reflect"
 	"strings"
 	"time"
 
@@ -144,4 +146,31 @@ func stringPtrToStringType(v *string) string {
 		return ""
 	}
 	return *v
+}
+
+func intTypeToIntPtr(v int) *int {
+	if v == 0 {
+		return nil
+	}
+	return &v
+}
+
+// renderRoundedPercentage is a helper function to render percentanges
+// represented as float64 numbers, by its round with two decimals string
+// representation.
+func renderRoundedPercentage(p float64) string {
+	return fmt.Sprintf("%.2f", math.Round(p*100))
+}
+
+// isNilFunc is a helper which verifies if an empty interface expecting a
+// nullable value indeed has a `nil` type assigned or it's just empty.
+func isNilFunc(i interface{}) bool {
+	if i == nil {
+		return true
+	}
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		return reflect.ValueOf(i).IsNil()
+	}
+	return false
 }

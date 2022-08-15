@@ -17,7 +17,6 @@ A [service](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODE5Nw-create-
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.example.id]
 }
 
 resource "pagerduty_escalation_policy" "foo" {
@@ -28,7 +27,7 @@ resource "pagerduty_escalation_policy" "foo" {
     escalation_delay_in_minutes = 10
 
     target {
-      type = "user"
+      type = "user_reference"
       id   = pagerduty_user.example.id
     }
   }
@@ -38,8 +37,13 @@ resource "pagerduty_service" "example" {
   name                    = "My Web App"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
-  escalation_policy       = pagerduty_escalation_policy.example.id
+  escalation_policy       = pagerduty_escalation_policy.foo.id
   alert_creation          = "create_alerts_and_incidents"
+
+  auto_pause_notifications_parameters {
+    enabled = true
+    timeout = 300
+  }
 }
 ```
 
@@ -53,10 +57,12 @@ The following arguments are supported:
   * `auto_resolve_timeout` - (Optional) Time in seconds that an incident is automatically resolved if left open for that long. Disabled if set to the `"null"` string.
   * `acknowledgement_timeout` - (Optional) Time in seconds that an incident changes to the Triggered State after being Acknowledged. Disabled if set to the `"null"` string.  If not passed in, will default to '"1800"'.
   * `escalation_policy` - (Required) The escalation policy used by this service.
+  * `response_play` - (Optional) The response play used by this service.
   * `alert_creation` - (Optional) Must be one of two values. PagerDuty receives events from your monitoring systems and can then create incidents in different ways. Value "create_incidents" is default: events will create an incident that cannot be merged. Value "create_alerts_and_incidents" is the alternative: events will create an alert and then add it to a new incident, these incidents can be merged. This option is recommended.
   * `alert_grouping` - (Optional) (Deprecated) Defines how alerts on this service will be automatically grouped into incidents. Note that the alert grouping features are available only on certain plans. If not set, each alert will create a separate incident; If value is set to `time`: All alerts within a specified duration will be grouped into the same incident. This duration is set in the `alert_grouping_timeout` setting (described below). Available on Standard, Enterprise, and Event Intelligence plans; If value is set to `intelligent` - Alerts will be intelligently grouped based on a machine learning model that looks at the alert summary, timing, and the history of grouped alerts. Available on Enterprise and Event Intelligence plan. This field is deprecated, use `alert_grouping_parameters.type` instead,
   * `alert_grouping_timeout` - (Optional) (Deprecated) The duration in minutes within which to automatically group incoming alerts. This setting applies only when `alert_grouping` is set to `time`. To continue grouping alerts until the incident is resolved, set this value to `0`. This field is deprecated, use `alert_grouping_parameters.config.timeout` instead,
   * `alert_grouping_parameters` - (Optional) Defines how alerts on this service will be automatically grouped into incidents. Note that the alert grouping features are available only on certain plans. If not set, each alert will create a separate incident.
+  * `auto_pause_notifications_parameters` - (Optional) Defines how alerts on this service are automatically suspended for a period of time before triggering, when identified as likely being transient. Note that automatically pausing notifications is only available on certain plans as mentioned [here](https://support.pagerduty.com/docs/auto-pause-incident-notifications).
 
 The `alert_grouping_parameters` block contains the following arguments:
 
@@ -65,6 +71,11 @@ The `alert_grouping_parameters` block contains the following arguments:
     * `timeout` - (Optional) The duration in minutes within which to automatically group incoming alerts. This setting applies only when `type` is set to `time`. To continue grouping alerts until the incident is resolved, set this value to `0`.
     * `aggregate` - (Optional) One of `any` or `all`. This setting applies only when `type` is set to `content_based`. Group alerts based on one or all of `fields` value(s).
     * `fields` - (Optional) Alerts will be grouped together if the content of these fields match. This setting applies only when `type` is set to `content_based`.
+
+The `auto_pause_notifications_parameters` block contains the following arguments:
+
+* `enabled` (Optional) - Indicates whether alerts should be automatically suspended when identified as transient.  If not passed in, will default to 'false'.
+* `timeout` (Optional) - Indicates in seconds how long alerts should be suspended before triggering. Allowed values: `120`, `180`, `300`, `600`, `900` if `enabled` is `true`. Must be omitted or set to `null` if `enabled` is `false`.
 
 
 You may specify one optional `incident_urgency_rule` block configuring what urgencies to use.

@@ -42,6 +42,10 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 										Type:     schema.TypeString,
 										Required: true,
 										ForceNew: true,
+										ValidateFunc: validateValueFunc([]string{
+											"business_service",
+											"service",
+										}),
 									},
 								},
 							},
@@ -60,6 +64,12 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 										Type:     schema.TypeString,
 										Required: true,
 										ForceNew: true,
+										ValidateFunc: validateValueFunc([]string{
+											"business_service",
+											"business_service_reference",
+											"service",
+											"technical_service_reference",
+										}),
 									},
 								},
 							},
@@ -188,6 +198,12 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	if retryErr != nil {
 		time.Sleep(5 * time.Second)
 		return retryErr
+	}
+	// If the dependency is not found, then chances are it had been deleted
+	// outside Terraform or be part of a stale state. So it's needed to be cleared
+	// from the state.
+	if foundDep == nil {
+		return nil
 	}
 
 	// convertType is needed because the PagerDuty API returns the 'reference' values in responses but wants the other

@@ -1,3 +1,43 @@
+## 2.5.2 (July 12, 2022)
+IMPROVEMENTS:
+* `goreleaser`: update to go-version 1.17 ([#543]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/543](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/543)))
+* `resource/pagerduty_schedule`: Addressing output not showing rendered_coverage_percentage ([#528]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/528](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/528)))
+* Docs: `resource/pagerduty_event_orchestration_router`: Fix typos in the event orchestration router docs ([#536]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/536](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/536)))
+* Docs: `resource/pagerduty_event_orchestration_router`, `resource/pagerduty_event_orchestration_service`, `resource/pagerduty_event_orchestration_unrouted`: Fix docs for event_orchestration resources import ([#529]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/529](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/529)))
+* Docs: `resource/pagerduty_extension_servicenow`: Wrong Extension Schema ([#487]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/487](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/487)))
+
+BUG FIXES:
+* `resource/pagerduty_service`: remove `expectNonEmptyPlanFromTest` from Service test responding to feedback left in PR#527 ([#542]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/542](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/542)))
+* `resource/pagerduty_service_dependency`: add input validation and drift detection during deletion for `service_dependency` ([#530]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/530](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/530)))
+* `data/pagerduty_business_services`, `data/extension_schema`, `data/priority`, `data/service`, `data/integration`, `data/tag`, `data/team`: Remove 429 check on remaining data sources ([#537]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/537](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/537)))
+* `resource/pagerduty_service`: Address unable to switch off alert grouping on a service ([#527]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/527](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/527)))
+
+
+## 2.5.1 (June 9, 2022)
+FEATURES:
+* `resource/pagerduty_service`: Address: Unable to switch off alert grouping on a service ([#455](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/455))
+
+BUG FIXES:
+* `resource/pagerduty_slack_connection`: Addressing pagerduty_slack_connection unable to set "No Priority" vs "Any Priority"([#519](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/519))
+* `data_source/pagerduty_user`,`data_source/pagerduty_schedule`,`data_source/pagerduty_vendor`: Changed logic to retry on all errors returned by PD API. Remedies GOAWAY error. ([#521](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/521))
+
+
+## 2.5.0 (June 1, 2022)
+
+FEATURES:
+* Support for Event Orchestration via several new resources. ([#512](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/512))
+    * `resource/pagerduty_event_orchestration`
+    * `resource/pagerduty_event_orchestration_router`
+    * `resource/pagerduty_event_orchestration_unrouted`
+    * `resource/pagerduty_event_orchestration_service`
+    * `data_source/pagerduty_event_orchestration`
+
+IMPROVEMENTS:
+* `data_source/pagerduty_user`: Add support for pagination. Gets all users. ([#511](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/511))
+
+BUG FIXES: 
+* `resource/pagerduty_service_integration`: Fix permadiff in email_parser with type regex & minor docs update ([#479](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/479))
+
 ## 2.4.2 (May 20, 2022)
 
 IMPROVEMENTS:

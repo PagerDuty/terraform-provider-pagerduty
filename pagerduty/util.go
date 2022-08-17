@@ -174,3 +174,16 @@ func isNilFunc(i interface{}) bool {
 	}
 	return false
 }
+
+// unique will remove duplicates from a strings slice.
+func unique(s []string) []string {
+	result := []string{}
+	uniqueVals := make(map[string]bool)
+	for _, v := range s {
+		if _, ok := uniqueVals[v]; !ok {
+			uniqueVals[v] = true
+			result = append(result, v)
+		}
+	}
+	return result
+}

@@ -11,3 +11,5 @@ require (
 	google.golang.org/genproto v0.0.0-20201109203340-2640f1f9cdfb // indirect
 	google.golang.org/grpc v1.33.2 // indirect
 )
+
+replace github.com/heimweh/go-pagerduty => /Volumes/jaroiswdblackM2/Workspace/go/src/github.com/imjaroiswebdev/go-pagerduty

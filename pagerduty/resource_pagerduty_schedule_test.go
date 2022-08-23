@@ -266,6 +266,11 @@ func TestAccPagerDutySchedule_BasicWeek(t *testing.T) {
 						"pagerduty_schedule.foo", "layer.0.rotation_virtual_start", rotationVirtualStart),
 				),
 			},
+			{
+				Config:      testAccCheckPagerDutyScheduleConfigWeekUpdatedInvalidWeeklyRestrictions(username, email, scheduleUpdated, location, start, rotationVirtualStart),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("weekly restriction must be less than a week"),
+			},
 		},
 	})
 }
@@ -368,6 +373,11 @@ func TestAccPagerDutySchedule_Multi(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_schedule.foo", "layer.#", "2"),
 				),
+			},
+			{
+				Config:      testAccCheckPagerDutyScheduleConfigInvalidDailyRestriction(username, email, schedule, location, start, rotationVirtualStart),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("daily restriction must be less than a day:"),
 			},
 		},
 	})
@@ -803,4 +813,64 @@ resource "pagerduty_schedule" "foo" {
   }
 }
 `, username, email, team, schedule, location, start, rotationVirtualStart)
+}
+
+func testAccCheckPagerDutyScheduleConfigInvalidDailyRestriction(username, email, schedule, location, start, rotationVirtualStart string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 86400
+    }
+  }
+}
+`, username, email, schedule, location, start, rotationVirtualStart)
+}
+
+func testAccCheckPagerDutyScheduleConfigWeekUpdatedInvalidWeeklyRestrictions(username, email, schedule, location, start, rotationVirtualStart string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone = "%s"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+		restriction {
+      type              = "weekly_restriction"
+      start_time_of_day = "08:00:00"
+			start_day_of_week = 5
+      duration_seconds  = 604800
+    }
+  }
+}
+`, username, email, schedule, location, start, rotationVirtualStart)
 }

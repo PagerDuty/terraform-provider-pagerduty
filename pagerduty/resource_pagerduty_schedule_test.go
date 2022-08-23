@@ -178,6 +178,45 @@ func TestAccPagerDutyScheduleWithTeams_Basic(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependant(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	location := "America/New_York"
+	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicy := fmt.Sprintf("ts-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantConfigUpdated(username, email, team, escalationPolicy),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleNoExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy),
+				),
+			},
+		},
+	})
+}
 func TestAccPagerDutyScheduleOverflow_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
@@ -407,6 +446,31 @@ func testAccCheckPagerDutyScheduleExists(n string) resource.TestCheckFunc {
 
 		if found.ID != rs.Primary.ID {
 			return fmt.Errorf("Schedule not found: %v - %v", rs.Primary.ID, found)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyScheduleNoExists(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return nil
+		}
+		if rs != nil && rs.Primary.ID == "" {
+			return nil
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+
+		found, _, err := client.Schedules.Get(rs.Primary.ID, &pagerduty.GetScheduleOptions{})
+		if err != nil {
+			return err
+		}
+
+		if found.ID == rs.Primary.ID {
+			return fmt.Errorf("Schedule still exists: %v - %v", rs.Primary.ID, found)
 		}
 
 		return nil
@@ -768,6 +832,7 @@ resource "pagerduty_schedule" "foo" {
 }
 `, username, email, team, schedule, location, start, rotationVirtualStart)
 }
+
 func testAccCheckPagerDutyScheduleWithTeamsConfigUpdated(username, email, schedule, location, start, rotationVirtualStart, team string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
@@ -803,4 +868,86 @@ resource "pagerduty_schedule" "foo" {
   }
 }
 `, username, email, team, schedule, location, start, rotationVirtualStart)
+}
+
+func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "fighters"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  teams = [pagerduty_team.foo.id]
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+}
+`, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy)
+}
+func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantConfigUpdated(username, email, team, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "bar"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+`, username, email, team, escalationPolicy)
 }

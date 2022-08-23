@@ -365,8 +365,23 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	log.Printf("[INFO] Deleting PagerDuty schedule: %s", d.Id())
+	log.Printf("[INFO] Starting deletion process of Schedule %s", d.Id())
 
+	log.Printf("[INFO] Listing Escalation Policies that use schedule : %s", d.Id())
+	// Extracting Escalation Policies that use this Schedule
+	epsAssociatedToSchedule, err := extractEPsAssociatedToSchedule(client, d.Id())
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[INFO] Dissociating Escalation Policies that use the Schedule: %s", d.Id())
+	// Dissociating Schedule from Escalation Policies before deleting the Schedule
+	err = dissociateScheduleFromEPs(client, d.Id(), epsAssociatedToSchedule)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[INFO] Deleting PagerDuty schedule: %s", d.Id())
 	// Retrying to give other resources (such as escalation policies) to delete
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Schedules.Delete(d.Id()); err != nil {
@@ -545,4 +560,90 @@ func flattenScheFinalSchedule(finalSche *pagerduty.SubSchedule) []map[string]int
 	res = append(res, elem)
 
 	return res
+}
+
+func extractEPsAssociatedToSchedule(c *pagerduty.Client, id string) ([]string, error) {
+	var s *pagerduty.Schedule
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		resp, _, err := c.Schedules.Get(id, &pagerduty.GetScheduleOptions{})
+		if err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
+		}
+		s = resp
+		return nil
+	})
+	if retryErr != nil {
+		return nil, retryErr
+	}
+
+	eps := []string{}
+	for _, ep := range s.EscalationPolicies {
+		eps = append(eps, ep.ID)
+	}
+	return eps, nil
+}
+
+func dissociateScheduleFromEPs(c *pagerduty.Client, scheduleID string, eps []string) error {
+	for _, epID := range eps {
+		isEPFound := false
+		var ep *pagerduty.EscalationPolicy
+		errorMessage := fmt.Sprintf("Error while trying to dissociate Schedule %q from Escalation Policy %q", scheduleID, epID)
+		retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+			resp, _, err := c.EscalationPolicies.Get(epID, &pagerduty.GetEscalationPolicyOptions{})
+			if err != nil {
+				if isErrCode(err, 404) {
+					return nil
+				}
+				return resource.RetryableError(err)
+			}
+			ep = resp
+			isEPFound = true
+			return nil
+		})
+		if retryErr != nil {
+			return fmt.Errorf("%w; %s", retryErr, errorMessage)
+		}
+
+		if !isEPFound {
+			continue
+		}
+		err := removeScheduleFromEP(c, scheduleID, ep)
+		if err != nil {
+			return fmt.Errorf("%w; %s", err, errorMessage)
+		}
+	}
+	return nil
+}
+
+func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.EscalationPolicy) error {
+	needsToUpdate := false
+	epr := ep.EscalationRules
+	for _, r := range epr {
+		for index, target := range r.Targets {
+			if target.Type == "schedule_reference" && target.ID == scheduleID {
+				// Remove Schedule as a configured Target from the Escalation Rules
+				// slice
+				r.Targets = append(r.Targets[:index], r.Targets[index+1:]...)
+				needsToUpdate = true
+			}
+		}
+	}
+	if !needsToUpdate {
+		return nil
+	}
+	ep.EscalationRules = epr
+
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		_, _, err := c.EscalationPolicies.Update(ep.ID, ep)
+		if err != nil && !isErrCode(err, 404) {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		return retryErr
+	}
+
+	return nil
 }

@@ -58,6 +58,7 @@ type Client struct {
 	Tags                       *TagService
 	WebhookSubscriptions       *WebhookSubscriptionService
 	BusinessServiceSubscribers *BusinessServiceSubscriberService
+	OnCall                     *OnCallService
 }
 
 // Response is a wrapper around http.Response
@@ -119,6 +120,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.Tags = &TagService{c}
 	c.WebhookSubscriptions = &WebhookSubscriptionService{c}
 	c.BusinessServiceSubscribers = &BusinessServiceSubscriberService{c}
+	c.OnCall = &OnCallService{c}
 
 	InitCache(c)
 	PopulateCache()

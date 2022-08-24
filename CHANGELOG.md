@@ -1,3 +1,17 @@
+## 2.6.0 (August 17, 2022)
+
+FEATURES:
+* `data_source/pagerduty_users`: Add `pagerduty_users` data source ([#545]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/545](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/545)))
+* `resource/pagerduty_service`: Add support for service level `auto_pause_notifications_parameters` ([#525]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/525](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/525)))
+
+IMPROVEMENTS:
+* `resource/pagerduty_service`: Add `response_play` field to service ([#515]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/515](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/515)))
+* Docs: `resource/pagerduty_service`: Fixed Docs Bugs in pagerduty_service Ref: Issue #522 ([#554]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/554](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/554)))
+
+BUG FIXES:
+* `resource/pagerduty_team_membership`: Add support for gracefully destroy `pagerduty_team_membership` ([#558]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/558](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/558)))
+
+
 ## 2.5.2 (July 12, 2022)
 IMPROVEMENTS:
 * `goreleaser`: update to go-version 1.17 ([#543]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/543](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/543)))

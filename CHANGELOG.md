@@ -1,3 +1,9 @@
+## 2.6.1 (August 25, 2022)
+
+BUG FIXES:
+* `resource/pagerduty_schedule`: Add support for gracefully destroy `pagerduty_schedule` ([#561]([https://github.com/PagerDuty/terraform-provider-pagerduty/pull/561](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/561)))
+
+
 ## 2.6.0 (August 17, 2022)
 
 FEATURES:

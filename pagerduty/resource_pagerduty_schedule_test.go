@@ -921,6 +921,14 @@ resource "pagerduty_escalation_policy" "foo" {
       id   = pagerduty_schedule.foo.id
     }
   }
+  
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
 }
 `, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy)
 }

@@ -619,7 +619,7 @@ func dissociateScheduleFromEPs(c *pagerduty.Client, scheduleID string, eps []str
 func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.EscalationPolicy) error {
 	needsToUpdate := false
 	epr := ep.EscalationRules
-	for _, r := range epr {
+	for ri, r := range epr {
 		for index, target := range r.Targets {
 			if target.Type == "schedule_reference" && target.ID == scheduleID {
 				// Remove Schedule as a configured Target from the Escalation Rules
@@ -627,6 +627,9 @@ func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.
 				r.Targets = append(r.Targets[:index], r.Targets[index+1:]...)
 				needsToUpdate = true
 			}
+		}
+		if len(r.Targets) == 0 {
+			epr = append(epr[:ri], epr[ri+1:]...)
 		}
 	}
 	if !needsToUpdate {

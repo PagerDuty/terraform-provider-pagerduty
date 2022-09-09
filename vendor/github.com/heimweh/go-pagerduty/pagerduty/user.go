@@ -332,6 +332,11 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 	v := new(ContactMethodPayload)
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
+
+	return s.processContactMethod(userID, v, contactMethod, resp, err)
+}
+
+func (s *UserService) processContactMethod(userID string, v *ContactMethodPayload, contactMethod *ContactMethod, resp *Response, err error) (*ContactMethod, *Response, error) {
 	if err != nil {
 		if e, ok := err.(*Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") != 0 {
 			return nil, nil, err
@@ -350,7 +355,6 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 	} else {
 		log.Printf("===== Added contact method %q to cache", v.ContactMethod.ID)
 	}
-
 	return v.ContactMethod, resp, nil
 }
 
@@ -401,13 +405,7 @@ func (s *UserService) UpdateContactMethod(userID, contactMethodID string, contac
 	v := new(ContactMethodPayload)
 
 	resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cachePutContactMethod(v.ContactMethod)
-
-	return v.ContactMethod, resp, nil
+	return s.processContactMethod(userID, v, contactMethod, resp, err)
 }
 
 // DeleteContactMethod deletes a contact method for a user.
@@ -443,6 +441,9 @@ func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRu
 	v := new(NotificationRulePayload)
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &NotificationRulePayload{NotificationRule: rule}, &v)
+	return s.processNotificationRule(userID, v, rule, resp, err)
+}
+func (s *UserService) processNotificationRule(userID string, v *NotificationRulePayload, rule *NotificationRule, resp *Response, err error) (*NotificationRule, *Response, error) {
 	if err != nil {
 		if e, ok := err.(*Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[Channel Start delay must be unique for a given contact method]") != 0 {
 			return nil, nil, err
@@ -461,7 +462,6 @@ func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRu
 	} else {
 		log.Printf("===== Added notification rule %q to cache", v.NotificationRule.ID)
 	}
-
 	return v.NotificationRule, resp, nil
 }
 
@@ -515,9 +515,7 @@ func (s *UserService) UpdateNotificationRule(userID, ruleID string, rule *Notifi
 		return nil, nil, err
 	}
 
-	cachePutNotificationRule(v.NotificationRule)
-
-	return v.NotificationRule, resp, nil
+	return s.processNotificationRule(userID, v, rule, resp, err)
 }
 
 // DeleteNotificationRule deletes a notification rule for a user.

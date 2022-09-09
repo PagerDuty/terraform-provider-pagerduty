@@ -1,3 +1,11 @@
+## 2.6.2 (September 8, 2022)
+
+BUG FIXES:
+* `resource/pagerduty_schedule`: Test rule removal rather than update for Escalation Policy Dependent Schedule ([#564](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/564))
+
+IMPROVEMENTS:
+* Docs: `changelog.md`: Fixing PR Links in Changelog ([#566](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/566))
+
 ## 2.6.1 (August 25, 2022)
 
 BUG FIXES:

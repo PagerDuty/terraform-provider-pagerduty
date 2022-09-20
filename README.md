@@ -84,7 +84,7 @@ Make changes to the PagerDuty provider and post a pull request for review.
    ```
 4. See `api_url_override` from Terraform docs for [PagerDuty Provider](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs#argument-reference) to set a custom proxy endpoint as PagerDuty client api url overriding service_region setup.
 
-### Setup local logs
+### Setup Local Logs
 
 1. See [Debugging Terraform](https://www.terraform.io/internals/debugging). Either add this to your shell's profile
    (example: `~/.bashrc`), or just execute these commands:

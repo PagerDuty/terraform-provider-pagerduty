@@ -742,6 +742,45 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 			},
 		},
 	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceWithNullResponsePlayConfig(username, email, escalationPolicy, responsePlay, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout", "null"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_service.foo", "html_url"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "type", "service"),
+				),
+			},
+		},
+	})
+
 }
 
 func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.TestCheckFunc {
@@ -1534,6 +1573,59 @@ resource "pagerduty_service" "foo" {
   acknowledgement_timeout = 1800
   escalation_policy       = pagerduty_escalation_policy.foo.id
   response_play           = pagerduty_response_play.foo.id
+  alert_creation          = "create_incidents"
+}
+`, username, email, escalationPolicy, responsePlay, service)
+}
+
+func testAccCheckPagerDutyServiceWithNullResponsePlayConfig(username, email, escalationPolicy, responsePlay, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "bar"
+  num_loops   = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_response_play" "foo" {
+  name = "%s"
+  from = pagerduty_user.foo.email
+
+  responder {
+    type = "escalation_policy_reference"
+    id   = pagerduty_escalation_policy.foo.id
+  }
+
+  subscriber {
+    type = "user_reference"
+    id   = pagerduty_user.foo.id
+  }
+
+  runnability = "services"
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%s"
+  description             = "foo"
+  auto_resolve_timeout    = 1800
+  acknowledgement_timeout = 1800
+  escalation_policy       = pagerduty_escalation_policy.foo.id
+  response_play           = "null"
   alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, responsePlay, service)

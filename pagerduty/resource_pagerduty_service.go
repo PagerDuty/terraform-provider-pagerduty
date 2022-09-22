@@ -388,9 +388,11 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	}
 
 	if attr, ok := d.GetOk("response_play"); ok {
-		service.ResponsePlay = &pagerduty.ResponsePlayReference{
-			ID:   attr.(string),
-			Type: "response_play_reference",
+		if attr.(string) != "null" {
+			service.ResponsePlay = &pagerduty.ResponsePlayReference{
+				ID:   attr.(string),
+				Type: "response_play_reference",
+			}
 		}
 	}
 	return &service, nil

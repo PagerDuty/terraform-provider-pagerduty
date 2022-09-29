@@ -351,6 +351,105 @@ func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyService_AutoPauseNotificationsParametersUpdateExistingService(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParametersRemoved(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParameters(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "true"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "300"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParametersUpdated(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "false"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "0"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParametersRemoved(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "false"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "0"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)

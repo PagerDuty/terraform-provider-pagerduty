@@ -1625,7 +1625,7 @@ resource "pagerduty_service" "foo" {
   auto_resolve_timeout    = 1800
   acknowledgement_timeout = 1800
   escalation_policy       = pagerduty_escalation_policy.foo.id
-  response_play           = "null"
+  response_play           = null
   alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, responsePlay, service)

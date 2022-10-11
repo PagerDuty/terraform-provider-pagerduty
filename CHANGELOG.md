@@ -1,3 +1,13 @@
+## 2.6.3 (October 11, 2022)
+
+BUG FIXES:
+* `resource/pagerduty_service`: Address: `pagerduty_service.alert_grouping_parameters.config` block parsing ([#570](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/570))
+* `resource/pagerduty_service`: resource_pagerduty_service: skip response_play with "null" value ([#573](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/573))
+
+IMPROVEMENTS:
+* Docs: `resource/tag_assignment`: Adds proper documentation for pagerduty_tag resource in tag_assignmen... ([#563](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/563))
+* Docs: `README.md`: Updates developer docs with more helpful setup information ([#571](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/571))
+
 ## 2.6.2 (September 8, 2022)
 
 BUG FIXES:

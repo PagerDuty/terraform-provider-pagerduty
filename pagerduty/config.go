@@ -55,6 +55,8 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 
 	// Return the previously-configured client if available.
 	if c.client != nil {
+		// Set caller name to x-terraform-function custom header if client was cached
+		c.client.SetXTerraformFunctionHeader(extractCallerName(2))
 		return c.client, nil
 	}
 

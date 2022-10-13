@@ -1,12 +1,7 @@
 package pagerduty
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // Test config with an empty token
@@ -102,47 +97,5 @@ func TestExtractCallerName(t *testing.T) {
 		if got := extractCallerName(c.skip); got != c.want {
 			t.Fatalf("error: expected %q, but got %q", c.want, got)
 		}
-	}
-}
-
-func TestAccXTerraformFunctionCustomHeader_Basic(t *testing.T) {
-	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	usernameSpaces := " " + username + " "
-	email := fmt.Sprintf("%s@foo.test", username)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckPagerDutyUserConfig(usernameSpaces, email),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyUserExists("pagerduty_user.foo"),
-					testAccCheckXTerraformFunctionCustomHeaderUserCreate("pagerduty_user.foo"),
-				),
-			},
-		},
-	})
-}
-
-func testAccCheckXTerraformFunctionCustomHeaderUserCreate(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No user ID is set")
-		}
-
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		want := "resourcePagerDutyUserCreate"
-		if got := client.Config.XTerraformFunctionHeader; got != want {
-			return fmt.Errorf("error: expected %q as value for \"client.Config.XTerraformFunctionHeader\", but got %q", want, got)
-		}
-
-		return nil
 	}
 }

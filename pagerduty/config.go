@@ -39,18 +39,6 @@ type Config struct {
 
 	client      *pagerduty.Client
 	slackClient *pagerduty.Client
-
-	terraformHeaderAddingTransport *terraformHeaderAddingTransport
-}
-
-type terraformHeaderAddingTransport struct {
-	transport    http.RoundTripper
-	functionName string
-}
-
-func (t *terraformHeaderAddingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Add("x-terraform-function", t.functionName)
-	return t.transport.RoundTrip(req)
 }
 
 const invalidCreds = `
@@ -65,21 +53,8 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	var functionName string
-
-	pc, _, _, ok := runtime.Caller(1)
-	details := runtime.FuncForPC(pc)
-	if ok && details != nil {
-		name := details.Name()
-		idx := strings.LastIndex(name, ".")
-		if idx > 0 {
-			functionName = name[idx+1:]
-		}
-	}
-
 	// Return the previously-configured client if available.
 	if c.client != nil {
-		c.terraformHeaderAddingTransport.functionName = functionName
 		return c.client, nil
 	}
 
@@ -88,14 +63,9 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		return nil, fmt.Errorf(invalidCreds)
 	}
 
-	t := &terraformHeaderAddingTransport{
-		transport:    logging.NewTransport("PagerDuty", http.DefaultTransport),
-		functionName: functionName,
-	}
-
 	var httpClient *http.Client
 	httpClient = http.DefaultClient
-	httpClient.Transport = t
+	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
 	var apiUrl = c.ApiUrl
 	if c.ApiUrlOverride != "" {
@@ -103,11 +73,12 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	config := &pagerduty.Config{
-		BaseURL:    apiUrl,
-		Debug:      logging.IsDebugOrHigher(),
-		HTTPClient: httpClient,
-		Token:      c.Token,
-		UserAgent:  c.UserAgent,
+		BaseURL:                  apiUrl,
+		Debug:                    logging.IsDebugOrHigher(),
+		HTTPClient:               httpClient,
+		Token:                    c.Token,
+		UserAgent:                c.UserAgent,
+		XTerraformFunctionHeader: extractCallerName(2),
 	}
 
 	client, err := pagerduty.NewClient(config)
@@ -124,7 +95,6 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	c.client = client
-	c.terraformHeaderAddingTransport = t
 
 	log.Printf("[INFO] PagerDuty client configured")
 
@@ -167,4 +137,20 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 	log.Printf("[INFO] PagerDuty client configured for slack")
 
 	return c.slackClient, nil
+}
+
+func extractCallerName(skip int) string {
+	var callerName string
+
+	pc, _, _, ok := runtime.Caller(skip)
+	details := runtime.FuncForPC(pc)
+	if ok && details != nil {
+		name := details.Name()
+		idx := strings.LastIndex(name, ".")
+		if idx > 0 {
+			callerName = name[idx+1:]
+		}
+	}
+
+	return callerName
 }

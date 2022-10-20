@@ -59,6 +59,7 @@ func Provider() *schema.Provider {
 			"pagerduty_business_service":    dataSourcePagerDutyBusinessService(),
 			"pagerduty_priority":            dataSourcePagerDutyPriority(),
 			"pagerduty_ruleset":             dataSourcePagerDutyRuleset(),
+			"pagerduty_rulesets":            dataSourcePagerDutyRulesets(),
 			"pagerduty_tag":                 dataSourcePagerDutyTag(),
 			"pagerduty_event_orchestration": dataSourcePagerDutyEventOrchestration(),
 		},

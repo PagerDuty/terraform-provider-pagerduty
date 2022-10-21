@@ -61,6 +61,7 @@ func Provider() *schema.Provider {
 			"pagerduty_ruleset":                   dataSourcePagerDutyRuleset(),
 			"pagerduty_tag":                       dataSourcePagerDutyTag(),
 			"pagerduty_event_orchestration":       dataSourcePagerDutyEventOrchestration(),
+			"pagerduty_event_orchestrations":      dataSourcePagerDutyEventOrchestrations(),
 			"pagerduty_automation_actions_runner": dataSourcePagerDutyAutomationActionsRunner(),
 			"pagerduty_automation_actions_action": dataSourcePagerDutyAutomationActionsAction(),
 			"pagerduty_incident_workflow":         dataSourcePagerDutyIncidentWorkflow(),

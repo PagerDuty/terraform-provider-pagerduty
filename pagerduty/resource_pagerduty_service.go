@@ -575,7 +575,7 @@ func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParame
 	// For Intelligent grouping type, config is null
 	alertGroupingParameters.Config = nil
 	if groupingType == "content_based" || groupingType == "time" {
-		alertGroupingParameters.Config = expandAlertGroupingContentBasedConfig(riur["config"], groupingType)
+		alertGroupingParameters.Config = expandAlertGroupingConfig(riur["config"], groupingType)
 	}
 	return alertGroupingParameters
 }
@@ -592,7 +592,7 @@ func expandAutoPauseNotificationsParameters(v interface{}) *pagerduty.AutoPauseN
 	return autoPauseNotificationsParameters
 }
 
-func expandAlertGroupingContentBasedConfig(v interface{}, groupingType string) *pagerduty.AlertGroupingConfig {
+func expandAlertGroupingConfig(v interface{}, groupingType string) *pagerduty.AlertGroupingConfig {
 	alertGroupingConfig := &pagerduty.AlertGroupingConfig{}
 	if len(v.([]interface{})) == 0 || v.([]interface{})[0] == nil {
 		return nil

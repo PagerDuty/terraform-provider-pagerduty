@@ -1,3 +1,8 @@
+## 2.6.4 (November 3, 2022)
+
+BUG FIXES:
+* `resource/pagerduty_service`: Test and handle time-based alert grouping parameters ([#582](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/582))
+
 ## 2.6.3 (October 11, 2022)
 
 BUG FIXES:

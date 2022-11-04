@@ -68,6 +68,37 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyUserContactMethodPhone_EnforceUpdateIfAlreadyExist(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	phoneNumber := "4153013250"
+	newPhoneNumber := "4153013251"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, phoneNumber),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
+					testAccAddPhoneContactOutsideTerraform("pagerduty_user_contact_method.foo", newPhoneNumber),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, newPhoneNumber),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_user_contact_method.foo", "label", username),
+					resource.TestCheckResourceAttr(
+						"pagerduty_user_contact_method.foo", "address", newPhoneNumber),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyUserContactMethodSMS_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -130,6 +161,36 @@ func testAccCheckPagerDutyUserContactMethodExists(n string) resource.TestCheckFu
 
 		if found.ID != rs.Primary.ID {
 			return fmt.Errorf("Contact method not found: %v - %v", rs.Primary.ID, found)
+		}
+
+		return nil
+	}
+}
+
+func testAccAddPhoneContactOutsideTerraform(n, p string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		resID := rs.Primary.ID
+
+		if resID == "" {
+			return fmt.Errorf("No User Contact Method ID is set")
+		}
+		userID := rs.Primary.Attributes["user_id"]
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+
+		found, _, err := client.Users.GetContactMethod(userID, rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		found.Address = p
+		_, _, err = client.Users.CreateContactMethod(userID, found)
+		if err != nil {
+			return fmt.Errorf("was not possible to set phone %s contact number outside Terraform state: %v", p, err)
 		}
 
 		return nil

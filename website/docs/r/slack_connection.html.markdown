@@ -59,7 +59,7 @@ The following arguments are supported:
 
   * `source_id` - (Required) The ID of the source in PagerDuty. Valid sources are services or teams.
   * `source_type` - (Required) The type of the source. Either `team_reference` or `service_reference`.
-  * `workspace_id` - (Required) The ID of the connected Slack workspace. Can also be defined by the `SLACK_CONNECTION_WORKSPACE_ID` environment variable.
+  * `workspace_id` - (Required) The slack team (workspace) ID of the connected Slack workspace. Can also be defined by the `SLACK_CONNECTION_WORKSPACE_ID` environment variable.
   * `channel_id` - (Required) The ID of a Slack channel in the workspace.
   * `config` - (Required) Configuration options for the Slack connection that provide options to filter events.
   * `notification_type` - (Required) Type of notification. Either `responder` or `stakeholder`.
@@ -94,7 +94,7 @@ The following attributes are exported:
 
 ## Import
 
-Slack connections can be imported using the related `workspace` ID and the `slack_connection` ID separated by a dot, e.g.
+Slack connections can be imported using the related `slack_team(workspace)` ID and the `slack_connection` ID separated by a dot, e.g.
 
 ```
 $ terraform import pagerduty_slack_connection.main T02A123LV1A.PUABCDL

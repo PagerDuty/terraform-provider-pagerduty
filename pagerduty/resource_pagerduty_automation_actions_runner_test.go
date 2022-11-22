@@ -17,7 +17,7 @@ func init() {
 }
 
 func testSweepAutomationActionsRunner(region string) error {
-	// TODO-AVG: Create a Jira ticket to implement sweepers
+	// TODO: Implement sweepers
 	return nil
 }
 

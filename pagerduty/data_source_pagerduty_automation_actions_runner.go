@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourcePagerdutyAutomationActionsRunner() *schema.Resource {
+func dataSourcePagerDutyAutomationActionsRunner() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyAutomationActionsRunnerRead,
 
@@ -21,7 +21,11 @@ func dataSourcePagerdutyAutomationActionsRunner() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"type": {
+			"runner_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -48,7 +52,8 @@ func dataSourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta
 
 		d.SetId(runner.ID)
 		d.Set("name", runner.Name)
-		d.Set("type", runner.Type)
+		d.Set("runner_type", runner.RunnerType)
+		d.Set("description", runner.Description)
 
 		return nil
 	})

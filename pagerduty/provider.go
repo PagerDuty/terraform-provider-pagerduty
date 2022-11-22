@@ -61,7 +61,7 @@ func Provider() *schema.Provider {
 			"pagerduty_ruleset":                   dataSourcePagerDutyRuleset(),
 			"pagerduty_tag":                       dataSourcePagerDutyTag(),
 			"pagerduty_event_orchestration":       dataSourcePagerDutyEventOrchestration(),
-			"pagerduty_automation_actions_runner": dataSourcePagerdutyAutomationActionsRunner(),
+			"pagerduty_automation_actions_runner": dataSourcePagerDutyAutomationActionsRunner(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -94,6 +94,7 @@ func Provider() *schema.Provider {
 			"pagerduty_event_orchestration_router":   resourcePagerDutyEventOrchestrationPathRouter(),
 			"pagerduty_event_orchestration_unrouted": resourcePagerDutyEventOrchestrationPathUnrouted(),
 			"pagerduty_event_orchestration_service":  resourcePagerDutyEventOrchestrationPathService(),
+			"pagerduty_automation_actions_runner":    resourcePagerDutyAutomationActionsRunner(),
 		},
 	}
 

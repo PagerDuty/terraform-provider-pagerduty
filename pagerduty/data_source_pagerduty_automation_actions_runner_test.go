@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDataSourcePagerDutyAutomationActionsRunner_Basic(t *testing.T) {
+	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyAutomationActionsRunnerConfig("01DCTHG8L7X4BDEQG3OQO2HZCN"),
+				Config: testAccDataSourcePagerDutyAutomationActionsRunnerConfig(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerdutyAutomationActionsRunnerExists("data.pagerduty_automation_actions_runner.foo"),
 				),
@@ -39,10 +42,15 @@ func testAccCheckPagerdutyAutomationActionsRunnerExists(n string) resource.TestC
 	}
 }
 
-func testAccDataSourcePagerDutyAutomationActionsRunnerConfig(id string) string {
+func testAccDataSourcePagerDutyAutomationActionsRunnerConfig(name string) string {
 	return fmt.Sprintf(`
-data "pagerduty_automation_actions_runner" "foo" {
-  id = "%s"
+resource "pagerduty_automation_actions_runner" "test" {
+  name = "%s"
+  runner_type = "sidecar"
 }
-`, id)
+
+data "pagerduty_automation_actions_runner" "foo" {
+  id = pagerduty_automation_actions_runner.test.id
+}
+`, name)
 }

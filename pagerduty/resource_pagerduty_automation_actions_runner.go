@@ -26,10 +26,10 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 			"runner_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				Default:  "sidecar",
 				ValidateFunc: validateValueFunc([]string{
 					"sidecar",
 				}),
+				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"id": {
 				Type:     schema.TypeString,
@@ -39,6 +39,7 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "Managed by Terraform",
+				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 		},
 	}

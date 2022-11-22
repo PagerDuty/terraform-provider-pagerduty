@@ -2,111 +2,86 @@ package pagerduty
 
 import (
 	"fmt"
-	"log"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
-	resource.AddTestSweepers("pagerduty_tag", &resource.Sweeper{
-		Name: "pagerduty_tag",
-		F:    testSweepTag,
+	resource.AddTestSweepers("automation_actions_runner", &resource.Sweeper{
+		Name: "automation_actions_runner",
+		F:    testSweepAutomationActionsRunner,
 	})
 }
 
-func testSweepTag(region string) error {
-	config, err := sharedConfigForRegion(region)
-	if err != nil {
-		return err
-	}
-
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-
-	resp, _, err := client.Tags.List(&pagerduty.ListTagsOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, tag := range resp.Tags {
-		if strings.HasPrefix(tag.Label, "test") || strings.HasPrefix(tag.Label, "tf-") {
-			log.Printf("Destroying tag %s (%s)", tag.Label, tag.ID)
-			if _, err := client.Tags.Delete(tag.ID); err != nil {
-				return err
-			}
-		}
-	}
-
+func testSweepAutomationActionsRunner(region string) error {
+	// TODO-AVG: Create a Jira ticket to implement sweepers
 	return nil
 }
 
-func TestAccPagerDutyTag_Basic(t *testing.T) {
-	tagLabel := fmt.Sprintf("tf-%s", acctest.RandString(5))
+func TestAccPagerDutyAutomationActionsRunner_Basic(t *testing.T) {
+	runnerName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTagDestroy,
+		CheckDestroy: testAccCheckPagerDutyAutomationActionsRunnerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyTagConfig(tagLabel),
+				Config: testAccCheckPagerDutyAutomationActionsRunnerConfig(runnerName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyTagExists("pagerduty_tag.foo"),
+					testAccCheckPagerDutyAutomationActionsRunnerExists("pagerduty_automation_actions_runner.foo"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_tag.foo", "label", tagLabel),
+						"pagerduty_automation_actions_runner.foo", "name", runnerName),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckPagerDutyTagDestroy(s *terraform.State) error {
+func testAccCheckPagerDutyAutomationActionsRunnerDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_tag" {
+		if r.Type != "pagerduty_automation_actions_runner" {
 			continue
 		}
-		if _, _, err := client.Tags.Get(r.Primary.ID); err == nil {
-			return fmt.Errorf("Tag still exists")
+		if _, _, err := client.AutomationActionsRunner.Get(r.Primary.ID); err == nil {
+			return fmt.Errorf("Automation Actions Runner still exists")
 		}
 	}
 	return nil
 }
 
-func testAccCheckPagerDutyTagExists(n string) resource.TestCheckFunc {
+func testAccCheckPagerDutyAutomationActionsRunnerExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Tag ID is set")
+			return fmt.Errorf("No Automation Actions Runner ID is set")
 		}
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.Tags.Get(rs.Primary.ID)
+		found, _, err := client.AutomationActionsRunner.Get(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 		if found.ID != rs.Primary.ID {
-			return fmt.Errorf("Tag not found: %v - %v", rs.Primary.ID, found)
+			return fmt.Errorf("Automation Actions Runner not found: %v - %v", rs.Primary.ID, found)
 		}
 
 		return nil
 	}
 }
 
-func testAccCheckPagerDutyTagConfig(tagLabel string) string {
+func testAccCheckPagerDutyAutomationActionsRunnerConfig(runnerName string) string {
 	return fmt.Sprintf(`
-resource "pagerduty_tag" "foo" {
-	label = "%s"
+resource "pagerduty_automation_actions_runner" "foo" {
+	name = "%s"
+	runner_type = "sidecar"
 }
-`, tagLabel)
+`, runnerName)
 }

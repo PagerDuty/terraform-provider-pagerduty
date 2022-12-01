@@ -13,11 +13,17 @@ import (
 
 var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
+var testAccProviderFactories map[string]func() (*schema.Provider, error)
 
 func init() {
 	testAccProvider = Provider()
 	testAccProviders = map[string]*schema.Provider{
 		"pagerduty": testAccProvider,
+	}
+	testAccProviderFactories = map[string]func() (*schema.Provider, error){
+		"pagerduty": func() (*schema.Provider, error) {
+			return testAccProvider, nil
+		},
 	}
 }
 

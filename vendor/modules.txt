@@ -37,6 +37,7 @@ github.com/hashicorp/go-checkpoint
 # github.com/hashicorp/go-cleanhttp v0.5.2
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
+## explicit
 github.com/hashicorp/go-cty/cty
 github.com/hashicorp/go-cty/cty/convert
 github.com/hashicorp/go-cty/cty/gocty
@@ -122,7 +123,7 @@ github.com/hashicorp/terraform-registry-address
 github.com/hashicorp/terraform-svchost
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 github.com/hashicorp/yamux
-# github.com/heimweh/go-pagerduty v0.0.0-20221219143240-8b7c456b23c6
+# github.com/heimweh/go-pagerduty v0.0.0-20221222221341-c1c27ca3744a
 ## explicit
 github.com/heimweh/go-pagerduty/pagerduty
 # github.com/klauspost/compress v1.15.9

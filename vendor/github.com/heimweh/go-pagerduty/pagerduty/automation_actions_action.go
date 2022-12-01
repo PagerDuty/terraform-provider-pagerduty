@@ -42,13 +42,8 @@ type AutomationActionsActionTeamAssociationPayload struct {
 func (s *AutomationActionsActionService) Create(action *AutomationActionsAction) (*AutomationActionsAction, *Response, error) {
 	u := "/automation_actions/actions"
 	v := new(AutomationActionsActionPayload)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	resp, err := s.client.newRequestDoOptions("POST", u, nil, &AutomationActionsActionPayload{Action: action}, &v, o)
+	resp, err := s.client.newRequestDoOptions("POST", u, nil, &AutomationActionsActionPayload{Action: action}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -60,13 +55,8 @@ func (s *AutomationActionsActionService) Create(action *AutomationActionsAction)
 func (s *AutomationActionsActionService) Get(id string) (*AutomationActionsAction, *Response, error) {
 	u := fmt.Sprintf("/automation_actions/actions/%s", id)
 	v := new(AutomationActionsActionPayload)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v, o)
+	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -77,29 +67,19 @@ func (s *AutomationActionsActionService) Get(id string) (*AutomationActionsActio
 // Delete deletes an existing action.
 func (s *AutomationActionsActionService) Delete(id string) (*Response, error) {
 	u := fmt.Sprintf("/automation_actions/actions/%s", id)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil, o)
+	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil)
 }
 
 // Associate an Automation Action with a team
 func (s *AutomationActionsActionService) AssociateToTeam(actionID, teamID string) (*AutomationActionsActionTeamAssociationPayload, *Response, error) {
 	u := fmt.Sprintf("/automation_actions/actions/%s/teams", actionID)
 	v := new(AutomationActionsActionTeamAssociationPayload)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 	p := &AutomationActionsActionTeamAssociationPayload{
 		Team: &TeamReference{ID: teamID, Type: "team_reference"},
 	}
 
-	resp, err := s.client.newRequestDoOptions("POST", u, nil, p, &v, o)
+	resp, err := s.client.newRequestDoOptions("POST", u, nil, p, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -110,26 +90,16 @@ func (s *AutomationActionsActionService) AssociateToTeam(actionID, teamID string
 // Dissociate an Automation Action with a team
 func (s *AutomationActionsActionService) DissociateToTeam(actionID, teamID string) (*Response, error) {
 	u := fmt.Sprintf("/automation_actions/actions/%s/teams/%s", actionID, teamID)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil, o)
+	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil)
 }
 
 // Gets the details of an Automation Action / team relation
 func (s *AutomationActionsActionService) GetAssociationToTeam(actionID, teamID string) (*AutomationActionsActionTeamAssociationPayload, *Response, error) {
 	u := fmt.Sprintf("/automation_actions/actions/%s/teams/%s", actionID, teamID)
 	v := new(AutomationActionsActionTeamAssociationPayload)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v, o)
+	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v)
 	if err != nil {
 		return nil, nil, err
 	}

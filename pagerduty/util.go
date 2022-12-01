@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -98,6 +100,31 @@ func validateValueFunc(values []string) schema.SchemaValidateFunc {
 			errors = append(errors, fmt.Errorf("%#v is an invalid value for argument %s. Must be one of %#v", value, k, values))
 		}
 		return
+	}
+}
+
+func validateValueFuncDiag(values []string) schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+
+		value := v.(string)
+		valid := false
+		for _, val := range values {
+			if value == val {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			diags = append(diags, diag.Diagnostic{
+				Severity:      diag.Error,
+				Summary:       fmt.Sprintf("%#v is an invalid value. Must be one of %#v", value, values),
+				AttributePath: p,
+			})
+		}
+
+		return diags
 	}
 }
 

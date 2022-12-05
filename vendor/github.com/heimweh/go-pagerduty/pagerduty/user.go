@@ -333,10 +333,10 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 
-	return s.processContactMethod(userID, v, contactMethod, resp, err)
+	return s.processCreateContactMethodResponse(userID, v, contactMethod, resp, err)
 }
 
-func (s *UserService) processContactMethod(userID string, v *ContactMethodPayload, contactMethod *ContactMethod, resp *Response, err error) (*ContactMethod, *Response, error) {
+func (s *UserService) processCreateContactMethodResponse(userID string, v *ContactMethodPayload, contactMethod *ContactMethod, resp *Response, err error) (*ContactMethod, *Response, error) {
 	if err != nil {
 		if e, ok := err.(*Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") != 0 {
 			return nil, nil, err
@@ -345,6 +345,46 @@ func (s *UserService) processContactMethod(userID string, v *ContactMethodPayloa
 		sContact, sResp, sErr := s.findExistingContactMethod(userID, contactMethod)
 		if sErr != nil {
 			return nil, nil, sErr
+		}
+		v.ContactMethod = sContact
+		resp = sResp
+	}
+
+	if err = cachePutContactMethod(v.ContactMethod); err != nil {
+		log.Printf("===== Error adding contact method %q to cache: %q", v.ContactMethod.ID, err)
+	} else {
+		log.Printf("===== Added contact method %q to cache", v.ContactMethod.ID)
+	}
+	return v.ContactMethod, resp, nil
+}
+
+func (s *UserService) processUpdateContactMethodResponse(userID, contactMethodId string, v *ContactMethodPayload, contactMethod *ContactMethod, resp *Response, err error) (*ContactMethod, *Response, error) {
+	if err != nil {
+		e, ok := err.(*Error)
+		isUniqueContactError := ok && strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") == 0
+		if !ok || !isUniqueContactError {
+			return nil, nil, err
+		}
+		sContact, sResp, sErr := s.findExistingContactMethod(userID, contactMethod)
+		if sErr != nil {
+			return nil, nil, sErr
+		}
+
+		if isUniqueContactError {
+			_, sErr = s.DeleteContactMethod(userID, sContact.ID)
+			if sErr != nil {
+				return nil, nil, sErr
+			}
+
+			sResp, sErr = s.updateContactMethodCall(userID, contactMethodId, contactMethod, v)
+			if sErr != nil {
+				return nil, nil, sErr
+			}
+
+			sContact, sResp, sErr = s.findExistingContactMethod(userID, contactMethod)
+			if sErr != nil {
+				return nil, nil, sErr
+			}
 		}
 		v.ContactMethod = sContact
 		resp = sResp
@@ -401,11 +441,19 @@ func (s *UserService) GetContactMethod(userID string, contactMethodID string) (*
 
 // UpdateContactMethod updates a contact method for a user.
 func (s *UserService) UpdateContactMethod(userID, contactMethodID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
-	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+	// u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
 	v := new(ContactMethodPayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
-	return s.processContactMethod(userID, v, contactMethod, resp, err)
+	// resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
+	resp, err := s.updateContactMethodCall(userID, contactMethodID, contactMethod, v)
+
+	return s.processUpdateContactMethodResponse(userID, contactMethodID, v, contactMethod, resp, err)
+}
+
+func (s *UserService) updateContactMethodCall(userID, contactMethodID string, contactMethod *ContactMethod, v interface{}) (*Response, error) {
+	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+
+	return s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 }
 
 // DeleteContactMethod deletes a contact method for a user.

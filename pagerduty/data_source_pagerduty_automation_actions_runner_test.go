@@ -14,8 +14,6 @@ func TestAccDataSourcePagerDutyAutomationActionsRunner_Basic(t *testing.T) {
 	runnerName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
-	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	runnerId := "default"
 
 	resource.Test(t, resource.TestCase{
@@ -23,16 +21,13 @@ func TestAccDataSourcePagerDutyAutomationActionsRunner_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service),
-				// Config: `
-				// provider "pagerduty" {}
-				// `,
+				Config: testAccDataSourcePagerDutyAutomationActionsRunnerConfig_1(username, email),
 				Check: resource.ComposeTestCheckFunc(
-					testAccDataSourcePagerdutyAutomationActionsRunnerRunnerCreation(runnerName, &runnerId),
+					testAccDataSourcePagerdutyAutomationActionsRunnerRunnerCreation_1(runnerName, &runnerId),
 				),
 			},
 			{
-				Config: testAccDataSourcePagerDutyAutomationActionsRunnerConfig(runnerName, runnerId),
+				Config: testAccDataSourcePagerDutyAutomationActionsRunnerConfig(runnerName, &runnerId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerdutyAutomationActionsRunner("data.pagerduty_automation_actions_runner.foo"),
 				),
@@ -56,18 +51,38 @@ func testAccDataSourcePagerdutyAutomationActionsRunner(n string) resource.TestCh
 	}
 }
 
-func testAccDataSourcePagerDutyAutomationActionsRunnerConfig(runnerName, runnerId string) string {
+func testAccDataSourcePagerDutyAutomationActionsRunnerConfig(runnerName string, runnerId *string) string {
+
+	fmt.Println("testAccDataSourcePagerDutyAutomationActionsRunnerConfig runnerId:", *runnerId)
+
 	return fmt.Sprintf(`
 data "pagerduty_automation_actions_runner" "tf_test_runner" {
   id = %q
 }
-`, runnerId)
+`, *runnerId)
 }
 
-func testAccDataSourcePagerdutyAutomationActionsRunnerRunnerCreation(runnerName string, runnerId *string) resource.TestCheckFunc {
+func testAccDataSourcePagerDutyAutomationActionsRunnerConfig_1(username, email string) string {
+
+	fmt.Println("Called: testAccDataSourcePagerDutyAutomationActionsRunnerConfig_1")
+
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+`, username, email)
+}
+
+func testAccDataSourcePagerdutyAutomationActionsRunnerRunnerCreation_1(runnerName string, runnerId *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		fmt.Println("runnerId in runner creation:", *runnerId)
+		fmt.Println("testAccDataSourcePagerdutyAutomationActionsRunnerRunnerCreation_1 runnerId:", *runnerId)
+
 		client, _ := testAccProvider.Meta().(*Config).Client()
 		input := &pagerduty.AutomationActionsRunner{
 			Name:        runnerName,
@@ -79,8 +94,9 @@ func testAccDataSourcePagerdutyAutomationActionsRunnerRunnerCreation(runnerName 
 			return err
 		}
 		*runnerId = runner.ID
-		fmt.Println("runnerId", runnerId)
-		fmt.Println("runnerId in runner creation2:", *runnerId)
+
+		fmt.Println("POST testAccDataSourcePagerdutyAutomationActionsRunnerRunnerCreation_1 runnerId:", *runnerId)
+
 		return nil
 	}
 }

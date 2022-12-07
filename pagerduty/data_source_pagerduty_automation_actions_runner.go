@@ -73,8 +73,11 @@ func dataSourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta
 		d.Set("name", runner.Name)
 		d.Set("type", runner.Type)
 		d.Set("runner_type", runner.RunnerType)
-		d.Set("description", runner.Description)
 		d.Set("creation_time", runner.CreationTime)
+
+		if runner.Description != nil {
+			d.Set("description", &runner.Description)
+		}
 
 		if runner.RunbookBaseUri != nil {
 			d.Set("runbook_base_uri", &runner.RunbookBaseUri)

@@ -48,10 +48,6 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 				Optional: true,
 				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
-			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -95,13 +91,6 @@ func buildAutomationActionsRunnerStruct(d *schema.ResourceData) (*pagerduty.Auto
 		return nil, errors.New("runbook_base_uri must be specified when creating a runbook runner")
 	}
 
-	if attr, ok := d.GetOk("runbook_base_uri"); ok {
-		val := attr.(string)
-		automationActionsRunner.RunbookBaseUri = &val
-	} else {
-		return nil, errors.New("runbook_base_uri must be specified when creating a runbook runner")
-	}
-
 	if attr, ok := d.GetOk("runbook_api_key"); ok {
 		val := attr.(string)
 		automationActionsRunner.RunbookApiKey = &val
@@ -128,6 +117,7 @@ func resourcePagerDutyAutomationActionsRunnerCreate(d *schema.ResourceData, meta
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		if automationActionsRunner, _, err := client.AutomationActionsRunner.Create(automationActionsRunner); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 

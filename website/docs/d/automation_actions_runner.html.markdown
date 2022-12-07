@@ -36,6 +36,5 @@ The following attributes are exported:
 * `description` - (Optional) The description of the runner.
 * `last_seen` - (Optional) The last time runner has been seen. Represented as an ISO 8601 timestamp.
 * `runbook_base_uri` - (Optional) The base URI of the Runbook server to connect to. Applicable to `runbook` type runners only.
-* `teams` - (Optional) Teams associated with the runner. Account must have the `teams` ability enabled.
 
 [1]: https://developer.pagerduty.com/api-reference/aace61f84cbd0-get-an-automation-action-runner

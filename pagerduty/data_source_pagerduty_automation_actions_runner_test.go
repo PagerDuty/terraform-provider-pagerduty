@@ -32,21 +32,21 @@ func testAccDataSourcePagerdutyAutomationActionsRunner(src, n string) resource.T
 		srcR := s.RootModule().Resources[src]
 		srcA := srcR.Primary.Attributes
 
-		r, ok := s.RootModule().Resources[n]
+		ds, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
-		a := r.Primary.Attributes
+		dsA := ds.Primary.Attributes
 
-		if a["id"] == "" {
+		if dsA["id"] == "" {
 			return fmt.Errorf("No Runner ID is set")
 		}
 
 		testAtts := []string{"id", "name", "type", "runner_type", "creation_time", "last_seen", "description", "runbook_base_uri"}
 
 		for _, att := range testAtts {
-			if a[att] != srcA[att] {
-				return fmt.Errorf("Expected the runner %s to be: %s, but got: %s", att, srcA[att], a[att])
+			if dsA[att] != srcA[att] {
+				return fmt.Errorf("Expected the runner %s to be: %s, but got: %s", att, srcA[att], dsA[att])
 			}
 		}
 

@@ -32,8 +32,13 @@ func TestAccPagerDutyAutomationActionsRunner_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyAutomationActionsRunnerConfig(runnerName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyAutomationActionsRunnerExists("pagerduty_automation_actions_runner.foo"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_runner.foo", "name", runnerName),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "name", runnerName),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "runner_type", "runbook"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "description", "Runner created by TF"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "runbook_base_uri", "cat-cat"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "type", "runner"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_runner.foo", "id"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_runner.foo", "creation_time"),
 				),
 			},
 		},
@@ -80,6 +85,7 @@ func testAccCheckPagerDutyAutomationActionsRunnerConfig(runnerName string) strin
 	return fmt.Sprintf(`
 resource "pagerduty_automation_actions_runner" "foo" {
 	name = "%s"
+	description = "Runner created by TF"
 	runner_type = "runbook"
 	runbook_base_uri = "cat-cat"
 	runbook_api_key = "cat-secret"

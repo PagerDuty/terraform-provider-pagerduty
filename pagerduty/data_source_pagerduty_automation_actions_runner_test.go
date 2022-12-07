@@ -58,6 +58,7 @@ func testAccDataSourcePagerDutyAutomationActionsRunnerConfig(name string) string
 	return fmt.Sprintf(`
 resource "pagerduty_automation_actions_runner" "test" {
   name = "%s"
+  description = "Runner created by TF"
   runner_type = "runbook"
   runbook_base_uri = "cat-cat"
   runbook_api_key = "secret"

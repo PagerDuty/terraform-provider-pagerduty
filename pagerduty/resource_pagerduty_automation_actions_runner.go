@@ -36,7 +36,6 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "Managed by Terraform",
 				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"runbook_base_uri": {
@@ -71,14 +70,29 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 }
 
 func buildAutomationActionsRunnerStruct(d *schema.ResourceData) (*pagerduty.AutomationActionsRunner, error) {
+
 	automationActionsRunner := pagerduty.AutomationActionsRunner{
-		Name:        d.Get("name").(string),
-		RunnerType:  d.Get("runner_type").(string),
-		Description: d.Get("description").(string),
+		Name:       d.Get("name").(string),
+		RunnerType: d.Get("runner_type").(string),
 	}
 
 	if automationActionsRunner.RunnerType != "runbook" {
 		return nil, errors.New("only runners of runner_type runbook can be created")
+	}
+
+	// The API does not allow new runners without a description, but legacy runners without a description exist
+	if attr, ok := d.GetOk("description"); ok {
+		val := attr.(string)
+		automationActionsRunner.Description = &val
+	} else {
+		return nil, errors.New("runner description must be specified when creating a runbook runner")
+	}
+
+	if attr, ok := d.GetOk("runbook_base_uri"); ok {
+		val := attr.(string)
+		automationActionsRunner.RunbookBaseUri = &val
+	} else {
+		return nil, errors.New("runbook_base_uri must be specified when creating a runbook runner")
 	}
 
 	if attr, ok := d.GetOk("runbook_base_uri"); ok {
@@ -148,8 +162,11 @@ func resourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta i
 			d.Set("name", automationActionsRunner.Name)
 			d.Set("type", automationActionsRunner.Type)
 			d.Set("runner_type", automationActionsRunner.RunnerType)
-			d.Set("description", automationActionsRunner.Description)
 			d.Set("creation_time", automationActionsRunner.CreationTime)
+
+			if automationActionsRunner.Description != nil {
+				d.Set("description", &automationActionsRunner.Description)
+			}
 
 			if automationActionsRunner.RunbookBaseUri != nil {
 				d.Set("runbook_base_uri", &automationActionsRunner.RunbookBaseUri)

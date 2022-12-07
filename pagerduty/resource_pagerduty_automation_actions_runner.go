@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"errors"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -44,9 +45,17 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"runbook_api_key": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
+				Type:      schema.TypeString,
+				Optional:  true,
+				Computed:  true,
+				ForceNew:  true, // Requires creation of new resource while support for update is not implemented
+				Sensitive: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if strings.Compare(old, new) < 0 {
+						return false
+					}
+					return true
+				},
 			},
 			"type": {
 				Type:     schema.TypeString,
@@ -94,8 +103,6 @@ func buildAutomationActionsRunnerStruct(d *schema.ResourceData) (*pagerduty.Auto
 	if attr, ok := d.GetOk("runbook_api_key"); ok {
 		val := attr.(string)
 		automationActionsRunner.RunbookApiKey = &val
-	} else {
-		return nil, errors.New("runbook_api_key must be specified when creating a runbook runner")
 	}
 
 	return &automationActionsRunner, nil

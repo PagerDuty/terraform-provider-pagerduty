@@ -1,7 +1,6 @@
 package pagerduty
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -49,13 +48,6 @@ func dataSourcePagerDutyAutomationActionsRunner() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
-			"teams": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
 		},
 	}
 }
@@ -81,8 +73,8 @@ func dataSourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta
 		d.Set("name", runner.Name)
 		d.Set("type", runner.Type)
 		d.Set("runner_type", runner.RunnerType)
-		d.Set("creation_time", runner.CreationTime)
 		d.Set("description", runner.Description)
+		d.Set("creation_time", runner.CreationTime)
 
 		if runner.RunbookBaseUri != nil {
 			d.Set("runbook_base_uri", &runner.RunbookBaseUri)
@@ -90,12 +82,6 @@ func dataSourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta
 
 		if runner.LastSeenTime != nil {
 			d.Set("last_seen", &runner.LastSeenTime)
-		}
-
-		if runner.Teams != nil {
-			if err := d.Set("teams", flattenShedTeams(runner.Teams)); err != nil {
-				return resource.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
-			}
 		}
 
 		return nil

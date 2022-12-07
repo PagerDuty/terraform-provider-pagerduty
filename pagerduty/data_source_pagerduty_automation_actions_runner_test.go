@@ -42,7 +42,7 @@ func testAccDataSourcePagerdutyAutomationActionsRunner(src, n string) resource.T
 			return fmt.Errorf("No Runner ID is set")
 		}
 
-		testAtts := []string{"id", "name", "type", "runner_type", "creation_time", "last_seen", "description", "runbook_base_uri", "teams"}
+		testAtts := []string{"id", "name", "type", "runner_type", "creation_time", "last_seen", "description", "runbook_base_uri"}
 
 		for _, att := range testAtts {
 			if a[att] != srcA[att] {

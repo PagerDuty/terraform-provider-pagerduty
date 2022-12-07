@@ -148,7 +148,6 @@ func resourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta i
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if automationActionsRunner != nil {
-			d.Set("id", automationActionsRunner.ID)
 			d.Set("name", automationActionsRunner.Name)
 			d.Set("type", automationActionsRunner.Type)
 			d.Set("runner_type", automationActionsRunner.RunnerType)

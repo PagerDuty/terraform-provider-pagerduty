@@ -19,28 +19,12 @@ func TestAccPagerDutyAutomationActionsRunner_import(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyAutomationActionsRunnerConfig(runnerName),
 			},
-
 			{
-				Config: testAccCheckPagerDutyAutomationActionsRunnerConfig2(runnerName),
-			},
-
-			{
-				ResourceName:      "pagerduty_automation_actions_runner.foo",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "pagerduty_automation_actions_runner.foo",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"runbook_api_key"},
 			},
 		},
 	})
-}
-
-func testAccCheckPagerDutyAutomationActionsRunnerConfig2(runnerName string) string {
-	return fmt.Sprintf(`
-resource "pagerduty_automation_actions_runner" "foo" {
-	name = "%s"
-	description = "Runner created by TF"
-	runner_type = "runbook"
-	runbook_base_uri = "cat-cat"
-    # runbook_api_key = "cat-secret"
-}
-`, runnerName)
 }

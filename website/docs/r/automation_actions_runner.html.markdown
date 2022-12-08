@@ -15,7 +15,7 @@ An Automation Actions [runner](https://developer.pagerduty.com/api-reference/d78
 ## Example Usage
 
 ```hcl
-# Assumes TF_VAR_RUNBOOK_API_KEY variable is defined in the environment
+# Assumes the TF_VAR_RUNBOOK_API_KEY variable is defined in the environment
 
 variable "RUNBOOK_API_KEY" {
   type = string

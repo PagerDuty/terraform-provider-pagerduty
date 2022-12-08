@@ -15,12 +15,19 @@ An Automation Actions [runner](https://developer.pagerduty.com/api-reference/d78
 ## Example Usage
 
 ```hcl
+# Assumes TF_VAR_RUNBOOK_API_KEY variable is defined in the environment
+
+variable "RUNBOOK_API_KEY" {
+  type = string
+  sensitive = true
+}
+
 resource "pagerduty_automation_actions_runner" "example" {
-	name = "Production runner"
-	description = "Runner created by the SRE team"
-	runner_type = "runbook"
-	runbook_base_uri = "prod.cat"
-	runbook_api_key = "ABC123456789XYZ"
+  name = "Runner created via TF"
+  description = "Description of the Runner created via TF"
+  runner_type = "runbook"
+  runbook_base_uri = "rdcat.stg"
+  runbook_api_key = var.RUNBOOK_API_KEY
 }
 ```
 
@@ -48,5 +55,16 @@ The following attributes are exported:
 Runners can be imported using the `id`, e.g.
 
 ```
-$ terraform import pagerduty_automation_actions_runner.main 01DBJLIGED17S1DQK123
+resource "pagerduty_automation_actions_runner" "example" {
+  name = "Runner created via TF"
+  description = "Description of the Runner created via TF"
+  runner_type = "runbook"
+  runbook_base_uri = "rdcat.stg"
+}
 ```
+
+```
+$ terraform import pagerduty_automation_actions_runner.example 01DER7CUUBF7TH4116K0M4WKPU
+```
+
+-> The imported resource `runbook_api_key` attribute has been omitted to avoid resource replacement after the import.

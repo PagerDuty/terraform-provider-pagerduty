@@ -52,6 +52,8 @@ The following attributes are exported:
 
 ## Import
 
+-> In the example below the `runbook_api_key` attribute has been omitted to avoid resource replacement after the import.
+
 Runners can be imported using the `id`, e.g.
 
 ```
@@ -62,9 +64,8 @@ resource "pagerduty_automation_actions_runner" "example" {
   runbook_base_uri = "rdcat.stg"
 }
 ```
-
 ```
 $ terraform import pagerduty_automation_actions_runner.example 01DER7CUUBF7TH4116K0M4WKPU
 ```
 
--> The imported resource `runbook_api_key` attribute has been omitted to avoid resource replacement after the import.
+

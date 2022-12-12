@@ -1,3 +1,8 @@
+## 2.6.5 (December 12, 2022)
+
+BUG FIXES:
+* `resource/pagerduty_user_contact_method`: Address: Unique contact method error not being captured ([#586](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/586))
+
 ## 2.6.4 (November 3, 2022)
 
 BUG FIXES:

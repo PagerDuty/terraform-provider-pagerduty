@@ -1,3 +1,8 @@
+## 2.7.0 (December 12, 2022)
+
+FEATURES:
+* `resource/pagerduty_automation_actions_runner`, `data_source/pagerduty_automation_actions_runner`: Add support for `pagerduty_automation_actions_runner` and `data.pagerduty_automation_actions_runner` ([#595](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/595))
+
 ## 2.6.5 (December 12, 2022)
 
 BUG FIXES:

@@ -59,6 +59,7 @@ type Client struct {
 	WebhookSubscriptions       *WebhookSubscriptionService
 	BusinessServiceSubscribers *BusinessServiceSubscriberService
 	OnCall                     *OnCallService
+	AutomationActionsRunner    *AutomationActionsRunnerService
 }
 
 // Response is a wrapper around http.Response
@@ -121,6 +122,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.WebhookSubscriptions = &WebhookSubscriptionService{c}
 	c.BusinessServiceSubscribers = &BusinessServiceSubscriberService{c}
 	c.OnCall = &OnCallService{c}
+	c.AutomationActionsRunner = &AutomationActionsRunnerService{c}
 
 	InitCache(c)
 	PopulateCache()

@@ -237,7 +237,6 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 	log.Printf("[INFO] Reading PagerDuty AutomationActionsAction %s", d.Id())
 
-	// TODO
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if automationActionsAction, _, err := client.AutomationActionsAction.Get(d.Id()); err != nil {
 			time.Sleep(2 * time.Second)
@@ -267,6 +266,10 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 			if automationActionsAction.RunnerType != nil {
 				d.Set("runner_type", &automationActionsAction.RunnerType)
+			}
+
+			if automationActionsAction.ActionClassification != nil {
+				d.Set("action_classification", &automationActionsAction.ActionClassification)
 			}
 		}
 		return nil

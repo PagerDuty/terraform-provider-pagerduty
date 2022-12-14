@@ -20,7 +20,7 @@ func testSweepAutomationActionsAction(region string) error {
 	return nil
 }
 
-func TestAccPagerDutyAutomationActionsAction_Basic(t *testing.T) {
+func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testing.T) {
 	actionName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
@@ -29,17 +29,65 @@ func TestAccPagerDutyAutomationActionsAction_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckPagerDutyAutomationActionsActionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyAutomationActionsActionConfig(actionName),
+				Config: testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfig(actionName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyAutomationActionsActionExists("pagerduty_automation_actions_action.foo"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "name", actionName),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_type", "process_automation"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "description", "PA Action created by TF"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "type", "action"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_classification", "diagnostic"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", "pa_job_id_123"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", "-arg 1"),
+					// Know defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", ""),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "id"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "creation_time"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
+	actionName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyAutomationActionsActionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAutomationActionsActionTypeScriptConfig(actionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAutomationActionsActionExists("pagerduty_automation_actions_action.foo"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "name", actionName),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_type", "script"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "description", "PA Action created by TF"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "type", "action"),
+					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "action_classification"),
+					// Know defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", "java --version"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", "/bin/bash"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "id"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "creation_time"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
+					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
+					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
 				),
 			},
 		},
@@ -82,14 +130,39 @@ func testAccCheckPagerDutyAutomationActionsActionExists(n string) resource.TestC
 	}
 }
 
-func testAccCheckPagerDutyAutomationActionsActionConfig(actionName string) string {
+func testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfig(actionName string) string {
 	return fmt.Sprintf(`
+resource "pagerduty_automation_actions_runner" "foo_runner" {
+	name = "%s runner"
+	description = "Runner created by TF"
+	runner_type = "runbook"
+	runbook_base_uri = "cat-cat"
+	runbook_api_key = "cat-secret"
+}
+
 resource "pagerduty_automation_actions_action" "foo" {
 	name = "%s"
 	description = "PA Action created by TF"
 	action_type = "process_automation"
+	action_classification = "diagnostic"
+	runner_id = pagerduty_automation_actions_runner.foo_runner.id
 	action_data_reference {
 		process_automation_job_id = "pa_job_id_123"
+		process_automation_job_arguments = "-arg 1"
+	  }
+}
+`, actionName, actionName)
+}
+
+func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfig(actionName string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_automation_actions_action" "foo" {
+	name = "%s"
+	description = "PA Action created by TF"
+	action_type = "script"
+	action_data_reference {
+		script = "java --version"
+		invocation_command = "/bin/bash"
 	  }
 }
 `, actionName)

@@ -76,6 +76,7 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Optional: true,
 			},
 			"action_classification": {
 				Type:     schema.TypeString,
@@ -89,10 +90,12 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 			"runner_type": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Optional: true,
 			},
 			"creation_time": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Optional: true,
 			},
 			"modify_time": {
 				Type:     schema.TypeString,
@@ -110,10 +113,6 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		ActionType: d.Get("action_type").(string),
 	}
 
-	if automationActionsAction.ActionType != "process_automation" {
-		return nil, errors.New("only actions of action_type process_automation can be created")
-	}
-
 	// The API does not allow new actions without a description, but legacy actions without a description exist
 	if attr, ok := d.GetOk("description"); ok {
 		val := attr.(string)
@@ -122,10 +121,40 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		return nil, errors.New("action description must be specified when creating an action")
 	}
 
+	if attr, ok := d.GetOk("runner_id"); ok {
+		val := attr.(string)
+		automationActionsAction.RunnerID = &val
+	}
+
 	if attr, ok := d.GetOk("action_data_reference"); ok {
 		automationActionsAction.ActionDataReference = expandActionDataReference(attr)
 	} else {
 		return nil, errors.New("action_data_reference must be specified when creating an action")
+	}
+
+	if attr, ok := d.GetOk("type"); ok {
+		val := attr.(string)
+		automationActionsAction.Type = &val
+	}
+
+	if attr, ok := d.GetOk("action_classification"); ok {
+		val := attr.(string)
+		automationActionsAction.ActionClassification = &val
+	}
+
+	if attr, ok := d.GetOk("runner_type"); ok {
+		val := attr.(string)
+		automationActionsAction.RunnerType = &val
+	}
+
+	if attr, ok := d.GetOk("creation_time"); ok {
+		val := attr.(string)
+		automationActionsAction.CreationTime = &val
+	}
+
+	if attr, ok := d.GetOk("modify_time"); ok {
+		val := attr.(string)
+		automationActionsAction.ModifyTime = &val
 	}
 
 	return &automationActionsAction, nil
@@ -133,10 +162,36 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 
 func expandActionDataReference(v interface{}) pagerduty.AutomationActionsActionDataReference {
 	attr_map := v.([]interface{})[0].(map[string]interface{})
-	process_automation_job_id := attr_map["process_automation_job_id"].(string)
-	adr := pagerduty.AutomationActionsActionDataReference{
-		ProcessAutomationJobId: &process_automation_job_id,
+	adr := pagerduty.AutomationActionsActionDataReference{}
+
+	if v, ok := attr_map["process_automation_job_id"]; ok {
+		v_str := v.(string)
+		if v_str != "" {
+			adr.ProcessAutomationJobId = &v_str
+		}
 	}
+
+	if v, ok := attr_map["process_automation_job_arguments"]; ok {
+		v_str := v.(string)
+		if v_str != "" {
+			adr.ProcessAutomationJobArguments = &v_str
+		}
+	}
+
+	if v, ok := attr_map["script"]; ok {
+		v_str := v.(string)
+		if v_str != "" {
+			adr.Script = &v_str
+		}
+	}
+
+	if v, ok := attr_map["invocation_command"]; ok {
+		v_str := v.(string)
+		if v_str != "" {
+			adr.InvocationCommand = &v_str
+		}
+	}
+
 	return adr
 }
 
@@ -182,6 +237,7 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 	log.Printf("[INFO] Reading PagerDuty AutomationActionsAction %s", d.Id())
 
+	// TODO
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if automationActionsAction, _, err := client.AutomationActionsAction.Get(d.Id()); err != nil {
 			time.Sleep(2 * time.Second)
@@ -199,6 +255,18 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 			f_adr := flattenActionDataReference(automationActionsAction.ActionDataReference)
 			if err := d.Set("action_data_reference", f_adr); err != nil {
 				return resource.NonRetryableError(err)
+			}
+
+			if automationActionsAction.ModifyTime != nil {
+				d.Set("modify_time", &automationActionsAction.ModifyTime)
+			}
+
+			if automationActionsAction.RunnerID != nil {
+				d.Set("runner_id", &automationActionsAction.RunnerID)
+			}
+
+			if automationActionsAction.RunnerType != nil {
+				d.Set("runner_type", &automationActionsAction.RunnerType)
 			}
 		}
 		return nil

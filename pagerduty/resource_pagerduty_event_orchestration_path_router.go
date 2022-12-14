@@ -1,10 +1,12 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -12,10 +14,10 @@ import (
 
 func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 	return &schema.Resource{
-		Read:   resourcePagerDutyEventOrchestrationPathRouterRead,
-		Create: resourcePagerDutyEventOrchestrationPathRouterCreate,
-		Update: resourcePagerDutyEventOrchestrationPathRouterUpdate,
-		Delete: resourcePagerDutyEventOrchestrationPathRouterDelete,
+		ReadContext:   resourcePagerDutyEventOrchestrationPathRouterRead,
+		CreateContext: resourcePagerDutyEventOrchestrationPathRouterCreate,
+		UpdateContext: resourcePagerDutyEventOrchestrationPathRouterUpdate,
+		DeleteContext: resourcePagerDutyEventOrchestrationPathRouterDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyEventOrchestrationPathRouterImport,
 		},
@@ -110,13 +112,15 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 	}
 }
 
-func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathRouterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", d.Id())
 
 		if routerPath, _, err := client.EventOrchestrationPaths.Get(d.Id(), "router"); err != nil {
@@ -136,56 +140,65 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(d *schema.ResourceData, m
 		return nil
 	})
 
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
+	}
+
+	return diags
 }
 
 // EventOrchestrationPath cannot be created, use update to add / edit / remove rules and sets
-func resourcePagerDutyEventOrchestrationPathRouterCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourcePagerDutyEventOrchestrationPathRouterUpdate(d, meta)
+func resourcePagerDutyEventOrchestrationPathRouterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx, d, meta)
 }
 
-func resourcePagerDutyEventOrchestrationPathRouterDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathRouterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	d.SetId("")
-	return nil
+	return diags
 }
 
-func resourcePagerDutyEventOrchestrationPathRouterUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	updatePath := buildRouterPathStructForUpdate(d)
+	routerPath := buildRouterPathStructForUpdate(d)
+	var warnings []*pagerduty.EventOrchestrationPathWarning
 
-	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", updatePath.Parent.ID)
+	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", routerPath.Parent.ID)
 
-	return performRouterPathUpdate(d, updatePath, client)
-}
-
-func performRouterPathUpdate(d *schema.ResourceData, routerPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		updatedPath, _, err := client.EventOrchestrationPaths.Update(routerPath.Parent.ID, "router", routerPath)
+		response, _, err := client.EventOrchestrationPaths.Update(routerPath.Parent.ID, "router", routerPath)
 		if err != nil {
 			return resource.RetryableError(err)
 		}
-		if updatedPath == nil {
+		if response == nil {
 			return resource.NonRetryableError(fmt.Errorf("No Event Orchestration Router found."))
 		}
 		d.SetId(routerPath.Parent.ID)
 		d.Set("event_orchestration", routerPath.Parent.ID)
+		warnings = response.Warnings
 
 		if routerPath.Sets != nil {
 			d.Set("set", flattenSets(routerPath.Sets))
 		}
-		if updatedPath.CatchAll != nil {
-			d.Set("catch_all", flattenCatchAll(updatedPath.CatchAll))
+		if response.OrchestrationPath.CatchAll != nil {
+			d.Set("catch_all", flattenCatchAll(response.OrchestrationPath.CatchAll))
 		}
 		return nil
 	})
+
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return nil
+
+	return convertEventOrchestrationPathWarningsToDiagnostics(warnings, diags)
 }
 
 func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {

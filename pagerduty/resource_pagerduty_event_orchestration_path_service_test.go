@@ -650,7 +650,6 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 			catch_all {
 				actions {
 					suspend = 360
-					suppress = true
 					priority = "P0IN2KX"
 					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
 					pagerduty_automation_action {

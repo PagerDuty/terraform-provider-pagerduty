@@ -187,3 +187,8 @@ func unique(s []string) []string {
 	}
 	return result
 }
+
+func resourcePagerDutyParseColonCompoundID(id string) (string, string) {
+	parts := strings.Split(id, ":")
+	return parts[0], parts[1]
+}

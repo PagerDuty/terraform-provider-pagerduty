@@ -59,5 +59,3 @@ Actions can be imported using the `id`, e.g.
 ```
 $ terraform import pagerduty_automation_actions_action.example 01DER7CUUBF7TH4116K0M4WKPU
 ```
-
-

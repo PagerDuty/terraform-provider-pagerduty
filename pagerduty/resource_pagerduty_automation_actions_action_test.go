@@ -41,7 +41,7 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", "pa_job_id_123"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", "-arg 1"),
-					// Know defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
+					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", ""),
 					resource.TestCheckResourceAttr(
@@ -74,7 +74,7 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "description", "PA Action created by TF"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "type", "action"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "action_classification"),
-					// Know defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
+					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", ""),
 					resource.TestCheckResourceAttr(

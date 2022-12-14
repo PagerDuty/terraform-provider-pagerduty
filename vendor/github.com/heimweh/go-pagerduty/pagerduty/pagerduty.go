@@ -60,6 +60,7 @@ type Client struct {
 	BusinessServiceSubscribers *BusinessServiceSubscriberService
 	OnCall                     *OnCallService
 	AutomationActionsRunner    *AutomationActionsRunnerService
+	AutomationActionsAction    *AutomationActionsActionService
 }
 
 // Response is a wrapper around http.Response
@@ -123,6 +124,7 @@ func NewClient(config *Config) (*Client, error) {
 	c.BusinessServiceSubscribers = &BusinessServiceSubscriberService{c}
 	c.OnCall = &OnCallService{c}
 	c.AutomationActionsRunner = &AutomationActionsRunnerService{c}
+	c.AutomationActionsAction = &AutomationActionsActionService{c}
 
 	InitCache(c)
 	PopulateCache()

@@ -13,7 +13,7 @@ An Automation Actions [action](https://developer.pagerduty.com/api-reference/d64
 ## Example Usage
 
 ```hcl
-resource "pagerduty_automation_actions_action" "example" {
+resource "pagerduty_automation_actions_action" "pa_action_example" {
   name = "PA Action created via TF"
   description = "Description of the PA Action created via TF"
   action_type = "process_automation"
@@ -21,6 +21,17 @@ resource "pagerduty_automation_actions_action" "example" {
     process_automation_job_id = "P123456"
   }
 }
+
+resource "pagerduty_automation_actions_action" "script_action_example" {
+  name = "Script Action created via TF"
+  description = "Description of the Script Action created via TF"
+  action_type = "script"
+  action_data_reference {
+    script = "print(\"Hello from a Python script!\")"
+    invocation_command = "/usr/local/bin/python3"
+  }
+}
+
 ```
 
 ## Argument Reference
@@ -38,8 +49,8 @@ Action Data (`action_data_reference`) supports the following:
 
   * `process_automation_job_id` - (Required for `process_automation` action_type) The ID of the Process Automation job to execute.
   * `process_automation_job_arguments` - (Optional) The arguments to pass to the Process Automation job execution.
-  * `script` - (Required for `script` action_type) Body of the script to be executed on the Runner.
-  * `process_automation_job_arguments` - (Optional) The command to executed a script with.
+  * `script` - (Required for `script` action_type) Body of the script to be executed on the Runner. Max length is 16777215 characters.
+  * `invocation_command` - (Optional) The command to execute the script with.
 
   
 ## Attributes Reference
@@ -50,7 +61,7 @@ The following attributes are exported:
 * `type` - The type of object. The value returned will be `action`.
 * `creation_time` - The time action was created. Represented as an ISO 8601 timestamp.
 * `runner_type` - (Optional) The type of the runner associated with the action.
-* `modify_time` - (Optional) The last time action has been seen. Represented as an ISO 8601 timestamp.
+* `modify_time` - (Optional) The last time action has been modified. Represented as an ISO 8601 timestamp.
 
 ## Import
 

@@ -95,6 +95,7 @@ func Provider() *schema.Provider {
 			"pagerduty_event_orchestration_unrouted": resourcePagerDutyEventOrchestrationPathUnrouted(),
 			"pagerduty_event_orchestration_service":  resourcePagerDutyEventOrchestrationPathService(),
 			"pagerduty_automation_actions_runner":    resourcePagerDutyAutomationActionsRunner(),
+			"pagerduty_automation_actions_action":    resourcePagerDutyAutomationActionsAction(),
 		},
 	}
 

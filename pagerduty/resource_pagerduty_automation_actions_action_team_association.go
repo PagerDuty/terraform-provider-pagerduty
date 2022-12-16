@@ -41,7 +41,7 @@ func resourcePagerDutyAutomationActionsActionTeamAssociationCreate(d *schema.Res
 	actionID := d.Get("action_id").(string)
 	teamID := d.Get("team_id").(string)
 
-	log.Printf("[INFO] Creating PagerDuty AutomationActionsActionTeamAssociation %s:%s", d.Get("actionID").(string), d.Get("team_id").(string))
+	log.Printf("[INFO] Creating PagerDuty AutomationActionsActionTeamAssociation %s:%s", d.Get("action_id").(string), d.Get("team_id").(string))
 
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		if teamRef, _, err := client.AutomationActionsAction.AssociateToTeam(actionID, teamID); err != nil {
@@ -73,7 +73,7 @@ func fetchPagerDutyAutomationActionsActionTeamAssociation(d *schema.ResourceData
 	actionID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
 	log.Printf("[DEBUG] Reading a2 action: %s from team: %s", actionID, teamID)
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
-		teamRef, _, err := client.AutomationActionsAction.GetAssociationToTeam(actionID, teamID)
+		resp, _, err := client.AutomationActionsAction.GetAssociationToTeam(actionID, teamID)
 		if err != nil {
 			errResp := errCallback(err, d)
 			if errResp != nil {
@@ -84,14 +84,14 @@ func fetchPagerDutyAutomationActionsActionTeamAssociation(d *schema.ResourceData
 			return nil
 		}
 
-		if teamRef.ID != teamID {
+		if resp.Team.ID != teamID {
 			log.Printf("[WARN] Removing %s since the user: %s is not a member of: %s", d.Id(), actionID, teamID)
 			d.SetId("")
 			return nil
 		}
 
 		d.Set("action_id", actionID)
-		d.Set("team_id", teamRef.ID)
+		d.Set("team_id", resp.Team.ID)
 
 		return nil
 	})

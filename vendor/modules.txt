@@ -122,7 +122,7 @@ github.com/hashicorp/terraform-registry-address
 github.com/hashicorp/terraform-svchost
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 github.com/hashicorp/yamux
-# github.com/heimweh/go-pagerduty v0.0.0-20221215133901-7c3850d0bcf4 => github.com/imjaroiswebdev/go-pagerduty v0.0.0-20221216173129-1dea6fd944c3
+# github.com/heimweh/go-pagerduty v0.0.0-20221219143240-8b7c456b23c6
 ## explicit
 github.com/heimweh/go-pagerduty/pagerduty
 # github.com/klauspost/compress v1.15.9
@@ -349,4 +349,3 @@ google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/timestamppb
-# github.com/heimweh/go-pagerduty => github.com/imjaroiswebdev/go-pagerduty v0.0.0-20221216173129-1dea6fd944c3

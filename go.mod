@@ -5,7 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.71.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
-	github.com/heimweh/go-pagerduty v0.0.0-20221215133901-7c3850d0bcf4
+	github.com/heimweh/go-pagerduty v0.0.0-20221219143240-8b7c456b23c6
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
 	go.mongodb.org/mongo-driver v1.10.2 // indirect
@@ -16,5 +16,3 @@ require (
 	google.golang.org/genproto v0.0.0-20201109203340-2640f1f9cdfb // indirect
 	google.golang.org/grpc v1.33.2 // indirect
 )
-
-replace github.com/heimweh/go-pagerduty => github.com/imjaroiswebdev/go-pagerduty v0.0.0-20221216173129-1dea6fd944c3

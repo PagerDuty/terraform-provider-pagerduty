@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -188,11 +189,6 @@ func resourcePagerDutySchedule() *schema.Resource {
 			},
 		},
 	}
-}
-
-var resScheduleDeleteHttp400Errors = map[string]string{
-	"must_dissociate_eps":        "Schedule can't be deleted if it's being used by escalation policies",
-	"must_resolve_eps_incidents": "Schedule can't be deleted if it's being used by an escalation policy snapshot with open incidents",
 }
 
 func buildScheduleStruct(d *schema.ResourceData) (*pagerduty.Schedule, error) {
@@ -380,24 +376,19 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	// 	log.Printf("[INFO] Dissociating Escalation Policies that use the Schedule: %s", scheduleId)
-	// 	// Dissociating Schedule from Escalation Policies before deleting the Schedule
-	// 	err = dissociateScheduleFromEPs(client, scheduleId, epsAssociatedToSchedule)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	incidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleId)
+	// An Schedule with open incidents related can't be remove till those
+	// incidents have been resolved.
+	linksToIncidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleId)
 	if err != nil {
 		return err
 	}
 
-	var linksToIncidentsOpen string
-	for _, incident := range incidentsOpen {
-		linksToIncidentsOpen = fmt.Sprintf("%s\nhttps://pdt-sandbox-jruiz.pagerduty.com/incidents/%s", linksToIncidentsOpen, incident)
-	}
-	if len(incidentsOpen) > 0 {
-		return fmt.Errorf("Before Removing Schedule %q You must first resolve the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, linksToIncidentsOpen)
+	if len(linksToIncidentsOpen) > 0 {
+		var urlLinksMessage string
+		for _, incident := range linksToIncidentsOpen {
+			urlLinksMessage = fmt.Sprintf("%s\n%s", urlLinksMessage, incident)
+		}
+		return fmt.Errorf("Before Removing Schedule %q You must first resolve the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, urlLinksMessage)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", scheduleId)
@@ -409,28 +400,15 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 			}
 
 			// Handling of specific http 400 errors from API call DELETE /schedules
-			e := err.(*pagerduty.Error)
-			errors := []string{}
-			for _, ei := range e.Errors.([]interface{}) {
-				errors = append(errors, ei.(string))
-			}
-			var workaroundErr error
-
-			switch errors[0] {
-			case resScheduleDeleteHttp400Errors["must_dissociate_eps"]:
-				log.Printf("[INFO] Dissociating Escalation Policies that use the Schedule: %s", scheduleId)
-				workaroundErr = dissociateScheduleFromEPs(client, scheduleId, epsAssociatedToSchedule)
-			// case resScheduleDeleteHttp400Errors["must_resolve_eps_incidents"]:
-			// 	workaroundErr = fmt.Errorf("Before Removing Schedule %q You first have to resolve incidents related with Escalation Policies using this Schedule", scheduleId)
-			default:
+			if e, ok := err.(*pagerduty.Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[Schedule can't be deleted if it's being used by escalation policies]") != 0 {
 				return resource.NonRetryableError(err)
 			}
 
+			log.Printf("[INFO] Dissociating Escalation Policies that use the Schedule: %s", scheduleId)
+			workaroundErr := dissociateScheduleFromEPs(client, scheduleId, epsAssociatedToSchedule)
 			if workaroundErr != nil {
-				err = fmt.Errorf("%w; %v", err, workaroundErr)
-				// return resource.NonRetryableError(err)
+				err = fmt.Errorf("%v; %w", err, workaroundErr)
 			}
-			log.Printf("[DEBUG] workaroundErr: %+v", workaroundErr)
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -624,7 +602,7 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, id string) ([]str
 		teams = append(teams, t.ID)
 	}
 
-	var incidents []string
+	var linksToIncidents []string
 	retryErr = resource.Retry(10*time.Second, func() *resource.RetryError {
 		resp, _, err := c.Incidents.List(&pagerduty.ListIncidentsOptions{
 			DateRange: "all",
@@ -636,12 +614,12 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, id string) ([]str
 			return resource.RetryableError(err)
 		}
 		for _, inc := range resp.Incidents {
-			incidents = append(incidents, inc.ID)
+			linksToIncidents = append(linksToIncidents, inc.HTMLURL)
 		}
 		return nil
 	})
 
-	return incidents, nil
+	return linksToIncidents, nil
 }
 
 func extractEPsAssociatedToSchedule(c *pagerduty.Client, id string) ([]string, error) {
@@ -667,12 +645,6 @@ func extractEPsAssociatedToSchedule(c *pagerduty.Client, id string) ([]string, e
 }
 
 func dissociateScheduleFromEPs(c *pagerduty.Client, scheduleID string, eps []string) error {
-	// errScheduleUsedByEPsWithOpenIncidents := validateScheduleHasOpenIncidents(c, scheduleID, eps)
-	var errScheduleUsedByEPsWithOpenIncidents interface{}
-	if errScheduleUsedByEPsWithOpenIncidents != nil {
-		return fmt.Errorf(resScheduleDeleteHttp400Errors["must_resolve_eps_incidents"])
-	}
-
 	for _, epID := range eps {
 		isEPFound := false
 		var ep *pagerduty.EscalationPolicy

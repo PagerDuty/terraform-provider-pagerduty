@@ -19,7 +19,7 @@ resource "pagerduty_team" "example" {
 }
 
 resource "pagerduty_automation_actions_action" "pa_action_example" {
-  name = "PA Action created via TF"
+  name        = "PA Action created via TF"
   description = "Description of the PA Action created via TF"
   action_type = "process_automation"
   action_data_reference {
@@ -29,7 +29,7 @@ resource "pagerduty_automation_actions_action" "pa_action_example" {
 
 resource "pagerduty_automation_actions_action_team_association" "foo" {
   action_id = pagerduty_automation_actions_action.pa_action_example.id
-  team_id = pagerduty_team.example.id
+  team_id   = pagerduty_team.example.id
 }
 
 ```

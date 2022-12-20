@@ -3,7 +3,6 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -51,7 +50,7 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 		return err
 	}
 
-	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
+	userID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
@@ -156,7 +155,7 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 		return err
 	}
 
-	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
+	userID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
 
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 
@@ -273,11 +272,6 @@ func associateEPsBackToTeam(c *pagerduty.Client, teamID string, eps []string) er
 		log.Printf("[DEBUG] EscalationPolicy %s added to team %s", ep, teamID)
 	}
 	return nil
-}
-
-func resourcePagerDutyTeamMembershipParseID(id string) (string, string) {
-	parts := strings.Split(id, ":")
-	return parts[0], parts[1]
 }
 
 func isTeamMember(user *pagerduty.User, teamID string) bool {

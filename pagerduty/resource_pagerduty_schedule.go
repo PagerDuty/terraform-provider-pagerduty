@@ -387,12 +387,17 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 	// 		return err
 	// 	}
 
-	incidentsOpened, err := listIncidentsOpenedRelatedToSchedule(client, scheduleId)
+	incidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleId)
 	if err != nil {
 		return err
 	}
-	if len(incidentsOpened) > 0 {
-		return fmt.Errorf("Before Removing Schedule %q You must first resolve the following incidents related with Escalation Policies using this Schedule... %+v", scheduleId, incidentsOpened)
+
+	var linksToIncidentsOpen string
+	for _, incident := range incidentsOpen {
+		linksToIncidentsOpen = fmt.Sprintf("%s\nhttps://pdt-sandbox-jruiz.pagerduty.com/incidents/%s", linksToIncidentsOpen, incident)
+	}
+	if len(incidentsOpen) > 0 {
+		return fmt.Errorf("Before Removing Schedule %q You must first resolve the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, linksToIncidentsOpen)
 	}
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", scheduleId)

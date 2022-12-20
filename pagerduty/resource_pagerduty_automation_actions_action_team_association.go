@@ -71,7 +71,6 @@ func fetchPagerDutyAutomationActionsActionTeamAssociation(d *schema.ResourceData
 	}
 
 	actionID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
-	log.Printf("[DEBUG] Reading a2 action: %s from team: %s", actionID, teamID)
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		resp, _, err := client.AutomationActionsAction.GetAssociationToTeam(actionID, teamID)
 		if err != nil {

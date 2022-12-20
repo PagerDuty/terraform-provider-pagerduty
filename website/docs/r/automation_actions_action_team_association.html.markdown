@@ -44,7 +44,7 @@ The following arguments are supported:
 ## Import
 
 Actions can be imported using the `id`, e.g.
-Action team association can be imported using the `action_id` and `team_id`, e.g.
+Action team association can be imported using the `action_id` and `team_id` separated by a colon, e.g.
 
 ```
 $ terraform import pagerduty_automation_actions_action_team_association.example 01DER7CUUBF7TH4116K0M4WKPU:PLB09Z

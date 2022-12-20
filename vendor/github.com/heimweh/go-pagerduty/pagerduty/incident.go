@@ -1,9 +1,6 @@
 package pagerduty
 
-import (
-	"fmt"
-	"log"
-)
+import "fmt"
 
 // IncidentService handles the communication with incident
 // related methods of the PagerDuty API.
@@ -115,27 +112,6 @@ func (s *IncidentService) List(o *ListIncidentsOptions) (*ListIncidentsResponse,
 	}
 
 	return v, resp, nil
-}
-
-// ListAll lists all result pages for incidents list.
-func (s *IncidentService) ListAll(o *ListIncidentsOptions) ([]*Incident, error) {
-	var incidents = make([]*Incident, 0, 25)
-	more := true
-	offset := 0
-
-	for more {
-		log.Printf("==== Getting incidents at offset %d", offset)
-		v := new(ListIncidentsResponse)
-		_, err := s.client.newRequestDo("GET", "/incidents", o, nil, &v)
-		if err != nil {
-			return incidents, err
-		}
-		incidents = append(incidents, v.Incidents...)
-		more = v.More
-		offset += v.Limit
-		o.Offset = offset
-	}
-	return incidents, nil
 }
 
 // ManageIncidents updates existing incidents.

@@ -23,6 +23,10 @@ func testSweepAutomationActionsAction(region string) error {
 func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testing.T) {
 	actionName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
+	nameUpdated := fmt.Sprintf("tf-update-%s", acctest.RandString(5))
+	descriptionUpdated := fmt.Sprintf("Description updated tf-%s", acctest.RandString(5))
+	actionClassificationUpdated := "remediation"
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -53,12 +57,41 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
 				),
 			},
+			{
+				Config: testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfigUpdated(actionName, nameUpdated, descriptionUpdated, actionClassificationUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAutomationActionsActionExists("pagerduty_automation_actions_action.foo"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "name", nameUpdated),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_type", "process_automation"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "description", descriptionUpdated),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "type", "action"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_classification", actionClassificationUpdated),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", "updated_pa_job_id_123"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
+					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", ""),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "id"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "creation_time"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
+				),
+			},
 		},
 	})
 }
 
 func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 	actionName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	nameUpdated := fmt.Sprintf("tf-update-%s", acctest.RandString(5))
+	descriptionUpdated := fmt.Sprintf("Description updated tf-%s", acctest.RandString(5))
+	actionClassificationUpdated := "remediation"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -85,6 +118,29 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", "/bin/bash"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "id"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "creation_time"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
+					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
+					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyAutomationActionsActionTypeScriptConfigUpdated(nameUpdated, descriptionUpdated, actionClassificationUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAutomationActionsActionExists("pagerduty_automation_actions_action.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "name", nameUpdated),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "description", descriptionUpdated),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_classification", actionClassificationUpdated),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", "echo 777"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", ""),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
@@ -154,6 +210,30 @@ resource "pagerduty_automation_actions_action" "foo" {
 `, actionName, actionName)
 }
 
+func testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfigUpdated(oldName, updatedName, updatedDescription, updatedActionClassification string) string {
+	return fmt.Sprintf(`
+
+	resource "pagerduty_automation_actions_runner" "foo_runner" {
+		name = "%s runner"
+		description = "Runner created by TF"
+		runner_type = "runbook"
+		runbook_base_uri = "cat-cat"
+		runbook_api_key = "cat-secret"
+	}
+
+resource "pagerduty_automation_actions_action" "foo" {
+	name = "%s"
+	description = "%s"
+	action_type = "process_automation"
+	action_classification = "%s"
+	runner_id = pagerduty_automation_actions_runner.foo_runner.id
+	action_data_reference {
+		process_automation_job_id = "updated_pa_job_id_123"
+	  }
+}
+`, oldName, updatedName, updatedDescription, updatedActionClassification)
+}
+
 func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfig(actionName string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_automation_actions_action" "foo" {
@@ -166,4 +246,18 @@ resource "pagerduty_automation_actions_action" "foo" {
 	  }
 }
 `, actionName)
+}
+
+func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfigUpdated(name, description, actionClassification string) string {
+	return fmt.Sprintf(`
+	resource "pagerduty_automation_actions_action" "foo" {
+		name = "%s"
+		description = "%s"
+		action_type = "script"
+		action_classification = "%s"
+		action_data_reference {
+			script = "echo 777"
+		  }
+	}
+`, name, description, actionClassification)
 }

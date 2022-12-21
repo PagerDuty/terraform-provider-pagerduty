@@ -604,7 +604,7 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, id string) ([]str
 
 	var linksToIncidents []string
 	retryErr = resource.Retry(10*time.Second, func() *resource.RetryError {
-		resp, _, err := c.Incidents.List(&pagerduty.ListIncidentsOptions{
+		incidents, err := c.Incidents.ListAll(&pagerduty.ListIncidentsOptions{
 			DateRange: "all",
 			Statuses:  []string{"triggered", "acknowledged"},
 			TeamIDs:   teams,
@@ -613,7 +613,7 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, id string) ([]str
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
-		for _, inc := range resp.Incidents {
+		for _, inc := range incidents {
 			linksToIncidents = append(linksToIncidents, inc.HTMLURL)
 		}
 		return nil

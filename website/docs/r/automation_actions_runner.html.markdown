@@ -35,8 +35,8 @@ resource "pagerduty_automation_actions_runner" "example" {
 
 The following arguments are supported:
 
-  * `name` - (Required) The name of the runner.
-  * `description` - (Required) The description of the runner.
+  * `name` - (Required) The name of the runner. Max length is 255 characters.
+  * `description` - (Required) The description of the runner. Max length is 1024 characters.
   * `runner_type` - (Required) The type of runner. The only allowed values is `runbook`. 
   * `runbook_base_uri` - (Required) The subdomain for your Runbook Automation Instance. 
   * `runbook_api_key` - (Required) The unique User API Token created in Runbook Automation. 

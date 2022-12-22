@@ -23,6 +23,9 @@ func testSweepAutomationActionsRunner(region string) error {
 func TestAccPagerDutyAutomationActionsRunner_Basic(t *testing.T) {
 	runnerName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
+	nameUpdated := fmt.Sprintf("%s-updated", runnerName)
+	descriptionUpdated := fmt.Sprintf("Description of %s-updated", runnerName)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -36,6 +39,19 @@ func TestAccPagerDutyAutomationActionsRunner_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "runner_type", "runbook"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "description", "Runner created by TF"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "runbook_base_uri", "cat-cat"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "type", "runner"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_runner.foo", "id"),
+					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_runner.foo", "creation_time"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyAutomationActionsRunnerUpdatedConfig(nameUpdated, descriptionUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAutomationActionsRunnerExists("pagerduty_automation_actions_runner.foo"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "name", nameUpdated),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "runner_type", "runbook"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "description", descriptionUpdated),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "runbook_base_uri", "cat-cat-updated"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_runner.foo", "type", "runner"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_runner.foo", "id"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_runner.foo", "creation_time"),
@@ -91,4 +107,16 @@ resource "pagerduty_automation_actions_runner" "foo" {
 	runbook_api_key = "cat-secret"
 }
 `, runnerName)
+}
+
+func testAccCheckPagerDutyAutomationActionsRunnerUpdatedConfig(nameUpdated, descriptionUpdated string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_automation_actions_runner" "foo" {
+	name = "%s"
+	description = "%s"
+	runner_type = "runbook"
+	runbook_base_uri = "cat-cat-updated"
+	runbook_api_key = "cat-secret-updated"
+}
+`, nameUpdated, descriptionUpdated)
 }

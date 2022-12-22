@@ -14,6 +14,7 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutyAutomationActionsRunnerCreate,
 		Read:   resourcePagerDutyAutomationActionsRunnerRead,
+		Update: resourcePagerDutyAutomationActionsRunnerUpdate,
 		Delete: resourcePagerDutyAutomationActionsRunnerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -22,7 +23,6 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"runner_type": {
 				Type:     schema.TypeString,
@@ -36,17 +36,14 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"runbook_base_uri": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"runbook_api_key": {
 				Type:      schema.TypeString,
 				Optional:  true,
-				ForceNew:  true, // Requires creation of new resource while support for update is not implemented
 				Sensitive: true,
 			},
 			"type": {
@@ -168,6 +165,26 @@ func resourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta i
 		}
 		return nil
 	})
+}
+
+func resourcePagerDutyAutomationActionsRunnerUpdate(d *schema.ResourceData, meta interface{}) error {
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
+	automationActionsRunner, err := buildAutomationActionsRunnerStruct(d)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[INFO] Updating PagerDuty AutomationActionsRunner %s", d.Id())
+
+	if _, _, err := client.AutomationActionsRunner.Update(d.Id(), automationActionsRunner); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func resourcePagerDutyAutomationActionsRunnerDelete(d *schema.ResourceData, meta interface{}) error {

@@ -1,3 +1,13 @@
+## 2.8.0 (December 23, 2022)
+
+FEATURES:
+* Support **Incident Workflows** via several new resources. ([#596](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/596))
+  - `resource/pagerduty_incident_workflow_trigger`
+  - `resource/pagerduty_incident_workflow`
+  - `data_source/pagerduty_incident_workflow`
+* `resource/pagerduty_automation_actions_action_team_association`: Add support for Automation Actions' Action association to a Team ([#600](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/600))
+* `resource/pagerduty_automation_actions_action`: Add support for pagerduty_automation_actions_action ([#599](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/599))
+
 ## 2.7.0 (December 12, 2022)
 
 FEATURES:

@@ -32,7 +32,7 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 			"action_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"script",
 					"process_automation",
 				}),
@@ -81,7 +81,7 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 			"action_classification": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"diagnostic",
 					"remediation",
 				}),

@@ -26,7 +26,7 @@ func resourcePagerDutyIncidentWorkflowTrigger() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"manual",
 					"conditional",
 				}),

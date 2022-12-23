@@ -134,7 +134,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 									"type": {
 										Type:     schema.TypeString,
 										Required: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"daily_restriction",
 											"weekly_restriction",
 										}),

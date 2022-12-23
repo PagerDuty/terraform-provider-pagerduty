@@ -34,7 +34,7 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "manager",
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"observer",
 					"responder",
 					"manager",

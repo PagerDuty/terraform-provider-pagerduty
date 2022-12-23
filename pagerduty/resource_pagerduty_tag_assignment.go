@@ -24,7 +24,7 @@ func resourcePagerDutyTagAssignment() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"users",
 					"teams",
 					"escalation_policies",

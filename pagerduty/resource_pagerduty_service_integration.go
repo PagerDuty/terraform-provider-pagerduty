@@ -49,7 +49,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				ForceNew:      true,
 				Computed:      true,
 				ConflictsWith: []string{"vendor"},
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"aws_cloudwatch_inbound_integration",
 					"cloudkick_inbound_integration",
 					"event_transformer_api_inbound_integration",
@@ -107,7 +107,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"action": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"resolve",
 								"trigger",
 							}),
@@ -137,7 +137,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 												"part": {
 													Type:     schema.TypeString,
 													Optional: true,
-													ValidateFunc: validateValueFunc([]string{
+													ValidateDiagFunc: validateValueDiagFunc([]string{
 														"body",
 														"from_addresses",
 														"subject",
@@ -156,7 +156,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 															"part": {
 																Type:     schema.TypeString,
 																Required: true,
-																ValidateFunc: validateValueFunc([]string{
+																ValidateDiagFunc: validateValueDiagFunc([]string{
 																	"body",
 																	"from_addresses",
 																	"subject",
@@ -165,7 +165,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 															"type": {
 																Type:     schema.TypeString,
 																Required: true,
-																ValidateFunc: validateValueFunc([]string{
+																ValidateDiagFunc: validateValueDiagFunc([]string{
 																	"contains",
 																	"exactly",
 																	"regex",
@@ -177,7 +177,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 												"type": {
 													Type:     schema.TypeString,
 													Required: true,
-													ValidateFunc: validateValueFunc([]string{
+													ValidateDiagFunc: validateValueDiagFunc([]string{
 														"contains",
 														"exactly",
 														"not",
@@ -190,7 +190,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 									"type": {
 										Type:     schema.TypeString,
 										Required: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"all",
 											"any",
 										}),
@@ -211,7 +211,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 									"part": {
 										Type:     schema.TypeString,
 										Required: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"body",
 											"subject",
 										}),
@@ -227,7 +227,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 									"type": {
 										Type:     schema.TypeString,
 										Required: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"between",
 											"entire",
 											"regex",
@@ -256,7 +256,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"subject_mode": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"always",
 								"match",
 								"no-match",
@@ -269,7 +269,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"body_mode": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"always",
 								"match",
 								"no-match",
@@ -282,7 +282,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"from_email_mode": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"always",
 								"match",
 								"no-match",

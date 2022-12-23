@@ -155,7 +155,7 @@ func resourcePagerDutyServiceEventRule() *schema.Resource {
 									"threshold_time_unit": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"minutes",
 											"seconds",
 											"hours",
@@ -176,7 +176,7 @@ func resourcePagerDutyServiceEventRule() *schema.Resource {
 									"value": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"info",
 											"error",
 											"warning",
@@ -218,7 +218,7 @@ func resourcePagerDutyServiceEventRule() *schema.Resource {
 									"value": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"trigger",
 											"resolve",
 										}),

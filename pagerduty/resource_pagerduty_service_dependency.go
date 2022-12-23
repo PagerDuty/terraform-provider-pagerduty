@@ -42,7 +42,7 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 										Type:     schema.TypeString,
 										Required: true,
 										ForceNew: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"business_service",
 											"service",
 										}),
@@ -64,7 +64,7 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 										Type:     schema.TypeString,
 										Required: true,
 										ForceNew: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"business_service",
 											"business_service_reference",
 											"service",

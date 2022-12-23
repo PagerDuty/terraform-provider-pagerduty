@@ -124,3 +124,16 @@ Run a specific subset of tests by name use the `TESTARGS="-run TestName"` option
 ```sh
 $ make testacc TESTARGS="-run TestAccPagerDutyTeam"
 ```
+
+Some tests require additional environment variables to be set to enable them due to account restrictions on certain
+features. Similarly to [`TF_ACC`](https://developer.hashicorp.com/terraform/plugin/sdkv2/testing/acceptance-tests#environment-variables),
+the value of the environment variable is not relevant.
+
+For example:
+```sh
+PAGERDUTY_ACC_INCIDENT_WORKFLOWS=1 make testacc TESTARGS="-run PagerDutyIncidentWorkflow"
+```
+
+| Variable Name                      | Feature Set        |
+|------------------------------------|--------------------|
+| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS` | Incident Workflows |

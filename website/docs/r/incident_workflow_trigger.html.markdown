@@ -16,23 +16,14 @@ An [Incident Workflow Trigger](https://support.pagerduty.com/docs/incident-workf
 
 ```hcl
 resource "pagerduty_incident_workflow" "my_first_workflow" {
-  name         = "My First Workflow"
-  description  = "Some description"
+  name         = "Example Incident Workflow"
+  description  = "This Incident Workflow is an example"
   step {
-    name           = "Example Step"
-    description    = "An example workflow step"
-    action         = "something"
+    name           = "Send Status Update"
+    action         = "pagerduty.com:incident-workflows:send-status-update:1"
     input {
-      name = "name"
-      value = "value"
-    }
-  }
-  step {
-    name          = "Another Step"
-    action        = "something_else"
-    input {
-      name  = "name"
-      value = "value"
+      name = "Message"
+      value = "Example status message sent on {{current_date}}"
     }
   }
 }

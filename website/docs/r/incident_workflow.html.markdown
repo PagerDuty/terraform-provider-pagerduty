@@ -16,22 +16,14 @@ An [Incident Workflow](https://support.pagerduty.com/docs/incident-workflows) is
 
 ```hcl
 resource "pagerduty_incident_workflow" "my_first_workflow" {
-  name         = "My First Workflow"
-  description  = "Some description"
+  name         = "Example Incident Workflow"
+  description  = "This Incident Workflow is an example"
   step {
-    name           = "Example Step"
-    action         = "something"
+    name           = "Send Status Update"
+    action         = "pagerduty.com:incident-workflows:send-status-update:1"
     input {
-      name = "name"
-      value = "value"
-    }
-  }
-  step {
-    name          = "Another Step"
-    action        = "something_else"
-    input {
-      name  = "name"
-      value = "value"
+      name = "Message"
+      value = "Example status message sent on {{current_date}}"
     }
   }
 }
@@ -48,7 +40,7 @@ The following arguments are supported:
 Each incident workflow step (`step`) supports the following:
 
 * `name` - (Required) The name of the workflow step.
-* `action` - (Required) The action id for the workflow step, including the version.
+* `action` - (Required) The action id for the workflow step, including the version. A list of actions available can be retrieved using the [PagerDuty API](https://developer.pagerduty.com/api-reference/aa192a25fac39-list-actions). 
 * `input` - (Optional) The list of inputs for the workflow action.
 
 Each incident workflow step input (`input`) supports the following:

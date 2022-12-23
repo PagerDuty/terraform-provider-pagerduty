@@ -33,13 +33,8 @@ type AutomationActionsRunnerPayload struct {
 func (s *AutomationActionsRunnerService) Create(runner *AutomationActionsRunner) (*AutomationActionsRunner, *Response, error) {
 	u := "/automation_actions/runners"
 	v := new(AutomationActionsRunnerPayload)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	resp, err := s.client.newRequestDoOptions("POST", u, nil, &AutomationActionsRunnerPayload{Runner: runner}, &v, o)
+	resp, err := s.client.newRequestDoOptions("POST", u, nil, &AutomationActionsRunnerPayload{Runner: runner}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -51,13 +46,8 @@ func (s *AutomationActionsRunnerService) Create(runner *AutomationActionsRunner)
 func (s *AutomationActionsRunnerService) Get(id string) (*AutomationActionsRunner, *Response, error) {
 	u := fmt.Sprintf("/automation_actions/runners/%s", id)
 	v := new(AutomationActionsRunnerPayload)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v, o)
+	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -68,11 +58,6 @@ func (s *AutomationActionsRunnerService) Get(id string) (*AutomationActionsRunne
 // Delete deletes an existing runner.
 func (s *AutomationActionsRunnerService) Delete(id string) (*Response, error) {
 	u := fmt.Sprintf("/automation_actions/runners/%s", id)
-	o := RequestOptions{
-		Type:  "header",
-		Label: "X-EARLY-ACCESS",
-		Value: "automation-actions-early-access",
-	}
 
-	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil, o)
+	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil)
 }

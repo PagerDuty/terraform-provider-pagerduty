@@ -54,3 +54,7 @@ type RulesetReference resourceReference
 
 // SubscriberReference represents a reference to a subscriber schema
 type SubscriberReference resourceReference
+
+// IncidentAttributeReference represents a reference to a Incident
+// Attribute schema
+type IncidentAttributeReference resourceReference

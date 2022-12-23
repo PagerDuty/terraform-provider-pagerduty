@@ -62,6 +62,7 @@ func Provider() *schema.Provider {
 			"pagerduty_tag":                       dataSourcePagerDutyTag(),
 			"pagerduty_event_orchestration":       dataSourcePagerDutyEventOrchestration(),
 			"pagerduty_automation_actions_runner": dataSourcePagerDutyAutomationActionsRunner(),
+			"pagerduty_incident_workflow":         dataSourcePagerDutyIncidentWorkflow(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -97,6 +98,8 @@ func Provider() *schema.Provider {
 			"pagerduty_automation_actions_runner":                  resourcePagerDutyAutomationActionsRunner(),
 			"pagerduty_automation_actions_action":                  resourcePagerDutyAutomationActionsAction(),
 			"pagerduty_automation_actions_action_team_association": resourcePagerDutyAutomationActionsActionTeamAssociation(),
+			"pagerduty_incident_workflow":                          resourcePagerDutyIncidentWorkflow(),
+			"pagerduty_incident_workflow_trigger":                  resourcePagerDutyIncidentWorkflowTrigger(),
 		},
 	}
 

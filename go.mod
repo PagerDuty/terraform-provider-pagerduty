@@ -4,9 +4,8 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.71.0 // indirect
-	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
-	github.com/heimweh/go-pagerduty v0.0.0-20221222173841-3d20d6941bb0
+	github.com/heimweh/go-pagerduty v0.0.0-20221222221341-c1c27ca3744a
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
 	go.mongodb.org/mongo-driver v1.10.2 // indirect

@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -62,6 +63,8 @@ type Client struct {
 	AutomationActionsRunner    *AutomationActionsRunnerService
 	AutomationActionsAction    *AutomationActionsActionService
 	Incidents                  *IncidentService
+	IncidentWorkflows          *IncidentWorkflowService
+	IncidentWorkflowTriggers   *IncidentWorkflowTriggerService
 }
 
 // Response is a wrapper around http.Response
@@ -127,6 +130,8 @@ func NewClient(config *Config) (*Client, error) {
 	c.AutomationActionsRunner = &AutomationActionsRunnerService{c}
 	c.AutomationActionsAction = &AutomationActionsActionService{c}
 	c.Incidents = &IncidentService{c}
+	c.IncidentWorkflows = &IncidentWorkflowService{c}
+	c.IncidentWorkflowTriggers = &IncidentWorkflowTriggerService{c}
 
 	InitCache(c)
 	PopulateCache()
@@ -135,6 +140,10 @@ func NewClient(config *Config) (*Client, error) {
 }
 
 func (c *Client) newRequest(method, url string, body interface{}, options ...RequestOptions) (*http.Request, error) {
+	return c.newRequestContext(context.Background(), method, url, body, options...)
+}
+
+func (c *Client) newRequestContext(ctx context.Context, method, url string, body interface{}, options ...RequestOptions) (*http.Request, error) {
 	var buf io.ReadWriter
 	if body != nil {
 		buf = new(bytes.Buffer)
@@ -150,7 +159,7 @@ func (c *Client) newRequest(method, url string, body interface{}, options ...Req
 
 	u := c.baseURL.String() + url
 
-	req, err := http.NewRequest(method, u, buf)
+	req, err := http.NewRequestWithContext(ctx, method, u, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -173,6 +182,10 @@ func (c *Client) newRequest(method, url string, body interface{}, options ...Req
 }
 
 func (c *Client) newRequestDo(method, url string, qryOptions, body, v interface{}) (*Response, error) {
+	return c.newRequestDoContext(context.Background(), method, url, qryOptions, body, v)
+}
+
+func (c *Client) newRequestDoContext(ctx context.Context, method, url string, qryOptions, body, v interface{}) (*Response, error) {
 	if qryOptions != nil {
 		values, err := query.Values(qryOptions)
 		if err != nil {
@@ -183,7 +196,7 @@ func (c *Client) newRequestDo(method, url string, qryOptions, body, v interface{
 			url = fmt.Sprintf("%s?%s", url, v)
 		}
 	}
-	req, err := c.newRequest(method, url, body)
+	req, err := c.newRequestContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -191,6 +204,10 @@ func (c *Client) newRequestDo(method, url string, qryOptions, body, v interface{
 }
 
 func (c *Client) newRequestDoOptions(method, url string, qryOptions, body, v interface{}, reqOptions ...RequestOptions) (*Response, error) {
+	return c.newRequestDoOptionsContext(context.Background(), method, url, qryOptions, body, v, reqOptions...)
+}
+
+func (c *Client) newRequestDoOptionsContext(ctx context.Context, method, url string, qryOptions, body, v interface{}, reqOptions ...RequestOptions) (*Response, error) {
 	if qryOptions != nil {
 		values, err := query.Values(qryOptions)
 		if err != nil {
@@ -201,7 +218,7 @@ func (c *Client) newRequestDoOptions(method, url string, qryOptions, body, v int
 			url = fmt.Sprintf("%s?%s", url, v)
 		}
 	}
-	req, err := c.newRequest(method, url, body, reqOptions...)
+	req, err := c.newRequestContext(ctx, method, url, body, reqOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +268,55 @@ type ListResp struct {
 // a specific slice. The responseHandler is responsible for closing the response.
 type responseHandler func(response *Response) (ListResp, *Response, error)
 
+// CursorListResp represents a cursor-paginated list response from the PagerDuty API
+type CursorListResp struct {
+	NextCursor string
+	Limit      int
+}
+
+// cursorResponseHandler is capable of parsing a response. At a minimum it must
+// extract the page information for the current page. It can also execute
+// additional necessary handling; for example, if a closure, it has access
+// to the scope in which it was defined, and can be used to append data to
+// a specific slice. The responseHandler is responsible for closing the response.
+type cursorResponseHandler func(response *Response) (CursorListResp, *Response, error)
+
+// offsetQueryOptionsGen enables updating the offset across multiple
+// pages of a list response while retaining query parameters other than the
+// offset. For list-style functions where the underlying method supports
+// other query parameters, this interface should be implemented to update
+// the offset when fetching subsequent pages of results.
+type offsetQueryOptionsGen interface {
+	currentOffset() int
+	changeOffset(int)
+	buildStruct() interface{}
+}
+
+type simpleOffsetQueryOptionsGen struct {
+	offset int `url:"offset,omitempty"`
+}
+
+func (o *simpleOffsetQueryOptionsGen) currentOffset() int {
+	return o.offset
+}
+
+func (o *simpleOffsetQueryOptionsGen) changeOffset(i int) {
+	o.offset = i
+}
+
+func (o *simpleOffsetQueryOptionsGen) buildStruct() interface{} {
+	return o
+}
+
 func (c *Client) newRequestPagedGetDo(basePath string, handler responseHandler, reqOptions ...RequestOptions) error {
+	return c.newRequestPagedGetQueryDo(basePath, handler, &simpleOffsetQueryOptionsGen{}, reqOptions...)
+}
+
+func (c *Client) newRequestPagedGetQueryDo(basePath string, handler responseHandler, qryOptions offsetQueryOptionsGen, reqOptions ...RequestOptions) error {
+	return c.newRequestPagedGetQueryDoContext(context.Background(), basePath, handler, qryOptions, reqOptions...)
+}
+
+func (c *Client) newRequestPagedGetQueryDoContext(ctx context.Context, basePath string, handler responseHandler, qryOptions offsetQueryOptionsGen, reqOptions ...RequestOptions) error {
 	// Indicates whether there are still additional pages associated with request.
 	var stillMore bool
 
@@ -259,8 +324,9 @@ func (c *Client) newRequestPagedGetDo(basePath string, handler responseHandler, 
 	var nextOffset int
 
 	// While there are more pages, keep adjusting the offset to get all results.
-	for stillMore, nextOffset = true, 0; stillMore; {
-		response, err := c.newRequestDoOptions("GET", fmt.Sprintf("%s?offset=%d", basePath, nextOffset), nil, nil, nil, reqOptions...)
+	for stillMore, nextOffset = true, qryOptions.currentOffset(); stillMore; {
+		qryOptions.changeOffset(nextOffset)
+		response, err := c.newRequestDoOptionsContext(ctx, "GET", basePath, qryOptions.buildStruct(), nil, nil, reqOptions...)
 		if err != nil {
 			return err
 		}
@@ -274,6 +340,50 @@ func (c *Client) newRequestPagedGetDo(basePath string, handler responseHandler, 
 		// Bump the offset as necessary and set whether more results exist.
 		nextOffset = pageInfo.Offset + pageInfo.Limit
 		stillMore = pageInfo.More
+	}
+
+	return nil
+}
+
+// cursorQueryOptionsGen enables updating the cursor across multiple
+// pages of a list response while retaining query parameters other than the
+// cursor. For list-style functions where the underlying method supports
+// other query parameters, this interface should be implemented to update
+// the cursor when fetching subsequent pages of results.
+type cursorQueryOptionsGen interface {
+	currentCursor() string
+	changeCursor(string)
+	buildStruct() interface{}
+}
+
+func (c *Client) newRequestCursorPagedGetQueryDo(basePath string, handler cursorResponseHandler, qryOptions cursorQueryOptionsGen, reqOptions ...RequestOptions) error {
+	return c.newRequestCursorPagedGetQueryDoContext(context.Background(), basePath, handler, qryOptions, reqOptions...)
+}
+
+func (c *Client) newRequestCursorPagedGetQueryDoContext(ctx context.Context, basePath string, handler cursorResponseHandler, qryOptions cursorQueryOptionsGen, reqOptions ...RequestOptions) error {
+	// Indicates whether there are still additional pages associated with request.
+	var stillMore bool
+
+	// Cursor to set for the next page request.
+	var nextCursor string
+
+	// While there are more pages, keep adjusting the offset to get all results.
+	for stillMore, nextCursor = true, qryOptions.currentCursor(); stillMore; {
+		qryOptions.changeCursor(nextCursor)
+		response, err := c.newRequestDoOptionsContext(ctx, "GET", basePath, qryOptions.buildStruct(), nil, nil, reqOptions...)
+		if err != nil {
+			return err
+		}
+
+		// Call handler to extract page information and execute additional necessary handling.
+		pageInfo, _, err := handler(response)
+		if err != nil {
+			return err
+		}
+
+		// Bump the offset as necessary and set whether more results exist.
+		nextCursor = pageInfo.NextCursor
+		stillMore = nextCursor != ""
 	}
 
 	return nil

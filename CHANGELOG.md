@@ -1,3 +1,8 @@
+## 2.8.1 (December 23, 2022)
+
+IMPROVEMENTS:
+* `resource/pagerduty_schedule`: Address: Schedules can't be deleted when they have open incidents ([#602](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/602))
+
 ## 2.8.0 (December 23, 2022)
 
 FEATURES:

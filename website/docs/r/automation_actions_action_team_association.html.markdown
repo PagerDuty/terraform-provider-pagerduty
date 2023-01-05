@@ -3,7 +3,7 @@ layout: "pagerduty"
 page_title: "PagerDuty: pagerduty_automation_actions_action_team_association"
 sidebar_current: "docs-pagerduty-resource-automation-actions-action"
 description: |-
-  Creates and manages an Automation Actions action assciation with a Team in PagerDuty.
+  Creates and manages an Automation Actions action association with a Team in PagerDuty.
 ---
 
 # pagerduty\_automation\_actions\_action_team_association
@@ -43,7 +43,6 @@ The following arguments are supported:
 
 ## Import
 
-Actions can be imported using the `id`, e.g.
 Action team association can be imported using the `action_id` and `team_id` separated by a colon, e.g.
 
 ```

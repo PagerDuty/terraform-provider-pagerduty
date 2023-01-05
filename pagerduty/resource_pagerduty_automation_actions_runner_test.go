@@ -109,7 +109,7 @@ resource "pagerduty_automation_actions_runner" "foo" {
 `, runnerName)
 }
 
-func testAccCheckPagerDutyAutomationActionsRunnerUpdatedConfig(nameUpdated, descriptionUpdated string) string {
+func testAccCheckPagerDutyAutomationActionsRunnerUpdatedConfig(runnerName, runnerDescription string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_automation_actions_runner" "foo" {
 	name = "%s"
@@ -118,5 +118,5 @@ resource "pagerduty_automation_actions_runner" "foo" {
 	runbook_base_uri = "cat-cat-updated"
 	runbook_api_key = "cat-secret-updated"
 }
-`, nameUpdated, descriptionUpdated)
+`, runnerName, runnerDescription)
 }

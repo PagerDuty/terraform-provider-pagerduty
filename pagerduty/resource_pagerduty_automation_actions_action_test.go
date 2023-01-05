@@ -210,16 +210,16 @@ resource "pagerduty_automation_actions_action" "foo" {
 `, actionName, actionName)
 }
 
-func testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfigUpdated(oldName, updatedName, updatedDescription, updatedActionClassification string) string {
+func testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfigUpdated(previousActionName, actionName, actionDescription, actionClassification string) string {
 	return fmt.Sprintf(`
 
-	resource "pagerduty_automation_actions_runner" "foo_runner" {
-		name = "%s runner"
-		description = "Runner created by TF"
-		runner_type = "runbook"
-		runbook_base_uri = "cat-cat"
-		runbook_api_key = "cat-secret"
-	}
+resource "pagerduty_automation_actions_runner" "foo_runner" {
+	name = "%s runner"
+	description = "Runner created by TF"
+	runner_type = "runbook"
+	runbook_base_uri = "cat-cat"
+	runbook_api_key = "cat-secret"
+}
 
 resource "pagerduty_automation_actions_action" "foo" {
 	name = "%s"
@@ -231,7 +231,7 @@ resource "pagerduty_automation_actions_action" "foo" {
 		process_automation_job_id = "updated_pa_job_id_123"
 	  }
 }
-`, oldName, updatedName, updatedDescription, updatedActionClassification)
+`, previousActionName, actionName, actionDescription, actionClassification)
 }
 
 func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfig(actionName string) string {
@@ -248,7 +248,7 @@ resource "pagerduty_automation_actions_action" "foo" {
 `, actionName)
 }
 
-func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfigUpdated(name, description, actionClassification string) string {
+func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfigUpdated(actionName, actionDescription, actionClassification string) string {
 	return fmt.Sprintf(`
 	resource "pagerduty_automation_actions_action" "foo" {
 		name = "%s"
@@ -259,5 +259,5 @@ func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfigUpdated(name, d
 			script = "echo 777"
 		  }
 	}
-`, name, description, actionClassification)
+`, actionName, actionDescription, actionClassification)
 }

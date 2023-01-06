@@ -3,7 +3,7 @@ layout: "pagerduty"
 page_title: "PagerDuty: pagerduty_automation_actions_action_service_association"
 sidebar_current: "docs-pagerduty-resource-automation-actions-action"
 description: |-
-  Creates and manages an Automation Actions action assciation with a Service in PagerDuty.
+  Creates and manages an Automation Actions action association with a Service in PagerDuty.
 ---
 
 # pagerduty\_automation\_actions\_action_service_association
@@ -70,7 +70,6 @@ The following arguments are supported:
 
 ## Import
 
-Actions can be imported using the `id`, e.g.
 Action service association can be imported using the `action_id` and `service_id` separated by a colon, e.g.
 
 ```

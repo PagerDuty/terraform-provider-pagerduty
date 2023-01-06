@@ -110,7 +110,7 @@ func resourcePagerDutyAutomationActionsActionServiceAssociationDelete(d *schema.
 	log.Printf("[INFO] Deleting PagerDuty AutomationActionsActionServiceAssociation %s", d.Id())
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
-		if _, err := client.AutomationActionsAction.DissociateToService(actionID, serviceID); err != nil {
+		if _, err := client.AutomationActionsAction.DissociateFromService(actionID, serviceID); err != nil {
 			return resource.RetryableError(err)
 		}
 		return nil

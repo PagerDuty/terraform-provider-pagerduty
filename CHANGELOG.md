@@ -1,3 +1,15 @@
+## 2.9.0 (January 9, 2023)
+
+FEATURES:
+
+* `data/pagerduty_automation_actions_action`: Add support for data.pagerduty_automation_actions_action ([#601](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/601))
+* `resource/pagerduty_automation_actions_runner_team_association`: Add support for Automation Actions' Runner association with a Team ([#607](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/607))
+* `resource/pagerduty_automation_actions_action_service_association`: Add support for Automation Actions' Action association to a Service ([#608](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/608))
+
+
+IMPROVEMENTS:
+* `resource/pagerduty_automation_actions_action`, `resource/pagerduty_automation_actions_runner`: Add support for the update operation on pagerduty_automation_actions_action and pagerduty_automation_actions_runner ([#603](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/603))
+
 ## 2.8.1 (December 23, 2022)
 
 IMPROVEMENTS:

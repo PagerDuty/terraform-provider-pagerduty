@@ -33,6 +33,10 @@ func resourcePagerDutyIncidentWorkflow() *schema.Resource {
 				Optional: true,
 				Default:  "Managed by Terraform",
 			},
+			"team": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"step": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -308,6 +312,9 @@ func flattenIncidentWorkflow(d *schema.ResourceData, iw *pagerduty.IncidentWorkf
 	if iw.Description != nil {
 		d.Set("description", *(iw.Description))
 	}
+	if iw.Team != nil {
+		d.Set("team", iw.Team.ID)
+	}
 
 	if includeSteps {
 		steps := flattenIncidentWorkflowSteps(iw, nonGeneratedInputNames)
@@ -369,6 +376,11 @@ func buildIncidentWorkflowStruct(d *schema.ResourceData) (*pagerduty.IncidentWor
 	if desc, ok := d.GetOk("description"); ok {
 		str := desc.(string)
 		iw.Description = &str
+	}
+	if team, ok := d.GetOk("team"); ok {
+		iw.Team = &pagerduty.TeamReference{
+			ID: team.(string),
+		}
 	}
 
 	if steps, ok := d.GetOk("step"); ok {

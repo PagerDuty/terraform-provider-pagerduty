@@ -91,6 +91,43 @@ func TestAccPagerDutyIncidentWorkflow_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyIncidentWorkflow_Team(t *testing.T) {
+	workflowName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowConfigWithTeam(workflowName, teamName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowExists("pagerduty_incident_workflow.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow.test", "name", workflowName),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "description", "Managed by Terraform"),
+					resource.TestCheckResourceAttrSet("pagerduty_incident_workflow.test", "team"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyIncidentWorkflowConfigWithTeam(name, team string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "pagerduty_incident_workflow" "test" {
+  name = "%s"
+  team = pagerduty_team.foo.id
+}
+`, testAccCheckPagerDutyTeamConfig(team), name)
+}
+
 func testAccCheckPagerDutyIncidentWorkflowConfig(name string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_incident_workflow" "test" {

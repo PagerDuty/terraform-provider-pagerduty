@@ -35,6 +35,7 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the workflow.
 * `description` - (Optional) The description of the workflow.
+* `team` - (Optional) A team ID. If specified then workflow edit permissions will be scoped to members of this team.
 * `step` - (Optional) The steps in the workflow.
 
 Each incident workflow step (`step`) supports the following:

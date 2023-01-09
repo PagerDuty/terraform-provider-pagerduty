@@ -224,8 +224,8 @@ github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734/go.mod
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d h1:kJCB4vdITiW1eC1vq2e6IsrXKrZit1bv/TDYFGMp4BQ=
 github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
-github.com/heimweh/go-pagerduty v0.0.0-20230106163906-1866a667c56b h1:lapOAMT0BgxVCtW7SzPNnH2Q1qlPeO/+ue+zXbahpMg=
-github.com/heimweh/go-pagerduty v0.0.0-20230106163906-1866a667c56b/go.mod h1:t9vftsO1IjYHGdgJXeemZtomCWnxi2SRgu0PRcRb2oY=
+github.com/heimweh/go-pagerduty v0.0.0-20230109193609-65eb8c4b0164 h1:awa7jI+gTGZ1vxoQVZPlf6grkP2L2uBtFPtYiwDJevM=
+github.com/heimweh/go-pagerduty v0.0.0-20230109193609-65eb8c4b0164/go.mod h1:t9vftsO1IjYHGdgJXeemZtomCWnxi2SRgu0PRcRb2oY=
 github.com/huandu/xstrings v1.3.2/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=

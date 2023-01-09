@@ -52,7 +52,7 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "create_incidents",
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"create_alerts_and_incidents",
 					"create_incidents",
 				}),
@@ -61,7 +61,7 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"time",
 					"intelligent",
 					"rules",
@@ -86,7 +86,7 @@ func resourcePagerDutyService() *schema.Resource {
 						"type": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"time",
 								"intelligent",
 								"content_based",
@@ -112,7 +112,7 @@ func resourcePagerDutyService() *schema.Resource {
 									"aggregate": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"all",
 											"any",
 										}),

@@ -45,7 +45,7 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"email_contact_method",
 					"phone_contact_method",
 					"push_notification_contact_method",

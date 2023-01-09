@@ -35,7 +35,7 @@ func resourcePagerDutySlackConnection() *schema.Resource {
 			"source_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"service_reference",
 					"team_reference",
 				}),
@@ -56,7 +56,7 @@ func resourcePagerDutySlackConnection() *schema.Resource {
 			"notification_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"responder",
 					"stakeholder",
 				}),
@@ -83,7 +83,7 @@ func resourcePagerDutySlackConnection() *schema.Resource {
 						"urgency": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"high",
 								"low",
 							}),

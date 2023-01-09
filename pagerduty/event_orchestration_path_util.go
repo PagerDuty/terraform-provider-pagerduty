@@ -77,8 +77,8 @@ func invalidExtractionRegexNilSourceConfig() string {
 		}`
 }
 
-func validateEventOrchestrationPathSeverity() schema.SchemaValidateFunc {
-	return validateValueFunc([]string{
+func validateEventOrchestrationPathSeverity() schema.SchemaValidateDiagFunc {
+	return validateValueDiagFunc([]string{
 		"info",
 		"error",
 		"warning",
@@ -86,8 +86,8 @@ func validateEventOrchestrationPathSeverity() schema.SchemaValidateFunc {
 	})
 }
 
-func validateEventOrchestrationPathEventAction() schema.SchemaValidateFunc {
-	return validateValueFunc([]string{
+func validateEventOrchestrationPathEventAction() schema.SchemaValidateDiagFunc {
+	return validateValueDiagFunc([]string{
 		"trigger",
 		"resolve",
 	})

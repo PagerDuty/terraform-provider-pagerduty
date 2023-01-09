@@ -45,7 +45,7 @@ func resourcePagerDutyBusinessService() *schema.Resource {
 				Optional:   true,
 				Default:    "business_service",
 				Deprecated: "This will change to a computed resource in the next major release.",
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"business_service",
 				}),
 			},

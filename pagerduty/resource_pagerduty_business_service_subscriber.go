@@ -29,7 +29,7 @@ func resourcePagerDutyBusinessServiceSubscriber() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"team",
 					"user",
 				}),

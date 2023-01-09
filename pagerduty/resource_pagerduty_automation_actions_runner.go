@@ -27,7 +27,7 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 			"runner_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"sidecar",
 					"runbook",
 				}),

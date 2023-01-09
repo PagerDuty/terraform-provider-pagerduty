@@ -36,7 +36,7 @@ func resourcePagerDutyUserNotificationRule() *schema.Resource {
 			"urgency": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"high",
 					"low",
 				}),

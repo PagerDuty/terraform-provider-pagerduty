@@ -72,7 +72,7 @@ resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
 		Steps: []resource.TestStep{
 			{
 				Config:      config,
-				ExpectError: regexp.MustCompile(`"dummy" is an invalid value for argument type. Must be one of \[]string{"manual", "conditional"}`),
+				ExpectError: regexp.MustCompile(`"dummy" is an invalid value. Must be one of \[]string{"manual", "conditional"}`),
 			},
 		},
 	})

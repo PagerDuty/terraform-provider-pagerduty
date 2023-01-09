@@ -38,6 +38,10 @@ type AutomationActionsActionTeamAssociationPayload struct {
 	Team *TeamReference `json:"team,omitempty"`
 }
 
+type AutomationActionsActionServiceAssociationPayload struct {
+	Service *ServiceReference `json:"service,omitempty"`
+}
+
 var automationActionsActionBaseUrl = "/automation_actions/actions"
 
 // Create creates a new action
@@ -114,6 +118,42 @@ func (s *AutomationActionsActionService) DissociateToTeam(actionID, teamID strin
 func (s *AutomationActionsActionService) GetAssociationToTeam(actionID, teamID string) (*AutomationActionsActionTeamAssociationPayload, *Response, error) {
 	u := fmt.Sprintf("%s/%s/teams/%s", automationActionsActionBaseUrl, actionID, teamID)
 	v := new(AutomationActionsActionTeamAssociationPayload)
+
+	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
+// Associate an Automation Action with a service
+func (s *AutomationActionsActionService) AssociateToService(actionID, serviceID string) (*AutomationActionsActionServiceAssociationPayload, *Response, error) {
+	u := fmt.Sprintf("%s/%s/services", automationActionsActionBaseUrl, actionID)
+	v := new(AutomationActionsActionServiceAssociationPayload)
+	p := &AutomationActionsActionServiceAssociationPayload{
+		Service: &ServiceReference{ID: serviceID, Type: "service_reference"},
+	}
+
+	resp, err := s.client.newRequestDoOptions("POST", u, nil, p, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
+// Dissociate an Automation Action with a service
+func (s *AutomationActionsActionService) DissociateFromService(actionID, serviceID string) (*Response, error) {
+	u := fmt.Sprintf("%s/%s/services/%s", automationActionsActionBaseUrl, actionID, serviceID)
+
+	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil)
+}
+
+// Gets the details of an Automation Action / service relation
+func (s *AutomationActionsActionService) GetAssociationToService(actionID, serviceID string) (*AutomationActionsActionServiceAssociationPayload, *Response, error) {
+	u := fmt.Sprintf("%s/%s/services/%s", automationActionsActionBaseUrl, actionID, serviceID)
+	v := new(AutomationActionsActionServiceAssociationPayload)
 
 	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v)
 	if err != nil {

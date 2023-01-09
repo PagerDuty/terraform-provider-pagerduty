@@ -29,6 +29,10 @@ type AutomationActionsRunnerPayload struct {
 	Runner *AutomationActionsRunner `json:"runner,omitempty"`
 }
 
+type AutomationActionsRunnerTeamAssociationPayload struct {
+	Team *TeamReference `json:"team,omitempty"`
+}
+
 var automationActionsRunnerBaseUrl = "/automation_actions/runners"
 
 // Create creates a new runner
@@ -76,4 +80,40 @@ func (s *AutomationActionsRunnerService) Delete(id string) (*Response, error) {
 	u := fmt.Sprintf("%s/%s", automationActionsRunnerBaseUrl, id)
 
 	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil)
+}
+
+// Associate a Runner with a team
+func (s *AutomationActionsRunnerService) AssociateToTeam(runnerID, teamID string) (*AutomationActionsRunnerTeamAssociationPayload, *Response, error) {
+	u := fmt.Sprintf("%s/%s/teams", automationActionsRunnerBaseUrl, runnerID)
+	v := new(AutomationActionsRunnerTeamAssociationPayload)
+	p := &AutomationActionsRunnerTeamAssociationPayload{
+		Team: &TeamReference{ID: teamID, Type: "team_reference"},
+	}
+
+	resp, err := s.client.newRequestDoOptions("POST", u, nil, p, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
+// Dissociate an Runner with a team
+func (s *AutomationActionsRunnerService) DissociateFromTeam(runnerID, teamID string) (*Response, error) {
+	u := fmt.Sprintf("%s/%s/teams/%s", automationActionsRunnerBaseUrl, runnerID, teamID)
+
+	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil)
+}
+
+// Gets the details of a Runner / team relation
+func (s *AutomationActionsRunnerService) GetAssociationToTeam(runnerID, teamID string) (*AutomationActionsRunnerTeamAssociationPayload, *Response, error) {
+	u := fmt.Sprintf("%s/%s/teams/%s", automationActionsRunnerBaseUrl, runnerID, teamID)
+	v := new(AutomationActionsRunnerTeamAssociationPayload)
+
+	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
 }

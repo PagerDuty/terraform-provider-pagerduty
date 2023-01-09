@@ -14,6 +14,7 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutyAutomationActionsActionCreate,
 		Read:   resourcePagerDutyAutomationActionsActionRead,
+		Update: resourcePagerDutyAutomationActionsActionUpdate,
 		Delete: resourcePagerDutyAutomationActionsActionDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -22,12 +23,10 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"action_type": {
 				Type:     schema.TypeString,
@@ -36,39 +35,33 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 					"script",
 					"process_automation",
 				}),
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
+				ForceNew: true, // Requires creation of new action
 			},
 			"runner_id": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"action_data_reference": {
 				Type:     schema.TypeList,
 				Required: true,
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"process_automation_job_id": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: true, // Requires creation of new resource while support for update is not implemented
 						},
 						"process_automation_job_arguments": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: true, // Requires creation of new resource while support for update is not implemented
 						},
 						"script": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: true, // Requires creation of new resource while support for update is not implemented
 						},
 						"invocation_command": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: true, // Requires creation of new resource while support for update is not implemented
 						},
 					},
 				},
@@ -85,7 +78,6 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 					"diagnostic",
 					"remediation",
 				}),
-				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},
 			"runner_type": {
 				Type:     schema.TypeString,
@@ -227,6 +219,26 @@ func resourcePagerDutyAutomationActionsActionCreate(d *schema.ResourceData, meta
 	}
 
 	return resourcePagerDutyAutomationActionsActionRead(d, meta)
+}
+
+func resourcePagerDutyAutomationActionsActionUpdate(d *schema.ResourceData, meta interface{}) error {
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return err
+	}
+
+	automationActionsAction, err := buildAutomationActionsActionStruct(d)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[INFO] Updating PagerDuty AutomationActionsAction %s", d.Id())
+
+	if _, _, err := client.AutomationActionsAction.Update(d.Id(), automationActionsAction); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta interface{}) error {

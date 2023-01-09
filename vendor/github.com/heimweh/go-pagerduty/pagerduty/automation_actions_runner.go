@@ -29,9 +29,11 @@ type AutomationActionsRunnerPayload struct {
 	Runner *AutomationActionsRunner `json:"runner,omitempty"`
 }
 
+var automationActionsRunnerBaseUrl = "/automation_actions/runners"
+
 // Create creates a new runner
 func (s *AutomationActionsRunnerService) Create(runner *AutomationActionsRunner) (*AutomationActionsRunner, *Response, error) {
-	u := "/automation_actions/runners"
+	u := automationActionsRunnerBaseUrl
 	v := new(AutomationActionsRunnerPayload)
 
 	resp, err := s.client.newRequestDoOptions("POST", u, nil, &AutomationActionsRunnerPayload{Runner: runner}, &v)
@@ -44,7 +46,7 @@ func (s *AutomationActionsRunnerService) Create(runner *AutomationActionsRunner)
 
 // Get retrieves information about a runner.
 func (s *AutomationActionsRunnerService) Get(id string) (*AutomationActionsRunner, *Response, error) {
-	u := fmt.Sprintf("/automation_actions/runners/%s", id)
+	u := fmt.Sprintf("%s/%s", automationActionsRunnerBaseUrl, id)
 	v := new(AutomationActionsRunnerPayload)
 
 	resp, err := s.client.newRequestDoOptions("GET", u, nil, nil, &v)
@@ -55,9 +57,23 @@ func (s *AutomationActionsRunnerService) Get(id string) (*AutomationActionsRunne
 	return v.Runner, resp, nil
 }
 
+// Update an existing runner
+func (s *AutomationActionsRunnerService) Update(ID string, runner *AutomationActionsRunner) (*AutomationActionsRunner, *Response, error) {
+	u := fmt.Sprintf("%s/%s", automationActionsRunnerBaseUrl, ID)
+	v := new(AutomationActionsRunnerPayload)
+	p := &AutomationActionsRunnerPayload{Runner: runner}
+
+	resp, err := s.client.newRequestDo("PUT", u, nil, p, v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.Runner, resp, nil
+}
+
 // Delete deletes an existing runner.
 func (s *AutomationActionsRunnerService) Delete(id string) (*Response, error) {
-	u := fmt.Sprintf("/automation_actions/runners/%s", id)
+	u := fmt.Sprintf("%s/%s", automationActionsRunnerBaseUrl, id)
 
 	return s.client.newRequestDoOptions("DELETE", u, nil, nil, nil)
 }

@@ -1,3 +1,32 @@
+## 2.9.1 (January 9, 2023)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_incident_workflow`: add team support for incident workflows ([#609](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/609))
+* replace `ValidateValueFunc` with `ValidateValueDiagFunc` due to deprecation on the following resources. ([#605](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/605))
+	- `resource/pagerduty_event_orchestration`
+	- `resource/pagerduty_automation_actions_action`
+	- `resource/pagerduty_automation_actions_runner`
+	- `resource/pagerduty_business_service`
+	- `resource/pagerduty_business_service_subscriber`
+	- `resource/pagerduty_escalation_policy`
+	- `resource/pagerduty_event_orchestration_service`
+	- `resource/pagerduty_event_orchestration_unrouted`
+	- `resource/pagerduty_incident_workflow_trigger`
+	- `resource/pagerduty_ruleset_rule`
+	- `resource/pagerduty_schedule`
+	- `resource/pagerduty_service`
+	- `resource/pagerduty_service_dependency`
+	- `resource/pagerduty_service_event_rule`
+	- `resource/pagerduty_service_integration`
+	- `resource/pagerduty_slack_connection`
+	- `resource/pagerduty_tag_assignment`
+	- `resource/pagerduty_team_membership`
+	- `resource/pagerduty_user`
+	- `resource/pagerduty_user_contact_method`
+	- `resource/pagerduty_user_notification_rule`
+	- `resource/pagerduty_webhook_subscription`
+
 ## 2.9.0 (January 9, 2023)
 
 FEATURES:

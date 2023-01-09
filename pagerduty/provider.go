@@ -99,6 +99,7 @@ func Provider() *schema.Provider {
 			"pagerduty_automation_actions_runner":                  resourcePagerDutyAutomationActionsRunner(),
 			"pagerduty_automation_actions_action":                  resourcePagerDutyAutomationActionsAction(),
 			"pagerduty_automation_actions_action_team_association": resourcePagerDutyAutomationActionsActionTeamAssociation(),
+			"pagerduty_automation_actions_runner_team_association": resourcePagerDutyAutomationActionsRunnerTeamAssociation(),
 			"pagerduty_incident_workflow":                          resourcePagerDutyIncidentWorkflow(),
 			"pagerduty_incident_workflow_trigger":                  resourcePagerDutyIncidentWorkflowTrigger(),
 		},

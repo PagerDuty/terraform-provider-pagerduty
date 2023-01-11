@@ -425,7 +425,7 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		scheduleLayers = append(scheduleLayers, scheduleLayer)
 	}
 
-  return scheduleLayers, nil
+	return scheduleLayers, nil
 }
 
 // the expandShedTeams and flattenSchedTeams are based on the expandTeams and flattenTeams functions in the user

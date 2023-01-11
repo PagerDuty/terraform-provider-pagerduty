@@ -425,14 +425,7 @@ func flattenScheduleLayers(v []*pagerduty.ScheduleLayer) ([]map[string]interface
 		scheduleLayers = append(scheduleLayers, scheduleLayer)
 	}
 
-	// Reverse the final result and return it
-	resultReversed := make([]map[string]interface{}, 0, len(scheduleLayers))
-
-	for i := len(scheduleLayers) - 1; i >= 0; i-- {
-		resultReversed = append(resultReversed, scheduleLayers[i])
-	}
-
-	return resultReversed, nil
+  return scheduleLayers, nil
 }
 
 // the expandShedTeams and flattenSchedTeams are based on the expandTeams and flattenTeams functions in the user

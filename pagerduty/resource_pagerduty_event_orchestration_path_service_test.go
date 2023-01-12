@@ -167,6 +167,15 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					testAccCheckPagerDutyEventOrchestrationServicePathNotExists(resourceName),
 				),
 			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "enable_event_orchestration_for_service", "false"),
+					)...,
+				),
+			},
 		},
 	})
 }

@@ -139,6 +139,10 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"enable_event_orchestration_for_service": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"set": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -213,20 +217,46 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, 
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		id := d.Id()
+	id := d.Id()
+	var path *pagerduty.EventOrchestrationPath
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		t := "service"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
 
-		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
+		path, _, err = client.EventOrchestrationPaths.Get(id, t)
+		if err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
-		} else if path != nil {
-			setEventOrchestrationPathServiceProps(d, path)
 		}
 		return nil
 	})
 
+	if retryErr != nil {
+		return retryErr
+	}
+
+	serviceID := d.Get("service").(string)
+	if path != nil {
+		retryErr = resource.Retry(10*time.Second, func() *resource.RetryError {
+			log.Printf("[INFO] Reading PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
+			pathServiceActiveStatus, _, err := client.EventOrchestrationPaths.GetServiceActiveStatus(serviceID)
+			if err != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(err)
+			}
+			d.Set("enable_event_orchestration_for_service", pathServiceActiveStatus.Active)
+			return nil
+		})
+	}
+	if retryErr != nil {
+		return retryErr
+	}
+
+	if path != nil {
+		setEventOrchestrationPathServiceProps(d, path)
+	}
+
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathServiceCreate(d *schema.ResourceData, meta interface{}) error {

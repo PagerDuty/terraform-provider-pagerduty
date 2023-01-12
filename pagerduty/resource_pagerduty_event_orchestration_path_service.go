@@ -1,7 +1,9 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -139,6 +141,10 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"enable_event_orchestration_for_service": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"set": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -213,20 +219,51 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, 
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		id := d.Id()
+	id := d.Id()
+	var path *pagerduty.EventOrchestrationPath
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		t := "service"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
 
-		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
+		path, _, err = client.EventOrchestrationPaths.Get(id, t)
+		if err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
-		} else if path != nil {
-			setEventOrchestrationPathServiceProps(d, path)
 		}
 		return nil
 	})
+	if retryErr != nil {
+		return retryErr
+	}
 
+	serviceID := d.Get("service").(string)
+	if path != nil {
+		retryErr = resource.Retry(30*time.Second, func() *resource.RetryError {
+			log.Printf("[INFO] Reading PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
+			pathServiceActiveStatus, _, err := client.EventOrchestrationPaths.GetServiceActiveStatus(serviceID)
+			// It should not retry request to the status endpoint after it starts to
+			// return 410 (Gone).
+			if err != nil && isErrCode(err, http.StatusGone) {
+				d.Set("enable_event_orchestration_for_service", true)
+				return nil
+			}
+			if err != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(err)
+			}
+			d.Set("enable_event_orchestration_for_service", pathServiceActiveStatus.Active)
+			return nil
+		})
+	}
+	if retryErr != nil {
+		return retryErr
+	}
+
+	if path != nil {
+		setEventOrchestrationPathServiceProps(d, path)
+	}
+
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathServiceCreate(d *schema.ResourceData, meta interface{}) error {
@@ -240,12 +277,13 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(d *schema.ResourceData
 	}
 
 	payload := buildServicePathStruct(d)
+	serviceID := payload.Parent.ID
 	var servicePath *pagerduty.EventOrchestrationPath
 
-	log.Printf("[INFO] Creating PagerDuty Event Orchestration Service Path: %s", payload.Parent.ID)
+	log.Printf("[INFO] Creating PagerDuty Event Orchestration Service Path: %s", serviceID)
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if path, _, err := client.EventOrchestrationPaths.Update(payload.Parent.ID, "service", payload); err != nil {
+		if path, _, err := client.EventOrchestrationPaths.Update(serviceID, "service", payload); err != nil {
 			return resource.RetryableError(err)
 		} else if path != nil {
 			d.SetId(path.Parent.ID)
@@ -253,14 +291,53 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(d *schema.ResourceData
 		}
 		return nil
 	})
-
 	if retryErr != nil {
 		return retryErr
 	}
 
 	setEventOrchestrationPathServiceProps(d, servicePath)
 
+	if needToUpdateServiceActiveStatus(d) {
+		enableEOForService := d.Get("enable_event_orchestration_for_service").(bool)
+		log.Printf("[INFO] Updating PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
+
+		retryErr = resource.Retry(30*time.Second, func() *resource.RetryError {
+			resp, _, err := client.EventOrchestrationPaths.UpdateServiceActiveStatus(serviceID, enableEOForService)
+			if err != nil && isErrCode(err, http.StatusGone) {
+				return nil
+			}
+			if err != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(err)
+			}
+			if resp.Active != enableEOForService {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(fmt.Errorf("uncosistent result received when trying to update event orchestration active status for service %q", serviceID))
+			}
+			return nil
+		})
+		if retryErr != nil {
+			return retryErr
+		}
+		d.Set("enable_event_orchestration_for_service", enableEOForService)
+	}
+
 	return nil
+}
+
+func needToUpdateServiceActiveStatus(d *schema.ResourceData) bool {
+	var needToUpdate bool
+	if d.HasChange("enable_event_orchestration_for_service") {
+		o, n := d.GetChange("enable_event_orchestration_for_service")
+		old := o.(bool)
+		new := n.(bool)
+		_, ok := d.GetOkExists("enable_event_orchestration_for_service")
+		if ok || old != new && new == false {
+			needToUpdate = true
+		}
+	}
+
+	return needToUpdate
 }
 
 func resourcePagerDutyEventOrchestrationPathServiceDelete(d *schema.ResourceData, meta interface{}) error {

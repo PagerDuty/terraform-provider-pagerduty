@@ -230,8 +230,8 @@ github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:
 github.com/imdario/mergo v0.3.11/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH0dnCYA=
 github.com/imdario/mergo v0.3.12 h1:b6R2BslTbIEToALKP7LxUvijTsNI9TAe80pLWN2g/HU=
 github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH0dnCYA=
-github.com/imjaroiswebdev/go-pagerduty v0.0.0-20230118135544-45c70992821b h1:OA7xTHsjeP0H1xZm3vcMKvuXWVuW5U+OD4yYhe9JX34=
-github.com/imjaroiswebdev/go-pagerduty v0.0.0-20230118135544-45c70992821b/go.mod h1:t9vftsO1IjYHGdgJXeemZtomCWnxi2SRgu0PRcRb2oY=
+github.com/imjaroiswebdev/go-pagerduty v0.0.0-20230308230704-601256a7e95c h1:WCfZjYf59e8w32AOK/QV89zKqq2dalWashTAyjBLwjU=
+github.com/imjaroiswebdev/go-pagerduty v0.0.0-20230308230704-601256a7e95c/go.mod h1:t9vftsO1IjYHGdgJXeemZtomCWnxi2SRgu0PRcRb2oY=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
 github.com/jessevdk/go-flags v1.5.0/go.mod h1:Fw0T6WPc1dYxT4mKEZRfG5kJhaTDP9pj1c2EWnYs/m4=

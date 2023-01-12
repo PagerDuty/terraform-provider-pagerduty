@@ -94,7 +94,7 @@ type EventOrchestrationPathActionExtractions struct {
 }
 
 type EventOrchestrationPathServiceActiveStatus struct {
-	Active bool `json:"active,omitempty"`
+	Active bool `json:"active"`
 }
 
 type EventOrchestrationPathCatchAll struct {

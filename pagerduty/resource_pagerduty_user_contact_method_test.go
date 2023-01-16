@@ -55,11 +55,45 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(usernameUpdated, emailUpdated, "4153013250"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
+				),
+			},
+		},
+	})
+}
+
+// https://github.com/pagerduty/terraform-provider-pagerduty/blob/master/pagerduty/resource_pagerduty_user_contact_method.go#L26
+func TestAccPagerDutyUserContactMethodPhone_Validation(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "415 301 3250"),
+				ExpectError: regexp.MustCompile("phone numbers should only contain digits"),
+			},
+			{
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "415-301-3250"),
+				ExpectError: regexp.MustCompile("phone numbers should only contain digits"),
+			},
+			{
+				// NOTE: This error message is not useful in indicating what the issue with the input actually is.
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "41530132501"),
+				ExpectError: regexp.MustCompile("phone numbers should only contain digits"),
+			},
+			{
 				Config:      testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "04153013250"),
 				ExpectError: regexp.MustCompile("phone numbers starting with a 0 are not supported"),
 			},
 			{
-				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(usernameUpdated, emailUpdated, "8019351337"),
+				// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/578
+				Config: testAccCheckPagerDutyUserContactMethodPhoneConfigRandom(username, email),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
 				),
@@ -256,6 +290,32 @@ resource "pagerduty_user_contact_method" "foo" {
   label        = "%[1]v"
 }
 `, username, email, phone)
+}
+
+func testAccCheckPagerDutyUserContactMethodPhoneConfigRandom(username, email) string {
+	return fmt.Sprintf(`
+resource "random_integer" "foo" {
+  min = 1000000000
+  max = 9999999999
+}
+	
+resource "pagerduty_user" "foo" {
+  name        = "%[1]v"
+  email       = "%[2]v"
+  color       = "red"
+  role        = "user"
+  job_title   = "bar"
+  description = "bar"
+}
+
+resource "pagerduty_user_contact_method" "foo" {
+  user_id      = pagerduty_user.foo.id
+  type         = "phone_contact_method"
+  country_code = "+1"
+  address      = tostring(random_integer.result)
+  label        = "%[1]v"
+}
+`, username, email)
 }
 
 func testAccCheckPagerDutyUserContactMethodSMSConfig(username, email string) string {

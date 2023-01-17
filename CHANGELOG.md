@@ -1,3 +1,8 @@
+## 2.9.2 (January 17, 2023)
+
+BUG FIXES:
+*  `dependency/go-pagerduty`: update `github.com/heimweh/go-pagerduty` to fix offset pagination ([#615](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/615))
+
 ## 2.9.1 (January 9, 2023)
 
 IMPROVEMENTS:

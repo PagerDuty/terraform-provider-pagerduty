@@ -293,15 +293,15 @@ type offsetQueryOptionsGen interface {
 }
 
 type simpleOffsetQueryOptionsGen struct {
-	offset int `url:"offset,omitempty"`
+	Offset int `url:"offset,omitempty"`
 }
 
 func (o *simpleOffsetQueryOptionsGen) currentOffset() int {
-	return o.offset
+	return o.Offset
 }
 
 func (o *simpleOffsetQueryOptionsGen) changeOffset(i int) {
-	o.offset = i
+	o.Offset = i
 }
 
 func (o *simpleOffsetQueryOptionsGen) buildStruct() interface{} {

@@ -97,8 +97,17 @@ type EventOrchestrationPathCatchAll struct {
 	Actions *EventOrchestrationPathRuleActions `json:"actions,omitempty"`
 }
 
+type EventOrchestrationPathWarning struct {
+	Feature string `json:"feature"`
+	FeatureType string `json:"feature_type"`
+	Message string `json:"message"`
+	RuleId string `json:"rule_id"`
+	WarningType string `json:"warning_type"`
+}
+
 type EventOrchestrationPathPayload struct {
 	OrchestrationPath *EventOrchestrationPath `json:"orchestration_path,omitempty"`
+	Warnings []*EventOrchestrationPathWarning `json:"warnings"`
 }
 
 const PathTypeRouter string = "router"
@@ -133,7 +142,7 @@ func (s *EventOrchestrationPathService) Get(id string, pathType string) (*EventO
 }
 
 // Update for EventOrchestrationPath
-func (s *EventOrchestrationPathService) Update(id string, pathType string, orchestration_path *EventOrchestrationPath) (*EventOrchestrationPath, *Response, error) {
+func (s *EventOrchestrationPathService) Update(id string, pathType string, orchestration_path *EventOrchestrationPath) (*EventOrchestrationPathPayload, *Response, error) {
 	u := orchestrationPathUrlBuilder(id, pathType)
 	v := new(EventOrchestrationPathPayload)
 	p := EventOrchestrationPathPayload{OrchestrationPath: orchestration_path}
@@ -143,5 +152,5 @@ func (s *EventOrchestrationPathService) Update(id string, pathType string, orche
 		return nil, nil, err
 	}
 
-	return v.OrchestrationPath, resp, nil
+	return v, resp, nil
 }

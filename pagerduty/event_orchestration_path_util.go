@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -222,4 +223,21 @@ func flattenEventOrchestrationPathExtractions(e []*pagerduty.EventOrchestrationP
 		res = append(res, e)
 	}
 	return res
+}
+
+func convertEventOrchestrationPathWarningsToDiagnostics(warnings []*pagerduty.EventOrchestrationPathWarning, diags diag.Diagnostics) diag.Diagnostics {
+	if warnings == nil {
+		return diags
+	}
+
+	for _, warning := range warnings {
+		diag := diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  warning.Message,
+			Detail:   fmt.Sprintf("Feature: %s\nFeature Type: %s\nRule ID: %s\nWarning Type: %s", warning.Feature, warning.FeatureType, warning.RuleId, warning.WarningType),
+		}
+		diags = append(diags, diag)
+	}
+
+	return diags
 }

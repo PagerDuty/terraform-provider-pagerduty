@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"context"
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -126,10 +128,10 @@ func buildEventOrchestrationPathServiceRuleActionsSchema() map[string]*schema.Sc
 
 func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 	return &schema.Resource{
-		Read:   resourcePagerDutyEventOrchestrationPathServiceRead,
-		Create: resourcePagerDutyEventOrchestrationPathServiceCreate,
-		Update: resourcePagerDutyEventOrchestrationPathServiceUpdate,
-		Delete: resourcePagerDutyEventOrchestrationPathServiceDelete,
+		ReadContext:   resourcePagerDutyEventOrchestrationPathServiceRead,
+		CreateContext: resourcePagerDutyEventOrchestrationPathServiceCreate,
+		UpdateContext: resourcePagerDutyEventOrchestrationPathServiceUpdate,
+		DeleteContext: resourcePagerDutyEventOrchestrationPathServiceDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyEventOrchestrationPathServiceImport,
 		},
@@ -207,13 +209,15 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 	}
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		id := d.Id()
 		t := "service"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
@@ -227,45 +231,57 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(d *schema.ResourceData, 
 		return nil
 	})
 
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
+	}
+
+	return diags
+
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourcePagerDutyEventOrchestrationPathServiceUpdate(d, meta)
+func resourcePagerDutyEventOrchestrationPathServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx, d, meta)
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	payload := buildServicePathStruct(d)
 	var servicePath *pagerduty.EventOrchestrationPath
+	var warnings []*pagerduty.EventOrchestrationPathWarning
 
 	log.Printf("[INFO] Creating PagerDuty Event Orchestration Service Path: %s", payload.Parent.ID)
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if path, _, err := client.EventOrchestrationPaths.Update(payload.Parent.ID, "service", payload); err != nil {
+		if response, _, err := client.EventOrchestrationPaths.Update(payload.Parent.ID, "service", payload); err != nil {
 			return resource.RetryableError(err)
-		} else if path != nil {
-			d.SetId(path.Parent.ID)
-			servicePath = path
+		} else if response != nil {
+			d.SetId(response.OrchestrationPath.Parent.ID)
+			servicePath = response.OrchestrationPath
+			warnings = response.Warnings
 		}
 		return nil
 	})
 
 	if retryErr != nil {
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	setEventOrchestrationPathServiceProps(d, servicePath)
 
-	return nil
+	return convertEventOrchestrationPathWarningsToDiagnostics(warnings, diags)
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	d.SetId("")
-	return nil
+	return diags
 }
 
 func resourcePagerDutyEventOrchestrationPathServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

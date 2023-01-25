@@ -49,6 +49,37 @@ func TestAccPagerDutyTeamMembership_WithRole(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyTeamMembership_WithRoleConsistentlyAssigned(t *testing.T) {
+	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	firstRole := "observer"
+	secondRole := "responder"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, firstRole),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team_membership.foo", "role", firstRole),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, secondRole),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team_membership.foo", "role", secondRole),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependant(t *testing.T) {
 	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))

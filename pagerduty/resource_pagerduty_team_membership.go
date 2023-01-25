@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -44,6 +45,31 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 	}
 }
 
+func fetchPagerDutyTeamMembershipWithRetries(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error, retryFn func(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error) error {
+	var retryCount int
+	retryLimit := 4
+	for retryCount <= retryLimit {
+		log.Printf("[MYDEBUG] retryCount %d", retryCount)
+		prevRole := d.Get("role").(string)
+		log.Printf("[MYDEBUG] prevRole %s", prevRole)
+		err := retryFn(d, meta, errCallback)
+		if err != nil {
+			return err
+		}
+		newRole := d.Get("role").(string)
+		log.Printf("[MYDEBUG] newRole %s", newRole)
+		isSameRole := strings.Compare(prevRole, newRole) == 0
+		log.Printf("[MYDEBUG] isSameRole %v", isSameRole)
+		if !isSameRole {
+			retryCount++
+			time.Sleep(time.Duration(retryCount * 500 * int(time.Millisecond)))
+		} else {
+			return nil
+		}
+	}
+	return nil
+}
+
 func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -52,6 +78,7 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 
 	userID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
+	// log.Printf("[MYDEBUG] prevRole: %s", d.Get("role"))
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 		if err != nil {
@@ -69,6 +96,8 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 				d.Set("user_id", userID)
 				d.Set("team_id", teamID)
 				d.Set("role", member.Role)
+				// log.Printf("[MYDEBUG] NewRole: %s", d.Get("role"))
+				// log.Printf("[MYDEBUG] member.Role %s", member.Role)
 
 				return nil
 			}
@@ -109,7 +138,7 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
-	return fetchPagerDutyTeamMembership(d, meta, genError)
+	return fetchPagerDutyTeamMembershipWithRetries(d, meta, genError, fetchPagerDutyTeamMembership)
 }
 
 func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{}) error {

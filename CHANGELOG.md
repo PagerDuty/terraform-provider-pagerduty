@@ -1,3 +1,8 @@
+## 2.9.3 (January 26, 2023)
+
+BUG FIXES:
+*  `resource/pagerduty_team_membership`: EF-3964 Address `team_membership` inconsistency after `create` and `update` ([#621](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/621))
+
 ## 2.9.2 (January 17, 2023)
 
 BUG FIXES:

@@ -11,17 +11,6 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-var eventOrchestrationAutomationActionObjectSchema = map[string]*schema.Schema{
-	"key": {
-		Type:     schema.TypeString,
-		Required: true,
-	},
-	"value": {
-		Type:     schema.TypeString,
-		Required: true,
-	},
-}
-
 var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Schema{
 	"suppress": {
 		Type:     schema.TypeBool,
@@ -57,35 +46,7 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 		Optional: true,
 		MaxItems: 1,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"name": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"url": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"auto_send": {
-					Type:     schema.TypeBool,
-					Optional: true,
-					Default:  false,
-				},
-				"header": {
-					Type:     schema.TypeList,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: eventOrchestrationAutomationActionObjectSchema,
-					},
-				},
-				"parameter": {
-					Type:     schema.TypeList,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: eventOrchestrationAutomationActionObjectSchema,
-					},
-				},
-			},
+			Schema: eventOrchestrationAutomationActionSchema,
 		},
 	},
 	"severity": {
@@ -385,7 +346,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)
 		actions.PagerdutyAutomationActions = expandServicePathPagerDutyAutomationActions(a["pagerduty_automation_action"])
-		actions.AutomationActions = expandServicePathAutomationActions(a["automation_action"])
+		actions.AutomationActions = expandEventOrchestrationPathAutomationActions(a["automation_action"])
 		actions.Variables = expandEventOrchestrationPathVariables(a["variable"])
 		actions.Extractions = expandEventOrchestrationPathExtractions(a["extraction"])
 	}
@@ -403,41 +364,6 @@ func expandServicePathPagerDutyAutomationActions(v interface{}) []*pagerduty.Eve
 		}
 
 		result = append(result, pdaa)
-	}
-
-	return result
-}
-
-func expandServicePathAutomationActions(v interface{}) []*pagerduty.EventOrchestrationPathAutomationAction {
-	result := []*pagerduty.EventOrchestrationPathAutomationAction{}
-
-	for _, i := range v.([]interface{}) {
-		a := i.(map[string]interface{})
-		aa := &pagerduty.EventOrchestrationPathAutomationAction{
-			Name:       a["name"].(string),
-			Url:        a["url"].(string),
-			AutoSend:   a["auto_send"].(bool),
-			Headers:    expandEventOrchestrationAutomationActionObjects(a["header"]),
-			Parameters: expandEventOrchestrationAutomationActionObjects(a["parameter"]),
-		}
-
-		result = append(result, aa)
-	}
-
-	return result
-}
-
-func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty.EventOrchestrationPathAutomationActionObject {
-	result := []*pagerduty.EventOrchestrationPathAutomationActionObject{}
-
-	for _, i := range v.([]interface{}) {
-		o := i.(map[string]interface{})
-		obj := &pagerduty.EventOrchestrationPathAutomationActionObject{
-			Key:   o["key"].(string),
-			Value: o["value"].(string),
-		}
-
-		result = append(result, obj)
 	}
 
 	return result

@@ -54,6 +54,47 @@ var eventOrchestrationPathExtractionsSchema = map[string]*schema.Schema{
 	},
 }
 
+var eventOrchestrationAutomationActionObjectSchema = map[string]*schema.Schema{
+	"key": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"value": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+}
+
+var eventOrchestrationAutomationActionSchema = map[string]*schema.Schema{
+	"name": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"url": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"auto_send": {
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
+	},
+	"header": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: eventOrchestrationAutomationActionObjectSchema,
+		},
+	},
+	"parameter": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: eventOrchestrationAutomationActionObjectSchema,
+		},
+	},
+}
+
 func invalidExtractionRegexTemplateNilConfig() string {
 	return `
 		extraction {
@@ -223,6 +264,41 @@ func flattenEventOrchestrationPathExtractions(e []*pagerduty.EventOrchestrationP
 		res = append(res, e)
 	}
 	return res
+}
+
+func expandEventOrchestrationPathAutomationActions(v interface{}) []*pagerduty.EventOrchestrationPathAutomationAction {
+	result := []*pagerduty.EventOrchestrationPathAutomationAction{}
+
+	for _, i := range v.([]interface{}) {
+		a := i.(map[string]interface{})
+		aa := &pagerduty.EventOrchestrationPathAutomationAction{
+			Name:       a["name"].(string),
+			Url:        a["url"].(string),
+			AutoSend:   a["auto_send"].(bool),
+			Headers:    expandEventOrchestrationAutomationActionObjects(a["header"]),
+			Parameters: expandEventOrchestrationAutomationActionObjects(a["parameter"]),
+		}
+
+		result = append(result, aa)
+	}
+
+	return result
+}
+
+func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty.EventOrchestrationPathAutomationActionObject {
+	result := []*pagerduty.EventOrchestrationPathAutomationActionObject{}
+
+	for _, i := range v.([]interface{}) {
+		o := i.(map[string]interface{})
+		obj := &pagerduty.EventOrchestrationPathAutomationActionObject{
+			Key:   o["key"].(string),
+			Value: o["value"].(string),
+		}
+
+		result = append(result, obj)
+	}
+
+	return result
 }
 
 func convertEventOrchestrationPathWarningsToDiagnostics(warnings []*pagerduty.EventOrchestrationPathWarning, diags diag.Diagnostics) diag.Diagnostics {

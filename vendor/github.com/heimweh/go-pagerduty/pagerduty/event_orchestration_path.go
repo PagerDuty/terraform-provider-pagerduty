@@ -45,10 +45,12 @@ type EventOrchestrationPathRuleCondition struct {
 }
 
 // See the full list of supported actions for path types:
+// Global: TODO
 // Router: https://developer.pagerduty.com/api-reference/f0fae270c70b3-get-the-router-for-a-global-event-orchestration
 // Service: https://developer.pagerduty.com/api-reference/179537b835e2d-get-the-service-orchestration-for-a-service
 // Unrouted: https://developer.pagerduty.com/api-reference/70aa1139e1013-get-the-unrouted-orchestration-for-a-global-event-orchestration
 type EventOrchestrationPathRuleActions struct {
+	DropEvent									 bool																								`json:"drop_event"`
 	RouteTo                    string                                             `json:"route_to"`
 	Suppress                   bool                                               `json:"suppress"`
 	Suspend                    *int                                               `json:"suspend"`
@@ -110,21 +112,17 @@ type EventOrchestrationPathPayload struct {
 	Warnings []*EventOrchestrationPathWarning `json:"warnings"`
 }
 
+const PathTypeGlobal string = "global"
 const PathTypeRouter string = "router"
 const PathTypeService string = "service"
 const PathTypeUnrouted string = "unrouted"
 
 func orchestrationPathUrlBuilder(id string, pathType string) string {
-	switch {
-	case pathType == PathTypeService:
+	if pathType == PathTypeService {
 		return fmt.Sprintf("%s/services/%s", eventOrchestrationBaseUrl, id)
-	case pathType == PathTypeUnrouted:
-		return fmt.Sprintf("%s/%s/unrouted", eventOrchestrationBaseUrl, id)
-	case pathType == PathTypeRouter:
-		return fmt.Sprintf("%s/%s/router", eventOrchestrationBaseUrl, id)
-	default:
-		return ""
 	}
+
+	return fmt.Sprintf("%s/%s/%s", eventOrchestrationBaseUrl, id, pathType)
 }
 
 // Get for EventOrchestrationPath

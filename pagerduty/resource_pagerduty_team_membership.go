@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -42,6 +43,36 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 			},
 		},
 	}
+}
+
+func maxRetries() int {
+	return 4
+}
+
+func retryDelayMs() int {
+	return 500
+}
+
+func calculateDelay(retryCount int) time.Duration {
+	return time.Duration(retryCount*retryDelayMs()) * time.Millisecond
+}
+
+func fetchPagerDutyTeamMembershipWithRetries(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error, retryCount int, neededRole string) error {
+	if retryCount >= maxRetries() {
+		return nil
+	}
+	if err := fetchPagerDutyTeamMembership(d, meta, errCallback); err != nil {
+		return err
+	}
+	fetchedRole, userId, teamId := d.Get("role").(string), d.Get("user_id"), d.Get("team_id")
+	if strings.Compare(neededRole, fetchedRole) == 0 {
+		return nil
+	}
+	log.Printf("[DEBUG] Warning role '%s' fetched from PD is different from the role '%s' from config for user: %s from team: %s, retrying...", fetchedRole, neededRole, userId, teamId)
+
+	retryCount++
+	time.Sleep(calculateDelay(retryCount))
+	return fetchPagerDutyTeamMembershipWithRetries(d, meta, errCallback, retryCount, neededRole)
 }
 
 func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
@@ -109,7 +140,7 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
-	return fetchPagerDutyTeamMembership(d, meta, genError)
+	return fetchPagerDutyTeamMembershipWithRetries(d, meta, genError, 0, d.Get("role").(string))
 }
 
 func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{}) error {
@@ -146,7 +177,7 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
-	return nil
+	return fetchPagerDutyTeamMembershipWithRetries(d, meta, genError, 0, d.Get("role").(string))
 }
 
 func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interface{}) error {

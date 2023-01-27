@@ -317,9 +317,9 @@ func expandGlobalPathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCa
 
 func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
 	var actions = &pagerduty.EventOrchestrationPathRuleActions{
-		AutomationActions:          []*pagerduty.EventOrchestrationPathAutomationAction{},
-		Variables:                  []*pagerduty.EventOrchestrationPathActionVariables{},
-		Extractions:                []*pagerduty.EventOrchestrationPathActionExtractions{},
+		AutomationActions: []*pagerduty.EventOrchestrationPathAutomationAction{},
+		Variables:         []*pagerduty.EventOrchestrationPathActionVariables{},
+		Extractions:       []*pagerduty.EventOrchestrationPathActionExtractions{},
 	}
 
 	for _, i := range v.([]interface{}) {
@@ -397,7 +397,7 @@ func flattenGlobalPathActions(actions *pagerduty.EventOrchestrationPathRuleActio
 	var actionsMap []map[string]interface{}
 
 	flattenedAction := map[string]interface{}{
-		"drop_event":		actions.DropEvent,
+		"drop_event":   actions.DropEvent,
 		"route_to":     actions.RouteTo,
 		"severity":     actions.Severity,
 		"event_action": actions.EventAction,

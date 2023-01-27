@@ -11,7 +11,11 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Schema{
+var eventOrchestrationPathGlobalCatchAllActionsSchema = map[string]*schema.Schema{
+	"drop_event": {
+		Type:     schema.TypeBool,
+		Optional: true,
+	},
 	"suppress": {
 		Type:     schema.TypeBool,
 		Optional: true,
@@ -27,19 +31,6 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 	"annotate": {
 		Type:     schema.TypeString,
 		Optional: true,
-	},
-	"pagerduty_automation_action": {
-		Type:     schema.TypeList,
-		Optional: true,
-		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"action_id": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-			},
-		},
 	},
 	"automation_action": {
 		Type:     schema.TypeList,
@@ -75,10 +66,10 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 	},
 }
 
-var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPathServiceRuleActionsSchema()
+var eventOrchestrationPathGlobalRuleActionsSchema = buildEventOrchestrationPathGlobalRuleActionsSchema()
 
-func buildEventOrchestrationPathServiceRuleActionsSchema() map[string]*schema.Schema {
-	a := eventOrchestrationPathServiceCatchAllActionsSchema
+func buildEventOrchestrationPathGlobalRuleActionsSchema() map[string]*schema.Schema {
+	a := eventOrchestrationPathGlobalCatchAllActionsSchema
 	a["route_to"] = &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
@@ -87,18 +78,18 @@ func buildEventOrchestrationPathServiceRuleActionsSchema() map[string]*schema.Sc
 	return a
 }
 
-func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
+func resourcePagerDutyEventOrchestrationPathGlobal() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:   resourcePagerDutyEventOrchestrationPathServiceRead,
-		CreateContext: resourcePagerDutyEventOrchestrationPathServiceCreate,
-		UpdateContext: resourcePagerDutyEventOrchestrationPathServiceUpdate,
-		DeleteContext: resourcePagerDutyEventOrchestrationPathServiceDelete,
+		ReadContext:   resourcePagerDutyEventOrchestrationPathGlobalRead,
+		CreateContext: resourcePagerDutyEventOrchestrationPathGlobalCreate,
+		UpdateContext: resourcePagerDutyEventOrchestrationPathGlobalUpdate,
+		DeleteContext: resourcePagerDutyEventOrchestrationPathGlobalDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyEventOrchestrationPathServiceImport,
+			State: resourcePagerDutyEventOrchestrationPathGlobalImport,
 		},
 		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
-			"service": {
+			"event_orchestration": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -136,7 +127,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 										Required: true,
 										MaxItems: 1,
 										Elem: &schema.Resource{
-											Schema: eventOrchestrationPathServiceRuleActionsSchema,
+											Schema: eventOrchestrationPathGlobalRuleActionsSchema,
 										},
 									},
 									"disabled": {
@@ -160,7 +151,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 							Required: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
-								Schema: eventOrchestrationPathServiceRuleActionsSchema,
+								Schema: eventOrchestrationPathGlobalCatchAllActionsSchema,
 							},
 						},
 					},
@@ -170,7 +161,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 	}
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePagerDutyEventOrchestrationPathGlobalRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client, err := meta.(*Config).Client()
@@ -180,14 +171,14 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		id := d.Id()
-		t := "service"
+		t := "global"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
 
 		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if path != nil {
-			setEventOrchestrationPathServiceProps(d, path)
+			setEventOrchestrationPathGlobalProps(d, path)
 		}
 		return nil
 	})
@@ -200,11 +191,11 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx, d, meta)
+func resourcePagerDutyEventOrchestrationPathGlobalCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourcePagerDutyEventOrchestrationPathGlobalUpdate(ctx, d, meta)
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePagerDutyEventOrchestrationPathGlobalUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client, err := meta.(*Config).Client()
@@ -212,18 +203,18 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 		return diag.FromErr(err)
 	}
 
-	payload := buildServicePathStruct(d)
-	var servicePath *pagerduty.EventOrchestrationPath
+	payload := buildGlobalPathStruct(d)
+	var globalPath *pagerduty.EventOrchestrationPath
 	var warnings []*pagerduty.EventOrchestrationPathWarning
 
-	log.Printf("[INFO] Creating PagerDuty Event Orchestration Service Path: %s", payload.Parent.ID)
+	log.Printf("[INFO] Creating PagerDuty Event Orchestration Global Path: %s", payload.Parent.ID)
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if response, _, err := client.EventOrchestrationPaths.Update(payload.Parent.ID, "service", payload); err != nil {
+		if response, _, err := client.EventOrchestrationPaths.Update(payload.Parent.ID, "global", payload); err != nil {
 			return resource.RetryableError(err)
 		} else if response != nil {
 			d.SetId(response.OrchestrationPath.Parent.ID)
-			servicePath = response.OrchestrationPath
+			globalPath = response.OrchestrationPath
 			warnings = response.Warnings
 		}
 		return nil
@@ -233,48 +224,48 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 		return diag.FromErr(retryErr)
 	}
 
-	setEventOrchestrationPathServiceProps(d, servicePath)
+	setEventOrchestrationPathGlobalProps(d, globalPath)
 
 	return convertEventOrchestrationPathWarningsToDiagnostics(warnings, diags)
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePagerDutyEventOrchestrationPathGlobalDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	d.SetId("")
 	return diags
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyEventOrchestrationPathGlobalImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
-	id := d.Id()
+	orchestrationID := d.Id()
+	_, _, err = client.EventOrchestrationPaths.Get(orchestrationID, "global")
 
-	_, _, pErr := client.EventOrchestrationPaths.Get(id, "service")
-	if pErr != nil {
-		return []*schema.ResourceData{}, pErr
+	if err != nil {
+		return []*schema.ResourceData{}, err
 	}
 
-	d.SetId(id)
-	d.Set("service", id)
+	d.SetId(orchestrationID)
+	d.Set("event_orchestration", orchestrationID)
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func buildServicePathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
+func buildGlobalPathStruct(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
 	return &pagerduty.EventOrchestrationPath{
 		Parent: &pagerduty.EventOrchestrationPathReference{
-			ID: d.Get("service").(string),
+			ID: d.Get("event_orchestration").(string),
 		},
-		Sets:     expandServicePathSets(d.Get("set")),
-		CatchAll: expandServicePathCatchAll(d.Get("catch_all")),
+		Sets:     expandGlobalPathSets(d.Get("set")),
+		CatchAll: expandGlobalPathCatchAll(d.Get("catch_all")),
 	}
 }
 
-func expandServicePathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
+func expandGlobalPathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet {
 	var sets []*pagerduty.EventOrchestrationPathSet
 
 	for _, set := range v.([]interface{}) {
@@ -282,7 +273,7 @@ func expandServicePathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet
 
 		orchPathSet := &pagerduty.EventOrchestrationPathSet{
 			ID:    s["id"].(string),
-			Rules: expandServicePathRules(s["rule"].(interface{})),
+			Rules: expandGlobalPathRules(s["rule"].(interface{})),
 		}
 
 		sets = append(sets, orchPathSet)
@@ -291,7 +282,7 @@ func expandServicePathSets(v interface{}) []*pagerduty.EventOrchestrationPathSet
 	return sets
 }
 
-func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
+func expandGlobalPathRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 	items := v.([]interface{})
 	rules := []*pagerduty.EventOrchestrationPathRule{}
 
@@ -303,7 +294,7 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 			Label:      r["label"].(string),
 			Disabled:   r["disabled"].(bool),
 			Conditions: expandEventOrchestrationPathConditions(r["condition"]),
-			Actions:    expandServicePathActions(r["actions"]),
+			Actions:    expandGlobalPathActions(r["actions"]),
 		}
 
 		rules = append(rules, ruleInSet)
@@ -311,23 +302,22 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 	return rules
 }
 
-func expandServicePathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
+func expandGlobalPathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
 
 	for _, ca := range v.([]interface{}) {
 		if ca != nil {
 			am := ca.(map[string]interface{})
-			catchAll.Actions = expandServicePathActions(am["actions"])
+			catchAll.Actions = expandGlobalPathActions(am["actions"])
 		}
 	}
 
 	return catchAll
 }
 
-func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
+func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
 	var actions = &pagerduty.EventOrchestrationPathRuleActions{
 		AutomationActions:          []*pagerduty.EventOrchestrationPathAutomationAction{},
-		PagerdutyAutomationActions: []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction{},
 		Variables:                  []*pagerduty.EventOrchestrationPathActionVariables{},
 		Extractions:                []*pagerduty.EventOrchestrationPathActionExtractions{},
 	}
@@ -338,6 +328,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		}
 		a := i.(map[string]interface{})
 
+		actions.DropEvent = a["drop_event"].(bool)
 		actions.RouteTo = a["route_to"].(string)
 		actions.Suppress = a["suppress"].(bool)
 		actions.Suspend = intTypeToIntPtr(a["suspend"].(int))
@@ -345,7 +336,6 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)
-		actions.PagerdutyAutomationActions = expandServicePathPagerDutyAutomationActions(a["pagerduty_automation_action"])
 		actions.AutomationActions = expandEventOrchestrationPathAutomationActions(a["automation_action"])
 		actions.Variables = expandEventOrchestrationPathVariables(a["variable"])
 		actions.Extractions = expandEventOrchestrationPathExtractions(a["extraction"])
@@ -354,54 +344,39 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 	return actions
 }
 
-func expandServicePathPagerDutyAutomationActions(v interface{}) []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction {
-	result := []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction{}
-
-	for _, i := range v.([]interface{}) {
-		a := i.(map[string]interface{})
-		pdaa := &pagerduty.EventOrchestrationPathPagerdutyAutomationAction{
-			ActionId: a["action_id"].(string),
-		}
-
-		result = append(result, pdaa)
-	}
-
-	return result
-}
-
-func setEventOrchestrationPathServiceProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
+func setEventOrchestrationPathGlobalProps(d *schema.ResourceData, p *pagerduty.EventOrchestrationPath) error {
 	d.SetId(p.Parent.ID)
-	d.Set("service", p.Parent.ID)
-	d.Set("set", flattenServicePathSets(p.Sets))
-	d.Set("catch_all", flattenServicePathCatchAll(p.CatchAll))
+	d.Set("event_orchestration", p.Parent.ID)
+	d.Set("set", flattenGlobalPathSets(p.Sets))
+	d.Set("catch_all", flattenGlobalPathCatchAll(p.CatchAll))
 	return nil
 }
 
-func flattenServicePathSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
+func flattenGlobalPathSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
 	var flattenedSets []interface{}
 
 	for _, set := range orchPathSets {
 		flattenedSet := map[string]interface{}{
 			"id":   set.ID,
-			"rule": flattenServicePathRules(set.Rules),
+			"rule": flattenGlobalPathRules(set.Rules),
 		}
 		flattenedSets = append(flattenedSets, flattenedSet)
 	}
 	return flattenedSets
 }
 
-func flattenServicePathCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
+func flattenGlobalPathCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[string]interface{} {
 	var caMap []map[string]interface{}
 
 	c := make(map[string]interface{})
 
-	c["actions"] = flattenServicePathActions(catchAll.Actions)
+	c["actions"] = flattenGlobalPathActions(catchAll.Actions)
 	caMap = append(caMap, c)
 
 	return caMap
 }
 
-func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
+func flattenGlobalPathRules(rules []*pagerduty.EventOrchestrationPathRule) []interface{} {
 	var flattenedRules []interface{}
 
 	for _, rule := range rules {
@@ -410,7 +385,7 @@ func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []in
 			"label":     rule.Label,
 			"disabled":  rule.Disabled,
 			"condition": flattenEventOrchestrationPathConditions(rule.Conditions),
-			"actions":   flattenServicePathActions(rule.Actions),
+			"actions":   flattenGlobalPathActions(rule.Actions),
 		}
 		flattenedRules = append(flattenedRules, flattenedRule)
 	}
@@ -418,10 +393,11 @@ func flattenServicePathRules(rules []*pagerduty.EventOrchestrationPathRule) []in
 	return flattenedRules
 }
 
-func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
+func flattenGlobalPathActions(actions *pagerduty.EventOrchestrationPathRuleActions) []map[string]interface{} {
 	var actionsMap []map[string]interface{}
 
 	flattenedAction := map[string]interface{}{
+		"drop_event":		actions.DropEvent,
 		"route_to":     actions.RouteTo,
 		"severity":     actions.Severity,
 		"event_action": actions.EventAction,
@@ -437,9 +413,6 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 	if actions.Extractions != nil {
 		flattenedAction["extraction"] = flattenEventOrchestrationPathExtractions(actions.Extractions)
 	}
-	if actions.PagerdutyAutomationActions != nil {
-		flattenedAction["pagerduty_automation_action"] = flattenServicePathPagerDutyAutomationActions(actions.PagerdutyAutomationActions)
-	}
 	if actions.AutomationActions != nil {
 		flattenedAction["automation_action"] = flattenEventOrchestrationAutomationActions(actions.AutomationActions)
 	}
@@ -447,18 +420,4 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 	actionsMap = append(actionsMap, flattenedAction)
 
 	return actionsMap
-}
-
-func flattenServicePathPagerDutyAutomationActions(v []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction) []interface{} {
-	var result []interface{}
-
-	for _, i := range v {
-		pdaa := map[string]string{
-			"action_id": i.ActionId,
-		}
-
-		result = append(result, pdaa)
-	}
-
-	return result
 }

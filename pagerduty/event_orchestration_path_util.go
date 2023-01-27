@@ -301,6 +301,39 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 	return result
 }
 
+func flattenEventOrchestrationAutomationActions(v []*pagerduty.EventOrchestrationPathAutomationAction) []interface{} {
+	var result []interface{}
+
+	for _, i := range v {
+		pdaa := map[string]interface{}{
+			"name":      i.Name,
+			"url":       i.Url,
+			"auto_send": i.AutoSend,
+			"header":    flattenEventOrchestrationAutomationActionObjects(i.Headers),
+			"parameter": flattenEventOrchestrationAutomationActionObjects(i.Parameters),
+		}
+
+		result = append(result, pdaa)
+	}
+
+	return result
+}
+
+func flattenEventOrchestrationAutomationActionObjects(v []*pagerduty.EventOrchestrationPathAutomationActionObject) []interface{} {
+	var result []interface{}
+
+	for _, i := range v {
+		pdaa := map[string]interface{}{
+			"key":   i.Key,
+			"value": i.Value,
+		}
+
+		result = append(result, pdaa)
+	}
+
+	return result
+}
+
 func convertEventOrchestrationPathWarningsToDiagnostics(warnings []*pagerduty.EventOrchestrationPathWarning, diags diag.Diagnostics) diag.Diagnostics {
 	if warnings == nil {
 		return diags

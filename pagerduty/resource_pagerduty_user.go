@@ -3,11 +3,13 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -105,11 +107,23 @@ func resourcePagerDutyUser() *schema.Resource {
 				Optional: true,
 				Default:  "Managed by Terraform",
 			},
+
+			"license": {
+				Required: true,
+				Type:     schema.TypeMap,
+				// Using the `Elem` block to define specific keys for the map is currently not possible.
+				// The workaround described in SDK documentation is to confirm the required keys are set when expanding the Map object inside the resource code.
+				// See https://www.terraform.io/docs/extend/schemas/schema-types.html#typemap
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ValidateDiagFunc: validation.MapKeyMatch(regexp.MustCompile("(id|type)"), "`license` must only have `id` and `types` attributes"),
+			},
 		},
 	}
 }
 
-func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
+func buildUserStruct(d *schema.ResourceData) (*pagerduty.User, error) {
 	user := &pagerduty.User{
 		Name:  strings.TrimSpace(d.Get("name").(string)),
 		Email: d.Get("email").(string),
@@ -134,8 +148,38 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	if attr, ok := d.GetOk("description"); ok {
 		user.Description = attr.(string)
 	}
+
+	if attr, ok := d.GetOk("license"); ok {
+		license, err := expandLicense(attr.([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+		user.License = license
+	}
+
 	log.Printf("[DEBUG] buildUserStruct-- d: .%v. user:%v.", d.Get("name").(string), user.Name)
-	return user
+	return user, nil
+}
+
+func expandLicense(v interface{}) (*pagerduty.LicenseReference, error) {
+	l := v.(map[string]interface{})
+
+	if _, ok := l["id"]; !ok {
+		return nil, fmt.Errorf("the `id` attribute of `license` is required")
+	}
+
+	if t, ok := l["type"]; !ok {
+		return nil, fmt.Errorf("the `type` attribute of `license` is required")
+	} else if t != "license_reference" {
+		return nil, fmt.Errorf("the `type` attribute of `license` must be `license_reference`")
+	}
+
+	var license = &pagerduty.LicenseReference{
+		ID:   l["id"].(string),
+		Type: l["type"].(string),
+	}
+
+	return license, nil
 }
 
 func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error {
@@ -144,7 +188,7 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	user := buildUserStruct(d)
+	user, err := buildUserStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty user %s", user.Name)
 
@@ -206,7 +250,9 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	user := buildUserStruct(d)
+	if user, err := buildUserStruct(d); err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Updating PagerDuty user %s", d.Id())
 

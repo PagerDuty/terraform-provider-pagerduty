@@ -16,7 +16,7 @@ func dataSourcePagerDutyEventOrchestrations() *schema.Resource {
 		Read: dataSourcePagerDutyEventOrchestrationsRead,
 
 		Schema: map[string]*schema.Schema{
-			"search": {
+			"name_filter": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -76,7 +76,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 
 	log.Printf("[INFO] Reading PagerDuty Event Orchestrations")
 
-	searchName := d.Get("search").(string)
+	nameFilter := d.Get("name_filter").(string)
 
 	var eoList []*pagerduty.EventOrchestration
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
@@ -85,9 +85,9 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 			return resource.RetryableError(err)
 		}
 
-		re, err := regexp.Compile(searchName)
+		re, err := regexp.Compile(nameFilter)
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("invalid regexp for name_filter provided %s", searchName))
+			return resource.NonRetryableError(fmt.Errorf("invalid regexp for name_filter provided %s", nameFilter))
 		}
 		for _, orchestration := range resp.Orchestrations {
 			if re.MatchString(orchestration.Name) {
@@ -95,7 +95,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 			}
 		}
 		if len(eoList) == 0 {
-			return resource.NonRetryableError(fmt.Errorf("Unable to locate any Event Orchestration matching the expression: %s", searchName))
+			return resource.NonRetryableError(fmt.Errorf("Unable to locate any Event Orchestration matching the expression: %s", nameFilter))
 		}
 
 		return nil
@@ -124,7 +124,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 	}
 
 	d.SetId(resource.UniqueId())
-	d.Set("search", searchName)
+	d.Set("name_filter", nameFilter)
 	d.Set("event_orchestrations", flattenPagerDutyEventOrchestrations(orchestrations))
 
 	return nil

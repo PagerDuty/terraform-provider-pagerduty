@@ -81,7 +81,7 @@ resource "pagerduty_event_orchestration" "test" {
 }
 
 data "pagerduty_event_orchestrations" "by_name" {
-  search = pagerduty_event_orchestration.test.name
+  name_filter = pagerduty_event_orchestration.test.name
 }
 `, name)
 }
@@ -110,7 +110,7 @@ data "pagerduty_event_orchestrations" "by_name" {
     pagerduty_event_orchestration.test3,
   ]
 
-  search = "^%[1]s*"
+  name_filter = "^%[1]s*"
 }
 `, matchingName, notMatchingName)
 }
@@ -118,7 +118,7 @@ data "pagerduty_event_orchestrations" "by_name" {
 func testAccDataSourcePagerDutyEventOrchestrationsNotFoundConfig(name string) string {
 	return fmt.Sprintf(`
 data "pagerduty_event_orchestrations" "not_found" {
-  search = %q
+  name_filter = %q
 }
 `, name)
 }
@@ -126,7 +126,7 @@ data "pagerduty_event_orchestrations" "not_found" {
 func testAccDataSourcePagerDutyEventOrchestrationsInvalidRegexConfig() string {
 	return fmt.Sprintf(`
 data "pagerduty_event_orchestrations" "invalid_regex" {
-  search = ")"
+  name_filter = ")"
 }
 `)
 }

@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_event_orchestrations
 
-Use this data source to get informations about specific Global [Event Orchestrations][1]
+Use this data source to get information as a list about specific Global [Event Orchestrations][1] filtered by a Regular Expression provided.
 
 ## Example Usage
 ```hcl

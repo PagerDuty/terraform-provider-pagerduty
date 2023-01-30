@@ -21,7 +21,7 @@ resource "pagerduty_event_orchestration" "tf_orch_b" {
 }
 
 data "pagerduty_event_orchestrations" "tf_my_monitor" {
-  search = ".*Orchestration$"
+  name_filter = ".*Orchestration$"
 }
 
 ```
@@ -30,11 +30,11 @@ data "pagerduty_event_orchestrations" "tf_my_monitor" {
 
 The following arguments are supported:
 
-* `search` - (Required) The regex name of Global Event orchestrations to find in the PagerDuty API.
+* `name_filter` - (Required) The regex name of Global Event orchestrations to find in the PagerDuty API.
 
 ## Attributes Reference
 
-* `event_orchestrations` - The list of the Event Orchestrations which name match `search` argument.
+* `name_filter` - The list of the Event Orchestrations which name match `name_filter` argument.
   * `id` - The ID of the found Event Orchestration.
   * `name` - The name of the found Event Orchestration.
   * `integration` - An integration for the Event Orchestration.

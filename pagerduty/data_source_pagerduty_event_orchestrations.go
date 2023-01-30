@@ -85,7 +85,10 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 			return resource.RetryableError(err)
 		}
 
-		re := regexp.MustCompile(searchName)
+		re, err := regexp.Compile(searchName)
+		if err != nil {
+			return resource.NonRetryableError(fmt.Errorf("invalid regexp for name_filter provided %s", searchName))
+		}
 		for _, orchestration := range resp.Orchestrations {
 			if re.MatchString(orchestration.Name) {
 				eoList = append(eoList, orchestration)

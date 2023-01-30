@@ -40,6 +40,10 @@ func TestAccDataSourcePagerDutyEventOrchestrations_Basic(t *testing.T) {
 				Config:      testAccDataSourcePagerDutyEventOrchestrationsNotFoundConfig(name),
 				ExpectError: regexp.MustCompile("Unable to locate any Event Orchestration matching the expression"),
 			},
+			{
+				Config:      testAccDataSourcePagerDutyEventOrchestrationsInvalidRegexConfig(),
+				ExpectError: regexp.MustCompile("invalid regexp for name_filter provided"),
+			},
 		},
 	})
 }
@@ -117,4 +121,12 @@ data "pagerduty_event_orchestrations" "not_found" {
   search = %q
 }
 `, name)
+}
+
+func testAccDataSourcePagerDutyEventOrchestrationsInvalidRegexConfig() string {
+	return fmt.Sprintf(`
+data "pagerduty_event_orchestrations" "invalid_regex" {
+  search = ")"
+}
+`)
 }

@@ -78,38 +78,53 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 
 	searchName := d.Get("search").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	var eoList []*pagerduty.EventOrchestration
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		resp, _, err := client.EventOrchestrations.List()
 		if err != nil {
 			return resource.RetryableError(err)
 		}
 
-		var orchestrations []*pagerduty.EventOrchestration
 		re := regexp.MustCompile(searchName)
 		for _, orchestration := range resp.Orchestrations {
 			if re.MatchString(orchestration.Name) {
-				// Get orchestration matched by ID so we can set the integrations property
-				// since the list endpoint does not return it
-				orch, _, err := client.EventOrchestrations.Get(orchestration.ID)
-				if err != nil {
-					return resource.RetryableError(err)
-				}
-				orchestrations = append(orchestrations, orch)
+				eoList = append(eoList, orchestration)
 			}
 		}
-
-		if len(orchestrations) == 0 {
-			return resource.NonRetryableError(
-				fmt.Errorf("Unable to locate any Event Orchestration with the name: %s", searchName),
-			)
+		if len(eoList) == 0 {
+			return resource.NonRetryableError(fmt.Errorf("Unable to locate any Event Orchestration matching the expression: %s", searchName))
 		}
-
-		d.SetId(resource.UniqueId())
-		d.Set("search", searchName)
-		d.Set("event_orchestrations", flattenPagerDutyEventOrchestrations(orchestrations))
 
 		return nil
 	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
+	}
+
+	var orchestrations []*pagerduty.EventOrchestration
+	for _, orchestration := range eoList {
+		// Get orchestration matched by ID so we can set the integrations property
+		// since the list endpoint does not return it
+		retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+			orch, _, err := client.EventOrchestrations.Get(orchestration.ID)
+			if err != nil {
+				return resource.RetryableError(err)
+			}
+			orchestrations = append(orchestrations, orch)
+			return nil
+		})
+		if retryErr != nil {
+			time.Sleep(2 * time.Second)
+			return retryErr
+		}
+	}
+
+	d.SetId(resource.UniqueId())
+	d.Set("search", searchName)
+	d.Set("event_orchestrations", flattenPagerDutyEventOrchestrations(orchestrations))
+
+	return nil
 }
 
 func flattenPagerDutyEventOrchestrations(orchestrations []*pagerduty.EventOrchestration) []interface{} {

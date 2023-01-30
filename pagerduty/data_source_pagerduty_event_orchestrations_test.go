@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -11,6 +12,8 @@ import (
 
 func TestAccDataSourcePagerDutyEventOrchestrations_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	multipleMatchesName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	notMatchingName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -21,6 +24,21 @@ func TestAccDataSourcePagerDutyEventOrchestrations_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyEventOrchestrations("pagerduty_event_orchestration.test", "data.pagerduty_event_orchestrations.by_name"),
 				),
+			},
+			{
+				Config: testAccDataSourcePagerDutyEventOrchestrationsMultipleMatchesConfig(multipleMatchesName, notMatchingName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_event_orchestrations.by_name", "event_orchestrations.0.name", fmt.Sprintf("%s-matching-eo-name1", multipleMatchesName)),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_event_orchestrations.by_name", "event_orchestrations.1.name", fmt.Sprintf("%s-matching-eo-name2", multipleMatchesName)),
+					resource.TestCheckNoResourceAttr(
+						"data.pagerduty_event_orchestrations.by_name", "event_orchestrations.2"),
+				),
+			},
+			{
+				Config:      testAccDataSourcePagerDutyEventOrchestrationsNotFoundConfig(name),
+				ExpectError: regexp.MustCompile("Unable to locate any Event Orchestration matching the expression"),
 			},
 		},
 	})
@@ -60,6 +78,43 @@ resource "pagerduty_event_orchestration" "test" {
 
 data "pagerduty_event_orchestrations" "by_name" {
   search = pagerduty_event_orchestration.test.name
+}
+`, name)
+}
+
+func testAccDataSourcePagerDutyEventOrchestrationsMultipleMatchesConfig(matchingName, notMatchingName string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_event_orchestration" "test1" {
+  name                    = "%[1]s-matching-eo-name1"
+}
+resource "pagerduty_event_orchestration" "test2" {
+  # this explicit dependecy is introduced to ensure the order of EO on the Data Source, because the test check relies on this order
+  depends_on = [
+    pagerduty_event_orchestration.test1,
+  ]
+
+  name                    = "%[1]s-matching-eo-name2"
+}
+resource "pagerduty_event_orchestration" "test3" {
+  name                    = "%[2]s"
+}
+
+data "pagerduty_event_orchestrations" "by_name" {
+  depends_on = [
+    pagerduty_event_orchestration.test1,
+    pagerduty_event_orchestration.test2,
+    pagerduty_event_orchestration.test3,
+  ]
+
+  search = "^%[1]s*"
+}
+`, matchingName, notMatchingName)
+}
+
+func testAccDataSourcePagerDutyEventOrchestrationsNotFoundConfig(name string) string {
+	return fmt.Sprintf(`
+data "pagerduty_event_orchestrations" "not_found" {
+  search = %q
 }
 `, name)
 }

@@ -355,11 +355,11 @@ func customizeServiceIntegrationDiff() schema.CustomizeDiffFunc {
 				old := oldEF[idx]
 				isSameEFConfig := old["id"] == new["id"]
 
+				efConfig := new
 				if isSameEFConfig && isEFDefaultConfigBlock(old) && isEFEmptyConfigBlock(new) {
-					updatedEF = append(updatedEF, old)
-				} else {
-					updatedEF = append(updatedEF, new)
+					efConfig = old
 				}
+				updatedEF = append(updatedEF, efConfig)
 			}
 
 			diff.SetNew("email_filter", updatedEF)

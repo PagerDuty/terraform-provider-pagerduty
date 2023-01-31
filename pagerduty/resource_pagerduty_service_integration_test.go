@@ -395,6 +395,13 @@ func TestAccPagerDutyServiceIntegration_GenericEmailNoFilters(t *testing.T) {
 						"pagerduty_service_integration.bar", "type", "generic_email_inbound_integration"),
 				),
 			},
+			{
+				Config: testAccCheckPagerDutyServiceIntegrationMultipleGenericEmailNoFilters(username, email, escalationPolicy, service, serviceIntegration),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_integration.foo", "type", "generic_email_inbound_integration"),
+				),
+			},
 		},
 	})
 }
@@ -1042,6 +1049,73 @@ resource "pagerduty_service_integration" "bar" {
   type              = "generic_email_inbound_integration"
   integration_email = "%[6]s"
   email_filter {}
+}
+`, username, email, escalationPolicy, service, serviceIntegration, integrationEmail)
+}
+
+func testAccCheckPagerDutyServiceIntegrationMultipleGenericEmailNoFilters(username, email, escalationPolicy, service, serviceIntegration string) string {
+	integrationEmail := os.Getenv("PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS")
+
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "bar"
+  num_loops   = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%s"
+  description             = "bar"
+  auto_resolve_timeout    = 3600
+  acknowledgement_timeout = 3600
+  escalation_policy       = pagerduty_escalation_policy.foo.id
+
+  incident_urgency_rule {
+    type    = "constant"
+    urgency = "high"
+  }
+}
+
+resource "pagerduty_service_integration" "foo" {
+  name              = "%[5]s"
+  service           = pagerduty_service.foo.id
+  type              = "generic_email_inbound_integration"
+  integration_email = "%[6]s"
+  email_filter {
+    body_mode        = "always"
+    body_regex       = null
+    from_email_mode  = "match"
+    from_email_regex = "(@bar.com*)"
+    subject_mode     = "match"
+    subject_regex    = "(CRITICAL*)"
+  }
+  email_filter {}
+  email_filter {
+    body_mode        = "always"
+    body_regex       = null
+    from_email_mode  = "match"
+    from_email_regex = "(@bar.com*)"
+    subject_mode     = "match"
+    subject_regex    = "(CRITICAL*)"
+  }
 }
 `, username, email, escalationPolicy, service, serviceIntegration, integrationEmail)
 }

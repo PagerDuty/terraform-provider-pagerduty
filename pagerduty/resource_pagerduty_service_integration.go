@@ -19,70 +19,11 @@ const (
 
 func resourcePagerDutyServiceIntegration() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyServiceIntegrationCreate,
-		Read:   resourcePagerDutyServiceIntegrationRead,
-		Update: resourcePagerDutyServiceIntegrationUpdate,
-		Delete: resourcePagerDutyServiceIntegrationDelete,
-		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
-			t := diff.Get("type").(string)
-			if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" && diff.NewValueKnown("integration_email") {
-				return errors.New(errEmailIntegrationMustHaveEmail)
-			}
-			oldEF, newEF := diff.GetChange("email_filter")
-			var rOldEF, rNewEF []map[string]interface{}
-			for _, rEF := range oldEF.([]interface{}) {
-				rOldEF = append(rOldEF, rEF.(map[string]interface{}))
-			}
-			for _, rEF := range newEF.([]interface{}) {
-				rNewEF = append(rNewEF, rEF.(map[string]interface{}))
-			}
-			isEFEmptyConfigBlock := func(ef map[string]interface{}) bool {
-				var isEmpty bool
-				if ef["body_mode"].(string) == "" &&
-					ef["body_regex"].(string) == "" &&
-					ef["from_email_mode"].(string) == "" &&
-					ef["from_email_regex"].(string) == "" &&
-					ef["subject_mode"].(string) == "" &&
-					ef["subject_regex"].(string) == "" {
-					isEmpty = true
-				}
-
-				return isEmpty
-			}
-			isEFDefaultConfigBlock := func(ef map[string]interface{}) bool {
-				var isDefault bool
-				if ef["body_mode"].(string) == "always" &&
-					ef["body_regex"].(string) == "" &&
-					ef["from_email_mode"].(string) == "always" &&
-					ef["from_email_regex"].(string) == "" &&
-					ef["subject_mode"].(string) == "always" &&
-					ef["subject_regex"].(string) == "" {
-					isDefault = true
-				}
-
-				return isDefault
-			}
-			var isOldEFDefaultConfigBlock bool
-			for _, ef := range rOldEF {
-				if isEFDefaultConfigBlock(ef) {
-					isOldEFDefaultConfigBlock = true
-					break
-				}
-			}
-			var isNewEFEmptyConfigBlock bool
-			for _, ef := range rNewEF {
-				if isEFEmptyConfigBlock(ef) {
-					isNewEFEmptyConfigBlock = true
-					break
-				}
-			}
-
-			if isOldEFDefaultConfigBlock && isNewEFEmptyConfigBlock {
-				diff.SetNew("email_filter", oldEF)
-			}
-
-			return nil
-		},
+		Create:        resourcePagerDutyServiceIntegrationCreate,
+		Read:          resourcePagerDutyServiceIntegrationRead,
+		Update:        resourcePagerDutyServiceIntegrationUpdate,
+		Delete:        resourcePagerDutyServiceIntegrationDelete,
+		CustomizeDiff: customizeServiceIntegrationDiff(),
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyServiceIntegrationImport,
 		},
@@ -350,6 +291,81 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				},
 			},
 		},
+	}
+}
+
+func customizeServiceIntegrationDiff() schema.CustomizeDiffFunc {
+	flattenEFConfigBlock := func(v interface{}) []map[string]interface{} {
+		var efConfigBlock []map[string]interface{}
+		if isNilFunc(v) {
+			return efConfigBlock
+		}
+		for _, ef := range v.([]interface{}) {
+			var efConfig map[string]interface{}
+			if !isNilFunc(ef) {
+				efConfig = ef.(map[string]interface{})
+			}
+			efConfigBlock = append(efConfigBlock, efConfig)
+		}
+		return efConfigBlock
+	}
+
+	isEFEmptyConfigBlock := func(ef map[string]interface{}) bool {
+		var isEmpty bool
+		if ef["body_mode"].(string) == "" &&
+			ef["body_regex"].(string) == "" &&
+			ef["from_email_mode"].(string) == "" &&
+			ef["from_email_regex"].(string) == "" &&
+			ef["subject_mode"].(string) == "" &&
+			ef["subject_regex"].(string) == "" {
+			isEmpty = true
+		}
+		return isEmpty
+	}
+
+	isEFDefaultConfigBlock := func(ef map[string]interface{}) bool {
+		var isDefault bool
+		if ef["body_mode"].(string) == "always" &&
+			ef["body_regex"].(string) == "" &&
+			ef["from_email_mode"].(string) == "always" &&
+			ef["from_email_regex"].(string) == "" &&
+			ef["subject_mode"].(string) == "always" &&
+			ef["subject_regex"].(string) == "" {
+			isDefault = true
+		}
+		return isDefault
+	}
+
+	return func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+		t := diff.Get("type").(string)
+		if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" && diff.NewValueKnown("integration_email") {
+			return errors.New(errEmailIntegrationMustHaveEmail)
+		}
+
+		// All this custom diff logic is needed because the email_filters API
+		// response returns a default value for its structure even when this
+		// configuration is sent empty, so it produces a permanent diff on each Read
+		// that has an empty configuration for email_filter attribute on HCL code.
+		vOldEF, vNewEF := diff.GetChange("email_filter")
+		oldEF := flattenEFConfigBlock(vOldEF)
+		newEF := flattenEFConfigBlock(vNewEF)
+		if len(oldEF) > 0 && len(newEF) > 0 && len(oldEF) == len(newEF) {
+			var updatedEF []map[string]interface{}
+			for idx, new := range newEF {
+				old := oldEF[idx]
+				isSameEFConfig := old["id"] == new["id"]
+
+				if isSameEFConfig && isEFDefaultConfigBlock(old) && isEFEmptyConfigBlock(new) {
+					updatedEF = append(updatedEF, old)
+				} else {
+					updatedEF = append(updatedEF, new)
+				}
+			}
+
+			diff.SetNew("email_filter", updatedEF)
+		}
+
+		return nil
 	}
 }
 

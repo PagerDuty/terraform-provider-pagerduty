@@ -28,6 +28,59 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" && diff.NewValueKnown("integration_email") {
 				return errors.New(errEmailIntegrationMustHaveEmail)
 			}
+			oldEF, newEF := diff.GetChange("email_filter")
+			var rOldEF, rNewEF []map[string]interface{}
+			for _, rEF := range oldEF.([]interface{}) {
+				rOldEF = append(rOldEF, rEF.(map[string]interface{}))
+			}
+			for _, rEF := range newEF.([]interface{}) {
+				rNewEF = append(rNewEF, rEF.(map[string]interface{}))
+			}
+			isEFEmptyConfigBlock := func(ef map[string]interface{}) bool {
+				var isEmpty bool
+				if ef["body_mode"].(string) == "" &&
+					ef["body_regex"].(string) == "" &&
+					ef["from_email_mode"].(string) == "" &&
+					ef["from_email_regex"].(string) == "" &&
+					ef["subject_mode"].(string) == "" &&
+					ef["subject_regex"].(string) == "" {
+					isEmpty = true
+				}
+
+				return isEmpty
+			}
+			isEFDefaultConfigBlock := func(ef map[string]interface{}) bool {
+				var isDefault bool
+				if ef["body_mode"].(string) == "always" &&
+					ef["body_regex"].(string) == "" &&
+					ef["from_email_mode"].(string) == "always" &&
+					ef["from_email_regex"].(string) == "" &&
+					ef["subject_mode"].(string) == "always" &&
+					ef["subject_regex"].(string) == "" {
+					isDefault = true
+				}
+
+				return isDefault
+			}
+			var isOldEFDefaultConfigBlock bool
+			for _, ef := range rOldEF {
+				if isEFDefaultConfigBlock(ef) {
+					isOldEFDefaultConfigBlock = true
+					break
+				}
+			}
+			var isNewEFEmptyConfigBlock bool
+			for _, ef := range rNewEF {
+				if isEFEmptyConfigBlock(ef) {
+					isNewEFEmptyConfigBlock = true
+					break
+				}
+			}
+
+			if isOldEFDefaultConfigBlock && isNewEFEmptyConfigBlock {
+				diff.SetNew("email_filter", oldEF)
+			}
+
 			return nil
 		},
 		Importer: &schema.ResourceImporter{
@@ -246,6 +299,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			"email_filter": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

@@ -181,7 +181,7 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		id := d.Id()
 		t := "service"
-		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
+		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for service: %s", t, id)
 
 		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
 			time.Sleep(2 * time.Second)

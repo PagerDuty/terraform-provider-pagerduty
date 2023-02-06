@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/heimweh/go-pagerduty/persistentconfig"
 )
 
 // Config defines the configuration options for the PagerDuty client
@@ -35,6 +36,12 @@ type Config struct {
 	// UserAgent for API Client
 	UserAgent string
 
+	APITokenType *pagerduty.AuthTokenType
+
+	AppOauthScopedTokenParams *persistentconfig.AppOauthScopedTokenParams
+
+	ServiceRegion string
+
 	client      *pagerduty.Client
 	slackClient *pagerduty.Client
 }
@@ -57,7 +64,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	// Validate that the PagerDuty token is set
-	if c.Token == "" {
+	if c.Token == "" && *c.APITokenType == pagerduty.AuthTokenTypeAPIToken {
 		return nil, fmt.Errorf(invalidCreds)
 	}
 
@@ -71,11 +78,13 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	config := &pagerduty.Config{
-		BaseURL:    apiUrl,
-		Debug:      logging.IsDebugOrHigher(),
-		HTTPClient: httpClient,
-		Token:      c.Token,
-		UserAgent:  c.UserAgent,
+		BaseURL:                   apiUrl,
+		Debug:                     logging.IsDebugOrHigher(),
+		HTTPClient:                httpClient,
+		Token:                     c.Token,
+		UserAgent:                 c.UserAgent,
+		AppOauthScopedTokenParams: c.AppOauthScopedTokenParams,
+		APIAuthTokenType:          c.APITokenType,
 	}
 
 	client, err := pagerduty.NewClient(config)

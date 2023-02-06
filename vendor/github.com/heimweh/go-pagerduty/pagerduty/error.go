@@ -21,10 +21,13 @@ type errorResponse struct {
 
 // Error represents an error response from the PagerDuty API.
 type Error struct {
-	ErrorResponse *Response
-	Code          int         `json:"code,omitempty"`
-	Errors        interface{} `json:"errors,omitempty"`
-	Message       string      `json:"message,omitempty"`
+	ErrorResponse  *Response
+	Code           int         `json:"code,omitempty"`
+	Errors         interface{} `json:"errors,omitempty"`
+	Message        string      `json:"message,omitempty"`
+	RequiredScopes string      `json:"required_scopes,omitempty"`
+	TokenScopes    string      `json:"token_scopes,omitempty"`
+	needToRetry    bool
 }
 
 func (e *Error) Error() string {

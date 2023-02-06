@@ -1,12 +1,15 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -37,6 +40,46 @@ func TestProviderImpl(t *testing.T) {
 	var _ *schema.Provider = Provider()
 }
 
+func TestAccPagerDutyProviderScopedOauthTokenAuthentication_Basic(t *testing.T) {
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckProviderScopedOauthTokenAuthentication(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyProviderAuthenticationConfig(team, "scoped_oauth_token"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamExists("pagerduty_team.foo"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyProviderAuthenticationConfig(team, "use_app_credentials"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamExists("pagerduty_team.foo"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyProviderAuthenticationConfig(team, apiTokenType string) string {
+	return fmt.Sprintf(`
+
+provider "pagerduty" {
+  api_token_type = "%[2]s"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[1]s"
+  description = "foo created with api token type of %[2]s"
+}`, team, apiTokenType)
+}
+
 func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("PAGERDUTY_PARALLEL"); v != "" {
 		t.Parallel()
@@ -48,6 +91,12 @@ func testAccPreCheck(t *testing.T) {
 
 	if v := os.Getenv("PAGERDUTY_USER_TOKEN"); v == "" {
 		t.Fatal("PAGERDUTY_USER_TOKEN must be set for acceptance tests")
+	}
+}
+
+func testAccPreCheckProviderScopedOauthTokenAuthentication(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_PROVIDER_SCOPED_OAUTH"); v == "" {
+		t.Skip("PAGERDUTY_ACC_PROVIDER_SCOPED_OAUTH not set. Skipping Provider Scoped Oauth-related test")
 	}
 }
 

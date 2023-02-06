@@ -25,7 +25,6 @@ package channelz
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -185,77 +184,54 @@ func GetServer(id int64) *ServerMetric {
 	return db.get().GetServer(id)
 }
 
-// RegisterChannel registers the given channel c in the channelz database with
-// ref as its reference name, and adds it to the child list of its parent
-// (identified by pid). pid == nil means no parent.
-//
-// Returns a unique channelz identifier assigned to this channel.
-//
-// If channelz is not turned ON, the channelz database is not mutated.
-func RegisterChannel(c Channel, pid *Identifier, ref string) *Identifier {
+// RegisterChannel registers the given channel c in channelz database with ref
+// as its reference name, and add it to the child list of its parent (identified
+// by pid). pid = 0 means no parent. It returns the unique channelz tracking id
+// assigned to this channel.
+func RegisterChannel(c Channel, pid int64, ref string) int64 {
 	id := idGen.genID()
-	var parent int64
-	isTopChannel := true
-	if pid != nil {
-		isTopChannel = false
-		parent = pid.Int()
-	}
-
-	if !IsOn() {
-		return newIdentifer(RefChannel, id, pid)
-	}
-
 	cn := &channel{
 		refName:     ref,
 		c:           c,
 		subChans:    make(map[int64]string),
 		nestedChans: make(map[int64]string),
 		id:          id,
-		pid:         parent,
+		pid:         pid,
 		trace:       &channelTrace{createdTime: time.Now(), events: make([]*TraceEvent, 0, getMaxTraceEntry())},
 	}
-	db.get().addChannel(id, cn, isTopChannel, parent)
-	return newIdentifer(RefChannel, id, pid)
+	if pid == 0 {
+		db.get().addChannel(id, cn, true, pid)
+	} else {
+		db.get().addChannel(id, cn, false, pid)
+	}
+	return id
 }
 
-// RegisterSubChannel registers the given subChannel c in the channelz database
-// with ref as its reference name, and adds it to the child list of its parent
-// (identified by pid).
-//
-// Returns a unique channelz identifier assigned to this subChannel.
-//
-// If channelz is not turned ON, the channelz database is not mutated.
-func RegisterSubChannel(c Channel, pid *Identifier, ref string) (*Identifier, error) {
-	if pid == nil {
-		return nil, errors.New("a SubChannel's parent id cannot be nil")
+// RegisterSubChannel registers the given channel c in channelz database with ref
+// as its reference name, and add it to the child list of its parent (identified
+// by pid). It returns the unique channelz tracking id assigned to this subchannel.
+func RegisterSubChannel(c Channel, pid int64, ref string) int64 {
+	if pid == 0 {
+		logger.Error("a SubChannel's parent id cannot be 0")
+		return 0
 	}
 	id := idGen.genID()
-	if !IsOn() {
-		return newIdentifer(RefSubChannel, id, pid), nil
-	}
-
 	sc := &subChannel{
 		refName: ref,
 		c:       c,
 		sockets: make(map[int64]string),
 		id:      id,
-		pid:     pid.Int(),
+		pid:     pid,
 		trace:   &channelTrace{createdTime: time.Now(), events: make([]*TraceEvent, 0, getMaxTraceEntry())},
 	}
-	db.get().addSubChannel(id, sc, pid.Int())
-	return newIdentifer(RefSubChannel, id, pid), nil
+	db.get().addSubChannel(id, sc, pid)
+	return id
 }
 
 // RegisterServer registers the given server s in channelz database. It returns
 // the unique channelz tracking id assigned to this server.
-//
-// If channelz is not turned ON, the channelz database is not mutated.
-func RegisterServer(s Server, ref string) *Identifier {
+func RegisterServer(s Server, ref string) int64 {
 	id := idGen.genID()
-	if !IsOn() {
-		return newIdentifer(RefServer, id, nil)
-	}
-
 	svr := &server{
 		refName:       ref,
 		s:             s,
@@ -264,92 +240,71 @@ func RegisterServer(s Server, ref string) *Identifier {
 		id:            id,
 	}
 	db.get().addServer(id, svr)
-	return newIdentifer(RefServer, id, nil)
+	return id
 }
 
 // RegisterListenSocket registers the given listen socket s in channelz database
 // with ref as its reference name, and add it to the child list of its parent
 // (identified by pid). It returns the unique channelz tracking id assigned to
 // this listen socket.
-//
-// If channelz is not turned ON, the channelz database is not mutated.
-func RegisterListenSocket(s Socket, pid *Identifier, ref string) (*Identifier, error) {
-	if pid == nil {
-		return nil, errors.New("a ListenSocket's parent id cannot be 0")
+func RegisterListenSocket(s Socket, pid int64, ref string) int64 {
+	if pid == 0 {
+		logger.Error("a ListenSocket's parent id cannot be 0")
+		return 0
 	}
 	id := idGen.genID()
-	if !IsOn() {
-		return newIdentifer(RefListenSocket, id, pid), nil
-	}
-
-	ls := &listenSocket{refName: ref, s: s, id: id, pid: pid.Int()}
-	db.get().addListenSocket(id, ls, pid.Int())
-	return newIdentifer(RefListenSocket, id, pid), nil
+	ls := &listenSocket{refName: ref, s: s, id: id, pid: pid}
+	db.get().addListenSocket(id, ls, pid)
+	return id
 }
 
 // RegisterNormalSocket registers the given normal socket s in channelz database
-// with ref as its reference name, and adds it to the child list of its parent
+// with ref as its reference name, and add it to the child list of its parent
 // (identified by pid). It returns the unique channelz tracking id assigned to
 // this normal socket.
-//
-// If channelz is not turned ON, the channelz database is not mutated.
-func RegisterNormalSocket(s Socket, pid *Identifier, ref string) (*Identifier, error) {
-	if pid == nil {
-		return nil, errors.New("a NormalSocket's parent id cannot be 0")
+func RegisterNormalSocket(s Socket, pid int64, ref string) int64 {
+	if pid == 0 {
+		logger.Error("a NormalSocket's parent id cannot be 0")
+		return 0
 	}
 	id := idGen.genID()
-	if !IsOn() {
-		return newIdentifer(RefNormalSocket, id, pid), nil
-	}
-
-	ns := &normalSocket{refName: ref, s: s, id: id, pid: pid.Int()}
-	db.get().addNormalSocket(id, ns, pid.Int())
-	return newIdentifer(RefNormalSocket, id, pid), nil
+	ns := &normalSocket{refName: ref, s: s, id: id, pid: pid}
+	db.get().addNormalSocket(id, ns, pid)
+	return id
 }
 
 // RemoveEntry removes an entry with unique channelz tracking id to be id from
 // channelz database.
-//
-// If channelz is not turned ON, this function is a no-op.
-func RemoveEntry(id *Identifier) {
-	if !IsOn() {
-		return
-	}
-	db.get().removeEntry(id.Int())
+func RemoveEntry(id int64) {
+	db.get().removeEntry(id)
 }
 
-// TraceEventDesc is what the caller of AddTraceEvent should provide to describe
-// the event to be added to the channel trace.
-//
-// The Parent field is optional. It is used for an event that will be recorded
-// in the entity's parent trace.
+// TraceEventDesc is what the caller of AddTraceEvent should provide to describe the event to be added
+// to the channel trace.
+// The Parent field is optional. It is used for event that will be recorded in the entity's parent
+// trace also.
 type TraceEventDesc struct {
 	Desc     string
 	Severity Severity
 	Parent   *TraceEventDesc
 }
 
-// AddTraceEvent adds trace related to the entity with specified id, using the
-// provided TraceEventDesc.
-//
-// If channelz is not turned ON, this will simply log the event descriptions.
-func AddTraceEvent(l grpclog.DepthLoggerV2, id *Identifier, depth int, desc *TraceEventDesc) {
-	// Log only the trace description associated with the bottom most entity.
-	switch desc.Severity {
-	case CtUnknown, CtInfo:
-		l.InfoDepth(depth+1, withParens(id)+desc.Desc)
-	case CtWarning:
-		l.WarningDepth(depth+1, withParens(id)+desc.Desc)
-	case CtError:
-		l.ErrorDepth(depth+1, withParens(id)+desc.Desc)
+// AddTraceEvent adds trace related to the entity with specified id, using the provided TraceEventDesc.
+func AddTraceEvent(l grpclog.DepthLoggerV2, id int64, depth int, desc *TraceEventDesc) {
+	for d := desc; d != nil; d = d.Parent {
+		switch d.Severity {
+		case CtUnknown, CtInfo:
+			l.InfoDepth(depth+1, d.Desc)
+		case CtWarning:
+			l.WarningDepth(depth+1, d.Desc)
+		case CtError:
+			l.ErrorDepth(depth+1, d.Desc)
+		}
 	}
-
 	if getMaxTraceEntry() == 0 {
 		return
 	}
-	if IsOn() {
-		db.get().traceEvent(id.Int(), desc)
-	}
+	db.get().traceEvent(id, desc)
 }
 
 // channelMap is the storage data structure for channelz.

@@ -1,4 +1,9 @@
-## 2.10.0 (January 9, 2023)
+## 2.10.1 (February 9, 2023)
+
+BUG FIXES:
+*  `resource/pagerduty_service_integration`: Address: Service integration perm diff with Generic email and empty/omitted `email_filter` ([#625](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/625))
+
+## 2.10.0 (February 9, 2023)
 
 FEATURES:
 

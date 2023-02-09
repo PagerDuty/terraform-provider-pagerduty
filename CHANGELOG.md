@@ -1,3 +1,9 @@
+## 2.10.0 (January 9, 2023)
+
+FEATURES:
+
+* `data/pagerduty_event_orchestrations`: feat: add `pagerduty_event_orchestrations` datasource ([#581](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/581))
+
 ## 2.9.3 (January 26, 2023)
 
 BUG FIXES:

@@ -378,7 +378,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 
 	// An Schedule with open incidents related can't be remove till those
 	// incidents have been resolved.
-	linksToIncidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleId)
+	linksToIncidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleId, epsAssociatedToSchedule)
 	if err != nil {
 		return err
 	}
@@ -582,10 +582,10 @@ func flattenScheFinalSchedule(finalSche *pagerduty.SubSchedule) []map[string]int
 	return res
 }
 
-func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, id string) ([]string, error) {
+func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, scheduleID string, epIDs []string) ([]string, error) {
 	var s *pagerduty.Schedule
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
-		resp, _, err := c.Schedules.Get(id, &pagerduty.GetScheduleOptions{})
+		resp, _, err := c.Schedules.Get(scheduleID, &pagerduty.GetScheduleOptions{})
 		if err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
@@ -602,23 +602,42 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, id string) ([]str
 		teams = append(teams, t.ID)
 	}
 
-	var linksToIncidents []string
+	var incidents []*pagerduty.Incident
 	retryErr = resource.Retry(10*time.Second, func() *resource.RetryError {
-		incidents, err := c.Incidents.ListAll(&pagerduty.ListIncidentsOptions{
+		var err error
+		incidents, err = c.Incidents.ListAll(&pagerduty.ListIncidentsOptions{
 			DateRange: "all",
 			Statuses:  []string{"triggered", "acknowledged"},
 			TeamIDs:   teams,
+			Limit:     100,
 		})
 		if err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
-		for _, inc := range incidents {
-			linksToIncidents = append(linksToIncidents, inc.HTMLURL)
-		}
 		return nil
 	})
 
+	filterIncidentsByEPs := func(incidents []*pagerduty.Incident, eps []string) []*pagerduty.Incident {
+		var r []*pagerduty.Incident
+
+		matchIndex := make(map[string]bool)
+		for _, ep := range eps {
+			matchIndex[ep] = true
+		}
+		for _, inc := range incidents {
+			if matchIndex[inc.EscalationPolicy.ID] {
+				r = append(r, inc)
+			}
+		}
+		return r
+	}
+	incidents = filterIncidentsByEPs(incidents, epIDs)
+
+	var linksToIncidents []string
+	for _, inc := range incidents {
+		linksToIncidents = append(linksToIncidents, inc.HTMLURL)
+	}
 	return linksToIncidents, nil
 }
 

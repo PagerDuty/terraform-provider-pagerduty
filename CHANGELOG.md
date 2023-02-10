@@ -1,3 +1,8 @@
+## 2.10.2 (February 9, 2023)
+
+BUG FIXES:
+*  `resource/pagerduty_schedule`: Cannot destroy pagerduty_schedule. You must first resolve the following incidents related with Escalation Policies ([#619](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/619))
+
 ## 2.10.1 (February 9, 2023)
 
 BUG FIXES:

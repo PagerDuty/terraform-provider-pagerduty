@@ -305,6 +305,92 @@ func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependantWithOpenIncident
 	})
 }
 
+func TestAccPagerDutySchedule_EscalationPolicyDependantWithOpenIncidents(t *testing.T) {
+	service1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	location := "America/New_York"
+	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	escalationPolicy1 := fmt.Sprintf("ts-%s", acctest.RandString(5))
+	escalationPolicy2 := fmt.Sprintf("ts-%s", acctest.RandString(5))
+	incident_id := ""
+	p_incident_id := &incident_id
+	unrelated_incident_id := ""
+	p_unrelated_incident_id := &unrelated_incident_id
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyScheduleEscalationPolicyDependantWithOpenIncidentConfig(username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, service1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy1),
+					testAccCheckPagerDutyScheduleOpenIncidentOnService(p_incident_id, "pagerduty_service.foo", "pagerduty_escalation_policy.foo"),
+				),
+			},
+			{
+				Config:      testAccCheckPagerDutyScheduleEscalationPolicyDependantWithOpenIncidentConfigUpdated(username, email, escalationPolicy1, service1),
+				ExpectError: regexp.MustCompile("Before Removing Schedule \".*\" You must first resolve the following incidents related with Escalation Policies using this Schedule"),
+			},
+			{
+				// Extra intermediate step with the original plan for resolving the
+				// outstanding incident and retrying the schedule destroy after that.
+				Config: testAccCheckPagerDutyScheduleEscalationPolicyDependantWithOpenIncidentConfig(username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, service1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPagerDutyScheduleResolveIncident(p_incident_id, "pagerduty_escalation_policy.foo"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleEscalationPolicyDependantWithOpenIncidentConfigUpdated(username, email, escalationPolicy1, service1),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy1),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleEscalationPolicyDependantWithUnrelatedOpenIncidentConfig(username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy1),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.bar", "name", escalationPolicy2),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service1),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.bar", "name", service2),
+					testAccCheckPagerDutyScheduleOpenIncidentOnService(p_unrelated_incident_id, "pagerduty_service.bar", "pagerduty_escalation_policy.bar"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleEscalationPolicyDependantWithUnrelatedOpenIncidentConfigUpdated(username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy1),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.bar", "name", escalationPolicy2),
+					testAccPagerDutyScheduleResolveIncident(p_unrelated_incident_id, "pagerduty_escalation_policy.bar"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyScheduleOverflow_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
@@ -1186,6 +1272,69 @@ resource "pagerduty_service" "foo" {
 `, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy, service)
 }
 
+func testAccCheckPagerDutyScheduleEscalationPolicyDependantWithOpenIncidentConfig(username, email, schedule, location, start, rotationVirtualStart, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+  
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+}
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+`, username, email, schedule, location, start, rotationVirtualStart, escalationPolicy, service)
+}
+
 func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithUnrelatedOpenIncidentConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy1, escalationPolicy2, service1, service2 string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
@@ -1280,6 +1429,91 @@ resource "pagerduty_service" "bar" {
 `, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2)
 }
 
+func testAccCheckPagerDutyScheduleEscalationPolicyDependantWithUnrelatedOpenIncidentConfig(username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%[1]s"
+  email = "%[2]s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%[3]s"
+
+  time_zone   = "%[4]s"
+  description = "foo"
+
+  layer {
+    name                         = "foo"
+    start                        = "%[5]s"
+    rotation_virtual_start       = "%[6]s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%[7]s"
+  num_loops = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+  
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "bar" {
+  name      = "%[8]s"
+  num_loops = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%[9]s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+resource "pagerduty_service" "bar" {
+	name                    = "%[10]s"
+	description             = "bar"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.bar.id
+	alert_creation          = "create_incidents"
+}
+`, username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2)
+}
+
 func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithUnrelatedOpenIncidentConfigUpdated(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy1, escalationPolicy2, service1, service2 string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
@@ -1339,6 +1573,58 @@ resource "pagerduty_service" "bar" {
 `, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2)
 }
 
+func testAccCheckPagerDutyScheduleEscalationPolicyDependantWithUnrelatedOpenIncidentConfigUpdated(username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%[1]s"
+  email = "%[2]s"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%[7]s"
+  num_loops = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "bar" {
+  name      = "%[8]s"
+  num_loops = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%[9]s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+resource "pagerduty_service" "bar" {
+	name                    = "%[10]s"
+	description             = "bar"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.bar.id
+	alert_creation          = "create_incidents"
+}
+`, username, email, schedule, location, start, rotationVirtualStart, escalationPolicy1, escalationPolicy2, service1, service2)
+}
+
 func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithOpenIncidentConfigUpdated(username, email, team, escalationPolicy, service string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
@@ -1373,4 +1659,34 @@ resource "pagerduty_service" "foo" {
 	alert_creation          = "create_incidents"
 }
 `, username, email, team, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyScheduleEscalationPolicyDependantWithOpenIncidentConfigUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+`, username, email, escalationPolicy, service)
 }

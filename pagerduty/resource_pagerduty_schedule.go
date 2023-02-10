@@ -368,17 +368,30 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 	scheduleId := d.Id()
 
 	log.Printf("[INFO] Starting deletion process of Schedule %s", scheduleId)
+	var scheduleData *pagerduty.Schedule
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		resp, _, err := client.Schedules.Get(scheduleId, &pagerduty.GetScheduleOptions{})
+		if err != nil {
+			time.Sleep(2 * time.Second)
+			return resource.RetryableError(err)
+		}
+		scheduleData = resp
+		return nil
+	})
+	if retryErr != nil {
+		return retryErr
+	}
 
 	log.Printf("[INFO] Listing Escalation Policies that use schedule : %s", scheduleId)
 	// Extracting Escalation Policies that use this Schedule
-	epsAssociatedToSchedule, err := extractEPsAssociatedToSchedule(client, scheduleId)
+	epsAssociatedToSchedule, err := extractEPsAssociatedToSchedule(client, scheduleData)
 	if err != nil {
 		return err
 	}
 
 	// An Schedule with open incidents related can't be remove till those
 	// incidents have been resolved.
-	linksToIncidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleId, epsAssociatedToSchedule)
+	linksToIncidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleData, epsAssociatedToSchedule)
 	if err != nil {
 		return err
 	}
@@ -393,7 +406,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", scheduleId)
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr = resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Schedules.Delete(scheduleId); err != nil {
 			if !isErrCode(err, 400) {
 				return resource.RetryableError(err)
@@ -582,33 +595,13 @@ func flattenScheFinalSchedule(finalSche *pagerduty.SubSchedule) []map[string]int
 	return res
 }
 
-func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, scheduleID string, epIDs []string) ([]string, error) {
-	var s *pagerduty.Schedule
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
-		resp, _, err := c.Schedules.Get(scheduleID, &pagerduty.GetScheduleOptions{})
-		if err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		}
-		s = resp
-		return nil
-	})
-	if retryErr != nil {
-		return nil, retryErr
-	}
-
-	teams := []string{}
-	for _, t := range s.Teams {
-		teams = append(teams, t.ID)
-	}
-
+func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerduty.Schedule, epIDs []string) ([]string, error) {
 	var incidents []*pagerduty.Incident
-	retryErr = resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		var err error
 		incidents, err = c.Incidents.ListAll(&pagerduty.ListIncidentsOptions{
 			DateRange: "all",
 			Statuses:  []string{"triggered", "acknowledged"},
-			TeamIDs:   teams,
 			Limit:     100,
 		})
 		if err != nil {
@@ -617,6 +610,9 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, scheduleID string
 		}
 		return nil
 	})
+	if retryErr != nil {
+		return nil, retryErr
+	}
 
 	filterIncidentsByEPs := func(incidents []*pagerduty.Incident, eps []string) []*pagerduty.Incident {
 		var r []*pagerduty.Incident
@@ -641,23 +637,9 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, scheduleID string
 	return linksToIncidents, nil
 }
 
-func extractEPsAssociatedToSchedule(c *pagerduty.Client, id string) ([]string, error) {
-	var s *pagerduty.Schedule
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
-		resp, _, err := c.Schedules.Get(id, &pagerduty.GetScheduleOptions{})
-		if err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		}
-		s = resp
-		return nil
-	})
-	if retryErr != nil {
-		return nil, retryErr
-	}
-
+func extractEPsAssociatedToSchedule(c *pagerduty.Client, schedule *pagerduty.Schedule) ([]string, error) {
 	eps := []string{}
-	for _, ep := range s.EscalationPolicies {
+	for _, ep := range schedule.EscalationPolicies {
 		eps = append(eps, ep.ID)
 	}
 	return eps, nil

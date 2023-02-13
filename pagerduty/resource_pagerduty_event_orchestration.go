@@ -207,20 +207,12 @@ func flattenEventOrchestrationIntegrations(eoi []*pagerduty.EventOrchestrationIn
 	for _, i := range eoi {
 		integration := map[string]interface{}{
 			"id":         i.ID,
+			"label":         i.Label,
 			"parameters": flattenEventOrchestrationIntegrationParameters(i.Parameters),
 		}
 		result = append(result, integration)
 	}
 	return result
-}
-
-func flattenEventOrchestrationIntegrationParameters(p *pagerduty.EventOrchestrationIntegrationParameters) []interface{} {
-	result := map[string]interface{}{
-		"routing_key": p.RoutingKey,
-		"type":        p.Type,
-	}
-
-	return []interface{}{result}
 }
 
 func setEventOrchestrationProps(d *schema.ResourceData, o *pagerduty.EventOrchestration) error {

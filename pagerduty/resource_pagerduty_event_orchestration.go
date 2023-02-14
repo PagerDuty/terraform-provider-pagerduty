@@ -207,7 +207,7 @@ func flattenEventOrchestrationIntegrations(eoi []*pagerduty.EventOrchestrationIn
 	for _, i := range eoi {
 		integration := map[string]interface{}{
 			"id":         i.ID,
-			"label":         i.Label,
+			"label":      i.Label,
 			"parameters": flattenEventOrchestrationIntegrationParameters(i.Parameters),
 		}
 		result = append(result, integration)

@@ -18,7 +18,7 @@ func resourcePagerDutyEventOrchestrationIntegration() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyEventOrchestrationIntegrationImport,
 		},
-		CustomizeDiff: checkEventOrchestrationChange,
+		// CustomizeDiff: checkEventOrchestrationChange, // Cannot return diags, only error
 		Schema: map[string]*schema.Schema{
 			map[string]*schema.Schema{
 				"event_orchestration": {
@@ -73,16 +73,15 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 	}
 
 	orchestrationId, payload := getEventOrchestrationIntegrationPayloadData(d)
-	var integration *pagerduty.EventOrchestrationIntegration	
-
+	
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		log.Printf("[INFO] Creating Integration '%s' for PagerDuty Event Orchestration: %s", payload.Label, orchestrationId)
 
-		if response, _, err := client.EventOrchestrationIntegrations.Create(orchestrationId, payload); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.Create(orchestrationId, payload); err != nil {
 			return resource.RetryableError(err)
-		} else if response != nil {
-			d.SetId(response.Id)
-			integration = response
+		} else if integration != nil {
+			d.SetId(integration.Id)
+			setEventOrchestrationIntegrationProps(d, integration)
 		}
 		return nil
 	})
@@ -90,8 +89,6 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 	if retryErr != nil {
 		return diag.FromErr(retryErr)
 	}
-
-	setEventOrchestrationIntegrationProps(d, integration)
 
 	return diags
 }
@@ -104,13 +101,23 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 		return diag.FromErr(err)
 	}
 
+	// Testing warnings on `terraform plan`:
+	if d.HasChange("event_orchestration") {
+		diag := diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  ">>> test warning summary",
+			Detail:   ">>> test warning detail",
+		}
+		diags = append(diags, diag)
+	}
+
 	id := d.Id()
 	orchestrationId := d.Get("event_orchestration").(string)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {		
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {		
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, orchestrationId)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.Get(orchestrationId, id, t); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.Get(orchestrationId, id); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {
@@ -126,37 +133,6 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 	return diags
 }
 
-// func resourcePagerDutyEventOrchestrationIntegrationUpdate(d *schema.ResourceData, meta interface{}) error {
-// 	client, err := meta.(*Config).Client()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	orchestration := buildEventOrchestrationStruct(d)
-
-// 	log.Printf("[INFO] Updating PagerDuty Event Orchestration: %s", d.Id())
-
-// 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
-// 		id := d.Id()
-// 		orchestrationId := d.Get("event_orchestration").(string)
-// 		log.Printf("[INFO] Updating Integration '%s' for PagerDuty Event Orchestration: %s", id, orchestrationId)
-
-// 		if integration, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
-// 			if isErrCode(err, 400) || isErrCode(err, 429) {
-// 				return resource.RetryableError(err)
-// 			}
-// 			return resource.NonRetryableError(err)
-// 		}
-
-// 		return nil
-// 	})
-
-// 	if retryErr != nil {
-// 		return retryErr
-// 	}
-
-// 	return nil
-// }
 func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -167,17 +143,14 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 
 	id := d.Id()
 	orchestrationId, payload := getEventOrchestrationIntegrationPayloadData(d)
-	var integration *pagerduty.EventOrchestrationIntegration
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		log.Printf("[INFO] Updating Integration '%s' for PagerDuty Event Orchestration: %s", id, orchestrationId)
 
-		if response, _, err := client.EventOrchestrationIntegrations.Update(payload.Parent.ID, "global", payload); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.Update(orchestrationId, id, payload); err != nil {
 			return resource.RetryableError(err)
-		} else if response != nil {
-			d.SetId(response.OrchestrationPath.Parent.ID)
-			globalPath = response.OrchestrationPath
-			warnings = response.Warnings
+		} else if integration != nil {
+			setEventOrchestrationIntegrationProps(d, integration)
 		}
 		return nil
 	})
@@ -186,25 +159,34 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 		return diag.FromErr(retryErr)
 	}
 
-	setEventOrchestrationPathGlobalProps(d, globalPath)
-
 	return diags
 }
 
-func resourcePagerDutyEventOrchestrationIntegrationDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	log.Printf("[INFO] Deleting PagerDuty Event Orchestration: %s", d.Id())
-	if _, err := client.EventOrchestrations.Delete(d.Id()); err != nil {
-		return err
+	id := d.Id()
+	orchestrationId, _ := getEventOrchestrationIntegrationPayloadData(d)
+
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, err := client.EventOrchestrationIntegrations.Delete(orchestrationId, id); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
 	}
 
 	d.SetId("")
 
-	return nil
+	return diags
 }
 
 func flattenEventOrchestrationIntegrationParameters(p *pagerduty.EventOrchestrationIntegrationParameters) []interface{} {

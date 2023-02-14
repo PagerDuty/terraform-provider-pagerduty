@@ -43,6 +43,7 @@ type Client struct {
 	MaintenanceWindows           *MaintenanceWindowService
 	Rulesets                     *RulesetService
 	EventOrchestrations          *EventOrchestrationService
+	EventOrchestrationIntegrations *EventOrchestrationIntegrationService
 	EventOrchestrationPaths      *EventOrchestrationPathService
 	Schedules                    *ScheduleService
 	Services                     *ServicesService

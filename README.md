@@ -139,3 +139,4 @@ PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.p
 | ----------------------------------------------------------- | ------------------- |
 | `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                          | Incident Workflows  |
 | `PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS` | Service Integration |
+| `PAGERDUTY_ACC_CUSTOM_FIELDS`                                | Custom Fields       |

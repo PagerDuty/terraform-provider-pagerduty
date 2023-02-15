@@ -58,3 +58,7 @@ type SubscriberReference resourceReference
 // IncidentAttributeReference represents a reference to a Incident
 // Attribute schema
 type IncidentAttributeReference resourceReference
+
+// CustomFieldSchemaReference represents a reference to a Custom
+// Field schema
+type CustomFieldSchemaReference resourceReference

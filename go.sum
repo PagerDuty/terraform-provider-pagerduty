@@ -226,6 +226,8 @@ github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d h1:kJCB4vdITiW1eC1
 github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/heimweh/go-pagerduty v0.0.0-20230117201746-310c225f8600 h1:mf9awB4qvSXN6fIo94bd/MnG2n3ts+i2KA+mZ3N92z4=
 github.com/heimweh/go-pagerduty v0.0.0-20230117201746-310c225f8600/go.mod h1:t9vftsO1IjYHGdgJXeemZtomCWnxi2SRgu0PRcRb2oY=
+github.com/heimweh/go-pagerduty v0.0.0-20230213205146-a7761402c92d h1:9OZp5Bgl1WDswugwBKLiTcxeCT/t0c293zUtXLL6OUc=
+github.com/heimweh/go-pagerduty v0.0.0-20230213205146-a7761402c92d/go.mod h1:t9vftsO1IjYHGdgJXeemZtomCWnxi2SRgu0PRcRb2oY=
 github.com/huandu/xstrings v1.3.2/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=

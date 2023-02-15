@@ -132,7 +132,8 @@ the value of the environment variable is not relevant.
 For example:
 ```sh
 PAGERDUTY_ACC_INCIDENT_WORKFLOWS=1 make testacc TESTARGS="-run PagerDutyIncidentWorkflow"
-PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.pagerduty.com" make testacc TESTARGS="-run TestAccPagerDutyServiceIntegration_GenericEmailNoFilters"
+PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.pagerduty.com" make testacc TESTARGS="-run PagerDutyServiceIntegration_GenericEmailNoFilters"
+PAGERDUTY_ACC_CUSTOM_FIELDS=1 make testacc TESTARGS="-run PagerDutyCustomField"
 ```
 
 | Variable Name                                               | Feature Set         |

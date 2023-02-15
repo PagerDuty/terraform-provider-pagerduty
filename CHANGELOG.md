@@ -1,3 +1,16 @@
+## 2.11.0 (February 15, 2023)
+
+FEATURES:
+
+* Support **Custom Fields** via several new resources. ([#623](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/623))
+  - `resource/pagerduty_custom_field`
+  - `resource/pagerduty_custom_field_option`
+  - `resource/pagerduty_custom_field_schema`
+  - `resource/pagerduty_custom_field_schema_assignment`
+  - `resource/pagerduty_custom_field_schema_field_configuration`
+  - `data_source/pagerduty_custom_field`
+  - `data_source/pagerduty_custom_field_schema`
+
 ## 2.10.2 (February 9, 2023)
 
 BUG FIXES:

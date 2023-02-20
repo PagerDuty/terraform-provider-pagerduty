@@ -54,6 +54,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 					"nagios_inbound_integration",
 					"pingdom_inbound_integration",
 					"sql_monitor_inbound_integration",
+					"change_event_transform_inbound_integration",
 				}),
 			},
 			"vendor": {

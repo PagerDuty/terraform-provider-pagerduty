@@ -160,7 +160,8 @@ The following arguments are supported:
   `generic_events_api_inbound_integration`,
   `keynote_inbound_integration`,
   `nagios_inbound_integration`,
-  `pingdom_inbound_integration`or `sql_monitor_inbound_integration`.
+  `pingdom_inbound_integration`,
+  `sql_monitor_inbound_integration` or `change_event_transform_inbound_integration`.
 
     **Note:** This is meant for **generic** service integrations.
     To integrate with a **vendor** (e.g. Datadog or Amazon Cloudwatch) use the `vendor` field instead.

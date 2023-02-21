@@ -1,88 +1,48 @@
 ---
 layout: "pagerduty"
-page_title: "PagerDuty: pagerduty_event_orchestration_service"
-sidebar_current: "docs-pagerduty-resource-event-orchestration-service"
+page_title: "PagerDuty: pagerduty_event_orchestration_global"
+sidebar_current: "docs-pagerduty-resource-event-orchestration-global"
 description: |-
-  Creates and manages a Service Orchestration for a Service.
+  Creates and manages a Global Orchestration for an Event Orchestration.
 ---
 
-# pagerduty_event_orchestration_service
+# pagerduty_event_orchestration_global
 
-A [Service Orchestration](https://support.pagerduty.com/docs/event-orchestration#service-orchestrations) allows you to create a set of Event Rules. The Service Orchestration evaluates Events sent to this Service against each of its rules, beginning with the rules in the "start" set. When a matching rule is found, it can modify and enhance the event and can route the event to another set of rules within this Service Orchestration for further processing.
+A [Global Orchestration](https://support.pagerduty.com/docs/event-orchestration#global-orchestrations) allows you to create a set of Event Rules. The Global Orchestration evaluates Events sent to it against each of its rules, beginning with the rules in the "start" set. When a matching rule is found, it can modify and enhance the event and can route the event to another set of rules within this Global Orchestration for further processing.
 
-**Note:** If you have a Service that uses [Service Event Rules](https://support.pagerduty.com/docs/rulesets#service-event-rules), you can switch to [Service Orchestrations](https://support.pagerduty.com/docs/event-orchestration#service-orchestrations) at any time. Please read the [Switch to Service Orchestrations](https://support.pagerduty.com/docs/event-orchestration#switch-to-service-orchestrations) instructions for more information.
+## Example of configuring a Global Orchestration
 
-## Example of configuring a Service Orchestration
+This example shows creating `Team`, and `Event Orchestration` resources followed by creating a Global Orchestration to handle Events sent to that Event Orchestration.
 
-This example shows creating `Team`, `User`, `Escalation Policy`, and `Service` resources followed by creating a Service Orchestration to handle Events sent to that Service.
+This example also shows using `priority` [data source](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) to configure `priority` action for a rule. If the Event matches the third rule in set "step-two" the resulting incident will have the Priority `P1`.
 
-This example also shows using `priority` [data source](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) to configure `priority` action for a rule. If the Event matches the first rule in set "step-two" the resulting incident will have the Priority `P1`.
-
-This example shows a Service Orchestration that has nested sets: a rule in the "start" set has a `route_to` action pointing at the "step-two" set.
+This example shows a Global Orchestration that has nested sets: a rule in the "start" set has a `route_to` action pointing at the "step-two" set.
 
 The `catch_all` actions will be applied if an Event reaches the end of any set without matching any rules in that set. In this example the `catch_all` doesn't have any `actions` so it'll leave events as-is.
 
 
 ```hcl
-resource "pagerduty_team" "engineering" {
-  name = "Engineering"
+resource "pagerduty_team" "database_team" {
+  name = "Database Team"
 }
 
-resource "pagerduty_user" "example" {
-  name  = "Earline Greenholt"
-  email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.engineering.id]
-}
-
-resource "pagerduty_escalation_policy" "foo" {
-  name      = "Engineering Escalation Policy"
-  num_loops = 2
-
-  rule {
-    escalation_delay_in_minutes = 10
-    target {
-      type = "user"
-      id   = pagerduty_user.example.id
-    }
-  }
-}
-
-resource "pagerduty_service" "example" {
-  name                    = "My Web App"
-  auto_resolve_timeout    = 14400
-  acknowledgement_timeout = 600
-  escalation_policy       = pagerduty_escalation_policy.example.id
-  alert_creation          = "create_alerts_and_incidents"
+resource "pagerduty_event_orchestration" "event_orchestration" {
+  name = "Example Orchestration"
+  team = pagerduty_team.database_team.id
 }
 
 data "pagerduty_priority" "p1" {
   name = "P1"
 }
 
-resource "pagerduty_event_orchestration_service" "www" {
-  service = pagerduty_service.example.id
+resource "pagerduty_event_orchestration_global" "global" {
+  event_orchestration = pagerduty_event_orchestration.event_orchestration.id
   set {
     id = "start"
     rule {
-      label = "Always apply some consistent event transformations to all events"
+      label = "Always annotate a note to all events"
       actions {
-        variable {
-          name = "hostname"
-          path = "event.component"
-          value = "hostname: (.*)"
-          type = "regex"
-        }
-        extraction {
-          # Demonstrating a template-style extraction
-          template = "{{variables.hostname}}"
-          target = "event.custom_details.hostname"
-        }
-        extraction {
-          # Demonstrating a regex-style extraction
-          source = "event.source"
-          regex = "www (.*) service"
-          target = "event.source"
-        }
+        annotate = "This incident was created by the Database Team via a Global Orchestration"
         # Id of the next set
         route_to = "step-two"
       }
@@ -91,48 +51,32 @@ resource "pagerduty_event_orchestration_service" "www" {
   set {
     id = "step-two"
     rule {
-      label = "All critical alerts should be treated as P1 incident"
+      label = "Drop events that are marked as no-op"
       condition {
-        expression = "event.severity matches 'critical'"
+        expression = "event.summary matches 'no-op'"
       }
       actions {
-        annotate = "Please use our P1 runbook: https://docs.test/p1-runbook"
+        drop_event = true
+      }
+    }
+    rule {
+      label = "If there's something wrong on the replica, then mark the alert as a warning"
+      condition {
+        expression = "event.custom_details.hostname matches part 'replica'"
+      }
+      actions {
+        severity = "warning"
+      }
+    }
+    rule {
+      label = "Otherwise, set the incident to P1 and run a diagnostic"
+      actions {
         priority = data.pagerduty_priority.p1.id
-      }
-    }
-    rule {
-      label = "If there's something wrong on the canary let the team know about it in our deployments Slack channel"
-      condition {
-        expression = "event.custom_details.hostname matches part 'canary'"
-      }
-      # create webhook action with parameters and headers
-      actions {
         automation_action {
-          name = "Canary Slack Notification"
-          url = "https://our-slack-listerner.test/canary-notification"
+          name = "db-diagnostic"
+          url = "https://example.com/run-diagnostic"
           auto_send = true
-          parameter {
-            key = "channel"
-            value = "#my-team-channel"
-          }
-          parameter {
-            key = "message"
-            value = "something is wrong with the canary deployment"
-          }
-          header {
-            key = "X-Notification-Source"
-            value = "PagerDuty Incident Webhook"
-          }
         }
-      }
-    }
-    rule {
-      label = "Never bother the on-call for info-level events outside of work hours"
-      condition {
-        expression = "event.severity matches 'info' and not (now in Mon,Tue,Wed,Thu,Fri 09:00:00 to 17:00:00 America/Los_Angeles)"
-      }
-      actions {
-        suppress = true
       }
     }
   }
@@ -145,13 +89,13 @@ resource "pagerduty_event_orchestration_service" "www" {
 
 The following arguments are supported:
 
-* `service` - (Required) ID of the Service to which this Service Orchestration belongs to.
-* `set` - (Required) A Service Orchestration must contain at least a "start" set, but can contain any number of additional sets that are routed to by other rules to form a directional graph.
+* `event_orchestration` - (Required) ID of the Event Orchestration to which this Global Orchestration belongs to.
+* `set` - (Required) A Global Orchestration must contain at least a "start" set, but can contain any number of additional sets that are routed to by other rules to form a directional graph.
 * `catch_all` - (Required) the `catch_all` actions will be applied if an Event reaches the end of any set without matching any rules in that set.
 
 ### Set (`set`) supports the following:
 * `id` - (Required) The ID of this set of rules. Rules in other sets can route events into this set using the rule's `route_to` property.
-* `rule` - (Optional) The service orchestration evaluates Events against these Rules, one at a time, and applies all the actions for first rule it finds where the event matches the rule's conditions. If no rules are provided as part of Terraform configuration, the API returns empty list of rules.
+* `rule` - (Optional) The Global Orchestration evaluates Events against these Rules, one at a time, and applies all the actions for first rule it finds where the event matches the rule's conditions. If no rules are provided as part of Terraform configuration, the API returns empty list of rules.
 
 ### Rule (`rule`) supports the following:
 * `label` - (Optional) A description of this rule's purpose.
@@ -163,13 +107,12 @@ The following arguments are supported:
 * `expression`- (Required) A [PCL condition](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) string.
 
 ### Actions (`actions`) supports the following:
-* `route_to` - (Optional) The ID of a Set from this Service Orchestration whose rules you also want to use with events that match this rule.
+* `route_to` - (Optional) The ID of a Set from this Global Orchestration whose rules you also want to use with events that match this rule.
+* `drop_event` - (Optional) When true, this event will be dropped. Dropped events will not trigger or resolve an alert or an incident. Dropped events will not be evaluated against router rules.
 * `suppress` - (Optional) Set whether the resulting alert is suppressed. Suppressed alerts will not trigger an incident.
 * `suspend` - (Optional) The number of seconds to suspend the resulting alert before triggering. This effectively pauses incident notifications. If a `resolve` event arrives before the alert triggers then PagerDuty won't create an incident for this alert.
 * `priority` - (Optional) The ID of the priority you want to set on resulting incident. Consider using the [`pagerduty_priority`](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) data source.
 * `annotate` - (Optional) Add this text as a note on the resulting incident.
-* `pagerduty_automation_action` - (Optional) Configure a [Process Automation](https://support.pagerduty.com/docs/event-orchestration#process-automation) associated with the resulting incident.
-  * `action_id` - (Required) Id of the Process Automation action to be triggered.
 * `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) associated with the resulting incident.
   * `name` - (Required) Name of this Webhook.
   * `url` - (Required) The API endpoint where PagerDuty's servers will send the webhook request.
@@ -202,14 +145,15 @@ The following arguments are supported:
 ## Attributes Reference
 
 The following attributes are exported:
-* `self` - The URL at which the Service Orchestration is accessible.
+* `self` - The URL at which the Global Orchestration is accessible.
 * `rule`
   * `id` - The ID of the rule within the set.
 
 ## Import
 
-Service Orchestration can be imported using the `id` of the Service, e.g.
+Global Orchestration can be imported using the `id` of the Event Orchestration, e.g.
+
 
 ```
-$ terraform import pagerduty_event_orchestration_service.service PFEODA7
+$ terraform import pagerduty_event_orchestration_global.global 1b49abe7-26db-4439-a715-c6d883acfb3e
 ```

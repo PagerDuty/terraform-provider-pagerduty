@@ -10,7 +10,7 @@ description: |-
 
 [Event Orchestrations](https://support.pagerduty.com/docs/event-orchestration) allow you define a set of Event Rules, so that when you ingest events using the Orchestration's Routing Key your events will be routed to the correct Global and/or Service Orchestration, based on the event's content.
 
-## Example of configuring a Event Orchestration
+## Example of configuring an Event Orchestration
 
 ```hcl
 resource "pagerduty_team" "engineering" {

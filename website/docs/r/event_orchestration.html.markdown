@@ -3,14 +3,14 @@ layout: "pagerduty"
 page_title: "PagerDuty: pagerduty_event_orchestration"
 sidebar_current: "docs-pagerduty-resource-event-orchestration"
 description: |-
-  Creates and manages a Global Event Orchestration in PagerDuty.
+  Creates and manages an Event Orchestration in PagerDuty.
 ---
 
 # pagerduty_event_orchestration
 
-[Global Event Orchestrations](https://support.pagerduty.com/docs/event-orchestration#global-orchestrations) allow you define a set of Event Rules, so that when you ingest events using the Orchestration's Routing Key your events will be routed to the correct Service, based on the event's content.
+[Event Orchestrations](https://support.pagerduty.com/docs/event-orchestration) allow you define a set of Event Rules, so that when you ingest events using the Orchestration's Routing Key your events will be routed to the correct Global and/or Service Orchestration, based on the event's content.
 
-## Example of configuring a Global Event Orchestration
+## Example of configuring an Event Orchestration
 
 ```hcl
 resource "pagerduty_team" "engineering" {

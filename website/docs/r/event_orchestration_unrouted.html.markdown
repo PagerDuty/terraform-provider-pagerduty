@@ -66,7 +66,7 @@ The following arguments are supported:
 * `expression`- (Required) A [PCL condition](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) string.
 
 ### Actions (`actions`) supports the following:
-* `route_to` - (Optional) The ID of a Set from this Unrouted Orchestration whose rules you also want to use with event that match this rule.
+* `route_to` - (Optional) The ID of a Set from this Unrouted Orchestration whose rules you also want to use with events that match this rule.
 * `severity` - (Optional) sets Severity of the resulting alert. Allowed values are: `info`, `error`, `warning`, `critical`
 * `event_action` - (Optional) sets whether the resulting alert status is trigger or resolve. Allowed values are: `trigger`, `resolve`
 * `variable` - (Optional) Populate variables from event payloads and use those variables in other event actions.

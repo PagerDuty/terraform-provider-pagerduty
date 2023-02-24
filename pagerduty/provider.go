@@ -166,7 +166,7 @@ func providerConfigure(data *schema.ResourceData, terraformVersion string) (inte
 	var SlackUrl = data.Get("slack_url").(string)
 
 	if SlackUrl == "" {
-		SlackUrl = "https://api." + ServiceRegion + "pagerduty.com"
+		SlackUrl = "https://app." + ServiceRegion + "pagerduty.com"
 	}
 
 	config := Config{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -20,7 +21,7 @@ func resourcePagerDutyEventOrchestrationIntegration() *schema.Resource {
 		UpdateContext: resourcePagerDutyEventOrchestrationIntegrationUpdate,
 		DeleteContext: resourcePagerDutyEventOrchestrationIntegrationDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyEventOrchestrationIntegrationImport,
+			StateContext: resourcePagerDutyEventOrchestrationIntegrationImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
@@ -62,7 +63,7 @@ func addIntegrationMigrationWarning() schema.SchemaValidateDiagFunc {
 
 		diags = append(diags, diag.Diagnostic{
 			Severity:      diag.Warning,
-			Summary:       fmt.Sprintf("Once you modify the event_orchestration property all future events will be evaluated against the new Event Orchestration"),
+			Summary:       "Modifying the event_orchestration property of the 'pagerduty_event_orchestration_integration' resource will cause all future events sent with this integration's routing key to be evaluated against the new Event Orchestration.",
 			AttributePath: p,
 		})
 
@@ -122,12 +123,12 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 	}
 
 	id := d.Id()
-	orchestrationId := d.Get("event_orchestration").(string)
+	oid := d.Get("event_orchestration").(string)
 
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
-		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, orchestrationId)
+		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.Get(orchestrationId, id); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.Get(oid, id); err != nil {
 			return resource.RetryableError(err)
 		} else if integration != nil {
 			setEventOrchestrationIntegrationProps(d, integration)
@@ -233,22 +234,35 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 	return diags
 }
 
-func resourcePagerDutyEventOrchestrationIntegrationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestratiion_id>.<integration_id>")
+	}
+	oid, id := ids[0], ids[1]
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
-	id := d.Id()
-	orchestrationId, _ := getEventOrchestrationIntegrationPayloadData(d)
-	_, _, err = client.EventOrchestrationIntegrations.Get(orchestrationId, id)
+	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
-	if err != nil {
-		return []*schema.ResourceData{}, err
+		if integration, _, err := client.EventOrchestrationIntegrations.Get(oid, id); err != nil {
+			return resource.RetryableError(err)
+		} else if integration != nil {
+			d.SetId(id)
+			d.Set("event_orchestration", oid)
+			setEventOrchestrationIntegrationProps(d, integration)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return []*schema.ResourceData{}, retryErr
 	}
-
-	d.SetId(id)
-	d.Set("event_orchestration", orchestrationId)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -263,7 +277,6 @@ func flattenEventOrchestrationIntegrationParameters(p *pagerduty.EventOrchestrat
 }
 
 func setEventOrchestrationIntegrationProps(d *schema.ResourceData, i *pagerduty.EventOrchestrationIntegration) error {
-	d.Set("id", i.ID)
 	d.Set("label", i.Label)
 	d.Set("parameters", flattenEventOrchestrationIntegrationParameters(i.Parameters))
 

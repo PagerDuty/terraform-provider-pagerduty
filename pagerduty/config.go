@@ -29,6 +29,9 @@ type Config struct {
 	// The PagerDuty User level token for Slack
 	UserToken string
 
+	// The URL to send requests to Slack
+	SlackUrlOverride string
+
 	// Skip validation of the token against the PagerDuty API
 	SkipCredsValidation bool
 
@@ -117,7 +120,7 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
 	config := &pagerduty.Config{
-		BaseURL:    c.AppUrl,
+		BaseURL:    c.SlackUrlOverride,
 		Debug:      logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
 		Token:      c.UserToken,

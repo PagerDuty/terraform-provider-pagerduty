@@ -43,6 +43,12 @@ func Provider() *schema.Provider {
 				Optional: true,
 				Default:  "",
 			},
+
+			"slack_url": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -157,6 +163,12 @@ func providerConfigure(data *schema.ResourceData, terraformVersion string) (inte
 		ServiceRegion = ServiceRegion + "."
 	}
 
+	var SlackUrl = data.Get("slack_url").(string)
+
+	if SlackUrl == "" {
+		SlackUrl = "https://api." + ServiceRegion + "pagerduty.com"
+	}
+
 	config := Config{
 		ApiUrl:              "https://api." + ServiceRegion + "pagerduty.com",
 		AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
@@ -165,6 +177,7 @@ func providerConfigure(data *schema.ResourceData, terraformVersion string) (inte
 		UserToken:           data.Get("user_token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
 		ApiUrlOverride:      data.Get("api_url_override").(string),
+		SlackUrlOverride:    SlackUrl,
 	}
 
 	log.Println("[INFO] Initializing PagerDuty client")

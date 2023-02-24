@@ -22,8 +22,8 @@ type EventOrchestrationIntegrationPayload struct {
 }
 
 type EventOrchestrationIntegrationMigrationPayload struct {
-	SourceType 		string `json:"source_type,omitempty"`
-	SourceId			string `json:"source_id,omitempty"`
+	SourceType    string `json:"source_type,omitempty"`
+	SourceId      string `json:"source_id,omitempty"`
 	IntegrationId string `json:"integration_id,omitempty"`
 }
 
@@ -33,13 +33,26 @@ type ListEventOrchestrationIntegrationsResponse struct {
 }
 
 func buildEventOrchestrationIntegrationUrl(orchestrationId string, lastUrlSegment string) string {
-	baseUrl := fmt.Sprintf("%s/%s/integrations", eventOrchestrationBaseUrl, orchestrationId)
+	url := fmt.Sprintf("%s/%s/integrations", eventOrchestrationBaseUrl, orchestrationId)
 
 	if len(lastUrlSegment) > 0 {
-		baseUrl = fmt.Sprintf("%s/%s", baseUrl, lastUrlSegment)
+		url = fmt.Sprintf("%s/%s", url, lastUrlSegment)
 	}
 
-	return fmt.Sprintf("%s/%s/integrations/%s", eventOrchestrationBaseUrl, orchestrationId, lastUrlSegment)
+	return url
+}
+
+func (s *EventOrchestrationIntegrationService) List(orchestrationId string) (*ListEventOrchestrationIntegrationsResponse, *Response, error) {
+	u := buildEventOrchestrationIntegrationUrl(orchestrationId, "")
+	v := new(ListEventOrchestrationIntegrationsResponse)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, v)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
 }
 
 func (s *EventOrchestrationIntegrationService) Create(orchestrationId string, integration *EventOrchestrationIntegration) (*EventOrchestrationIntegration, *Response, error) {
@@ -56,12 +69,11 @@ func (s *EventOrchestrationIntegrationService) Create(orchestrationId string, in
 	return v.Integration, resp, nil
 }
 
-func (s *EventOrchestrationIntegrationService) Get(orchestrationId string, Id string) (*EventOrchestrationIntegration, *Response, error) {
-	u := buildEventOrchestrationIntegrationUrl(orchestrationId, Id)
+func (s *EventOrchestrationIntegrationService) Get(orchestrationId string, id string) (*EventOrchestrationIntegration, *Response, error) {
+	u := buildEventOrchestrationIntegrationUrl(orchestrationId, id)
 	v := new(EventOrchestrationIntegrationPayload)
-	p := &EventOrchestrationIntegrationPayload{}
 
-	resp, err := s.client.newRequestDo("GET", u, nil, p, v)
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -69,8 +81,8 @@ func (s *EventOrchestrationIntegrationService) Get(orchestrationId string, Id st
 	return v.Integration, resp, nil
 }
 
-func (s *EventOrchestrationIntegrationService) Update(orchestrationId string, Id string, integration *EventOrchestrationIntegration) (*EventOrchestrationIntegration, *Response, error) {
-	u := buildEventOrchestrationIntegrationUrl(orchestrationId, Id)
+func (s *EventOrchestrationIntegrationService) Update(orchestrationId string, id string, integration *EventOrchestrationIntegration) (*EventOrchestrationIntegration, *Response, error) {
+	u := buildEventOrchestrationIntegrationUrl(orchestrationId, id)
 	v := new(EventOrchestrationIntegrationPayload)
 	p := &EventOrchestrationIntegrationPayload{Integration: integration}
 
@@ -82,18 +94,18 @@ func (s *EventOrchestrationIntegrationService) Update(orchestrationId string, Id
 	return v.Integration, resp, nil
 }
 
-func (s *EventOrchestrationIntegrationService) Delete(orchestrationId string, Id string) (*Response, error) {
-	u := buildEventOrchestrationIntegrationUrl(orchestrationId, Id)
+func (s *EventOrchestrationIntegrationService) Delete(orchestrationId string, id string) (*Response, error) {
+	u := buildEventOrchestrationIntegrationUrl(orchestrationId, id)
 	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
 }
 
-func (s *EventOrchestrationIntegrationService) MigrateFromOrchestration(destinationOrchestrationId string, sourceOrchestrationId string, integrationId string) (*ListEventOrchestrationIntegrationsResponse, *Response, error) {
+func (s *EventOrchestrationIntegrationService) MigrateFromOrchestration(destinationOrchestrationId string, sourceOrchestrationId string, id string) (*ListEventOrchestrationIntegrationsResponse, *Response, error) {
 	u := buildEventOrchestrationIntegrationUrl(destinationOrchestrationId, "migration")
 	v := new(ListEventOrchestrationIntegrationsResponse)
 	p := &EventOrchestrationIntegrationMigrationPayload{
-		SourceType: "orchestration",
-		SourceId: sourceOrchestrationId,
-		IntegrationId: integrationId,
+		SourceType:    "orchestration",
+		SourceId:      sourceOrchestrationId,
+		IntegrationId: id,
 	}
 
 	resp, err := s.client.newRequestDo("POST", u, nil, p, v)

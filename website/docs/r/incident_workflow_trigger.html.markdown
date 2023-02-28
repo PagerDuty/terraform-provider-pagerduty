@@ -10,8 +10,6 @@ description: |-
 
 An [Incident Workflow Trigger](https://support.pagerduty.com/docs/incident-workflows#triggers) defines when and if an [Incident Workflow](https://support.pagerduty.com/docs/incident-workflows) will be triggered.
 
--> The Incident Workflows feature is currently available in Early Access.
-
 ## Example Usage
 
 ```hcl

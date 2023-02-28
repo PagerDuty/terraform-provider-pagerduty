@@ -75,7 +75,7 @@ func (s *IncidentWorkflowTriggerService) ListContext(ctx context.Context, o *Lis
 	}
 
 	if o.Limit != 0 {
-		resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, o, nil, &v, incidentWorkflowsEarlyAccessHeader)
+		resp, err := s.client.newRequestDoContext(ctx, "GET", u, o, nil, &v)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -104,7 +104,7 @@ func (s *IncidentWorkflowTriggerService) ListContext(ctx context.Context, o *Lis
 		}
 		err := s.client.newRequestCursorPagedGetQueryDoContext(ctx, u, responseHandler, &listIncidentWorkflowTriggerOptionsGen{
 			options: o,
-		}, incidentWorkflowsEarlyAccessHeader)
+		})
 		if err != nil {
 			return nil, nil, err
 		}
@@ -124,7 +124,7 @@ func (s *IncidentWorkflowTriggerService) GetContext(ctx context.Context, id stri
 	u := fmt.Sprintf("/incident_workflows/triggers/%s", id)
 	v := new(IncidentWorkflowTriggerPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, nil, nil, v, incidentWorkflowsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -142,7 +142,7 @@ func (s *IncidentWorkflowTriggerService) CreateContext(ctx context.Context, t *I
 	u := "/incident_workflows/triggers"
 	v := new(IncidentWorkflowTriggerPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "POST", u, nil, &t, &v, incidentWorkflowsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "POST", u, nil, &t, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -158,7 +158,7 @@ func (s *IncidentWorkflowTriggerService) Delete(id string) (*Response, error) {
 // DeleteContext removes an existing incident workflow trigger.
 func (s *IncidentWorkflowTriggerService) DeleteContext(ctx context.Context, id string) (*Response, error) {
 	u := fmt.Sprintf("/incident_workflows/triggers/%s", id)
-	return s.client.newRequestDoOptionsContext(ctx, "DELETE", u, nil, nil, nil, incidentWorkflowsEarlyAccessHeader)
+	return s.client.newRequestDoContext(ctx, "DELETE", u, nil, nil, nil)
 }
 
 // Update updates an existing incident workflow trigger.
@@ -171,7 +171,7 @@ func (s *IncidentWorkflowTriggerService) UpdateContext(ctx context.Context, id s
 	u := fmt.Sprintf("/incident_workflows/triggers/%s", id)
 	v := new(IncidentWorkflowTriggerPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "PUT", u, nil, &t, &v, incidentWorkflowsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, &t, &v)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -55,12 +55,6 @@ type IncidentWorkflowPayload struct {
 	IncidentWorkflow *IncidentWorkflow `json:"incident_workflow,omitempty"`
 }
 
-var incidentWorkflowsEarlyAccessHeader = RequestOptions{
-	Type:  "header",
-	Label: "X-EARLY-ACCESS",
-	Value: "incident-workflows-early-access",
-}
-
 // ListIncidentWorkflowOptions represents options when retrieving a list of incident workflows.
 type ListIncidentWorkflowOptions struct {
 	Offset   int      `url:"offset,omitempty"`
@@ -102,7 +96,7 @@ func (s *IncidentWorkflowService) ListContext(ctx context.Context, o *ListIncide
 	}
 
 	if o.Limit != 0 {
-		resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, o, nil, &v, incidentWorkflowsEarlyAccessHeader)
+		resp, err := s.client.newRequestDoContext(ctx, "GET", u, o, nil, &v)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -132,7 +126,7 @@ func (s *IncidentWorkflowService) ListContext(ctx context.Context, o *ListIncide
 		}
 		err := s.client.newRequestPagedGetQueryDoContext(ctx, u, responseHandler, &listIncidentWorkflowOptionsGen{
 			options: o,
-		}, incidentWorkflowsEarlyAccessHeader)
+		})
 		if err != nil {
 			return nil, nil, err
 		}
@@ -152,7 +146,7 @@ func (s *IncidentWorkflowService) GetContext(ctx context.Context, id string) (*I
 	u := fmt.Sprintf("/incident_workflows/%s", id)
 	v := new(IncidentWorkflowPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, nil, nil, v, incidentWorkflowsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -170,7 +164,7 @@ func (s *IncidentWorkflowService) CreateContext(ctx context.Context, iw *Inciden
 	u := "/incident_workflows"
 	v := new(IncidentWorkflowPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "POST", u, nil, &IncidentWorkflowPayload{IncidentWorkflow: iw}, &v, incidentWorkflowsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "POST", u, nil, &IncidentWorkflowPayload{IncidentWorkflow: iw}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -186,7 +180,7 @@ func (s *IncidentWorkflowService) Delete(id string) (*Response, error) {
 // DeleteContext removes an existing incident workflow.
 func (s *IncidentWorkflowService) DeleteContext(ctx context.Context, id string) (*Response, error) {
 	u := fmt.Sprintf("/incident_workflows/%s", id)
-	return s.client.newRequestDoOptionsContext(ctx, "DELETE", u, nil, nil, nil, incidentWorkflowsEarlyAccessHeader)
+	return s.client.newRequestDoContext(ctx, "DELETE", u, nil, nil, nil)
 }
 
 // Update updates an existing incident workflow.
@@ -199,7 +193,7 @@ func (s *IncidentWorkflowService) UpdateContext(ctx context.Context, id string, 
 	u := fmt.Sprintf("/incident_workflows/%s", id)
 	v := new(IncidentWorkflowPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "PUT", u, nil, &IncidentWorkflowPayload{IncidentWorkflow: iw}, &v, incidentWorkflowsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, &IncidentWorkflowPayload{IncidentWorkflow: iw}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

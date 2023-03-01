@@ -55,11 +55,7 @@ func dataSourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d
 	lbl := d.Get("label").(string)
 
 	if id == "" && lbl == "" {
-		diag := diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Invalid Event Orchestration Integration data source configuration: ID and label cannot both be null",
-		}
-		return append(diags, diag)
+		return diag.FromErr(fmt.Errorf("Invalid Event Orchestration Integration data source configuration: ID and label cannot both be null"))
 	}
 
 	oid := d.Get("event_orchestration").(string)

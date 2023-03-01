@@ -237,7 +237,7 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestratiion_id>.<integration_id>")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestration_id>.<integration_id>")
 	}
 	oid, id := ids[0], ids[1]
 

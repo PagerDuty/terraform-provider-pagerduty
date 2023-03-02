@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty_event_orchestration_integration
 
-An Event Orchestration Integration allows you to create and manage multiple Integrations (and Routing Keys) per Event Orchestration _and_ will alow you to move (migrate) Integrations _between_ two Event Orchestrations.
+An Event Orchestration Integration allows you to create and manage multiple Integrations (and Routing Keys) per Event Orchestration _and_ will allow you to move (migrate) Integrations _between_ two Event Orchestrations.
 
 ## Example of configuring an Integration for an Event Orchestration
 

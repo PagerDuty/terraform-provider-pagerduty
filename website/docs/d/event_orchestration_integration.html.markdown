@@ -14,10 +14,13 @@ Use this data source to get information about a specific [Integration][1] for an
 
 ```hcl
 
+resource "pagerduty_event_orchestration" "event_orchestration" {
+  name = "Test Event Orchestration"
+}
+
 data "pagerduty_event_orchestration_integration" "integration" {
-  event_orchestration = "19acac92-027a-4ea0-b06c-bbf516519601"
-  id = "1b49abe7-26db-4439-a715-c6d883acfb3e"
-  label = "Example integration"
+  event_orchestration = pagerduty_event_orchestration.event_orchestration.id
+  label = "Test Event Orchestration Default Integration"
 }
 
 ```
@@ -28,7 +31,7 @@ The following arguments are supported:
 
 - `event_orchestration` - (Required) ID of the Event Orchestration to which this Integration belongs.
 - `id` - (Optional) ID of the Integration associated with the Event Orchestration. Specify either `id` or `label`. If both are specified `id` takes precedence.
-- `label` - (Optional) Name/description of the Integration associated with the Event Orchestration. Specify either `id` or `label`. If both are specified `id` takes precedence. The value of `label` is not unique and potentially there might be multiple Integrations with the same `label` value associated with the Event Orchestration.
+- `label` - (Optional) Name/description of the Integration associated with the Event Orchestration. Specify either `id` or `label`. If both are specified `id` takes precedence. The value of `label` is not unique. Potentially there might be multiple Integrations with the same `label` value associated with the Event Orchestration and retrieving data by `label` attribute will result in an error during the planning step.
 
 ## Attributes Reference
 

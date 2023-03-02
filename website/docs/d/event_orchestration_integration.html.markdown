@@ -26,7 +26,7 @@ data "pagerduty_event_orchestration_integration" "integration" {
 
 The following arguments are supported:
 
-- `event_orchestration` - (Required) ID of the Event Orchestration to which this Integration belongs to.
+- `event_orchestration` - (Required) ID of the Event Orchestration to which this Integration belongs.
 - `id` - (Optional) ID of the Integration associated with the Event Orchestration. Specify either `id` or `label`. If both are specified `id` takes precedence.
 - `label` - (Optional) Name/description of the Integration associated with the Event Orchestration. Specify either `id` or `label`. If both are specified `id` takes precedence. The value of `label` is not unique and potentially there might be multiple Integrations with the same `label` value associated with the Event Orchestration.
 

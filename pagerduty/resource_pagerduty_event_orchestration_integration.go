@@ -82,8 +82,6 @@ func getEventOrchestrationIntegrationPayloadData(d *schema.ResourceData) (string
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return diag.FromErr(err)
@@ -98,6 +96,7 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 			if isErrCode(err, 400) {
 				return resource.NonRetryableError(err)
 			}
+			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {
 			d.SetId(integration.ID)
@@ -107,16 +106,13 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 	})
 
 	if retryErr != nil {
-		time.Sleep(2 * time.Second)
 		return diag.FromErr(retryErr)
 	}
 
-	return diags
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return diag.FromErr(err)
@@ -129,6 +125,7 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
 		if integration, _, err := client.EventOrchestrationIntegrations.Get(oid, id); err != nil {
+			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {
 			setEventOrchestrationIntegrationProps(d, integration)
@@ -137,16 +134,13 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 	})
 
 	if retryErr != nil {
-		time.Sleep(2 * time.Second)
 		return diag.FromErr(retryErr)
 	}
 
-	return diags
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return diag.FromErr(err)
@@ -167,14 +161,13 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 				if isErrCode(err, 400) {
 					return resource.NonRetryableError(err)
 				}
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 			return nil
 		})
 
 		if retryErr != nil {
-			time.Sleep(2 * time.Second)
-			d.Set("event_orchestration", sourceOrchId)
 			return diag.FromErr(retryErr)
 		}
 	}
@@ -190,6 +183,7 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 				if isErrCode(err, 400) {
 					return resource.NonRetryableError(err)
 				}
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			} else if integration != nil {
 				setEventOrchestrationIntegrationProps(d, integration)
@@ -198,17 +192,14 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 		})
 
 		if retryErr != nil {
-			time.Sleep(2 * time.Second)
 			return diag.FromErr(retryErr)
 		}
 	}
 
-	return diags
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return diag.FromErr(err)
@@ -219,19 +210,19 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		if _, err := client.EventOrchestrationIntegrations.Delete(orchestrationId, id); err != nil {
+			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil
 	})
 
 	if retryErr != nil {
-		time.Sleep(2 * time.Second)
 		return diag.FromErr(retryErr)
 	}
 
 	d.SetId("")
 
-	return diags
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
@@ -260,7 +251,6 @@ func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d
 	})
 
 	if retryErr != nil {
-		time.Sleep(2 * time.Second)
 		return []*schema.ResourceData{}, retryErr
 	}
 

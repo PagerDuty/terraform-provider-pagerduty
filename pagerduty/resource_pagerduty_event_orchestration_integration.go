@@ -87,25 +87,31 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 		return diag.FromErr(err)
 	}
 
-	orchestrationId, payload := getEventOrchestrationIntegrationPayloadData(d)
+	oid, payload := getEventOrchestrationIntegrationPayloadData(d)
 
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
-		log.Printf("[INFO] Creating Integration '%s' for PagerDuty Event Orchestration: %s", payload.Label, orchestrationId)
+		log.Printf("[INFO] Creating Integration '%s' for PagerDuty Event Orchestration '%s'", payload.Label, oid)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.Create(orchestrationId, payload); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.CreateContext(ctx, oid, payload); err != nil {
 			if isErrCode(err, 400) {
 				return resource.NonRetryableError(err)
 			}
-			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {
-			d.SetId(integration.ID)
-			setEventOrchestrationIntegrationProps(d, integration)
+			// Try reading an integration after creation, retry if not found:
+			if _, _, readErr := client.EventOrchestrationIntegrations.GetContext(ctx, oid, integration.ID); readErr != nil {
+				log.Printf("[WARN] Cannot locate Integration '%s' on PagerDuty Event Orchestration '%s'. Retrying creation...", integration.ID, oid)
+				return resource.RetryableError(readErr)
+			} else {
+				d.SetId(integration.ID)
+				setEventOrchestrationIntegrationProps(d, integration)
+			}
 		}
 		return nil
 	})
 
 	if retryErr != nil {
+		time.Sleep(2 * time.Second)
 		return diag.FromErr(retryErr)
 	}
 
@@ -124,7 +130,7 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.Get(oid, id); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {
@@ -155,19 +161,19 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 		destinationOrchId := n.(string)
 
 		retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
-			log.Printf("[INFO] Migrating Event Orchestration Integration '%s' - source: %s, destination: %s", id, sourceOrchId, destinationOrchId)
+			log.Printf("[INFO] Migrating Event Orchestration Integration '%s': source - '%s', destination - '%s'", id, sourceOrchId, destinationOrchId)
 
-			if _, _, err := client.EventOrchestrationIntegrations.MigrateFromOrchestration(destinationOrchId, sourceOrchId, id); err != nil {
+			if _, _, err := client.EventOrchestrationIntegrations.MigrateFromOrchestrationContext(ctx, destinationOrchId, sourceOrchId, id); err != nil {
 				if isErrCode(err, 400) {
 					return resource.NonRetryableError(err)
 				}
-				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 			return nil
 		})
 
 		if retryErr != nil {
+			time.Sleep(2 * time.Second)
 			return diag.FromErr(retryErr)
 		}
 	}
@@ -179,11 +185,10 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 		retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 			log.Printf("[INFO] Updating Integration '%s' for PagerDuty Event Orchestration: %s", id, orchestrationId)
 
-			if integration, _, err := client.EventOrchestrationIntegrations.Update(orchestrationId, id, payload); err != nil {
+			if integration, _, err := client.EventOrchestrationIntegrations.UpdateContext(ctx, orchestrationId, id, payload); err != nil {
 				if isErrCode(err, 400) {
 					return resource.NonRetryableError(err)
 				}
-				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			} else if integration != nil {
 				setEventOrchestrationIntegrationProps(d, integration)
@@ -192,6 +197,7 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 		})
 
 		if retryErr != nil {
+			time.Sleep(2 * time.Second)
 			return diag.FromErr(retryErr)
 		}
 	}
@@ -206,17 +212,24 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 	}
 
 	id := d.Id()
-	orchestrationId, _ := getEventOrchestrationIntegrationPayloadData(d)
+	oid, _ := getEventOrchestrationIntegrationPayloadData(d)
 
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
-		if _, err := client.EventOrchestrationIntegrations.Delete(orchestrationId, id); err != nil {
-			time.Sleep(2 * time.Second)
+		log.Printf("[INFO] Deleting Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
+		if _, err := client.EventOrchestrationIntegrations.DeleteContext(ctx, oid, id); err != nil {
 			return resource.RetryableError(err)
+		} else {
+			// Try reading an integration after deletion, retry if still found:
+			if integr, _, readErr := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); readErr == nil && integr != nil {
+				log.Printf("[WARN] Integration '%s' still exists on PagerDuty Event Orchestration '%s'. Retrying deletion...", id, oid)
+				return resource.RetryableError(fmt.Errorf("Integration '%s' still exists on PagerDuty Event Orchestration '%s'.", id, oid))
+			}
 		}
 		return nil
 	})
 
 	if retryErr != nil {
+		time.Sleep(2 * time.Second)
 		return diag.FromErr(retryErr)
 	}
 
@@ -240,7 +253,7 @@ func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.Get(oid, id); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
 			return resource.RetryableError(err)
 		} else if integration != nil {
 			d.SetId(id)

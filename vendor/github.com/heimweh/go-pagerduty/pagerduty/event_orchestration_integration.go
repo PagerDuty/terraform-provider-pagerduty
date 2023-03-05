@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -43,10 +44,14 @@ func buildEventOrchestrationIntegrationUrl(orchestrationId string, lastUrlSegmen
 }
 
 func (s *EventOrchestrationIntegrationService) List(orchestrationId string) (*ListEventOrchestrationIntegrationsResponse, *Response, error) {
+	return s.ListContext(context.Background(), orchestrationId)
+}
+
+func (s *EventOrchestrationIntegrationService) ListContext(ctx context.Context, orchestrationId string) (*ListEventOrchestrationIntegrationsResponse, *Response, error) {
 	u := buildEventOrchestrationIntegrationUrl(orchestrationId, "")
 	v := new(ListEventOrchestrationIntegrationsResponse)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, v)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, v)
 
 	if err != nil {
 		return nil, nil, err
@@ -56,11 +61,15 @@ func (s *EventOrchestrationIntegrationService) List(orchestrationId string) (*Li
 }
 
 func (s *EventOrchestrationIntegrationService) Create(orchestrationId string, integration *EventOrchestrationIntegration) (*EventOrchestrationIntegration, *Response, error) {
+	return s.CreateContext(context.Background(), orchestrationId, integration)
+}
+
+func (s *EventOrchestrationIntegrationService) CreateContext(ctx context.Context, orchestrationId string, integration *EventOrchestrationIntegration) (*EventOrchestrationIntegration, *Response, error) {
 	u := buildEventOrchestrationIntegrationUrl(orchestrationId, "")
 	v := new(EventOrchestrationIntegrationPayload)
 	p := &EventOrchestrationIntegrationPayload{Integration: integration}
 
-	resp, err := s.client.newRequestDo("POST", u, nil, p, v)
+	resp, err := s.client.newRequestDoContext(ctx, "POST", u, nil, p, v)
 
 	if err != nil {
 		return nil, nil, err
@@ -70,10 +79,14 @@ func (s *EventOrchestrationIntegrationService) Create(orchestrationId string, in
 }
 
 func (s *EventOrchestrationIntegrationService) Get(orchestrationId string, id string) (*EventOrchestrationIntegration, *Response, error) {
+	return s.GetContext(context.Background(), orchestrationId, id)
+}
+
+func (s *EventOrchestrationIntegrationService) GetContext(ctx context.Context, orchestrationId string, id string) (*EventOrchestrationIntegration, *Response, error) {
 	u := buildEventOrchestrationIntegrationUrl(orchestrationId, id)
 	v := new(EventOrchestrationIntegrationPayload)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, v)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -82,11 +95,15 @@ func (s *EventOrchestrationIntegrationService) Get(orchestrationId string, id st
 }
 
 func (s *EventOrchestrationIntegrationService) Update(orchestrationId string, id string, integration *EventOrchestrationIntegration) (*EventOrchestrationIntegration, *Response, error) {
+	return s.UpdateContext(context.Background(), orchestrationId, id, integration)
+}
+
+func (s *EventOrchestrationIntegrationService) UpdateContext(ctx context.Context, orchestrationId string, id string, integration *EventOrchestrationIntegration) (*EventOrchestrationIntegration, *Response, error) {
 	u := buildEventOrchestrationIntegrationUrl(orchestrationId, id)
 	v := new(EventOrchestrationIntegrationPayload)
 	p := &EventOrchestrationIntegrationPayload{Integration: integration}
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, p, v)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, p, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -95,11 +112,19 @@ func (s *EventOrchestrationIntegrationService) Update(orchestrationId string, id
 }
 
 func (s *EventOrchestrationIntegrationService) Delete(orchestrationId string, id string) (*Response, error) {
+	return s.DeleteContext(context.Background(), orchestrationId, id)
+}
+
+func (s *EventOrchestrationIntegrationService) DeleteContext(ctx context.Context, orchestrationId string, id string) (*Response, error) {
 	u := buildEventOrchestrationIntegrationUrl(orchestrationId, id)
-	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+	return s.client.newRequestDoContext(ctx, "DELETE", u, nil, nil, nil)
 }
 
 func (s *EventOrchestrationIntegrationService) MigrateFromOrchestration(destinationOrchestrationId string, sourceOrchestrationId string, id string) (*ListEventOrchestrationIntegrationsResponse, *Response, error) {
+	return s.MigrateFromOrchestrationContext(context.Background(), destinationOrchestrationId, sourceOrchestrationId, id)
+}
+
+func (s *EventOrchestrationIntegrationService) MigrateFromOrchestrationContext(ctx context.Context, destinationOrchestrationId string, sourceOrchestrationId string, id string) (*ListEventOrchestrationIntegrationsResponse, *Response, error) {
 	u := buildEventOrchestrationIntegrationUrl(destinationOrchestrationId, "migration")
 	v := new(ListEventOrchestrationIntegrationsResponse)
 	p := &EventOrchestrationIntegrationMigrationPayload{
@@ -108,7 +133,7 @@ func (s *EventOrchestrationIntegrationService) MigrateFromOrchestration(destinat
 		IntegrationId: id,
 	}
 
-	resp, err := s.client.newRequestDo("POST", u, nil, p, v)
+	resp, err := s.client.newRequestDoContext(ctx, "POST", u, nil, p, v)
 
 	if err != nil {
 		return nil, nil, err

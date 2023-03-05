@@ -84,7 +84,7 @@ func getEventOrchestrationIntegrationById(ctx context.Context, d *schema.Resourc
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading Integration data source by ID '%s' for PagerDuty Event Orchestration '%s'", id, oid)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.Get(oid, id); err != nil {
+		if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
 			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {

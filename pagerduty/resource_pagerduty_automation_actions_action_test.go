@@ -47,6 +47,8 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", "-arg 1"),
 					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
 					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", "tags: production"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", ""),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", ""),
@@ -71,6 +73,8 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
 					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", ""),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", ""),
 					resource.TestCheckResourceAttr(
@@ -113,6 +117,8 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
 					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", ""),
+					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", "java --version"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", "/bin/bash"),
@@ -137,6 +143,8 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", ""),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
+					resource.TestCheckResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", ""),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", "echo 777"),
 					resource.TestCheckResourceAttr(
@@ -205,6 +213,7 @@ resource "pagerduty_automation_actions_action" "foo" {
 	action_data_reference {
 		process_automation_job_id = "pa_job_id_123"
 		process_automation_job_arguments = "-arg 1"
+		process_automation_node_filter = "tags: production"
 	  }
 }
 `, actionName, actionName)

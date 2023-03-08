@@ -168,6 +168,22 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 					return resource.NonRetryableError(err)
 				}
 				return resource.RetryableError(err)
+			} else {
+				// try reading the migrated integration from destination and source:
+				_, _, readDestErr := client.EventOrchestrationIntegrations.GetContext(ctx, destinationOrchId, id)
+				srcInt, _, readSrcErr := client.EventOrchestrationIntegrations.GetContext(ctx, sourceOrchId, id)
+
+				// retry migration if the read request returned an error:
+				if readDestErr != nil {
+					log.Printf("[WARN] Integration '%s' cannot be found on the destination PagerDuty Event Orchestration '%s'. Retrying migration....", id, destinationOrchId)
+					return resource.RetryableError(readDestErr)
+				}
+
+				// retry migration if the integration still exists on the source:
+				if readSrcErr == nil && srcInt != nil {
+					log.Printf("[WARN] Integration '%s' still exists on the source PagerDuty Event Orchestration '%s'. Retrying migration....", id, sourceOrchId)
+					return resource.RetryableError(fmt.Errorf("Integration '%s' still exists on the source PagerDuty Event Orchestration '%s'.", id, sourceOrchId))
+				}
 			}
 			return nil
 		})
@@ -180,18 +196,24 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 
 	// Update migrated integration if the label property was modified
 	if d.HasChange("label") {
-		orchestrationId, payload := getEventOrchestrationIntegrationPayloadData(d)
+		oid, payload := getEventOrchestrationIntegrationPayloadData(d)
 
 		retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
-			log.Printf("[INFO] Updating Integration '%s' for PagerDuty Event Orchestration: %s", id, orchestrationId)
+			log.Printf("[INFO] Updating Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
-			if integration, _, err := client.EventOrchestrationIntegrations.UpdateContext(ctx, orchestrationId, id, payload); err != nil {
+			if integration, _, err := client.EventOrchestrationIntegrations.UpdateContext(ctx, oid, id, payload); err != nil {
 				if isErrCode(err, 400) {
 					return resource.NonRetryableError(err)
 				}
 				return resource.RetryableError(err)
 			} else if integration != nil {
-				setEventOrchestrationIntegrationProps(d, integration)
+				// Try reading an integration after updating the label, retry if the label is not updated:
+				if updInt, _, readErr := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); readErr == nil && updInt.Label != payload.Label {
+					log.Printf("[WARN] Label for Integration '%s' on PagerDuty Event Orchestration '%s' was not updated. Expected: '%s', actual: '%s'. Retrying update...", id, oid, payload.Label, updInt.Label)
+					return resource.RetryableError(fmt.Errorf("Label for Integration '%s' on PagerDuty Event Orchestration '%s' was not updated.", id, oid))
+				} else {
+					setEventOrchestrationIntegrationProps(d, integration)
+				}
 			}
 			return nil
 		})

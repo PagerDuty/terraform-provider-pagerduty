@@ -167,6 +167,52 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					testAccCheckPagerDutyEventOrchestrationServicePathNotExists(resourceName),
 				),
 			},
+			// Adding/Updating/Removing `enable_event_orchestration_for_service` attribute
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckNoResourceAttr(resourceName, "enable_event_orchestration_for_service"),
+					)...,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceEnableUpdateConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "enable_event_orchestration_for_service", "true"),
+					)...,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceDisableUpdateConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "enable_event_orchestration_for_service", "false"),
+					)...,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceEnableUpdateConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "enable_event_orchestration_for_service", "true"),
+					)...,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "enable_event_orchestration_for_service", "false"),
+					)...,
+				),
+			},
 		},
 	})
 }
@@ -650,7 +696,6 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 			catch_all {
 				actions {
 					suspend = 360
-					suppress = true
 					priority = "P0IN2KX"
 					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
 					pagerduty_automation_action {
@@ -730,4 +775,38 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceOneSetNoActionsConfig(ep,
 
 func testAccCheckPagerDutyEventOrchestrationPathServiceResourceDeleteConfig(ep, s string) string {
 	return createBaseServicePathConfig(ep, s)
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceEnableUpdateConfig(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			service = pagerduty_service.bar.id
+      enable_event_orchestration_for_service = true
+		
+			set {
+				id = "start"
+			}
+
+			catch_all {
+				actions { }
+			}
+		}
+	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceDisableUpdateConfig(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			service = pagerduty_service.bar.id
+      enable_event_orchestration_for_service = false
+		
+			set {
+				id = "start"
+			}
+
+			catch_all {
+				actions { }
+			}
+		}
+	`)
 }

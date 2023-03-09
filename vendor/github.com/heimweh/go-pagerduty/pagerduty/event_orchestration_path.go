@@ -93,6 +93,10 @@ type EventOrchestrationPathActionExtractions struct {
 	Source   string `json:"source,omitempty"`
 }
 
+type EventOrchestrationPathServiceActiveStatus struct {
+	Active bool `json:"active"`
+}
+
 type EventOrchestrationPathCatchAll struct {
 	Actions *EventOrchestrationPathRuleActions `json:"actions,omitempty"`
 }
@@ -132,6 +136,20 @@ func (s *EventOrchestrationPathService) Get(id string, pathType string) (*EventO
 	return v.OrchestrationPath, resp, nil
 }
 
+// GetServiceActiveStatus for EventOrchestrationPath
+func (s *EventOrchestrationPathService) GetServiceActiveStatus(id string) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
+	u := fmt.Sprintf("%s/services/%s/active", eventOrchestrationBaseUrl, id)
+	v := new(EventOrchestrationPathServiceActiveStatus)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, nil
+}
+
 // Update for EventOrchestrationPath
 func (s *EventOrchestrationPathService) Update(id string, pathType string, orchestration_path *EventOrchestrationPath) (*EventOrchestrationPath, *Response, error) {
 	u := orchestrationPathUrlBuilder(id, pathType)
@@ -144,4 +162,18 @@ func (s *EventOrchestrationPathService) Update(id string, pathType string, orche
 	}
 
 	return v.OrchestrationPath, resp, nil
+}
+
+// UpdateServiceActiveStatus for EventOrchestrationPath
+func (s *EventOrchestrationPathService) UpdateServiceActiveStatus(id string, isActive bool) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
+	u := fmt.Sprintf("%s/services/%s/active", eventOrchestrationBaseUrl, id)
+	v := new(EventOrchestrationPathServiceActiveStatus)
+	p := EventOrchestrationPathServiceActiveStatus{Active: isActive}
+
+	resp, err := s.client.newRequestDo("PUT", u, nil, p, &v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v, resp, err
 }

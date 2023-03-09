@@ -1,3 +1,12 @@
+## 2.11.1 (March 9, 2023)
+
+IMPROVEMENTS:
+*  `resource/pagerduty_event_orchestration_service`: Enable event orchestration active status for service ([#649](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/649))
+* Remove early access header for incident workflows. ([#645](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/645))
+  - `data_source/pagerduty_incident_workflow`
+  - `resource/pagerduty_incident_workflow`
+  - `resource/pagerduty_incident_workflow_trigger`
+
 ## 2.11.0 (February 15, 2023)
 
 FEATURES:

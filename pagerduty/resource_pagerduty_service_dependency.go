@@ -181,10 +181,11 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	// listServiceRelationships by calling get dependencies using the serviceDependency.DependentService.ID
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(dependency.DependentService.ID, dependency.DependentService.Type); err != nil {
-			if isErrCode(err, 404) || isErrCode(err, 500) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
-			}
-			return resource.NonRetryableError(err)
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
+
+			return resource.RetryableError(err)
 		} else if dependencies != nil {
 			for _, rel := range dependencies.Relationships {
 				if rel.ID == d.Id() {
@@ -221,10 +222,11 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	}
 	retryErr = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input); err != nil {
-			if isErrCode(err, 404) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
-			}
-			return resource.NonRetryableError(err)
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
+
+			return resource.RetryableError(err)
 		}
 		return nil
 	})
@@ -295,10 +297,11 @@ func findDependencySetState(depID, serviceID, serviceType string, d *schema.Reso
 	time.Sleep(1 * time.Second)
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(serviceID, serviceType); err != nil {
-			if isErrCode(err, 404) || isErrCode(err, 500) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
-			}
-			return resource.NonRetryableError(err)
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
+
+			return resource.RetryableError(err)
 		} else if dependencies != nil {
 			for _, rel := range dependencies.Relationships {
 				if rel.ID == depID {

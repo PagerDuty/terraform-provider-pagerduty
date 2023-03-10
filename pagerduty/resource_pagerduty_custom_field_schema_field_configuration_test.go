@@ -599,7 +599,7 @@ func testAccDeleteTestPagerDutyCustomFieldSchemaForFieldConfiguration(schemaID s
 func testAccCheckPagerDutyCustomFieldConfigurationDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_custom_field_configuration" {
+		if r.Type != "pagerduty_custom_field_schema_field_configuration" {
 			continue
 		}
 

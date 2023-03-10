@@ -1,3 +1,12 @@
+## 2.11.2 (March 10, 2023)
+
+IMPROVEMENTS:
+*  `resource/pagerduty_custom_field_schema_field_configuration`: Addressing name typo on custom fields schema field config docs and test ([#654](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/654))
+*  `resource/pagerduty_service_dependency`: Addressing GOAWAY error on `pagerduty_service_dependency` ([#653](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/653))
+* Add support for `process_automation_node_filter` on Automation Actions ([#647](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/647))
+  - `data_source/pagerduty_automation_actions_action`
+  - `resource/pagerduty_automation_actions_action`
+
 ## 2.11.1 (March 9, 2023)
 
 IMPROVEMENTS:

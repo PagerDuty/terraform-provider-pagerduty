@@ -25,7 +25,7 @@ resource "pagerduty_custom_field_schema" "my_schema" {
   description = "Fields used on incidents"
 }
 
-resource "pagerduty_custom_field_configuration" "first_field_configuration" {
+resource "pagerduty_custom_field_schema_field_configuration" "first_field_configuration" {
   schema                 = pagerduty_custom_field_schema.my_schema.id
   field                  = pagerduty_custom_field.cs_impact.id
   required               = true

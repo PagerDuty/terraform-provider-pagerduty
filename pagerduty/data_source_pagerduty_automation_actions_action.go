@@ -50,6 +50,11 @@ func dataSourcePagerDutyAutomationActionsAction() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
+						"process_automation_node_filter": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
 						"script": {
 							Type:     schema.TypeString,
 							Optional: true,

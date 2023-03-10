@@ -26,6 +26,7 @@ type AutomationActionsAction struct {
 type AutomationActionsActionDataReference struct {
 	ProcessAutomationJobId        *string `json:"process_automation_job_id,omitempty"`
 	ProcessAutomationJobArguments *string `json:"process_automation_job_arguments,omitempty"`
+	ProcessAutomationNodeFilter   *string `json:"process_automation_node_filter,omitempty"`
 	Script                        *string `json:"script,omitempty"`
 	InvocationCommand             *string `json:"invocation_command,omitempty"`
 }

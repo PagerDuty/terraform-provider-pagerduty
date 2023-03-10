@@ -49,10 +49,10 @@ Action Data (`action_data_reference`) supports the following:
 
   * `process_automation_job_id` - (Required for `process_automation` action_type) The ID of the Process Automation job to execute.
   * `process_automation_job_arguments` - (Optional) The arguments to pass to the Process Automation job execution.
+  * `process_automation_node_filter` - (Optional) The expression that filters on which nodes a Process Automation Job executes [Learn more](https://docs.rundeck.com/docs/manual/05-nodes.html#node-filtering).
   * `script` - (Required for `script` action_type) Body of the script to be executed on the Runner. Max length is 16777215 characters.
   * `invocation_command` - (Optional) The command to execute the script with.
 
-  
 ## Attributes Reference
 
 The following attributes are exported:

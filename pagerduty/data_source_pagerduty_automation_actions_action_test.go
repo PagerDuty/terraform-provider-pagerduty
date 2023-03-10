@@ -73,6 +73,7 @@ resource "pagerduty_automation_actions_action" "test" {
 	action_data_reference {
 		process_automation_job_id = "pa_job_id_123"
 		process_automation_job_arguments = "-arg 1"
+		process_automation_node_filter = "tags: production"
 	  }
 }
 

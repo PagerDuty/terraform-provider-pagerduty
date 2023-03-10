@@ -55,6 +55,10 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"process_automation_node_filter": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
 						"script": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -167,6 +171,13 @@ func expandActionDataReference(v interface{}) pagerduty.AutomationActionsActionD
 		v_str := v.(string)
 		if v_str != "" {
 			adr.ProcessAutomationJobArguments = &v_str
+		}
+	}
+
+	if v, ok := attr_map["process_automation_node_filter"]; ok {
+		v_str := v.(string)
+		if v_str != "" {
+			adr.ProcessAutomationNodeFilter = &v_str
 		}
 	}
 
@@ -297,6 +308,10 @@ func flattenActionDataReference(adr pagerduty.AutomationActionsActionDataReferen
 
 	if adr.ProcessAutomationJobArguments != nil {
 		adr_map["process_automation_job_arguments"] = *adr.ProcessAutomationJobArguments
+	}
+
+	if adr.ProcessAutomationNodeFilter != nil {
+		adr_map["process_automation_node_filter"] = *adr.ProcessAutomationNodeFilter
 	}
 
 	if adr.Script != nil {

@@ -1,8 +1,8 @@
 package pagerduty
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -188,7 +188,7 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 		t := "service"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for service: %s", t, id)
 
-		path, _, err := client.EventOrchestrationPaths.Get(id, t)
+		path, _, err = client.EventOrchestrationPaths.Get(id, t)
 
 		if err != nil {
 			time.Sleep(2 * time.Second)

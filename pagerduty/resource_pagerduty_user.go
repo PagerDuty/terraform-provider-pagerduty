@@ -109,7 +109,8 @@ func resourcePagerDutyUser() *schema.Resource {
 			},
 
 			"license": {
-				Required: true,
+				Computed: true,
+				Optional: true,
 				Type:     schema.TypeMap,
 				// Using the `Elem` block to define specific keys for the map is currently not possible.
 				// The workaround described in SDK documentation is to confirm the required keys are set when expanding the Map object inside the resource code.
@@ -117,7 +118,7 @@ func resourcePagerDutyUser() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				ValidateDiagFunc: validation.MapKeyMatch(regexp.MustCompile("(id|type)"), "`license` must only have `id` and `types` attributes"),
+				ValidateDiagFunc: validation.MapKeyMatch(regexp.MustCompile("(id|type)"), "`license` must only have `id` and `type` attributes"),
 			},
 		},
 	}
@@ -150,7 +151,7 @@ func buildUserStruct(d *schema.ResourceData) (*pagerduty.User, error) {
 	}
 
 	if attr, ok := d.GetOk("license"); ok {
-		license, err := expandLicense(attr.([]interface{}))
+		license, err := expandLicenseReference(attr)
 		if err != nil {
 			return nil, err
 		}
@@ -161,27 +162,6 @@ func buildUserStruct(d *schema.ResourceData) (*pagerduty.User, error) {
 	return user, nil
 }
 
-func expandLicense(v interface{}) (*pagerduty.LicenseReference, error) {
-	l := v.(map[string]interface{})
-
-	if _, ok := l["id"]; !ok {
-		return nil, fmt.Errorf("the `id` attribute of `license` is required")
-	}
-
-	if t, ok := l["type"]; !ok {
-		return nil, fmt.Errorf("the `type` attribute of `license` is required")
-	} else if t != "license_reference" {
-		return nil, fmt.Errorf("the `type` attribute of `license` must be `license_reference`")
-	}
-
-	var license = &pagerduty.LicenseReference{
-		ID:   l["id"].(string),
-		Type: l["type"].(string),
-	}
-
-	return license, nil
-}
-
 func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -189,6 +169,9 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	user, err := buildUserStruct(d)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Creating PagerDuty user %s", user.Name)
 
@@ -211,7 +194,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
+		user, err := client.Users.GetWithLicense(d.Id(), &pagerduty.GetUserOptions{})
 		if err != nil {
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
@@ -231,6 +214,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("avatar_url", user.AvatarURL)
 		d.Set("description", user.Description)
 		d.Set("job_title", user.JobTitle)
+		d.Set("license", flattenLicenseReference(user.License))
 
 		if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
 			return resource.NonRetryableError(
@@ -250,7 +234,8 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	if user, err := buildUserStruct(d); err != nil {
+	user, err := buildUserStruct(d)
+	if err != nil {
 		return err
 	}
 
@@ -344,4 +329,34 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 	// giving the API time to catchup
 	time.Sleep(time.Second)
 	return nil
+}
+
+func expandLicenseReference(v interface{}) (*pagerduty.LicenseReference, error) {
+	l := v.(map[string]interface{})
+
+	if _, ok := l["id"]; !ok {
+		return nil, fmt.Errorf("the `id` attribute of `license` is required")
+	}
+
+	if t, ok := l["type"]; !ok {
+		return nil, fmt.Errorf("the `type` attribute of `license` is required")
+	} else if t != "license_reference" {
+		return nil, fmt.Errorf("the `type` attribute of `license` must be `license_reference`")
+	}
+
+	var license = &pagerduty.LicenseReference{
+		ID:   l["id"].(string),
+		Type: l["type"].(string),
+	}
+
+	return license, nil
+}
+
+func flattenLicenseReference(l *pagerduty.LicenseReference) map[string]interface{} {
+	var license = map[string]interface{}{
+		"id":   l.ID,
+		"type": l.Type,
+	}
+
+	return license
 }

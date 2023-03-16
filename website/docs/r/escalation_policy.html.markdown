@@ -49,7 +49,7 @@ resource "pagerduty_escalation_policy" "example" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the escalation policy.
-* `teams` - (Optional) Teams associated with the policy. Account must have the `teams` ability to use this parameter.
+* `teams` - (Optional) Team associated with the policy (Only 1 team can be assigned to an Escalation Policy). Account must have the `teams` ability to use this parameter.
 * `description` - (Optional) A human-friendly description of the escalation policy.
   If not set, a placeholder of "Managed by Terraform" will be set.
 * `num_loops` - (Optional) The number of times the escalation policy will repeat after reaching the end of its escalation.

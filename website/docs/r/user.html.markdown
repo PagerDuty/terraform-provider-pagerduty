@@ -37,6 +37,11 @@ The following arguments are supported:
   * `time_zone` - (Optional) The time zone of the user. Default is account default timezone.
   * `description` - (Optional) A human-friendly description of the user.
     If not set, a placeholder of "Managed by Terraform" will be set.
+  * `license` - (Optional) The license assigned to the user. If provided the user's role must exist in the assigned license's `valid_roles` list. To reference purchased licenses see data source `pagerduty_licenses`.
+
+## License (`license`) supports the following:
+  * `id` - The id of the license
+  * `type` - Must be `license_refernce`
 
 ## Attributes Reference
 

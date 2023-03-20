@@ -18,7 +18,7 @@ func dataSourcePagerDutyLicenses() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"purchased": {
+			"licenses": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Optional: true,
@@ -107,7 +107,7 @@ func dataSourcePagerDutyLicensesRead(d *schema.ResourceData, meta interface{}) e
 		}
 
 		d.SetId(d.Get("name").(string))
-		d.Set("purchased", flattenLicenses(licenses))
+		d.Set("licenses", flattenLicenses(licenses))
 		return nil
 	})
 }

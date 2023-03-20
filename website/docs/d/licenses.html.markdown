@@ -26,13 +26,13 @@ resource "pagerduty_user" "example" {
   email = "125.greenholt.earline@graham.name"
 
 	license = {
-		id = data.pagerduty_licenses.licenses.purchased[0].id
+		id = data.pagerduty_licenses.licenses.licenses[0].id
 		type = "license_reference"
 	}
 
   # Role must be included in the assigned license's allowed_roles list.
   # Role may be dynamically referenced from data.pagerduty_licenses.licenses with the following:
-  # tolist(setsubtract(data.pagerduty_licenses.licenses.purchased[0].valid_roles, local.invalid_roles))[0]
+  # tolist(setsubtract(data.pagerduty_licenses.licenses.licenses[0].valid_roles, local.invalid_roles))[0]
 	role = "user"
 }
 ```
@@ -44,9 +44,9 @@ The following arguments are supported:
 * `name` - (Required) Used for referencing the data source.
 
 ## Attributes Reference
-* `purchased` - The list of purchased licenses.
+* `licenses` - The list of purchased licenses.
 
-### Purchased (`purchased`) supports the following:
+### Licenses (`licenses`) is a list of objects that support the following:
   * `id` - ID of the license
   * `name` - Name of the license
   * `summary` - Summary of the license

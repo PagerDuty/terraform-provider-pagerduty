@@ -43,19 +43,19 @@ func testAccDataSourcePagerDutyLicenses(n string) resource.TestCheckFunc {
 			"self",
 		}
 
-		if val, ok := a["purchased.#"]; !ok || val == "0" {
-			return fmt.Errorf("Expected licenses.purchased to have at least 1 license")
+		if val, ok := a["licenses.#"]; !ok || val == "0" {
+			return fmt.Errorf("Expected licenses.licenses to have at least 1 license")
 		}
 
 		for _, att := range testAtts {
-			required_sub_attr := fmt.Sprintf("purchased.0.%s", att)
+			required_sub_attr := fmt.Sprintf("licenses.0.%s", att)
 			if _, ok := a[required_sub_attr]; !ok {
 				return fmt.Errorf("Expected the required attribute %s to exist", required_sub_attr)
 			}
 		}
 
-		if val, ok := a["purchased.0.valid_roles.#"]; !ok || val == "0" {
-			return fmt.Errorf("Expected licenses.purchased[0].valid_roles to have at least 1 role")
+		if val, ok := a["licenses.0.valid_roles.#"]; !ok || val == "0" {
+			return fmt.Errorf("Expected licenses.licenses[0].valid_roles to have at least 1 role")
 		}
 
 		return nil

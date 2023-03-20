@@ -248,7 +248,7 @@ func testAccCheckPagerDutyUserExistsWithLicense(userResource, licenseData, i str
 			return fmt.Errorf("User not found: %v - %v", rs.Primary.ID, found)
 		}
 
-		licenseAttr := fmt.Sprintf("purchased.%s.id", i)
+		licenseAttr := fmt.Sprintf("licenses.%s.id", i)
 		licenseID, ok := dataA[licenseAttr]
 		if !ok {
 			return fmt.Errorf("Could not find %v in data.pagerduty_licenses", licenseAttr)
@@ -323,10 +323,10 @@ resource "pagerduty_user" "foo" {
   name  = "%s"
   email = "%s"
 	license = {
-		id = data.pagerduty_licenses.test.purchased[%s].id
+		id = data.pagerduty_licenses.test.licenses[%s].id
 		type = "license_reference"
 	}
-	role = tolist(setsubtract(data.pagerduty_licenses.test.purchased[%s].valid_roles, local.invalid_roles))[0]
+	role = tolist(setsubtract(data.pagerduty_licenses.test.licenses[%s].valid_roles, local.invalid_roles))[0]
 }
 `, licensesName, licensesName, username, email, i, i)
 }

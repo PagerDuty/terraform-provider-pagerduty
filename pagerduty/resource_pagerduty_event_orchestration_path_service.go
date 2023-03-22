@@ -538,4 +538,3 @@ func flattenServicePathPagerDutyAutomationActions(v []*pagerduty.EventOrchestrat
 
 	return result
 }
-

@@ -50,7 +50,7 @@ type EventOrchestrationPathRuleCondition struct {
 // Service: https://developer.pagerduty.com/api-reference/179537b835e2d-get-the-service-orchestration-for-a-service
 // Unrouted: https://developer.pagerduty.com/api-reference/70aa1139e1013-get-the-unrouted-orchestration-for-a-global-event-orchestration
 type EventOrchestrationPathRuleActions struct {
-	DropEvent									 bool																								`json:"drop_event"`
+	DropEvent                  bool                                               `json:"drop_event"`
 	RouteTo                    string                                             `json:"route_to"`
 	Suppress                   bool                                               `json:"suppress"`
 	Suspend                    *int                                               `json:"suspend"`
@@ -104,16 +104,16 @@ type EventOrchestrationPathCatchAll struct {
 }
 
 type EventOrchestrationPathWarning struct {
-	Feature string `json:"feature"`
+	Feature     string `json:"feature"`
 	FeatureType string `json:"feature_type"`
-	Message string `json:"message"`
-	RuleId string `json:"rule_id"`
+	Message     string `json:"message"`
+	RuleId      string `json:"rule_id"`
 	WarningType string `json:"warning_type"`
 }
 
 type EventOrchestrationPathPayload struct {
-	OrchestrationPath *EventOrchestrationPath `json:"orchestration_path,omitempty"`
-	Warnings []*EventOrchestrationPathWarning `json:"warnings"`
+	OrchestrationPath *EventOrchestrationPath          `json:"orchestration_path,omitempty"`
+	Warnings          []*EventOrchestrationPathWarning `json:"warnings"`
 }
 
 const PathTypeGlobal string = "global"

@@ -61,6 +61,7 @@ data "pagerduty_priority" "p1" {
 
 resource "pagerduty_event_orchestration_service" "www" {
   service = pagerduty_service.example.id
+  enable_event_orchestration_for_service = true
   set {
     id = "start"
     rule {

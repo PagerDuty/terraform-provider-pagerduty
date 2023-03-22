@@ -29,6 +29,10 @@ func dataSourcePagerDutyEventOrchestration() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"label": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"parameters": {
 							Type:     schema.TypeList,
 							Computed: true,

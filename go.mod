@@ -18,4 +18,4 @@ require (
 	google.golang.org/grpc v1.33.2 // indirect
 )
 
-replace github.com/heimweh/go-pagerduty => github.com/alenapan/go-pagerduty v0.0.0-20230322200217-d68066c0b414
+replace github.com/heimweh/go-pagerduty => github.com/alenapan/go-pagerduty v0.0.0-20230323211500-71ad28f8687d

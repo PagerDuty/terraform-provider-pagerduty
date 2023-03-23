@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -131,10 +132,14 @@ func orchestrationPathUrlBuilder(id string, pathType string) string {
 
 // Get for EventOrchestrationPath
 func (s *EventOrchestrationPathService) Get(id string, pathType string) (*EventOrchestrationPath, *Response, error) {
+	return s.GetContext(context.Background(), id, pathType)
+}
+
+func (s *EventOrchestrationPathService) GetContext(ctx context.Context, id string, pathType string) (*EventOrchestrationPath, *Response, error) {
 	u := orchestrationPathUrlBuilder(id, pathType)
 	v := new(EventOrchestrationPathPayload)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, &v)
 
 	if err != nil {
 		return nil, nil, err
@@ -144,11 +149,11 @@ func (s *EventOrchestrationPathService) Get(id string, pathType string) (*EventO
 }
 
 // GetServiceActiveStatus for EventOrchestrationPath
-func (s *EventOrchestrationPathService) GetServiceActiveStatus(id string) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
+func (s *EventOrchestrationPathService) GetServiceActiveStatusContext(ctx context.Context, id string) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
 	u := fmt.Sprintf("%s/services/%s/active", eventOrchestrationBaseUrl, id)
 	v := new(EventOrchestrationPathServiceActiveStatus)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, &v)
 
 	if err != nil {
 		return nil, nil, err
@@ -158,12 +163,16 @@ func (s *EventOrchestrationPathService) GetServiceActiveStatus(id string) (*Even
 }
 
 // Update for EventOrchestrationPath
-func (s *EventOrchestrationPathService) Update(id string, pathType string, orchestration_path *EventOrchestrationPath) (*EventOrchestrationPathPayload, *Response, error) {
+func (s *EventOrchestrationPathService) Update(id string, pathType string, orchestrationPath *EventOrchestrationPath) (*EventOrchestrationPathPayload, *Response, error) {
+	return s.UpdateContext(context.Background(), id, pathType, orchestrationPath)
+}
+
+func (s *EventOrchestrationPathService) UpdateContext(ctx context.Context, id string, pathType string, orchestrationPath *EventOrchestrationPath) (*EventOrchestrationPathPayload, *Response, error) {
 	u := orchestrationPathUrlBuilder(id, pathType)
 	v := new(EventOrchestrationPathPayload)
-	p := EventOrchestrationPathPayload{OrchestrationPath: orchestration_path}
+	p := EventOrchestrationPathPayload{OrchestrationPath: orchestrationPath}
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, p, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, p, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -172,12 +181,12 @@ func (s *EventOrchestrationPathService) Update(id string, pathType string, orche
 }
 
 // UpdateServiceActiveStatus for EventOrchestrationPath
-func (s *EventOrchestrationPathService) UpdateServiceActiveStatus(id string, isActive bool) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
+func (s *EventOrchestrationPathService) UpdateServiceActiveStatusContext(ctx context.Context, id string, isActive bool) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
 	u := fmt.Sprintf("%s/services/%s/active", eventOrchestrationBaseUrl, id)
 	v := new(EventOrchestrationPathServiceActiveStatus)
 	p := EventOrchestrationPathServiceActiveStatus{Active: isActive}
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, p, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, p, &v)
 	if err != nil {
 		return nil, nil, err
 	}

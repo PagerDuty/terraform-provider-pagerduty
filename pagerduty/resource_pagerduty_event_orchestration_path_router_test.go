@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -116,7 +117,7 @@ func testAccCheckPagerDutyEventOrchestrationRouterDestroy(s *terraform.State) er
 
 		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 
-		if _, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "router"); err == nil {
+		if _, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), orch.Primary.ID, "router"); err == nil {
 			return fmt.Errorf("Event Orchestration Path still exists")
 		}
 	}
@@ -135,7 +136,7 @@ func testAccCheckPagerDutyEventOrchestrationRouterExists(rn string) resource.Tes
 
 		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		_, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "router")
+		_, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), orch.Primary.ID, "router")
 
 		if err != nil {
 			return fmt.Errorf("Orchestration Path type not found: %v for orchestration %v", "router", orch.Primary.ID)

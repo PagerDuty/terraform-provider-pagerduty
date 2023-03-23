@@ -114,7 +114,7 @@ func getEventOrchestrationIntegrationByLabel(ctx context.Context, d *schema.Reso
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading Integration data source by label '%s' for PagerDuty Event Orchestration '%s'", lbl, oid)
 
-		resp, _, err := client.EventOrchestrationIntegrations.List(oid)
+		resp, _, err := client.EventOrchestrationIntegrations.ListContext(ctx, oid)
 
 		if err != nil {
 			time.Sleep(30 * time.Second)

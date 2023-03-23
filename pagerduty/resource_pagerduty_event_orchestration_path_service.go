@@ -96,7 +96,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 		UpdateContext: resourcePagerDutyEventOrchestrationPathServiceUpdate,
 		DeleteContext: resourcePagerDutyEventOrchestrationPathServiceDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyEventOrchestrationPathServiceImport,
+			StateContext: resourcePagerDutyEventOrchestrationPathServiceImport,
 		},
 		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
@@ -184,11 +184,11 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 	id := d.Id()
 	var path *pagerduty.EventOrchestrationPath
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		t := "service"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for service: %s", t, id)
 
-		path, _, err = client.EventOrchestrationPaths.Get(id, t)
+		path, _, err = client.EventOrchestrationPaths.GetContext(ctx, id, t)
 
 		if err != nil {
 			time.Sleep(2 * time.Second)
@@ -204,9 +204,9 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 	serviceID := d.Get("service").(string)
 	if path != nil {
-		retryErr = resource.Retry(30*time.Second, func() *resource.RetryError {
+		retryErr = resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
 			log.Printf("[INFO] Reading PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
-			pathServiceActiveStatus, _, err := client.EventOrchestrationPaths.GetServiceActiveStatus(serviceID)
+			pathServiceActiveStatus, _, err := client.EventOrchestrationPaths.GetServiceActiveStatusContext(ctx, serviceID)
 			// It should not retry request to the status endpoint after it starts to
 			// return 410 (Gone).
 			if err != nil && isErrCode(err, http.StatusGone) {
@@ -252,8 +252,8 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 
 	log.Printf("[INFO] Saving PagerDuty Event Orchestration Service Path: %s", serviceID)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if response, _, err := client.EventOrchestrationPaths.Update(serviceID, "service", payload); err != nil {
+	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		if response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", payload); err != nil {
 			return resource.RetryableError(err)
 		} else if response != nil {
 			d.SetId(response.OrchestrationPath.Parent.ID)
@@ -273,8 +273,8 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 		enableEOForService := d.Get("enable_event_orchestration_for_service").(bool)
 		log.Printf("[INFO] Updating PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
 
-		retryErr = resource.Retry(30*time.Second, func() *resource.RetryError {
-			resp, _, err := client.EventOrchestrationPaths.UpdateServiceActiveStatus(serviceID, enableEOForService)
+		retryErr = resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+			resp, _, err := client.EventOrchestrationPaths.UpdateServiceActiveStatusContext(ctx, serviceID, enableEOForService)
 			if err != nil && isErrCode(err, http.StatusGone) {
 				return nil
 			}
@@ -321,7 +321,7 @@ func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d
 	return diags
 }
 
-func resourcePagerDutyEventOrchestrationPathServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyEventOrchestrationPathServiceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err
@@ -329,7 +329,7 @@ func resourcePagerDutyEventOrchestrationPathServiceImport(d *schema.ResourceData
 
 	id := d.Id()
 
-	_, _, pErr := client.EventOrchestrationPaths.Get(id, "service")
+	_, _, pErr := client.EventOrchestrationPaths.GetContext(ctx, id, "service")
 	if pErr != nil {
 		return []*schema.ResourceData{}, pErr
 	}

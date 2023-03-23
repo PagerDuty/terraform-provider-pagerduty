@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -181,7 +182,7 @@ func testAccCheckPagerDutyEventOrchestrationGlobalPathDestroy(s *terraform.State
 
 		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 
-		if _, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "global"); err == nil {
+		if _, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), orch.Primary.ID, "global"); err == nil {
 			return fmt.Errorf("Event Orchestration Path still exists")
 		}
 	}
@@ -200,7 +201,7 @@ func testAccCheckPagerDutyEventOrchestrationGlobalExists(rn string) resource.Tes
 
 		orch, _ := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		_, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "global")
+		_, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), orch.Primary.ID, "global")
 
 		if err != nil {
 			return fmt.Errorf("Global Orchestration not found for orchestration %v", orch.Primary.ID)

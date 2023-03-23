@@ -85,7 +85,7 @@ func resourcePagerDutyEventOrchestrationPathGlobal() *schema.Resource {
 		UpdateContext: resourcePagerDutyEventOrchestrationPathGlobalUpdate,
 		DeleteContext: resourcePagerDutyEventOrchestrationPathGlobalDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyEventOrchestrationPathGlobalImport,
+			StateContext: resourcePagerDutyEventOrchestrationPathGlobalImport,
 		},
 		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
@@ -169,12 +169,12 @@ func resourcePagerDutyEventOrchestrationPathGlobalRead(ctx context.Context, d *s
 		return diag.FromErr(err)
 	}
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		id := d.Id()
 		t := "global"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
 
-		if path, _, err := client.EventOrchestrationPaths.Get(d.Id(), t); err != nil {
+		if path, _, err := client.EventOrchestrationPaths.GetContext(ctx, d.Id(), t); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if path != nil {
@@ -209,8 +209,8 @@ func resourcePagerDutyEventOrchestrationPathGlobalUpdate(ctx context.Context, d 
 
 	log.Printf("[INFO] Creating PagerDuty Event Orchestration Global Path: %s", payload.Parent.ID)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if response, _, err := client.EventOrchestrationPaths.Update(payload.Parent.ID, "global", payload); err != nil {
+	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		if response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, payload.Parent.ID, "global", payload); err != nil {
 			return resource.RetryableError(err)
 		} else if response != nil {
 			d.SetId(response.OrchestrationPath.Parent.ID)
@@ -236,14 +236,14 @@ func resourcePagerDutyEventOrchestrationPathGlobalDelete(ctx context.Context, d 
 	return diags
 }
 
-func resourcePagerDutyEventOrchestrationPathGlobalImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyEventOrchestrationPathGlobalImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
 	orchestrationID := d.Id()
-	_, _, err = client.EventOrchestrationPaths.Get(orchestrationID, "global")
+	_, _, err = client.EventOrchestrationPaths.GetContext(ctx, orchestrationID, "global")
 
 	if err != nil {
 		return []*schema.ResourceData{}, err

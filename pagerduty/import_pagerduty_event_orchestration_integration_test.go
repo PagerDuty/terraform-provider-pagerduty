@@ -32,5 +32,5 @@ func TestAccPagerDutyEventOrchestrationIntegration_import(t *testing.T) {
 }
 
 func testAccPagerDutyEventOrchestrationIntegrationImportID(s *terraform.State) (string, error) {
-	return fmt.Sprintf("%v.%v", s.RootModule().Resources["pagerduty_event_orchestration.orch_1"].Primary.ID, s.RootModule().Resources["pagerduty_event_orchestration_integration.int_1"].Primary.ID), nil
+	return fmt.Sprintf("%v:%v", s.RootModule().Resources["pagerduty_event_orchestration.orch_1"].Primary.ID, s.RootModule().Resources["pagerduty_event_orchestration_integration.int_1"].Primary.ID), nil
 }

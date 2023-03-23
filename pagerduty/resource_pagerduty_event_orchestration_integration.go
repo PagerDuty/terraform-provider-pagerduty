@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -261,11 +260,11 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	ids := strings.Split(d.Id(), ".")
-	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestration_id>.<integration_id>")
+	oid, id := resourcePagerDutyParseColonCompoundID(d.Id())
+
+	if oid == "" || id == "" {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestration_id>:<integration_id>")
 	}
-	oid, id := ids[0], ids[1]
 
 	client, err := meta.(*Config).Client()
 	if err != nil {

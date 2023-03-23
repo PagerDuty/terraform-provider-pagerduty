@@ -52,8 +52,8 @@ The following attributes are exported:
 
 ## Import
 
-Event Orchestration Integration can be imported using the dot-delimited `id`, which is the combination of the Event Orchestration ID followed by the Event Orchestration Integration ID, e.g.
+Event Orchestration Integration can be imported using colon-separated IDs, which is the combination of the Event Orchestration ID followed by the Event Orchestration Integration ID, e.g.
 
 ```
-$ terraform import pagerduty_event_orchestration_integration.integration 19acac92-027a-4ea0-b06c-bbf516519601.1b49abe7-26db-4439-a715-c6d883acfb3e
+$ terraform import pagerduty_event_orchestration_integration.integration 19acac92-027a-4ea0-b06c-bbf516519601:1b49abe7-26db-4439-a715-c6d883acfb3e
 ```

@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -226,7 +227,7 @@ func testAccCheckPagerDutyEventOrchestrationServicePathDestroy(s *terraform.Stat
 
 		srv := s.RootModule().Resources["pagerduty_service.bar"]
 
-		if _, _, err := client.EventOrchestrationPaths.Get(srv.Primary.ID, "service"); err == nil {
+		if _, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), srv.Primary.ID, "service"); err == nil {
 			return fmt.Errorf("Event Orchestration Service Path still exists")
 		}
 	}
@@ -244,7 +245,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceExists(rn string) resourc
 		}
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "service")
+		found, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), orch.Primary.ID, "service")
 		if err != nil {
 			return err
 		}

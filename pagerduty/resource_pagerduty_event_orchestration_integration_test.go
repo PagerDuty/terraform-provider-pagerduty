@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -78,7 +79,7 @@ func testAccCheckPagerDutyEventOrchestrationIntegrationDestroy(s *terraform.Stat
 		if r.Type != "pagerduty_event_orchestration_integration" {
 			continue
 		}
-		if _, _, err := client.EventOrchestrationIntegrations.Get(r.Primary.Attributes["event_orchestration"], r.Primary.ID); err == nil {
+		if _, _, err := client.EventOrchestrationIntegrations.GetContext(context.Background(), r.Primary.Attributes["event_orchestration"], r.Primary.ID); err == nil {
 			return fmt.Errorf("Event Orchestration Integration still exists")
 		}
 	}
@@ -109,7 +110,7 @@ func testAccCheckPagerDutyEventOrchestrationIntegrationAttr(rn, orn string) reso
 		id := ir.Primary.ID
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		i, _, err := client.EventOrchestrationIntegrations.Get(oid, id)
+		i, _, err := client.EventOrchestrationIntegrations.GetContext(context.Background(), oid, id)
 		eo, _, _ := client.EventOrchestrations.Get(eor.Primary.ID)
 
 		if err != nil {

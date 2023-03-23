@@ -19,7 +19,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 		UpdateContext: resourcePagerDutyEventOrchestrationPathRouterUpdate,
 		DeleteContext: resourcePagerDutyEventOrchestrationPathRouterDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyEventOrchestrationPathRouterImport,
+			StateContext: resourcePagerDutyEventOrchestrationPathRouterImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
@@ -120,10 +120,10 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(ctx context.Context, d *s
 		return diag.FromErr(err)
 	}
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", d.Id())
 
-		if routerPath, _, err := client.EventOrchestrationPaths.Get(d.Id(), "router"); err != nil {
+		if routerPath, _, err := client.EventOrchestrationPaths.GetContext(ctx, d.Id(), "router"); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
@@ -172,8 +172,8 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx context.Context, d 
 
 	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", routerPath.Parent.ID)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		response, _, err := client.EventOrchestrationPaths.Update(routerPath.Parent.ID, "router", routerPath)
+	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerPath.Parent.ID, "router", routerPath)
 		if err != nil {
 			return resource.RetryableError(err)
 		}
@@ -327,7 +327,7 @@ func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[s
 	return caMap
 }
 
-func resourcePagerDutyEventOrchestrationPathRouterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyEventOrchestrationPathRouterImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err
@@ -335,7 +335,7 @@ func resourcePagerDutyEventOrchestrationPathRouterImport(d *schema.ResourceData,
 	// given an orchestration ID import the router orchestration path
 	orchestrationID := d.Id()
 	pathType := "router"
-	_, _, err = client.EventOrchestrationPaths.Get(orchestrationID, pathType)
+	_, _, err = client.EventOrchestrationPaths.GetContext(ctx, orchestrationID, pathType)
 
 	if err != nil {
 		return []*schema.ResourceData{}, err

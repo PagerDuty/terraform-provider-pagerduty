@@ -14,15 +14,18 @@ func TestAccDataSourcePagerDutyService_Basic(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.test", username)
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamname := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy),
+				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyService("pagerduty_service.test", "data.pagerduty_service.by_name"),
+					resource.TestCheckResourceAttr("data.pagerduty_service.by_name", "teams.#", "1"),
+					resource.TestCheckResourceAttr("data.pagerduty_service.by_name", "teams.0.name", teamname),
 				),
 			},
 		},
@@ -42,7 +45,7 @@ func testAccDataSourcePagerDutyService(src, n string) resource.TestCheckFunc {
 			return fmt.Errorf("Expected to get a service ID from PagerDuty")
 		}
 
-		testAtts := []string{"id", "name"}
+		testAtts := []string{"teams", "id", "name", "type", "auto_resolve_timeout", "acknowledgement_timeout", "alert_creation", "description", "escalation_policy"}
 
 		for _, att := range testAtts {
 			if a[att] != srcA[att] {
@@ -54,16 +57,27 @@ func testAccDataSourcePagerDutyService(src, n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy string) string {
+func testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname string) string {
 	return fmt.Sprintf(`
+resource "pagerduty_team" "test" {
+	name        = "%s"
+	description = "test"
+}
+
 resource "pagerduty_user" "test" {
   name  = "%s"
   email = "%s"
 }
 
+resource "pagerduty_team_membership" "test" {
+	team_id = pagerduty_team.test.id
+	user_id = pagerduty_user.test.id
+}
+
 resource "pagerduty_escalation_policy" "test" {
   name        = "%s"
   num_loops   = 2
+  teams       = [pagerduty_team.test.id]
   rule {
     escalation_delay_in_minutes = 10
     target {
@@ -82,7 +96,8 @@ resource "pagerduty_service" "test" {
 }
 
 data "pagerduty_service" "by_name" {
+  depends_on = [pagerduty_team_membership.test, pagerduty_service.test]
   name = pagerduty_service.test.name
 }
-`, username, email, service, escalationPolicy)
+`, teamname, username, email, service, escalationPolicy)
 }

@@ -45,6 +45,6 @@ The following arguments are supported:
 * `alert_creation` - Whether a service creates only incidents, or both alerts and incidents. A service must create alerts in order to enable incident merging.
 * `description` - The user-provided description of the service.
 * `escalation_policy` - The escalation policy associated with this service.
-* `teams` - The set of teams associated with this service.
+* `teams` - The set of teams associated with the service.
 
 [1]: https://api-reference.pagerduty.com/#!/Services/get_services

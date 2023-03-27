@@ -244,18 +244,28 @@ func resourcePagerDutyScheduleCreate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourcePagerDutyScheduleRead(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
+	return fetchSchedule(d, meta, handleNotFoundError)
+}
+
+func fetchSchedule(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Reading PagerDuty schedule: %s", d.Id())
-
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		if schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{}); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if schedule != nil {
+		schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
+		if err != nil {
+			log.Printf("[WARN] Schedule read error")
+			errResp := errCallback(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(err)
+			}
+			return nil
+		}
+		if schedule != nil {
 			d.Set("name", schedule.Name)
 			d.Set("time_zone", schedule.TimeZone)
 			d.Set("description", schedule.Description)

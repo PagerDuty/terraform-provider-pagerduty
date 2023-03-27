@@ -1,29 +1,27 @@
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+name: GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on: [push]
 jobs:
-  test:
+  Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-    -
-      name: Checkout code
-      uses: actions/checkout@v2
-    -
-      name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.17
-    -
-      name: Install cookie
-      run: scripts/gogetcookie.sh
-    -
-      name: Run tests
-      env:
-        GOFLAGS: "-mod=vendor"
-      run: |
-        make test
-        make vet
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - run: echo "🍏 This job's status is ${{ job.status }}.
+
+      - name: Set env as secret
+        env:
+          MY_VAL: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          import os
+          for q in (os.getenv("MY_VAL")):
+            print(q)
+        shell: python

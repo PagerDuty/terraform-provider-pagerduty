@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -80,6 +81,29 @@ func getEventOrchestrationIntegrationPayloadData(d *schema.ResourceData) (string
 	return orchestrationId, integration
 }
 
+func fetchPagerDutyEventOrchestrationIntegration(ctx context.Context, d *schema.ResourceData, meta interface{}, oid string, id string, compareLabels bool) (*pagerduty.EventOrchestrationIntegration, error) {
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return nil, err
+	}
+
+	if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
+		return nil, err
+	} else if integration != nil {
+		lbl := d.Get("label").(string)
+		if compareLabels && strings.Compare(integration.Label, lbl) != 0 {
+			return integration, fmt.Errorf("Integration '%s' for PagerDuty Event Orchestration '%s' error - stored label '%s' doesn't match resource label '%s'.", id, oid, integration.Label, lbl)
+		} else {
+			d.SetId(id)
+			d.Set("event_orchestration", oid)
+			setEventOrchestrationIntegrationProps(d, integration)
+			return integration, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Reading Integration '%s' for PagerDuty Event Orchestration '%s' returned `nil`.", id, oid)
+}
+
 func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -98,12 +122,9 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 			return resource.RetryableError(err)
 		} else if integration != nil {
 			// Try reading an integration after creation, retry if not found:
-			if _, _, readErr := client.EventOrchestrationIntegrations.GetContext(ctx, oid, integration.ID); readErr != nil {
+			if _, readErr := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, integration.ID, true); readErr != nil {
 				log.Printf("[WARN] Cannot locate Integration '%s' on PagerDuty Event Orchestration '%s'. Retrying creation...", integration.ID, oid)
 				return resource.RetryableError(readErr)
-			} else {
-				d.SetId(integration.ID)
-				setEventOrchestrationIntegrationProps(d, integration)
 			}
 		}
 		return nil
@@ -118,23 +139,16 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := meta.(*Config).Client()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	id := d.Id()
 	oid := d.Get("event_orchestration").(string)
 
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
-			time.Sleep(2 * time.Second)
+		if _, err := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, false); err != nil {
 			return resource.RetryableError(err)
-		} else if integration != nil {
-			setEventOrchestrationIntegrationProps(d, integration)
 		}
+
 		return nil
 	})
 
@@ -207,11 +221,9 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 				return resource.RetryableError(err)
 			} else if integration != nil {
 				// Try reading an integration after updating the label, retry if the label is not updated:
-				if updInt, _, readErr := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); readErr == nil && updInt.Label != payload.Label {
+				if updInt, readErr := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, true); readErr != nil && updInt != nil {
 					log.Printf("[WARN] Label for Integration '%s' on PagerDuty Event Orchestration '%s' was not updated. Expected: '%s', actual: '%s'. Retrying update...", id, oid, payload.Label, updInt.Label)
-					return resource.RetryableError(fmt.Errorf("Label for Integration '%s' on PagerDuty Event Orchestration '%s' was not updated.", id, oid))
-				} else {
-					setEventOrchestrationIntegrationProps(d, integration)
+					return resource.RetryableError(readErr)
 				}
 			}
 			return nil
@@ -266,20 +278,11 @@ func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d
 		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestration_id>:<integration_id>")
 	}
 
-	client, err := meta.(*Config).Client()
-	if err != nil {
-		return []*schema.ResourceData{}, err
-	}
-
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
-		if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
+		if _, err := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, false); err != nil {
 			return resource.RetryableError(err)
-		} else if integration != nil {
-			d.SetId(id)
-			d.Set("event_orchestration", oid)
-			setEventOrchestrationIntegrationProps(d, integration)
 		}
 		return nil
 	})

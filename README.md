@@ -110,6 +110,29 @@ Make changes to the PagerDuty provider and post a pull request for review.
    ```
 4. See `api_url_override` from Terraform docs for [PagerDuty Provider](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs#argument-reference) to set a custom proxy endpoint as PagerDuty client api url overriding service_region setup.
 
+## Test a specific version of the go-pagerduty API client
+
+Modify the `go.mod` file by either of these 2 methods:
+```
+$ go mod edit -replace github.com/heimweh/go-pagerduty=/PATH/TO/LOCAL/github.com/<USERNAME>/<REPO>
+```
+
+Or update the file directly:
+```
+replace github.com/heimweh/go-pagerduty => /PATH/TO/LOCAL/go-pagerduty
+```
+
+Ensure that the vendor package is updated with any changes:
+```
+$ export GOFLAGS="-mod=mod"
+```
+Or:
+```
+$ go mod vendor
+```
+
+**!WARNING!** Do not commit the changes to `go.mod`
+
 ### Setup Local Logs
 
 1. See [Debugging Terraform](https://www.terraform.io/internals/debugging). Either add this to your shell's profile
@@ -162,8 +185,8 @@ PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.p
 PAGERDUTY_ACC_CUSTOM_FIELDS=1 make testacc TESTARGS="-run PagerDutyCustomField"
 ```
 
-| Variable Name                                               | Feature Set         |
-| ----------------------------------------------------------- | ------------------- |
-| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                          | Incident Workflows  |
+| Variable Name                                                | Feature Set         |
+| ------------------------------------------------------------ | ------------------- |
+| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                           | Incident Workflows  |
 | `PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS` | Service Integration |
 | `PAGERDUTY_ACC_CUSTOM_FIELDS`                                | Custom Fields       |

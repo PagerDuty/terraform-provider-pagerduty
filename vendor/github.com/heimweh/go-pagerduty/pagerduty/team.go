@@ -1,6 +1,9 @@
 package pagerduty
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 // TeamService handles the communication with team
 // related methods of the PagerDuty API.
@@ -130,7 +133,18 @@ func (s *TeamService) Update(id string, team *Team) (*Team, *Response, error) {
 // RemoveUser removes a user from a team.
 func (s *TeamService) RemoveUser(teamID, userID string) (*Response, error) {
 	u := fmt.Sprintf("/teams/%s/users/%s", teamID, userID)
-	return s.client.newRequestDo("DELETE", u, nil, nil, nil)
+	resp, err := s.client.newRequestDo("DELETE", u, nil, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cacheDeleteTeamMembership(teamID, userID); err != nil {
+		log.Printf("===== Error deleting user %q from team %q cache: %q", userID, teamID, err)
+	} else {
+		log.Printf("===== Deleted user %q from team %q cache", userID, teamID)
+	}
+
+	return resp, nil
 }
 
 // AddUser adds a user to a team.
@@ -143,7 +157,18 @@ func (s *TeamService) AddUser(teamID, userID string) (*Response, error) {
 func (s *TeamService) AddUserWithRole(teamID, userID string, role string) (*Response, error) {
 	tr := teamRole{Role: role}
 	u := fmt.Sprintf("/teams/%s/users/%s", teamID, userID)
-	return s.client.newRequestDo("PUT", u, nil, tr, nil)
+	resp, err := s.client.newRequestDo("PUT", u, nil, tr, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cachePutTeamMembership(teamID, userID, role); err != nil {
+		log.Printf("===== Error adding user %q to team %q cache: %q", userID, teamID, err)
+	} else {
+		log.Printf("===== Added user %q to team %q cache", userID, teamID)
+	}
+
+	return resp, nil
 }
 
 // GetMembers retrieves information about members on a team.
@@ -152,6 +177,15 @@ func (s *TeamService) GetMembers(teamID string, o *GetMembersOptions) (*GetMembe
 	v := new(GetMembersResponse)
 
 	members := make([]*Member, 0)
+
+	cm := new(GetMembersResponse)
+	if err := cacheGetTeamMembers(teamID, cm); err == nil && len(cm.Members) > 0 {
+		members = append(members, cm.Members...)
+		v.Members = members
+		return v, nil, nil
+	} else {
+		log.Printf("[DEBUG] error retrieving team members %q; %v", teamID, err)
+	}
 
 	responseHandler := func(response *Response) (ListResp, *Response, error) {
 		var result GetMembersResponse
@@ -175,6 +209,13 @@ func (s *TeamService) GetMembers(teamID string, o *GetMembersOptions) (*GetMembe
 		return nil, nil, err
 	}
 	v.Members = members
+
+	if err = cachePutTeamMembers(teamID, &GetMembersResponse{Members: members}); err != nil {
+		log.Printf("===== Error adding members of team %q to cache: %q", teamID, err)
+	} else {
+		log.Printf("===== Added members of team %q to cache", teamID)
+	}
+
 	return v, nil, nil
 }
 

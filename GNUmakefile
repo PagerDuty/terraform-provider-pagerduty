@@ -43,6 +43,9 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
+update-go-pagerduty:
+	go get github.com/heimweh/go-pagerduty/pagerduty && go mod tidy && go mod vendor
+
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."

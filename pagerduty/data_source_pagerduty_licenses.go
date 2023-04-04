@@ -14,75 +14,12 @@ func dataSourcePagerDutyLicenses() *schema.Resource {
 		Read: dataSourcePagerDutyLicensesRead,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
 			"licenses": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Optional: true,
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"type": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"summary": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"description": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"role_group": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"current_value": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
-						},
-						"allocations_available": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
-						},
-						"valid_roles": {
-							Type:     schema.TypeList,
-							Optional: true,
-							Computed: true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-						"self": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"html_url": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+					Schema: licenseSchema,
 				},
 			},
 		},
@@ -106,7 +43,7 @@ func dataSourcePagerDutyLicensesRead(d *schema.ResourceData, meta interface{}) e
 			return resource.RetryableError(err)
 		}
 
-		d.SetId(d.Get("name").(string))
+		d.SetId(resource.UniqueId())
 		d.Set("licenses", flattenLicenses(licenses))
 		return nil
 	})

@@ -41,7 +41,7 @@ The following arguments are supported:
 
 ## License (`license`) supports the following:
   * `id` - The id of the license
-  * `type` - Must be `license_refernce`
+  * `type` - Must be `license_reference`
 
 ## Attributes Reference
 

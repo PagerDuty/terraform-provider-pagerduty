@@ -17,7 +17,7 @@ func TestAccDataSourcePagerDutyLicenses_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyLicenseConfig(name),
+				Config: testAccDataSourcePagerDutyLicensesConfig(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyLicenses(fmt.Sprintf("data.pagerduty_licenses.%s", name)),
 				),
@@ -62,10 +62,6 @@ func testAccDataSourcePagerDutyLicenses(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyLicenseConfig(name string) string {
-	return fmt.Sprintf(`
-data "pagerduty_licenses" "%s" {
-	name = "%s"
-}
-`, name, name)
+func testAccDataSourcePagerDutyLicensesConfig(name string) string {
+	return fmt.Sprintf(`data "pagerduty_licenses" "%s" {}`, name)
 }

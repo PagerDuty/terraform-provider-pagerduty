@@ -315,9 +315,7 @@ locals {
 	invalid_roles = ["owner"]
 }
 
-data "pagerduty_licenses" "%s" {
-	name = "%s"
-}
+data "pagerduty_licenses" "%s" {}
 
 resource "pagerduty_user" "foo" {
   name  = "%s"
@@ -328,7 +326,7 @@ resource "pagerduty_user" "foo" {
 	}
 	role = tolist(setsubtract(data.pagerduty_licenses.test.licenses[%s].valid_roles, local.invalid_roles))[0]
 }
-`, licensesName, licensesName, username, email, i, i)
+`, licensesName, username, email, i, i)
 }
 
 func testAccCheckPagerDutyUserWithTeamsConfigUpdated(team1, team2, username, email string) string {

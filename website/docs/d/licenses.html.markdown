@@ -17,9 +17,7 @@ locals {
 	invalid_roles = ["owner"]
 }
 
-data "pagerduty_licenses" "licenses" {
-  name = "licenses"
-}
+data "pagerduty_licenses" "licenses" {}
 
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
@@ -36,12 +34,6 @@ resource "pagerduty_user" "example" {
 	role = "user"
 }
 ```
-
-## Argument Reference
-
-The following arguments are supported:
-
-* `name` - (Required) Used for referencing the data source.
 
 ## Attributes Reference
 * `licenses` - The list of purchased licenses.

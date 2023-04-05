@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -135,12 +136,19 @@ func isErrCode(err error, code int) bool {
 	return false
 }
 
+func isMalformedNotFoundError(err error) bool {
+	// There are some errors that doesn't stick to expected error interface and
+	// fallback to a simple text error message that can be capture by this regexp.
+	re := regexp.MustCompile(".*: 404 Not Found$")
+	return re.Match([]byte(err.Error()))
+}
+
 func genError(err error, d *schema.ResourceData) error {
 	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
 }
 
 func handleNotFoundError(err error, d *schema.ResourceData) error {
-	if isErrCode(err, 404) {
+	if isErrCode(err, 404) || isMalformedNotFoundError(err) {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")
 		return nil

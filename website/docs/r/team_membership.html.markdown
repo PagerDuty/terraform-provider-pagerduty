@@ -10,6 +10,8 @@ description: |-
 
 A [team membership](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIzMg-add-a-user-to-a-team) manages memberships within a team.
 
+-> This resource supports caching to improve performance in use cases when having Teams with 500 or more associations being managed via Terraform and a detrimental of the performance is noticed. So in order to overcome performance issues the **Cache** support can be activated. [Know more here...](https://github.com/PagerDuty/terraform-provider-pagerduty\#caching-support)
+
 ## Example Usage
 
 ```hcl

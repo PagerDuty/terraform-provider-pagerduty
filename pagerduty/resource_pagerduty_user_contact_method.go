@@ -2,7 +2,6 @@ package pagerduty
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -28,10 +27,10 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 			t := diff.Get("type").(string)
 			if t == "sms_contact_method" || t == "phone_contact_method" {
 				if strings.HasPrefix(a, "0") {
-					return errors.New("phone numbers starting with a 0 are not supported")
+					return fmt.Errorf("phone numbers starting with a 0 are not supported was %q", a)
 				}
 				if _, err := strconv.Atoi(a); err != nil {
-					return errors.New("phone numbers should only contain digits")
+					return fmt.Errorf("phone number %q is not valid as it contains non-digit characters: %w", a, err)
 				}
 			}
 			return nil

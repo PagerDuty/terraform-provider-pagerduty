@@ -88,10 +88,17 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty tag %s", d.Id())
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
-		if tag, _, err := client.Tags.Get(d.Id()); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if tag != nil {
+		tag, _, err := client.Tags.Get(d.Id())
+		if err != nil {
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
+
+			return nil
+		}
+		if tag != nil {
 			log.Printf("Tag Type: %v", tag.Type)
 			d.Set("label", tag.Label)
 			d.Set("summary", tag.Summary)

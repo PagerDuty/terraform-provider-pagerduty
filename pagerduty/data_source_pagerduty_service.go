@@ -19,6 +19,43 @@ func dataSourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"auto_resolve_timeout": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"acknowledgement_timeout": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"alert_creation": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"escalation_policy": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"teams": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The set of teams associated with the service",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -65,9 +102,23 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 			)
 		}
 
+		var teams []map[string]interface{}
+		for _, team := range found.Teams {
+			teams = append(teams, map[string]interface{}{
+				"id":   team.ID,
+				"name": team.Summary,
+			})
+		}
+
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
 		d.Set("type", found.Type)
+		d.Set("auto_resolve_timeout", found.AutoResolveTimeout)
+		d.Set("acknowledgement_timeout", found.AcknowledgementTimeout)
+		d.Set("alert_creation", found.AlertCreation)
+		d.Set("description", found.Description)
+		d.Set("teams", teams)
+		d.Set("escalation_policy", found.EscalationPolicy.ID)
 
 		return nil
 	})

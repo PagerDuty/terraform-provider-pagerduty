@@ -1,3 +1,8 @@
+## 2.11.3 (April 5, 2023)
+
+IMPROVEMENTS:
+*  `resource/pagerduty_team_memberhsip`: Upgrade `go-pagerduty` to support caching for `pagerduty_team_membership` ([#666](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/666))
+
 ## 2.11.2 (March 10, 2023)
 
 IMPROVEMENTS:

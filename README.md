@@ -38,6 +38,32 @@ This will build the provider and put the provider binary in the `$GOPATH/bin` di
 Please refer to Terraform docs for [PagerDuty Provider](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs)
 for examples on how to use the provider and detailed documentation about the Resources and Data Sources the provider has.
 
+## Caching Support
+
+The `go-pagerduty` library relies on various APIs to interact with PagerDuty's resources. However, some of these APIs lack efficient ways to query specific resources by their attributes. When an implementation in the Terraform Provider requires such logic, the library lists all resources of a specific entity and performs a lookup in memory. This can result in inefficient use of the APIs, especially when dealing with a large number of resources, as the repetitive API calls for listing resource definitions can lead to significant time consumption and performance penalties. To address this issue, we have introduced caching to improve the user experience when interacting with Terraform resources that rely on API calls to list all available data for a specific entity, and then perform a lookup by attribute value in memory. With this improvement, the Terraform Provider users can expect better performance and faster response times when working with PagerDuty's resources.
+
+### Resources currently supporting cache of API calls
+
+* `pagerduty_team_membership`
+* `pagerduty_user_contact_method`
+* `pagerduty_user_notification_rule` 
+* `pagerduty_user`
+
+### Caching mechanisms available
+
+* In memory.
+* MongoDB.
+
+### To activate caching support
+
+| Environment Variable       | Example Value                                                                      | Description                                                                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| TF_PAGERDUTY_CACHE         | memory                                                                             | Activate **In Memory** cache.                                                                                                                |
+| TF_PAGERDUTY_CACHE         | `mongodb+srv://[mongouser]:[mongopass]@[mongodbname].[mongosubdomain].mongodb.net` | Activate MongoDB cache.                                                                                                                      |
+| TF_PAGERDUTY_CACHE_MAX_AGE | 30s                                                                                | Only applicable for MongoDB cache. Time in seconds for cached data to become staled. Default value `10s`.                                    |
+| TF_PAGERDUTY_CACHE_PREFILL | 1                                                                                  | Only applicable for MongoDB cache. Indicates to pre-fill data in cache for *Abilities*, *Users*, *Contact Methods* and *Notification Rules*. |
+
+
 ## Development
 
 ### Setup Local Environment

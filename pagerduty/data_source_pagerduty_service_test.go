@@ -111,7 +111,6 @@ resource "pagerduty_user" "test" {
 }
 
 resource "pagerduty_team_membership" "team_membership_one" {
-	depends_on = [pagerduty_team.team_one, pagerduty_user.test]
 	team_id = pagerduty_team.team_one.id
 	user_id = pagerduty_user.test.id
 }
@@ -130,7 +129,7 @@ resource "pagerduty_escalation_policy" "no_team_ep" {
 
 resource "pagerduty_escalation_policy" "one_team_ep" {
 
-  depends_on = [pagerduty_team_membership.team_membership_one, pagerduty_user.test]
+  depends_on = [pagerduty_team_membership.team_membership_one]
   name        = "%s"
   num_loops   = 2
   teams       = [pagerduty_team.team_one.id]
@@ -144,7 +143,6 @@ resource "pagerduty_escalation_policy" "one_team_ep" {
 }
 
 resource "pagerduty_service" "no_team_service" {
-	depends_on = [pagerduty_escalation_policy.no_team_ep]
 	name                    = "no_team_service"
 	auto_resolve_timeout    = 14400
 	acknowledgement_timeout = 600
@@ -154,7 +152,6 @@ resource "pagerduty_service" "no_team_service" {
 
 
 resource "pagerduty_service" "one_team_service" {
-  depends_on = [pagerduty_escalation_policy.one_team_ep]
   name                    = "%s"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
@@ -163,12 +160,10 @@ resource "pagerduty_service" "one_team_service" {
 }
 
 data "pagerduty_service" "no_team_service" {
-	depends_on = [pagerduty_service.no_team_service]
 	name = pagerduty_service.no_team_service.name
 }
 
 data "pagerduty_service" "one_team_service" {
-  depends_on = [pagerduty_service.one_team_service]
   name = pagerduty_service.one_team_service.name
 }
 

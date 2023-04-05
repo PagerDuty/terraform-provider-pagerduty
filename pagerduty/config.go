@@ -56,8 +56,8 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		return c.client, nil
 	}
 
-	// Validate that the PagerDuty token is set
-	if c.Token == "" {
+	// Validate that the PagerDuty token is set when SkipCredsValidation is set to false
+	if c.Token == "" && !c.SkipCredsValidation {
 		return nil, fmt.Errorf(invalidCreds)
 	}
 

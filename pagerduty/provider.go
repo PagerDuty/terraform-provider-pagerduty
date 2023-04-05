@@ -22,7 +22,7 @@ func Provider() *schema.Provider {
 
 			"token": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
 			},
 

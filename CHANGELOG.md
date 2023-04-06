@@ -1,3 +1,8 @@
+## 2.12.1 (April 6, 2023)
+
+BUG FIXES:
+*  `resource/pagerduty_service`: Address: Service Read lifecycle wasn't detecting drift for auto pause notif and alert grouping params ([#673](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/673))
+
 ## 2.12.0 (April 6, 2023)
 
 FEATURES:

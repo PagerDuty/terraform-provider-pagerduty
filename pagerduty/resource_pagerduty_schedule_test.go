@@ -179,6 +179,38 @@ func TestAccPagerDutyScheduleWithTeams_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutySchedule_BasicWithExternalDestroyHandling(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	location := "America/New_York"
+	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyScheduleConfig(username, email, schedule, location, start, rotationVirtualStart),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+				),
+			},
+			// Validating that externally removed schedule are detected and planed for
+			// re-creation
+			{
+				Config: testAccCheckPagerDutyScheduleConfig(username, email, schedule, location, start, rotationVirtualStart),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroySchedule("pagerduty_schedule.foo"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependant(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
@@ -645,6 +677,26 @@ func testAccCheckPagerDutyScheduleNoExists(n string) resource.TestCheckFunc {
 
 		if found.ID == rs.Primary.ID {
 			return fmt.Errorf("Schedule still exists: %v - %v", rs.Primary.ID, found)
+		}
+
+		return nil
+	}
+}
+
+func testAccExternallyDestroySchedule(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Schedule ID is set")
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		_, err := client.Schedules.Delete(rs.Primary.ID)
+		if err != nil {
+			return err
 		}
 
 		return nil

@@ -79,6 +79,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"alert_grouping_parameters": {
 				Type:          schema.TypeList,
 				Optional:      true,
+				Computed:      true,
 				MaxItems:      1,
 				ConflictsWith: []string{"alert_grouping", "alert_grouping_timeout"},
 				Elem: &schema.Resource{
@@ -405,7 +406,9 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 	}
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{})
+		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{
+			Includes: []string{"auto_pause_notifications_parameters"},
+		})
 		if err != nil {
 			log.Printf("[WARN] Service read error")
 			errResp := errCallback(err, d)
@@ -521,7 +524,7 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	} else {
 		d.Set("alert_grouping_timeout", strconv.Itoa(*service.AlertGroupingTimeout))
 	}
-	if _, ok := d.GetOk("alert_grouping_parameters"); ok && service.AlertGroupingParameters != nil {
+	if service.AlertGroupingParameters != nil {
 		if err := d.Set("alert_grouping_parameters", flattenAlertGroupingParameters(service.AlertGroupingParameters)); err != nil {
 			return err
 		}

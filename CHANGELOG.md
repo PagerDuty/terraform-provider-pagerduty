@@ -1,3 +1,14 @@
+## 2.12.0 (April 6, 2023)
+
+FEATURES:
+* `data/pagerduty_service`: service: Compute additional fields already included in API response ([#660](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/660))
+
+IMPROVEMENTS:
+* `resource/pagerduty_schedule`: Handle a schedule being deleted in the UI ([#661](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/661))
+* `resource/pagerduty_tag`: Address #655 Tags are not cleaned up from State after removed externally ([#670](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/670))
+* `resource/pagerduty_tag`: Address #655 Tags are not cleaned up from State after removed externally ([#670](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/670))
+* `resource/pagerduty_user_contact_method`: Print number and error for failing contact method validation ([#568](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/568))
+
 ## 2.11.3 (April 5, 2023)
 
 IMPROVEMENTS:

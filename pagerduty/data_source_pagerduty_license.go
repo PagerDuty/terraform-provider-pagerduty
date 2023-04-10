@@ -109,7 +109,7 @@ func dataSourcePagerDutyLicenseRead(d *schema.ResourceData, meta interface{}) er
 			id, name, description := d.Get("id").(string), d.Get("name").(string), d.Get("description").(string)
 
 			return resource.NonRetryableError(
-				fmt.Errorf("Unable to locate any license with the configured id: %s, name: %s or description: %s", id, name, description))
+				fmt.Errorf("Unable to locate any license with the configured id: '%s', name: '%s' or description: '%s'", id, name, description))
 		}
 
 		d.SetId(found.ID)

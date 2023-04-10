@@ -2,13 +2,18 @@ package pagerduty
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDataSourcePagerDutyLicense_Basic(t *testing.T) {
+	// Note that this test may fail if the test account's license name does not
+	// include "User" in it. This is highly unlikely as all accounts will likely
+	// always have a license with "(Full User)" in the name of it.
 	reference := "full_user"
 	name := "User"
 	description := ""
@@ -43,6 +48,22 @@ func TestAccDataSourcePagerDutyLicense_Empty(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyLicense(fmt.Sprintf("data.pagerduty_license.%s", reference)),
 				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourcePagerDutyLicense_Error(t *testing.T) {
+	reference := acctest.RandString(30)
+	expectedErrorString := fmt.Sprintf("Unable to locate any license with the configured id: '', name: '%s' or description: ''", reference)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccDataSourcePagerDutyLicenseConfigError(reference),
+				ExpectError: regexp.MustCompile(expectedErrorString),
 			},
 		},
 	})
@@ -88,4 +109,12 @@ func testAccDataSourceEmptyPagerDutyLicenseConfig(reference string) string {
 	return fmt.Sprintf(`
 data "pagerduty_license" "%s" {}
 `, reference)
+}
+
+func testAccDataSourcePagerDutyLicenseConfigError(reference string) string {
+	return fmt.Sprintf(`
+data "pagerduty_license" "%s" {
+	name = "%s"
+}
+`, reference, reference)
 }

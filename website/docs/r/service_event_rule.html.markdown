@@ -10,6 +10,21 @@ description: |-
 
 A [service event rule](https://support.pagerduty.com/docs/rulesets#service-event-rules) allows you to set actions that should be taken on events for a service that meet the designated rule criteria.
 
+<div role="alert" class="alert alert-warning">
+  <div class="alert-title"><i class="fa fa-warning"></i>End-of-Life</div>
+  <p>
+    Rulesets and Event Rules will end-of-life soon. We highly recommend that you
+    <a
+      href="https://support.pagerduty.com/docs/migrate-to-event-orchestration"
+      rel="noopener noreferrer"
+      target="_blank"
+      >migrate to Event Orchestration</a>
+    as soon as possible so you can take advantage of the new functionality, such
+    as improved UI, rule creation, APIs and Terraform support, advanced
+    conditions, and rule nesting.
+  </p>
+</div>
+
 ## Example Usage
 
 ```hcl

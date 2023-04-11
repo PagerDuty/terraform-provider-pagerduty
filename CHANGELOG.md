@@ -1,3 +1,12 @@
+## 2.12.2 (April 11, 2023)
+
+IMPROVEMENTS:
+* [ORCA-3999] Add EOL banner to Ruleset and Service Rules. ([#672](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/672))
+  - `data/pagerduty_ruleset`
+  - `resource/pagerduty_ruleset`
+  - `resource/pagerduty_ruleset_rule`
+  - `resource/pagerduty_service_event_rule`
+
 ## 2.12.1 (April 6, 2023)
 
 BUG FIXES:

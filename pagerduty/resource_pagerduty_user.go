@@ -3,13 +3,11 @@ package pagerduty
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -111,14 +109,7 @@ func resourcePagerDutyUser() *schema.Resource {
 			"license": {
 				Computed: true,
 				Optional: true,
-				Type:     schema.TypeMap,
-				// Using the `Elem` block to define specific keys for the map is currently not possible.
-				// The workaround described in SDK documentation is to confirm the required keys are set when expanding the Map object inside the resource code.
-				// See https://www.terraform.io/docs/extend/schemas/schema-types.html#typemap
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				ValidateDiagFunc: validation.MapKeyMatch(regexp.MustCompile("(id|type)"), "`license` must only have `id` and `type` attributes"),
+				Type:     schema.TypeString,
 			},
 		},
 	}
@@ -151,9 +142,9 @@ func buildUserStruct(d *schema.ResourceData) (*pagerduty.User, error) {
 	}
 
 	if attr, ok := d.GetOk("license"); ok {
-		license, err := expandLicenseReference(attr)
-		if err != nil {
-			return nil, err
+		license := &pagerduty.LicenseReference{
+			ID:   attr.(string),
+			Type: "license_reference",
 		}
 		user.License = license
 	}
@@ -214,7 +205,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("avatar_url", user.AvatarURL)
 		d.Set("description", user.Description)
 		d.Set("job_title", user.JobTitle)
-		d.Set("license", flattenLicenseReference(user.License))
+		d.Set("license", user.License.ID)
 
 		if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
 			return resource.NonRetryableError(
@@ -332,31 +323,10 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 }
 
 func expandLicenseReference(v interface{}) (*pagerduty.LicenseReference, error) {
-	l := v.(map[string]interface{})
-
-	if _, ok := l["id"]; !ok {
-		return nil, fmt.Errorf("the `id` attribute of `license` is required")
-	}
-
-	if t, ok := l["type"]; !ok {
-		return nil, fmt.Errorf("the `type` attribute of `license` is required")
-	} else if t != "license_reference" {
-		return nil, fmt.Errorf("the `type` attribute of `license` must be `license_reference`")
-	}
-
 	var license = &pagerduty.LicenseReference{
-		ID:   l["id"].(string),
-		Type: l["type"].(string),
+		ID:   v.(string),
+		Type: "license_reference",
 	}
 
 	return license, nil
-}
-
-func flattenLicenseReference(l *pagerduty.LicenseReference) map[string]interface{} {
-	var license = map[string]interface{}{
-		"id":   l.ID,
-		"type": l.Type,
-	}
-
-	return license
 }

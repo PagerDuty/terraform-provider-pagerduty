@@ -320,10 +320,7 @@ data "pagerduty_licenses" "%s" {}
 resource "pagerduty_user" "foo" {
   name  = "%s"
   email = "%s"
-	license = {
-		id = data.pagerduty_licenses.test.licenses[%s].id
-		type = "license_reference"
-	}
+	license = data.pagerduty_licenses.test.licenses[%s].id
 	role = tolist(setsubtract(data.pagerduty_licenses.test.licenses[%s].valid_roles, local.invalid_roles))[0]
 }
 `, licensesName, username, email, i, i)

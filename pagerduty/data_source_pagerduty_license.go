@@ -96,18 +96,10 @@ func dataSourcePagerDutyLicenseRead(d *schema.ResourceData, meta interface{}) er
 			return resource.RetryableError(err)
 		}
 
-		var found *pagerduty.License
-
-		for _, license := range licenses {
-			if licenseIsMatch(license, d) {
-				found = license
-				break
-			}
-		}
+		id, name, description := d.Get("id").(string), d.Get("name").(string), d.Get("description").(string)
+		found := findBestMatchLicense(licenses, id, name, description)
 
 		if found == nil {
-			id, name, description := d.Get("id").(string), d.Get("name").(string), d.Get("description").(string)
-
 			return resource.NonRetryableError(
 				fmt.Errorf("Unable to locate any license with the configured id: '%s', name: '%s' or description: '%s'", id, name, description))
 		}
@@ -128,14 +120,38 @@ func dataSourcePagerDutyLicenseRead(d *schema.ResourceData, meta interface{}) er
 	})
 }
 
-func licenseIsMatch(license *pagerduty.License, d *schema.ResourceData) bool {
-	id, name, description := d.Get("id").(string), d.Get("name").(string), d.Get("description").(string)
+func findBestMatchLicense(licenses []*pagerduty.License, id, name, description string) *pagerduty.License {
+	var found *pagerduty.License
+	for _, license := range licenses {
+		if licenseIsExactMatch(license, id, name, description) {
+			found = license
+			break
+		}
+	}
 
+	// If there is no exact match for a license, check for substring matches
+	// This allows customers to use a term such as "Full User", which is included
+	// in the names of all licenses that support creating full users. Every
+	// Account must have a license that supports at least 1 Full User.
+	if found == nil {
+		for _, license := range licenses {
+			if licenseIsMatch(license, name, description) {
+				found = license
+				break
+			}
+		}
+	}
+
+	return found
+}
+
+func licenseIsExactMatch(license *pagerduty.License, id, name, description string) bool {
 	if license.ID == id {
 		return true
 	}
-	if strings.Contains(license.Name, name) && strings.Contains(license.Description, description) {
-		return true
-	}
-	return false
+	return license.Name == name && license.Description == description
+}
+
+func licenseIsMatch(license *pagerduty.License, name, description string) bool {
+	return strings.Contains(license.Name, name) && strings.Contains(license.Description, description)
 }

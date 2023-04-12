@@ -11,9 +11,6 @@ import (
 )
 
 func TestAccDataSourcePagerDutyLicense_Basic(t *testing.T) {
-	// Note that this test may fail if the test account's license name does not
-	// include "User" in it. This is highly unlikely as all accounts will likely
-	// always have a license with "(Full User)" in the name of it.
 	reference := "full_user"
 	name := "User"
 	description := ""

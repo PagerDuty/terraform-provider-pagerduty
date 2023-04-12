@@ -14,6 +14,10 @@ func dataSourcePagerDutyLicenses() *schema.Resource {
 		Read: dataSourcePagerDutyLicensesRead,
 
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"licenses": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -43,8 +47,14 @@ func dataSourcePagerDutyLicensesRead(d *schema.ResourceData, meta interface{}) e
 			return resource.RetryableError(err)
 		}
 
-		d.SetId(resource.UniqueId())
-		d.Set("licenses", flattenLicenses(licenses))
+		newLicenses := flattenLicenses(licenses)
+		d.Set("licenses", newLicenses)
+
+		if id, ok := d.GetOk("id"); !ok {
+			d.SetId(resource.UniqueId())
+		} else {
+			d.SetId(id.(string))
+		}
 		return nil
 	})
 }

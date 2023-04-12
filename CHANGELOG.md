@@ -1,3 +1,14 @@
+## 2.13.0 (April 12, 2023)
+
+FEATURES:
+* Event Orchestration Updates: Orchestration Warnings, Global Orchestrations, Orchestration Integrations ([#618](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/618))
+
+## 2.12.1 (April 6, 2023)
+
+BUG FIXES:
+*  `resource/pagerduty_service`: Address: Service Read lifecycle wasn't detecting drift for auto pause notif and alert grouping params ([#673](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/673))
+
+## 2.12.0 (April 6, 2023)
 ## 2.12.2 (April 11, 2023)
 
 IMPROVEMENTS:

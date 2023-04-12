@@ -8,7 +8,9 @@ description: |-
 
 # pagerduty\_license
 
-Use this data source to use a single purchased [license][1] to manage PagerDuty user resources.
+Use this data source to use a single purchased [license][1] to manage PagerDuty user resources. After applying changes to users' licenses, the `current_value` and `allocations_available` attributes of licenses will change.
+
+-> It is preferred to set the `name` and `description` to their exact values or to set the `id`. However, this will require updating your configuration if the accounts products ever change. To avoid errors when account products change, you may set the `name` of a license to a valid substring such as `"Full User"` or `"Stakeholder"`.
 
 ## Example Usage
 
@@ -26,10 +28,7 @@ resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
 
-	license = {
-		id = data.pagerduty_license.full_user.id
-		type = "license_reference"
-	}
+	license = data.pagerduty_license.full_user.id
 
   # Role must be included in the assigned license's allowed_roles list.
   # Role may be dynamically referenced from data.pagerduty_license.full_user with the following:
@@ -47,10 +46,7 @@ The following arguments are supported:
 * `description` - (Optional) Used to determine if the data config *description* is a valid substring of a valid license description assigned to the account.
 
 ## Attributes Reference
-  * `id` - ID of the license
-  * `name` - Name of the license
   * `summary` - Summary of the license
-  * `description` - Description of the license
   * `role_group` - The role group for the license that determines the available `valid_roles`
   * `valid_roles` - List of allowed roles that may be assigned to a user with this license
   * `current_value` - The number of allocations already assigned to users

@@ -1,10 +1,12 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -12,12 +14,12 @@ import (
 
 func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 	return &schema.Resource{
-		Read:   resourcePagerDutyEventOrchestrationPathUnroutedRead,
-		Create: resourcePagerDutyEventOrchestrationPathUnroutedCreate,
-		Update: resourcePagerDutyEventOrchestrationPathUnroutedUpdate,
-		Delete: resourcePagerDutyEventOrchestrationPathUnroutedDelete,
+		ReadContext:   resourcePagerDutyEventOrchestrationPathUnroutedRead,
+		CreateContext: resourcePagerDutyEventOrchestrationPathUnroutedCreate,
+		UpdateContext: resourcePagerDutyEventOrchestrationPathUnroutedUpdate,
+		DeleteContext: resourcePagerDutyEventOrchestrationPathUnroutedDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyEventOrchestrationPathUnroutedImport,
+			StateContext: resourcePagerDutyEventOrchestrationPathUnroutedImport,
 		},
 		CustomizeDiff: checkExtractions,
 		Schema: map[string]*schema.Schema{
@@ -160,17 +162,19 @@ func resourcePagerDutyEventOrchestrationPathUnrouted() *schema.Resource {
 	}
 }
 
-func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathUnroutedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "unrouted", d.Id())
 
-		if unroutedPath, _, err := client.EventOrchestrationPaths.Get(d.Id(), "unrouted"); err != nil {
+		if unroutedPath, _, err := client.EventOrchestrationPaths.GetContext(ctx, d.Id(), "unrouted"); err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if unroutedPath != nil {
@@ -185,56 +189,70 @@ func resourcePagerDutyEventOrchestrationPathUnroutedRead(d *schema.ResourceData,
 		return nil
 	})
 
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
+	}
+
+	return diags
 }
 
 // EventOrchestrationPath cannot be created, use update to add / edit / remove rules and sets
-func resourcePagerDutyEventOrchestrationPathUnroutedCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourcePagerDutyEventOrchestrationPathUnroutedUpdate(d, meta)
+func resourcePagerDutyEventOrchestrationPathUnroutedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourcePagerDutyEventOrchestrationPathUnroutedUpdate(ctx, d, meta)
 }
 
 // EventOrchestrationPath cannot be deleted, use update to add / edit / remove rules and sets
-func resourcePagerDutyEventOrchestrationPathUnroutedDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathUnroutedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	d.SetId("")
-	return nil
+	return diags
 }
 
-func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	updatePath := buildUnroutedPathStructForUpdate(d)
+	unroutedPath := buildUnroutedPathStructForUpdate(d)
+	var warnings []*pagerduty.EventOrchestrationPathWarning
 
-	log.Printf("[INFO] Updating PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "unrouted", updatePath.Parent.ID)
+	log.Printf("[INFO] Updating PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "unrouted", unroutedPath.Parent.ID)
 
-	return performUnroutedPathUpdate(d, updatePath, client)
-}
-
-func performUnroutedPathUpdate(d *schema.ResourceData, unroutedPath *pagerduty.EventOrchestrationPath, client *pagerduty.Client) error {
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		updatedPath, _, err := client.EventOrchestrationPaths.Update(unroutedPath.Parent.ID, "unrouted", unroutedPath)
+	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, unroutedPath.Parent.ID, "unrouted", unroutedPath)
 		if err != nil {
 			return resource.RetryableError(err)
 		}
-		if updatedPath == nil {
+
+		if response == nil {
 			return resource.NonRetryableError(fmt.Errorf("no event orchestration unrouted found"))
 		}
+
 		d.SetId(unroutedPath.Parent.ID)
 		d.Set("event_orchestration", unroutedPath.Parent.ID)
+		warnings = response.Warnings
+
 		if unroutedPath.Sets != nil {
 			d.Set("set", flattenUnroutedSets(unroutedPath.Sets))
 		}
-		if updatedPath.CatchAll != nil {
-			d.Set("catch_all", flattenUnroutedCatchAll(updatedPath.CatchAll))
+
+		if response.OrchestrationPath.CatchAll != nil {
+			d.Set("catch_all", flattenUnroutedCatchAll(response.OrchestrationPath.CatchAll))
 		}
+
 		return nil
 	})
+
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
-	return nil
+
+	return convertEventOrchestrationPathWarningsToDiagnostics(warnings, diags)
 }
 
 func buildUnroutedPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
@@ -424,7 +442,7 @@ func flattenUnroutedCatchAllActions(actions *pagerduty.EventOrchestrationPathRul
 	return actionsMap
 }
 
-func resourcePagerDutyEventOrchestrationPathUnroutedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyEventOrchestrationPathUnroutedImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return []*schema.ResourceData{}, err
@@ -432,7 +450,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedImport(d *schema.ResourceDat
 	// given an orchestration ID import the unrouted orchestration path
 	orchestrationID := d.Id()
 	pathType := "unrouted"
-	_, _, err = client.EventOrchestrationPaths.Get(orchestrationID, pathType)
+	_, _, err = client.EventOrchestrationPaths.GetContext(ctx, orchestrationID, pathType)
 
 	if err != nil {
 		return []*schema.ResourceData{}, err

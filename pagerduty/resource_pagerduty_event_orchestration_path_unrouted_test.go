@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -248,7 +249,7 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedDestroy(s *terraform.Sta
 
 		orch := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 
-		if _, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "unrouted"); err == nil {
+		if _, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), orch.Primary.ID, "unrouted"); err == nil {
 			return fmt.Errorf("Event Orchestration Path still exists")
 		}
 	}
@@ -267,7 +268,7 @@ func testAccCheckPagerDutyEventOrchestrationPathUnroutedExists(rn string) resour
 
 		orch := s.RootModule().Resources["pagerduty_event_orchestration.orch"]
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		_, _, err := client.EventOrchestrationPaths.Get(orch.Primary.ID, "unrouted")
+		_, _, err := client.EventOrchestrationPaths.GetContext(context.Background(), orch.Primary.ID, "unrouted")
 
 		if err != nil {
 			return fmt.Errorf("Event Orchestration Unrouted Path not found: %v for orchestration %v", "unrouted", orch.Primary.ID)

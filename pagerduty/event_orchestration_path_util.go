@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -50,6 +51,47 @@ var eventOrchestrationPathExtractionsSchema = map[string]*schema.Schema{
 	"template": {
 		Type:     schema.TypeString,
 		Optional: true,
+	},
+}
+
+var eventOrchestrationAutomationActionObjectSchema = map[string]*schema.Schema{
+	"key": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"value": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+}
+
+var eventOrchestrationAutomationActionSchema = map[string]*schema.Schema{
+	"name": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"url": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"auto_send": {
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
+	},
+	"header": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: eventOrchestrationAutomationActionObjectSchema,
+		},
+	},
+	"parameter": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: eventOrchestrationAutomationActionObjectSchema,
+		},
 	},
 }
 
@@ -222,4 +264,89 @@ func flattenEventOrchestrationPathExtractions(e []*pagerduty.EventOrchestrationP
 		res = append(res, e)
 	}
 	return res
+}
+
+func expandEventOrchestrationPathAutomationActions(v interface{}) []*pagerduty.EventOrchestrationPathAutomationAction {
+	result := []*pagerduty.EventOrchestrationPathAutomationAction{}
+
+	for _, i := range v.([]interface{}) {
+		a := i.(map[string]interface{})
+		aa := &pagerduty.EventOrchestrationPathAutomationAction{
+			Name:       a["name"].(string),
+			Url:        a["url"].(string),
+			AutoSend:   a["auto_send"].(bool),
+			Headers:    expandEventOrchestrationAutomationActionObjects(a["header"]),
+			Parameters: expandEventOrchestrationAutomationActionObjects(a["parameter"]),
+		}
+
+		result = append(result, aa)
+	}
+
+	return result
+}
+
+func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty.EventOrchestrationPathAutomationActionObject {
+	result := []*pagerduty.EventOrchestrationPathAutomationActionObject{}
+
+	for _, i := range v.([]interface{}) {
+		o := i.(map[string]interface{})
+		obj := &pagerduty.EventOrchestrationPathAutomationActionObject{
+			Key:   o["key"].(string),
+			Value: o["value"].(string),
+		}
+
+		result = append(result, obj)
+	}
+
+	return result
+}
+
+func flattenEventOrchestrationAutomationActions(v []*pagerduty.EventOrchestrationPathAutomationAction) []interface{} {
+	var result []interface{}
+
+	for _, i := range v {
+		pdaa := map[string]interface{}{
+			"name":      i.Name,
+			"url":       i.Url,
+			"auto_send": i.AutoSend,
+			"header":    flattenEventOrchestrationAutomationActionObjects(i.Headers),
+			"parameter": flattenEventOrchestrationAutomationActionObjects(i.Parameters),
+		}
+
+		result = append(result, pdaa)
+	}
+
+	return result
+}
+
+func flattenEventOrchestrationAutomationActionObjects(v []*pagerduty.EventOrchestrationPathAutomationActionObject) []interface{} {
+	var result []interface{}
+
+	for _, i := range v {
+		pdaa := map[string]interface{}{
+			"key":   i.Key,
+			"value": i.Value,
+		}
+
+		result = append(result, pdaa)
+	}
+
+	return result
+}
+
+func convertEventOrchestrationPathWarningsToDiagnostics(warnings []*pagerduty.EventOrchestrationPathWarning, diags diag.Diagnostics) diag.Diagnostics {
+	if warnings == nil {
+		return diags
+	}
+
+	for _, warning := range warnings {
+		diag := diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  warning.Message,
+			Detail:   fmt.Sprintf("Feature: %s\nFeature Type: %s\nRule ID: %s\nWarning Type: %s", warning.Feature, warning.FeatureType, warning.RuleId, warning.WarningType),
+		}
+		diags = append(diags, diag)
+	}
+
+	return diags
 }

@@ -33,41 +33,43 @@ type Config struct {
 
 // Client manages the communication with the PagerDuty API
 type Client struct {
-	baseURL                      *url.URL
-	client                       *http.Client
-	Config                       *Config
-	Abilities                    *AbilityService
-	Addons                       *AddonService
-	EscalationPolicies           *EscalationPolicyService
-	Extensions                   *ExtensionService
-	MaintenanceWindows           *MaintenanceWindowService
-	Rulesets                     *RulesetService
-	EventOrchestrations          *EventOrchestrationService
-	EventOrchestrationPaths      *EventOrchestrationPathService
-	Schedules                    *ScheduleService
-	Services                     *ServicesService
-	Teams                        *TeamService
-	ExtensionSchemas             *ExtensionSchemaService
-	Users                        *UserService
-	Vendors                      *VendorService
-	EventRules                   *EventRuleService
-	BusinessServices             *BusinessServiceService
-	ServiceDependencies          *ServiceDependencyService
-	Priorities                   *PriorityService
-	ResponsePlays                *ResponsePlayService
-	SlackConnections             *SlackConnectionService
-	Tags                         *TagService
-	WebhookSubscriptions         *WebhookSubscriptionService
-	BusinessServiceSubscribers   *BusinessServiceSubscriberService
-	OnCall                       *OnCallService
-	AutomationActionsRunner      *AutomationActionsRunnerService
-	AutomationActionsAction      *AutomationActionsActionService
-	Incidents                    *IncidentService
-	IncidentWorkflows            *IncidentWorkflowService
-	IncidentWorkflowTriggers     *IncidentWorkflowTriggerService
-	CustomFields                 *CustomFieldService
-	CustomFieldSchemas           *CustomFieldSchemaService
-	CustomFieldSchemaAssignments *CustomFieldSchemaAssignmentService
+	baseURL                        *url.URL
+	client                         *http.Client
+	Config                         *Config
+	Abilities                      *AbilityService
+	Addons                         *AddonService
+	EscalationPolicies             *EscalationPolicyService
+	Extensions                     *ExtensionService
+	MaintenanceWindows             *MaintenanceWindowService
+	Rulesets                       *RulesetService
+	EventOrchestrations            *EventOrchestrationService
+	EventOrchestrationPaths        *EventOrchestrationPathService
+	EventOrchestrationIntegrations *EventOrchestrationIntegrationService
+	Schedules                      *ScheduleService
+	Services                       *ServicesService
+	Teams                          *TeamService
+	ExtensionSchemas               *ExtensionSchemaService
+	Users                          *UserService
+	Licenses                       *LicenseService
+	Vendors                        *VendorService
+	EventRules                     *EventRuleService
+	BusinessServices               *BusinessServiceService
+	ServiceDependencies            *ServiceDependencyService
+	Priorities                     *PriorityService
+	ResponsePlays                  *ResponsePlayService
+	SlackConnections               *SlackConnectionService
+	Tags                           *TagService
+	WebhookSubscriptions           *WebhookSubscriptionService
+	BusinessServiceSubscribers     *BusinessServiceSubscriberService
+	OnCall                         *OnCallService
+	AutomationActionsRunner        *AutomationActionsRunnerService
+	AutomationActionsAction        *AutomationActionsActionService
+	Incidents                      *IncidentService
+	IncidentWorkflows              *IncidentWorkflowService
+	IncidentWorkflowTriggers       *IncidentWorkflowTriggerService
+	CustomFields                   *CustomFieldService
+	CustomFieldSchemas             *CustomFieldSchemaService
+	CustomFieldSchemaAssignments   *CustomFieldSchemaAssignmentService
 }
 
 // Response is a wrapper around http.Response
@@ -112,11 +114,13 @@ func NewClient(config *Config) (*Client, error) {
 	c.MaintenanceWindows = &MaintenanceWindowService{c}
 	c.Rulesets = &RulesetService{c}
 	c.EventOrchestrations = &EventOrchestrationService{c}
+	c.EventOrchestrationIntegrations = &EventOrchestrationIntegrationService{c}
 	c.EventOrchestrationPaths = &EventOrchestrationPathService{c}
 	c.Schedules = &ScheduleService{c}
 	c.Services = &ServicesService{c}
 	c.Teams = &TeamService{c}
 	c.Users = &UserService{c}
+	c.Licenses = &LicenseService{c}
 	c.Vendors = &VendorService{c}
 	c.Extensions = &ExtensionService{c}
 	c.ExtensionSchemas = &ExtensionSchemaService{c}

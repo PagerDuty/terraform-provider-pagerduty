@@ -20,16 +20,6 @@ type EventOrchestrationObject struct {
 	ID   *string `json:"id"`
 }
 
-type EventOrchestrationIntegrationParameters struct {
-	RoutingKey string `json:"routing_key,omitempty"`
-	Type       string `json:"type,omitempty"`
-}
-
-type EventOrchestrationIntegration struct {
-	ID         string                                   `json:"id,omitempty"`
-	Parameters *EventOrchestrationIntegrationParameters `json:"parameters,omitempty"`
-}
-
 type EventOrchestrationPayload struct {
 	Orchestration *EventOrchestration `json:"orchestration,omitempty"`
 }

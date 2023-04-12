@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -45,10 +46,12 @@ type EventOrchestrationPathRuleCondition struct {
 }
 
 // See the full list of supported actions for path types:
+// Global: https://developer.pagerduty.com/api-reference/28317f3c2bdfd-get-the-global-orchestration-for-an-event-orchestration
 // Router: https://developer.pagerduty.com/api-reference/f0fae270c70b3-get-the-router-for-a-global-event-orchestration
 // Service: https://developer.pagerduty.com/api-reference/179537b835e2d-get-the-service-orchestration-for-a-service
 // Unrouted: https://developer.pagerduty.com/api-reference/70aa1139e1013-get-the-unrouted-orchestration-for-a-global-event-orchestration
 type EventOrchestrationPathRuleActions struct {
+	DropEvent                  bool                                               `json:"drop_event"`
 	RouteTo                    string                                             `json:"route_to"`
 	Suppress                   bool                                               `json:"suppress"`
 	Suspend                    *int                                               `json:"suspend"`
@@ -101,33 +104,42 @@ type EventOrchestrationPathCatchAll struct {
 	Actions *EventOrchestrationPathRuleActions `json:"actions,omitempty"`
 }
 
-type EventOrchestrationPathPayload struct {
-	OrchestrationPath *EventOrchestrationPath `json:"orchestration_path,omitempty"`
+type EventOrchestrationPathWarning struct {
+	Feature     string `json:"feature"`
+	FeatureType string `json:"feature_type"`
+	Message     string `json:"message"`
+	RuleId      string `json:"rule_id"`
+	WarningType string `json:"warning_type"`
 }
 
+type EventOrchestrationPathPayload struct {
+	OrchestrationPath *EventOrchestrationPath          `json:"orchestration_path,omitempty"`
+	Warnings          []*EventOrchestrationPathWarning `json:"warnings"`
+}
+
+const PathTypeGlobal string = "global"
 const PathTypeRouter string = "router"
 const PathTypeService string = "service"
 const PathTypeUnrouted string = "unrouted"
 
 func orchestrationPathUrlBuilder(id string, pathType string) string {
-	switch {
-	case pathType == PathTypeService:
+	if pathType == PathTypeService {
 		return fmt.Sprintf("%s/services/%s", eventOrchestrationBaseUrl, id)
-	case pathType == PathTypeUnrouted:
-		return fmt.Sprintf("%s/%s/unrouted", eventOrchestrationBaseUrl, id)
-	case pathType == PathTypeRouter:
-		return fmt.Sprintf("%s/%s/router", eventOrchestrationBaseUrl, id)
-	default:
-		return ""
 	}
+
+	return fmt.Sprintf("%s/%s/%s", eventOrchestrationBaseUrl, id, pathType)
 }
 
 // Get for EventOrchestrationPath
 func (s *EventOrchestrationPathService) Get(id string, pathType string) (*EventOrchestrationPath, *Response, error) {
+	return s.GetContext(context.Background(), id, pathType)
+}
+
+func (s *EventOrchestrationPathService) GetContext(ctx context.Context, id string, pathType string) (*EventOrchestrationPath, *Response, error) {
 	u := orchestrationPathUrlBuilder(id, pathType)
 	v := new(EventOrchestrationPathPayload)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, &v)
 
 	if err != nil {
 		return nil, nil, err
@@ -137,11 +149,11 @@ func (s *EventOrchestrationPathService) Get(id string, pathType string) (*EventO
 }
 
 // GetServiceActiveStatus for EventOrchestrationPath
-func (s *EventOrchestrationPathService) GetServiceActiveStatus(id string) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
+func (s *EventOrchestrationPathService) GetServiceActiveStatusContext(ctx context.Context, id string) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
 	u := fmt.Sprintf("%s/services/%s/active", eventOrchestrationBaseUrl, id)
 	v := new(EventOrchestrationPathServiceActiveStatus)
 
-	resp, err := s.client.newRequestDo("GET", u, nil, nil, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, &v)
 
 	if err != nil {
 		return nil, nil, err
@@ -151,26 +163,30 @@ func (s *EventOrchestrationPathService) GetServiceActiveStatus(id string) (*Even
 }
 
 // Update for EventOrchestrationPath
-func (s *EventOrchestrationPathService) Update(id string, pathType string, orchestration_path *EventOrchestrationPath) (*EventOrchestrationPath, *Response, error) {
+func (s *EventOrchestrationPathService) Update(id string, pathType string, orchestrationPath *EventOrchestrationPath) (*EventOrchestrationPathPayload, *Response, error) {
+	return s.UpdateContext(context.Background(), id, pathType, orchestrationPath)
+}
+
+func (s *EventOrchestrationPathService) UpdateContext(ctx context.Context, id string, pathType string, orchestrationPath *EventOrchestrationPath) (*EventOrchestrationPathPayload, *Response, error) {
 	u := orchestrationPathUrlBuilder(id, pathType)
 	v := new(EventOrchestrationPathPayload)
-	p := EventOrchestrationPathPayload{OrchestrationPath: orchestration_path}
+	p := EventOrchestrationPathPayload{OrchestrationPath: orchestrationPath}
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, p, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, p, &v)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return v.OrchestrationPath, resp, nil
+	return v, resp, nil
 }
 
 // UpdateServiceActiveStatus for EventOrchestrationPath
-func (s *EventOrchestrationPathService) UpdateServiceActiveStatus(id string, isActive bool) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
+func (s *EventOrchestrationPathService) UpdateServiceActiveStatusContext(ctx context.Context, id string, isActive bool) (*EventOrchestrationPathServiceActiveStatus, *Response, error) {
 	u := fmt.Sprintf("%s/services/%s/active", eventOrchestrationBaseUrl, id)
 	v := new(EventOrchestrationPathServiceActiveStatus)
 	p := EventOrchestrationPathServiceActiveStatus{Active: isActive}
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, p, &v)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, p, &v)
 	if err != nil {
 		return nil, nil, err
 	}

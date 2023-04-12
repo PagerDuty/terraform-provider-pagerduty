@@ -34,12 +34,12 @@ resource "pagerduty_event_orchestration_integration" "integration" {
 
 ## Argument Reference
 
+-> Modifying `event_orchestration` property will cause Integration migration process and as a result all future events sent with this Integrations's Routing Key will be evaluated against the new Event Orchestration.
+
 The following arguments are supported:
 
 - `event_orchestration` - (Required) ID of the Event Orchestration to which this Integration belongs to. If value is changed, current Integration is associated with a newly provided ID.
 - `label` - (Required) Name/description of the Integration.
-
--> Modifying `event_orchestration` property will cause Integration migration process and as a result all future events sent with this Integrations's Routing Key will be evaluated against the new Event Orchestration.
 
 ## Attributes Reference
 

@@ -112,7 +112,7 @@ Make changes to the PagerDuty provider and post a pull request for review.
 
 ## Test a specific version of the go-pagerduty API client
 
-Modify the `go.mod` file by either of these 2 methods:
+Modify the `go.mod` file using a [Go module replacement](https://go.dev/doc/modules/managing-dependencies#external_fork) for `github.com/heimweh/go-pagerduty:
 ```
 $ go mod edit -replace github.com/heimweh/go-pagerduty=/PATH/TO/LOCAL/github.com/<USERNAME>/<REPO>
 ```
@@ -130,8 +130,6 @@ Or:
 ```
 $ go mod vendor
 ```
-
-**!WARNING!** Do not commit the changes to `go.mod`
 
 ### Setup Local Logs
 

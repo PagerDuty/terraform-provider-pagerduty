@@ -39,6 +39,4 @@ The following arguments are supported:
   - `routing_key` - Routing key that routes to this Orchestration.
   - `type` - Type of the routing key. `global` is the default type.
 
-<!-- TODO: Add a link to Integration Page when API docs will be available -->
-
-[1]: https://developer.pagerduty.com/api-reference/<event_orchestration_integration>
+[1]: https://developer.pagerduty.com/api-reference/1c6607db389a8-get-an-integration-for-an-event-orchestration

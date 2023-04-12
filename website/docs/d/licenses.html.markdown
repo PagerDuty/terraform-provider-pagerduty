@@ -14,7 +14,7 @@ Use this data source to get information about the purchased [licenses][1] that y
 
 ```hcl
 locals {
-	invalid_roles = ["owner"]
+  invalid_roles = ["owner"]
 }
 
 data "pagerduty_licenses" "licenses" {}
@@ -23,12 +23,12 @@ resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
 
-	license = data.pagerduty_licenses.licenses.licenses[0].id
+  license = data.pagerduty_licenses.licenses.licenses[0].id
 
   # Role must be included in the assigned license's allowed_roles list.
   # Role may be dynamically referenced from data.pagerduty_licenses.licenses with the following:
   # tolist(setsubtract(data.pagerduty_licenses.licenses.licenses[0].valid_roles, local.invalid_roles))[0]
-	role = "user"
+  role = "user"
 }
 ```
 

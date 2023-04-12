@@ -46,7 +46,7 @@ type EventOrchestrationPathRuleCondition struct {
 }
 
 // See the full list of supported actions for path types:
-// Global: TODO
+// Global: https://developer.pagerduty.com/api-reference/28317f3c2bdfd-get-the-global-orchestration-for-an-event-orchestration
 // Router: https://developer.pagerduty.com/api-reference/f0fae270c70b3-get-the-router-for-a-global-event-orchestration
 // Service: https://developer.pagerduty.com/api-reference/179537b835e2d-get-the-service-orchestration-for-a-service
 // Unrouted: https://developer.pagerduty.com/api-reference/70aa1139e1013-get-the-unrouted-orchestration-for-a-global-event-orchestration

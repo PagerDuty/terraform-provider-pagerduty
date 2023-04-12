@@ -28,6 +28,9 @@ type ScheduleReference resourceReference
 // TeamReference represents a reference to a team.
 type TeamReference resourceReference
 
+// LicenseReference represents a reference to a team.
+type LicenseReference resourceReference
+
 // ContactMethodReference represents a reference to a contact method.
 type ContactMethodReference resourceReference
 

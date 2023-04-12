@@ -29,23 +29,31 @@ type NotificationRulePayload struct {
 
 // User represents a user.
 type User struct {
-	AvatarURL         string                    `json:"avatar_url,omitempty"`
-	Color             string                    `json:"color,omitempty"`
-	ContactMethods    []*ContactMethodReference `json:"contact_methods,omitempty"`
-	Description       string                    `json:"description,omitempty"`
-	Email             string                    `json:"email,omitempty"`
-	HTMLURL           string                    `json:"html_url,omitempty"`
-	ID                string                    `json:"id,omitempty"`
-	InvitationSent    bool                      `json:"invitation_sent,omitempty"`
-	JobTitle          string                    `json:"job_title,omitempty"`
-	Name              string                    `json:"name,omitempty"`
+	AvatarURL      string `json:"avatar_url,omitempty"`
+	Color          string `json:"color,omitempty"`
+	Description    string `json:"description,omitempty"`
+	Email          string `json:"email,omitempty"`
+	HTMLURL        string `json:"html_url,omitempty"`
+	ID             string `json:"id,omitempty"`
+	InvitationSent bool   `json:"invitation_sent,omitempty"`
+	JobTitle       string `json:"job_title,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Role           string `json:"role,omitempty"`
+	Self           string `json:"self,omitempty"`
+	Summary        string `json:"summary,omitempty"`
+	TimeZone       string `json:"time_zone,omitempty"`
+	Type           string `json:"type,omitempty"`
+
+	// User Associations
 	NotificationRules []*NotificationRule       `json:"notification_rules,omitempty"`
-	Role              string                    `json:"role,omitempty"`
-	Self              string                    `json:"self,omitempty"`
-	Summary           string                    `json:"summary,omitempty"`
 	Teams             []*TeamReference          `json:"teams,omitempty"`
-	TimeZone          string                    `json:"time_zone,omitempty"`
-	Type              string                    `json:"type,omitempty"`
+	ContactMethods    []*ContactMethodReference `json:"contact_methods,omitempty"`
+	License           *LicenseReference         `json:"license,omitempty"`
+}
+
+// LicensePayload represents a license.
+type LicensePayload struct {
+	License *License `json:"license,omitempty"`
 }
 
 // UserPayload represents a user.
@@ -53,26 +61,31 @@ type UserPayload struct {
 	User *User `json:"user,omitempty"`
 }
 
-// FullUser represents a user fetched with include[]=contact_methods,notification_rules.
-// This is only used when caching is enabled
+// FullUser represents a user fetched with:
+// `include[]=contact_methods,notification_rules`. This is only used when
+// caching is enabled. Since licenses are not fetched with the `include[]`
+// params, but instead require a new api route, they are not included in the
+// FullUser struct.
 type FullUser struct {
-	AvatarURL         string              `json:"avatar_url,omitempty"`
-	Color             string              `json:"color,omitempty"`
+	AvatarURL      string `json:"avatar_url,omitempty"`
+	Color          string `json:"color,omitempty"`
+	Description    string `json:"description,omitempty"`
+	Email          string `json:"email,omitempty"`
+	HTMLURL        string `json:"html_url,omitempty"`
+	ID             string `json:"id,omitempty"`
+	InvitationSent bool   `json:"invitation_sent,omitempty"`
+	JobTitle       string `json:"job_title,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Role           string `json:"role,omitempty"`
+	Self           string `json:"self,omitempty"`
+	Summary        string `json:"summary,omitempty"`
+	TimeZone       string `json:"time_zone,omitempty"`
+	Type           string `json:"type,omitempty"`
+
+	// User Associations fetched with `include[]` params
 	ContactMethods    []*ContactMethod    `json:"contact_methods,omitempty"`
-	Description       string              `json:"description,omitempty"`
-	Email             string              `json:"email,omitempty"`
-	HTMLURL           string              `json:"html_url,omitempty"`
-	ID                string              `json:"id,omitempty"`
-	InvitationSent    bool                `json:"invitation_sent,omitempty"`
-	JobTitle          string              `json:"job_title,omitempty"`
-	Name              string              `json:"name,omitempty"`
 	NotificationRules []*NotificationRule `json:"notification_rules,omitempty"`
-	Role              string              `json:"role,omitempty"`
-	Self              string              `json:"self,omitempty"`
-	Summary           string              `json:"summary,omitempty"`
 	Teams             []*Team             `json:"teams,omitempty"`
-	TimeZone          string              `json:"time_zone,omitempty"`
-	Type              string              `json:"type,omitempty"`
 }
 
 // FullUserPayload represents a user.
@@ -277,6 +290,81 @@ func (s *UserService) Get(id string, o *GetUserOptions) (*User, *Response, error
 	}
 
 	return v.User, resp, nil
+}
+
+// GetLicense retrieves a users assigned License.
+func (s *UserService) GetLicense(id string) (*License, *Response, error) {
+	u := fmt.Sprintf("/users/%s/license", id)
+	v := new(LicensePayload)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.License, resp, nil
+}
+
+// GetWithLicense retrieves information about a user and their assigned License.
+// This function exists because the interface for GetLicense does not return
+// a user's assigned account Role, which is required in order to manage licenses
+func (s *UserService) GetWithLicense(id string, o *GetUserOptions) (*User, error) {
+	user, _, err := s.Get(id, o)
+	if err != nil {
+		return nil, err
+	}
+
+	license, _, err := s.GetLicense(id)
+	if err != nil {
+		return nil, err
+	}
+	user.License = &LicenseReference{ID: license.ID, Type: "license_reference"}
+
+	return user, nil
+}
+
+// ListAllWithLicenses lists users into User objects with assigned licenses
+// This function exists because licenses are not supported with the include[]
+// API Param and so 2 API calls are required in order to fetch all of the users
+// with their complete attributes including their assigned licenses.
+// This API supports the include params for expanded references and also
+// requires that the caller list all users since the users &
+// license_allocations API's are not sorted in the same way.
+func (s *UserService) ListAllWithLicenses(o *ListUsersOptions) ([]*User, error) {
+	users := make(map[string]*User)
+	o.More, o.Offset = true, 0
+
+	for o.More {
+		log.Printf("==== Getting users at offset %d", o.Offset)
+		v, _, err := s.List(o)
+		if err != nil {
+			return prepareUsers(users), err
+		}
+		for _, u := range v.Users {
+			users[u.ID] = u
+		}
+		o.More = v.More
+		o.Offset = o.Offset + v.Limit
+	}
+
+	licenseAllocations, err := s.client.Licenses.ListAllAllocations(&ListLicenseAllocationsOptions{})
+	if err != nil {
+		return prepareUsers(users), err
+	}
+	for _, la := range licenseAllocations {
+		users[la.User.ID].License = &LicenseReference{ID: la.License.ID, Type: "license_reference"}
+	}
+	return prepareUsers(users), nil
+}
+
+func prepareUsers(users map[string]*User) []*User {
+	usersSlice := make([]*User, 0, len(users))
+
+	for _, u := range users {
+		usersSlice = append(usersSlice, u)
+	}
+
+	return usersSlice
 }
 
 // GetFull retrieves information about a user including contact methods and notification rules.

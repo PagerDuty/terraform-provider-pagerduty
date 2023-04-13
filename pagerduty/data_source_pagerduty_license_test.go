@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -51,8 +50,8 @@ func TestAccDataSourcePagerDutyLicense_Empty(t *testing.T) {
 }
 
 func TestAccDataSourcePagerDutyLicense_Error(t *testing.T) {
-	reference := acctest.RandString(30)
-	expectedErrorString := fmt.Sprintf("Unable to locate any license with the configured id: '', name: '%s' or description: ''", reference)
+	reference := "testing_reference"
+	expectedErrorString := "Unable to locate any license"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },

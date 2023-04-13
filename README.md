@@ -122,7 +122,7 @@ Or update the file directly:
 replace github.com/heimweh/go-pagerduty => /PATH/TO/LOCAL/go-pagerduty
 ```
 
-Ensure that the vendor package is updated with any changes:
+Update vendored dependencies or configure compiler to prefer using downloaded modules based on `go.mod` file:
 ```
 $ export GOFLAGS="-mod=mod"
 ```

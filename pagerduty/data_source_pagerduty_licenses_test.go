@@ -36,7 +36,7 @@ func TestAccDataSourcePagerDutyLicenses_WithID(t *testing.T) {
 			{
 				Config: testAccDataSourcePagerDutyLicensesConfigWithID(name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccDataSourcePagerDutyLicenses(fmt.Sprintf("data.pagerduty_licenses.%s", name)),
+					testAccDataSourcePagerDutyLicensesWithID(fmt.Sprintf("data.pagerduty_licenses.%s", name), name),
 				),
 			},
 		},

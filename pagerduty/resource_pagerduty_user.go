@@ -115,7 +115,7 @@ func resourcePagerDutyUser() *schema.Resource {
 	}
 }
 
-func buildUserStruct(d *schema.ResourceData) (*pagerduty.User, error) {
+func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	user := &pagerduty.User{
 		Name:  strings.TrimSpace(d.Get("name").(string)),
 		Email: d.Get("email").(string),
@@ -150,7 +150,7 @@ func buildUserStruct(d *schema.ResourceData) (*pagerduty.User, error) {
 	}
 
 	log.Printf("[DEBUG] buildUserStruct-- d: .%v. user:%v.", d.Get("name").(string), user.Name)
-	return user, nil
+	return user
 }
 
 func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error {
@@ -159,10 +159,7 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	user, err := buildUserStruct(d)
-	if err != nil {
-		return err
-	}
+	user := buildUserStruct(d)
 
 	log.Printf("[INFO] Creating PagerDuty user %s", user.Name)
 
@@ -225,10 +222,7 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	user, err := buildUserStruct(d)
-	if err != nil {
-		return err
-	}
+	user := buildUserStruct(d)
 
 	log.Printf("[INFO] Updating PagerDuty user %s", d.Id())
 

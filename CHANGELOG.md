@@ -1,3 +1,11 @@
+## 2.14.0 (April 13, 2023)
+
+FEATURES:
+* Adds license resource for user management ([#657](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/657))
+  - `data/pagerduty_license`
+  - `data/pagerduty_licenses`
+  - `resource/pagerduty_user`
+
 ## 2.13.0 (April 12, 2023)
 
 FEATURES:

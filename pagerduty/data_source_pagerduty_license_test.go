@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -11,11 +12,14 @@ import (
 
 func TestAccDataSourcePagerDutyLicense_Basic(t *testing.T) {
 	reference := "full_user"
-	name := "User"
 	description := ""
+	name := os.Getenv("PAGERDUTY_ACC_LICENSE_NAME")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckLicenseNameTests(t, name)
+		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
@@ -50,7 +54,7 @@ func TestAccDataSourcePagerDutyLicense_Empty(t *testing.T) {
 }
 
 func TestAccDataSourcePagerDutyLicense_Error(t *testing.T) {
-	reference := "testing_reference"
+	reference := "testing_reference_missing_license"
 	expectedErrorString := "Unable to locate any license"
 
 	resource.Test(t, resource.TestCase{
@@ -63,6 +67,31 @@ func TestAccDataSourcePagerDutyLicense_Error(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccDataSourcePagerDutyLicense_ErrorWithID(t *testing.T) {
+	reference := "testing_reference_missing_license"
+	expectedErrorString := "Unable to locate any license"
+	// Even with an expected name, if the configured ID is not found there
+	// should be an error
+	name := "Full User"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccDataSourcePagerDutyLicenseConfigErrorWithID(reference, name),
+				ExpectError: regexp.MustCompile(expectedErrorString),
+			},
+		},
+	})
+}
+
+func testAccPreCheckLicenseNameTests(t *testing.T, name string) {
+	if name == "" {
+		t.Skip("PAGERDUTY_ACC_LICENSE_NAME not set. Skipping tests requiring license names")
+	}
 }
 
 func testAccDataSourcePagerDutyLicense(n string) resource.TestCheckFunc {
@@ -113,4 +142,13 @@ data "pagerduty_license" "%s" {
 	name = "%s"
 }
 `, reference, reference)
+}
+
+func testAccDataSourcePagerDutyLicenseConfigErrorWithID(reference, name string) string {
+	return fmt.Sprintf(`
+data "pagerduty_license" "%s" {
+	id = "%s"
+	name = "%s"
+}
+`, reference, reference, name)
 }

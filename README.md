@@ -110,6 +110,27 @@ Make changes to the PagerDuty provider and post a pull request for review.
    ```
 4. See `api_url_override` from Terraform docs for [PagerDuty Provider](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs#argument-reference) to set a custom proxy endpoint as PagerDuty client api url overriding service_region setup.
 
+## Test a specific version of the go-pagerduty API client
+
+Modify the `go.mod` file using a [Go module replacement](https://go.dev/doc/modules/managing-dependencies#external_fork) for `github.com/heimweh/go-pagerduty:
+```
+$ go mod edit -replace github.com/heimweh/go-pagerduty=/PATH/TO/LOCAL/github.com/<USERNAME>/<REPO>
+```
+
+Or update the file directly:
+```
+replace github.com/heimweh/go-pagerduty => /PATH/TO/LOCAL/go-pagerduty
+```
+
+Update vendored dependencies or configure compiler to prefer using downloaded modules based on `go.mod` file:
+```
+$ export GOFLAGS="-mod=mod"
+```
+Or:
+```
+$ go mod vendor
+```
+
 ### Setup Local Logs
 
 1. See [Debugging Terraform](https://www.terraform.io/internals/debugging). Either add this to your shell's profile
@@ -160,10 +181,12 @@ For example:
 PAGERDUTY_ACC_INCIDENT_WORKFLOWS=1 make testacc TESTARGS="-run PagerDutyIncidentWorkflow"
 PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.pagerduty.com" make testacc TESTARGS="-run PagerDutyServiceIntegration_GenericEmailNoFilters"
 PAGERDUTY_ACC_CUSTOM_FIELDS=1 make testacc TESTARGS="-run PagerDutyCustomField"
+PAGERDUTY_ACC_LICENSE_NAME="Full User" make testacc TESTARGS="-run DataSourcePagerDutyLicense_Basic"
 ```
 
-| Variable Name                                               | Feature Set         |
-| ----------------------------------------------------------- | ------------------- |
-| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                          | Incident Workflows  |
+| Variable Name                                                | Feature Set         |
+| ------------------------------------------------------------ | ------------------- |
+| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                           | Incident Workflows  |
 | `PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS` | Service Integration |
 | `PAGERDUTY_ACC_CUSTOM_FIELDS`                                | Custom Fields       |
+| `PAGERDUTY_ACC_LICENSE_NAME`                                 | Licenses            |

@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_user
 
-A [user](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIzNA-create-a-user) is a member of a PagerDuty account that have the ability to interact with incidents and other data on the account.
+A [user][1] is a member of a PagerDuty account that have the ability to interact with incidents and other data on the account.
 
 
 ## Example Usage
@@ -37,6 +37,7 @@ The following arguments are supported:
   * `time_zone` - (Optional) The time zone of the user. Default is account default timezone.
   * `description` - (Optional) A human-friendly description of the user.
     If not set, a placeholder of "Managed by Terraform" will be set.
+  * `license` - (Optional) The license id assigned to the user. If provided the user's role must exist in the assigned license's `valid_roles` list. To reference purchased licenses' ids see data source `pagerduty_licenses` [data source][1].
 
 ## Attributes Reference
 
@@ -55,3 +56,6 @@ Users can be imported using the `id`, e.g.
 ```
 $ terraform import pagerduty_user.main PLBP09X
 ```
+
+[1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIzNA-create-a-user
+[2]: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/pagerduty_license

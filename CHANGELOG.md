@@ -1,3 +1,12 @@
+## 2.14.1 (April 14, 2023)
+
+IMPROVEMENTS:
+* Support for deleting remote configuration of Event Orchestration Paths ([#676](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/676))
+  - `resource/pagerduty_event_orchestration_service`
+  - `resource/pagerduty_event_orchestration_router`
+  - `resource/pagerduty_event_orchestration_unrouted`
+  - `resource/pagerduty_event_orchestration_global`
+
 ## 2.14.0 (April 13, 2023)
 
 FEATURES:
@@ -10,13 +19,10 @@ FEATURES:
 
 FEATURES:
 * Event Orchestration Updates: Orchestration Warnings, Global Orchestrations, Orchestration Integrations ([#618](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/618))
+  - `data/pagerduty_event_orchestration_integration`
+  - `resource/pagerduty_event_orchestration_global`
+  - `resource/pagerduty_event_orchestration_integration`
 
-## 2.12.1 (April 6, 2023)
-
-BUG FIXES:
-*  `resource/pagerduty_service`: Address: Service Read lifecycle wasn't detecting drift for auto pause notif and alert grouping params ([#673](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/673))
-
-## 2.12.0 (April 6, 2023)
 ## 2.12.2 (April 11, 2023)
 
 IMPROVEMENTS:

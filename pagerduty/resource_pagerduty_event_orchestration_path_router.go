@@ -153,10 +153,31 @@ func resourcePagerDutyEventOrchestrationPathRouterCreate(ctx context.Context, d 
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// In order to delete an Orchestration Router an empty orchestration path
+	// config should be sent as an update.
+	emptyPath := emptyOrchestrationPathStructBuilder("router")
+	routerID := d.Get("event_orchestration").(string)
+
+	log.Printf("[INFO] Deleting PagerDuty Event Orchestration Router Path: %s", routerID)
+
+	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerID, "router", emptyPath); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
+	}
 
 	d.SetId("")
-	return diags
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

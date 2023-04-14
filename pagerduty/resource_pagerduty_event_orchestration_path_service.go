@@ -315,10 +315,31 @@ func needToUpdateServiceActiveStatus(d *schema.ResourceData) bool {
 }
 
 func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// In order to delete a Service Orchestration an empty orchestration path
+	// config should be sent as an update.
+	emptyPath := emptyOrchestrationPathStructBuilder("service")
+	serviceID := d.Get("service").(string)
+
+	log.Printf("[INFO] Deleting PagerDuty Event Orchestration Service Path: %s", serviceID)
+
+	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", emptyPath); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
+	}
 
 	d.SetId("")
-	return diags
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathServiceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

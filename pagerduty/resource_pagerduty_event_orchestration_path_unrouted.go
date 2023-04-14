@@ -203,10 +203,31 @@ func resourcePagerDutyEventOrchestrationPathUnroutedCreate(ctx context.Context, 
 
 // EventOrchestrationPath cannot be deleted, use update to add / edit / remove rules and sets
 func resourcePagerDutyEventOrchestrationPathUnroutedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// In order to delete an Unrouted Orchestration an empty orchestration path
+	// config should be sent as an update.
+	emptyPath := emptyOrchestrationPathStructBuilder("unrouted")
+	routerID := d.Get("event_orchestration").(string)
+
+	log.Printf("[INFO] Deleting PagerDuty Unrouted Event Orchestration Path: %s", routerID)
+
+	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerID, "unrouted", emptyPath); err != nil {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
+	}
 
 	d.SetId("")
-	return diags
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

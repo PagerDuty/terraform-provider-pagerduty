@@ -350,3 +350,40 @@ func convertEventOrchestrationPathWarningsToDiagnostics(warnings []*pagerduty.Ev
 
 	return diags
 }
+
+func emptyOrchestrationPathStructBuilder(pathType string) *pagerduty.EventOrchestrationPath {
+	commonEmptyOrchestrationPath := func() *pagerduty.EventOrchestrationPath {
+		return &pagerduty.EventOrchestrationPath{
+			CatchAll: &pagerduty.EventOrchestrationPathCatchAll{
+				Actions: nil,
+			},
+			Sets: []*pagerduty.EventOrchestrationPathSet{
+				{
+					ID:    "start",
+					Rules: []*pagerduty.EventOrchestrationPathRule{},
+				},
+			},
+		}
+	}
+	routerEmptyOrchestrationPath := func() *pagerduty.EventOrchestrationPath {
+		return &pagerduty.EventOrchestrationPath{
+			CatchAll: &pagerduty.EventOrchestrationPathCatchAll{
+				Actions: &pagerduty.EventOrchestrationPathRuleActions{
+					RouteTo: "unrouted",
+				},
+			},
+			Sets: []*pagerduty.EventOrchestrationPathSet{
+				{
+					ID:    "start",
+					Rules: []*pagerduty.EventOrchestrationPathRule{},
+				},
+			},
+		}
+	}
+
+	if pathType == "router" {
+		return routerEmptyOrchestrationPath()
+	}
+
+	return commonEmptyOrchestrationPath()
+}

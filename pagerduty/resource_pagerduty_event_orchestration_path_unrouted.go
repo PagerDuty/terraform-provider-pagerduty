@@ -211,12 +211,12 @@ func resourcePagerDutyEventOrchestrationPathUnroutedDelete(ctx context.Context, 
 	// In order to delete an Unrouted Orchestration an empty orchestration path
 	// config should be sent as an update.
 	emptyPath := emptyOrchestrationPathStructBuilder("unrouted")
-	routerID := d.Get("event_orchestration").(string)
+	orchestrationID := d.Get("event_orchestration").(string)
 
-	log.Printf("[INFO] Deleting PagerDuty Unrouted Event Orchestration Path: %s", routerID)
+	log.Printf("[INFO] Deleting PagerDuty Unrouted Event Orchestration Path: %s", orchestrationID)
 
 	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
-		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerID, "unrouted", emptyPath); err != nil {
+		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, orchestrationID, "unrouted", emptyPath); err != nil {
 			return resource.RetryableError(err)
 		}
 		return nil

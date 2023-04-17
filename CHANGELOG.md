@@ -1,3 +1,8 @@
+## 2.14.2 (April 17, 2023)
+
+IMPROVEMENTS:
+*  `resource/pagerduty_escalation_policy`: Handle retries and state drift clean up for Escalation Policy ([#677](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/677))
+
 ## 2.14.1 (April 14, 2023)
 
 IMPROVEMENTS:

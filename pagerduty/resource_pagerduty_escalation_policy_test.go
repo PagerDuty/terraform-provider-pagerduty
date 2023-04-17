@@ -96,6 +96,15 @@ func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 						"pagerduty_escalation_policy.foo", "rule.1.escalation_delay_in_minutes", "20"),
 				),
 			},
+			// Validating that externally removed escalation policies are detected and
+			// planed for re-creation
+			{
+				Config: testAccCheckPagerDutyEscalationPolicyConfigUpdated(username, email, escalationPolicyUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyEscalationPolicy("pagerduty_escalation_policy.foo"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -188,6 +197,26 @@ func testAccCheckPagerDutyEscalationPolicyExists(n string) resource.TestCheckFun
 
 		if found.ID != rs.Primary.ID {
 			return fmt.Errorf("Escalation policy not found: %v - %v", rs.Primary.ID, found)
+		}
+
+		return nil
+	}
+}
+
+func testAccExternallyDestroyEscalationPolicy(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Tag ID is set")
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		_, err := client.EscalationPolicies.Delete(rs.Primary.ID)
+		if err != nil {
+			return err
 		}
 
 		return nil

@@ -10,6 +10,8 @@ description: |-
 
 Use this data source to get information about a specific [vendor][1] that you can use for a service integration (e.g. Amazon Cloudwatch, Splunk, Datadog).
 
+-> For the case of vendors that rely on [Change Events][2] (e.g. Jekings CI, Github, Gitlab, ...) is important to know that those vendors are only available with [PagerDuty AIOps][3] add-on. Therefore, they won't be accessible as result of `pagerduty_vendor` data source without the proper entitlements.
+
 ## Example Usage
 
 ```hcl
@@ -64,3 +66,5 @@ The following arguments are supported:
 * `type` - The generic service type for this vendor.
 
 [1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODI1OQ-list-vendors
+[2]: https://support.pagerduty.com/docs/change-events
+[3]: https://support.pagerduty.com/docs/aiops

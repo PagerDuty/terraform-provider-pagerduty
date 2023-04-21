@@ -1,3 +1,10 @@
+## 2.14.3 (April 20, 2023)
+
+IMPROVEMENTS:
+*  `data/vendor`: Doc update for `data.pagerduty_vendor` regarding PagerDuty AIOps feature gate ([#678](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/678))
+*  `resource/schedule`: Add schedule's users as query param when listing open incidents associated to EP snashot ([#679](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/679))
+*  `resource/service`: Service response play no op update ([#680](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/680))
+
 ## 2.14.2 (April 17, 2023)
 
 IMPROVEMENTS:

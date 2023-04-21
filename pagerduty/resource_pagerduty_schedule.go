@@ -609,9 +609,14 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerdu
 	var incidents []*pagerduty.Incident
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		var err error
+		var userIDs []string
+		for _, u := range schedule.Users {
+			userIDs = append(userIDs, u.ID)
+		}
 		incidents, err = c.Incidents.ListAll(&pagerduty.ListIncidentsOptions{
 			DateRange: "all",
 			Statuses:  []string{"triggered", "acknowledged"},
+			UserIDs:   userIDs,
 			Limit:     100,
 		})
 		if err != nil {
@@ -646,7 +651,6 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerdu
 	}
 	return linksToIncidents, nil
 }
-
 func extractEPsAssociatedToSchedule(c *pagerduty.Client, schedule *pagerduty.Schedule) ([]string, error) {
 	eps := []string{}
 	for _, ep := range schedule.EscalationPolicies {

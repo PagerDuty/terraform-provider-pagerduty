@@ -884,6 +884,7 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 						"pagerduty_service.foo", "html_url"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "type", "service"),
+					testAccCheckPagerDutyServiceResponsePlayNotExist("pagerduty_service.foo"),
 				),
 			},
 		},
@@ -954,6 +955,32 @@ func testAccCheckPagerDutyServiceExists(n string) resource.TestCheckFunc {
 
 		if found.ID != rs.Primary.ID {
 			return fmt.Errorf("Service not found: %v - %v", rs.Primary.ID, found)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyServiceResponsePlayNotExist(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Service ID is set")
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+
+		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		if err != nil {
+			return err
+		}
+
+		if found.ID == rs.Primary.ID && found.ResponsePlay != nil {
+			return fmt.Errorf("Service %s still has a response play configured", rs.Primary.ID)
 		}
 
 		return nil

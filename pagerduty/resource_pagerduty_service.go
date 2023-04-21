@@ -305,6 +305,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"response_play": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 		},
 	}

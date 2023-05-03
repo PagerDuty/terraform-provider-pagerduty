@@ -399,21 +399,6 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	// An Schedule with open incidents related can't be remove till those
-	// incidents have been resolved.
-	linksToIncidentsOpen, err := listIncidentsOpenedRelatedToSchedule(client, scheduleData, epsAssociatedToSchedule)
-	if err != nil {
-		return err
-	}
-
-	if len(linksToIncidentsOpen) > 0 {
-		var urlLinksMessage string
-		for _, incident := range linksToIncidentsOpen {
-			urlLinksMessage = fmt.Sprintf("%s\n%s", urlLinksMessage, incident)
-		}
-		return fmt.Errorf("Before Removing Schedule %q You must first resolve the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, urlLinksMessage)
-	}
-
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", scheduleId)
 	// Retrying to give other resources (such as escalation policies) to delete
 	retryErr = resource.Retry(2*time.Minute, func() *resource.RetryError {
@@ -421,14 +406,40 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 			if !isErrCode(err, 400) {
 				return resource.RetryableError(err)
 			}
+			isErrorScheduleUsedByEP := func(e *pagerduty.Error) bool {
+				return strings.Compare(fmt.Sprintf("%v", e.Errors), "[Schedule can't be deleted if it's being used by escalation policies]") == 0
+			}
+			isErrorScheduleWOpenIncidents := func(e *pagerduty.Error) bool {
+				return strings.Compare(fmt.Sprintf("%v", e.Errors), "[Schedule can't be deleted if it's being used by an escalation policy snapshot with open incidents]") == 0
+			}
 
 			// Handling of specific http 400 errors from API call DELETE /schedules
-			if e, ok := err.(*pagerduty.Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[Schedule can't be deleted if it's being used by escalation policies]") != 0 {
+			e, ok := err.(*pagerduty.Error)
+			if !ok || !isErrorScheduleUsedByEP(e) && !isErrorScheduleWOpenIncidents(e) {
+				log.Printf("[MYDEBUG] isErrorScheduleUsedByEP: %t; isErrorScheduleWOpenIncidents: %t", isErrorScheduleUsedByEP(e), isErrorScheduleWOpenIncidents(e))
 				return resource.NonRetryableError(err)
 			}
 
+			var workaroundErr error
+			// An Schedule with open incidents related can't be remove till those
+			// incidents have been resolved.
+			linksToIncidentsOpen, workaroundErr := listIncidentsOpenedRelatedToSchedule(client, scheduleData, epsAssociatedToSchedule)
+			if workaroundErr != nil {
+				err = fmt.Errorf("%v; %w", err, workaroundErr)
+				return resource.NonRetryableError(err)
+			}
+
+			if len(linksToIncidentsOpen) > 0 {
+				var urlLinksMessage string
+				for _, incident := range linksToIncidentsOpen {
+					urlLinksMessage = fmt.Sprintf("%s\n%s", urlLinksMessage, incident)
+				}
+				return resource.NonRetryableError(fmt.Errorf("Before Removing Schedule %q You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, urlLinksMessage))
+			}
+
+			// Workaround for Schedule being used by escalation policies error
 			log.Printf("[INFO] Dissociating Escalation Policies that use the Schedule: %s", scheduleId)
-			workaroundErr := dissociateScheduleFromEPs(client, scheduleId, epsAssociatedToSchedule)
+			workaroundErr = dissociateScheduleFromEPs(client, scheduleId, epsAssociatedToSchedule)
 			if workaroundErr != nil {
 				err = fmt.Errorf("%v; %w", err, workaroundErr)
 			}
@@ -607,18 +618,20 @@ func flattenScheFinalSchedule(finalSche *pagerduty.SubSchedule) []map[string]int
 
 func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerduty.Schedule, epIDs []string) ([]string, error) {
 	var incidents []*pagerduty.Incident
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		var err error
-		var userIDs []string
-		for _, u := range schedule.Users {
-			userIDs = append(userIDs, u.ID)
-		}
-		incidents, err = c.Incidents.ListAll(&pagerduty.ListIncidentsOptions{
+		options := &pagerduty.ListIncidentsOptions{
 			DateRange: "all",
 			Statuses:  []string{"triggered", "acknowledged"},
-			UserIDs:   userIDs,
 			Limit:     100,
-		})
+		}
+		if len(schedule.Users) > 0 {
+			for _, u := range schedule.Users {
+				options.UserIDs = append(options.UserIDs, u.ID)
+			}
+		}
+
+		incidents, err = c.Incidents.ListAll(options)
 		if err != nil {
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)

@@ -1,3 +1,8 @@
+## 2.14.4 (May 2, 2023)
+
+IMPROVEMENTS:
+*  `resource/schedule`: Improve `resource/pagerduty_schedule` open incidents handling on deletion ([#681](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/681))
+
 ## 2.14.3 (April 20, 2023)
 
 IMPROVEMENTS:

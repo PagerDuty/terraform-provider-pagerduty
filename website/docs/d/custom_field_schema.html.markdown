@@ -8,9 +8,14 @@ description: |-
 
 # pagerduty\_custom\_field\_schema
 
+!> This Data Source is no longer functional. Documentation is left here for the purpose of documenting migration steps.
+
 Use this data source to get information about a specific [Custom Field Schema](https://support.pagerduty.com/docs/custom-fields#schemas) that you can assign to a service.
 
--> The Custom Fields feature is currently available in Early Access.
+## Migration
+
+This data source has no currently functional counterpart. Custom Fields on Incidents are now applied globally
+to incidents within an account and have no notion of a Field Schema.
 
 ## Example Usage
 

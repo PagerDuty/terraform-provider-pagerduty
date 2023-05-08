@@ -2,13 +2,23 @@ package pagerduty
 
 import (
 	"context"
-	"fmt"
+	"errors"
 )
 
+const customFieldDeprecationMessage = "standalone custom field functionality has been removed"
+
+func customFieldDeprecationError() error {
+	return errors.New(customFieldDeprecationMessage)
+}
+
 // CustomFieldService handles the communication with field related methods of the PagerDuty API.
+//
+// Deprecated: This service should no longer be used. IncidentCustomFieldService provides similar functionality.
 type CustomFieldService service
 
 // CustomField represents a custom field.
+//
+// Deprecated: This struct should no longer be used. IncidentCustomField is similar but not identical.
 type CustomField struct {
 	ID           string               `json:"id,omitempty"`
 	Name         string               `json:"name,omitempty"`
@@ -24,6 +34,8 @@ type CustomField struct {
 }
 
 // ListCustomFieldResponse represents a list response of fields
+//
+// Deprecated: This struct should no longer be used.
 type ListCustomFieldResponse struct {
 	Total  int            `json:"total,omitempty"`
 	Fields []*CustomField `json:"fields,omitempty"`
@@ -33,11 +45,15 @@ type ListCustomFieldResponse struct {
 }
 
 // CustomFieldPayload represents payload with a field object
+//
+// Deprecated: This struct should no longer be used.
 type CustomFieldPayload struct {
 	Field *CustomField `json:"field,omitempty"`
 }
 
 // ListCustomFieldOptions represents options when retrieving a list of fields.
+//
+// Deprecated: This struct should no longer be used.
 type ListCustomFieldOptions struct {
 	Offset   int      `url:"offset,omitempty"`
 	Limit    int      `url:"limit,omitempty"`
@@ -45,151 +61,81 @@ type ListCustomFieldOptions struct {
 	Includes []string `url:"include,brackets,omitempty"`
 }
 
-type listCustomFieldOptionsGen struct {
-	options *ListCustomFieldOptions
-}
-
-func (o *listCustomFieldOptionsGen) currentOffset() int {
-	return o.options.Offset
-}
-
-func (o *listCustomFieldOptionsGen) changeOffset(i int) {
-	o.options.Offset = i
-}
-
-func (o *listCustomFieldOptionsGen) buildStruct() interface{} {
-	return o.options
-}
-
 // GetCustomFieldOptions represents options when retrieving a field.
+//
+// Deprecated: This struct should no longer be used.
 type GetCustomFieldOptions struct {
 	Includes []string `url:"include,brackets,omitempty"`
 }
 
-var customFieldsEarlyAccessHeader = RequestOptions{
-	Type:  "header",
-	Label: "X-EARLY-ACCESS",
-	Value: "flex-service-early-access",
-}
-
 // List lists existing custom fields. If a non-zero Limit is passed as an option, only a single page of results will be
 // returned. Otherwise, the entire list of fields will be returned.
+//
+// Deprecated: Use IncidentCustomFieldService.List
 func (s *CustomFieldService) List(o *ListCustomFieldOptions) (*ListCustomFieldResponse, *Response, error) {
 	return s.ListContext(context.Background(), o)
 }
 
 // ListContext lists existing custom fields. If a non-zero Limit is passed as an option, only a single page of results will be
 // returned. Otherwise, the entire list of fields will be returned.
-func (s *CustomFieldService) ListContext(ctx context.Context, o *ListCustomFieldOptions) (*ListCustomFieldResponse, *Response, error) {
-	u := "/customfields/fields"
-	v := new(ListCustomFieldResponse)
-
-	if o == nil {
-		o = &ListCustomFieldOptions{}
-	}
-
-	if o.Limit != 0 {
-		resp, err := s.client.newRequestDoContext(ctx, "GET", u, o, nil, &v)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return v, resp, nil
-	} else {
-		fields := make([]*CustomField, 0)
-
-		// Create a handler closure capable of parsing data from the fields endpoint
-		// and appending resultant response plays to the return slice.
-		responseHandler := func(response *Response) (ListResp, *Response, error) {
-			var result ListCustomFieldResponse
-
-			if err := s.client.DecodeJSON(response, &result); err != nil {
-				return ListResp{}, response, err
-			}
-
-			fields = append(fields, result.Fields...)
-
-			// Return stats on the current page. Caller can use this information to
-			// adjust for requesting additional pages.
-			return ListResp{
-				More:   result.More,
-				Offset: result.Offset,
-				Limit:  result.Limit,
-			}, response, nil
-		}
-		err := s.client.newRequestPagedGetQueryDo(u, responseHandler, &listCustomFieldOptionsGen{
-			options: o,
-		}, customFieldsEarlyAccessHeader)
-		if err != nil {
-			return nil, nil, err
-		}
-		v.Fields = fields
-
-		return v, nil, nil
-	}
+//
+// Deprecated: Use IncidentCustomFieldService.ListContext
+func (s *CustomFieldService) ListContext(_ context.Context, _ *ListCustomFieldOptions) (*ListCustomFieldResponse, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }
 
 // Get gets a custom field.
+//
+// Deprecated: Use IncidentCustomFieldService.Get
 func (s *CustomFieldService) Get(id string, o *GetCustomFieldOptions) (*CustomField, *Response, error) {
 	return s.GetContext(context.Background(), id, o)
 }
 
 // GetContext gets a custom field.
-func (s *CustomFieldService) GetContext(ctx context.Context, id string, o *GetCustomFieldOptions) (*CustomField, *Response, error) {
-	u := fmt.Sprintf("/customfields/fields/%s", id)
-	v := new(CustomFieldPayload)
-
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, o, nil, v, customFieldsEarlyAccessHeader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v.Field, resp, nil
+//
+// Deprecated: Use IncidentCustomFieldService.GetContext
+func (s *CustomFieldService) GetContext(_ context.Context, _ string, _ *GetCustomFieldOptions) (*CustomField, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }
 
 // Create creates a new custom field.
+//
+// Deprecated: Use IncidentCustomFieldService.Create
 func (s *CustomFieldService) Create(field *CustomField) (*CustomField, *Response, error) {
 	return s.CreateContext(context.Background(), field)
 }
 
 // CreateContext creates a new custom field.
-func (s *CustomFieldService) CreateContext(ctx context.Context, field *CustomField) (*CustomField, *Response, error) {
-	u := "/customfields/fields"
-	v := new(CustomFieldPayload)
-
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "POST", u, nil, &CustomFieldPayload{Field: field}, &v, customFieldsEarlyAccessHeader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v.Field, resp, nil
+//
+// Deprecated: Use IncidentCustomFieldService.CreateContext
+func (s *CustomFieldService) CreateContext(_ context.Context, _ *CustomField) (*CustomField, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }
 
 // Delete removes an existing custom field.
+//
+// Deprecated: Use IncidentCustomFieldService.Delete
 func (s *CustomFieldService) Delete(id string) (*Response, error) {
 	return s.DeleteContext(context.Background(), id)
 }
 
 // DeleteContext removes an existing custom field.
-func (s *CustomFieldService) DeleteContext(ctx context.Context, id string) (*Response, error) {
-	u := fmt.Sprintf("/customfields/fields/%s", id)
-	return s.client.newRequestDoOptionsContext(ctx, "DELETE", u, nil, nil, nil, customFieldsEarlyAccessHeader)
+//
+// Deprecated: Use IncidentCustomFieldService.DeleteContext
+func (s *CustomFieldService) DeleteContext(_ context.Context, _ string) (*Response, error) {
+	return nil, customFieldDeprecationError()
 }
 
 // Update updates an existing custom field.
+//
+// Deprecated: Use IncidentCustomFieldService.Update
 func (s *CustomFieldService) Update(id string, field *CustomField) (*CustomField, *Response, error) {
 	return s.UpdateContext(context.Background(), id, field)
 }
 
 // UpdateContext updates an existing custom field.
-func (s *CustomFieldService) UpdateContext(ctx context.Context, id string, field *CustomField) (*CustomField, *Response, error) {
-	u := fmt.Sprintf("/customfields/fields/%s", id)
-	v := new(CustomFieldPayload)
-
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "PUT", u, nil, &CustomFieldPayload{Field: field}, &v, customFieldsEarlyAccessHeader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v.Field, resp, nil
+//
+// Deprecated: Use IncidentCustomFieldService.UpdateContext
+func (s *CustomFieldService) UpdateContext(_ context.Context, _ string, _ *CustomField) (*CustomField, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }

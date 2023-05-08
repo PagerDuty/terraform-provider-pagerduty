@@ -7,6 +7,9 @@ import (
 	"math"
 )
 
+// CustomFieldSchemaFieldConfiguration represents a field configuration in a field schema.
+//
+// Deprecated: This struct should no longer be used
 type CustomFieldSchemaFieldConfiguration struct {
 	ID           string                   `json:"id,omitempty"`
 	Type         string                   `json:"type,omitempty"`
@@ -15,6 +18,9 @@ type CustomFieldSchemaFieldConfiguration struct {
 	DefaultValue *CustomFieldDefaultValue `json:"default_value,omitempty"`
 }
 
+// CustomFieldDefaultValue
+//
+// Deprecated: This struct should no longer be used
 type CustomFieldDefaultValue struct {
 	DataType   CustomFieldDataType `json:"datatype,omitempty"`
 	MultiValue bool                `json:"multi_value"`
@@ -105,104 +111,97 @@ func (d *CustomFieldDefaultValue) convertForInt(value interface{}) error {
 }
 
 // ListCustomFieldSchemaConfigurationsOptions represents options when retrieving a list of field schemas.
+//
+// Deprecated: This struct should no longer be used
 type ListCustomFieldSchemaConfigurationsOptions struct {
 	Includes []string `url:"include,brackets,omitempty"`
 }
 
 // GetCustomFieldSchemaConfigurationsOptions represents options when retrieving a field configuration for a schema
+//
+// Deprecated: This struct should no longer be used
 type GetCustomFieldSchemaConfigurationsOptions struct {
 	Includes []string `url:"include,brackets,omitempty"`
 }
 
+// Deprecated: This struct should no longer be used
 type CustomFieldSchemaFieldConfigurationPayload struct {
 	FieldConfiguration *CustomFieldSchemaFieldConfiguration `json:"field_configuration,omitempty"`
 }
 
 // ListCustomFieldSchemaFieldConfigurationsResponse represents a list response of field configurations for a schema
+//
+// Deprecated: This struct should no longer be used
 type ListCustomFieldSchemaFieldConfigurationsResponse struct {
 	FieldConfigurations []*CustomFieldSchemaFieldConfiguration `json:"field_configurations,omitempty"`
 }
 
 // ListFieldConfigurations lists field configurations for a schema.
+//
+// Deprecated: No current replacement
 func (s *CustomFieldSchemaService) ListFieldConfigurations(schemaID string, o *ListCustomFieldSchemaConfigurationsOptions) (*ListCustomFieldSchemaFieldConfigurationsResponse, *Response, error) {
 	return s.ListFieldConfigurationsContext(context.Background(), schemaID, o)
 }
 
 // ListFieldConfigurationsContext lists field configurations for a schema.
-func (s *CustomFieldSchemaService) ListFieldConfigurationsContext(ctx context.Context, schemaID string, o *ListCustomFieldSchemaConfigurationsOptions) (*ListCustomFieldSchemaFieldConfigurationsResponse, *Response, error) {
-	u := fmt.Sprintf("/customfields/schemas/%s/field_configurations", schemaID)
-	v := new(ListCustomFieldSchemaFieldConfigurationsResponse)
-
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, o, nil, &v, customFieldsEarlyAccessHeader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v, resp, nil
+//
+// Deprecated: No current replacement
+func (s *CustomFieldSchemaService) ListFieldConfigurationsContext(_ context.Context, _ string, _ *ListCustomFieldSchemaConfigurationsOptions) (*ListCustomFieldSchemaFieldConfigurationsResponse, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }
 
 // GetFieldConfiguration gets a field configuration in a schema.
+//
+// Deprecated: No current replacement
 func (s *CustomFieldSchemaService) GetFieldConfiguration(schemaID string, configurationID string, o *GetCustomFieldSchemaConfigurationsOptions) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
 	return s.GetFieldConfigurationContext(context.Background(), schemaID, configurationID, o)
 }
 
 // GetFieldConfigurationContext gets a field configuration in a schema.
-func (s *CustomFieldSchemaService) GetFieldConfigurationContext(ctx context.Context, schemaID string, configurationID string, o *GetCustomFieldSchemaConfigurationsOptions) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
-	u := fmt.Sprintf("/customfields/schemas/%s/field_configurations/%s", schemaID, configurationID)
-	v := new(CustomFieldSchemaFieldConfigurationPayload)
-	p := &CustomFieldSchemaFieldConfigurationPayload{}
-
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, o, p, v, customFieldsEarlyAccessHeader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v.FieldConfiguration, resp, nil
+//
+// Deprecated: No current replacement
+func (s *CustomFieldSchemaService) GetFieldConfigurationContext(_ context.Context, _ string, _ string, _ *GetCustomFieldSchemaConfigurationsOptions) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }
 
 // DeleteFieldConfiguration deletes a field configuration for a schema.
+//
+// Deprecated: No current replacement
 func (s *CustomFieldSchemaService) DeleteFieldConfiguration(schemaID string, configurationID string) (*Response, error) {
 	return s.DeleteFieldConfigurationContext(context.Background(), schemaID, configurationID)
 }
 
 // DeleteFieldConfigurationContext deletes a field configuration for a schema.
-func (s *CustomFieldSchemaService) DeleteFieldConfigurationContext(ctx context.Context, schemaID string, configurationID string) (*Response, error) {
-	u := fmt.Sprintf("/customfields/schemas/%s/field_configurations/%s", schemaID, configurationID)
-	return s.client.newRequestDoOptionsContext(ctx, "DELETE", u, nil, nil, nil, customFieldsEarlyAccessHeader)
+//
+// Deprecated: No current replacement
+func (s *CustomFieldSchemaService) DeleteFieldConfigurationContext(_ context.Context, _ string, _ string) (*Response, error) {
+	return nil, customFieldDeprecationError()
 }
 
 // CreateFieldConfiguration creates a field configuration in a schema.
+//
+// Deprecated: No current replacement
 func (s *CustomFieldSchemaService) CreateFieldConfiguration(schemaID string, configuration *CustomFieldSchemaFieldConfiguration) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
 	return s.CreateFieldConfigurationContext(context.Background(), schemaID, configuration)
 }
 
 // CreateFieldConfigurationContext creates a field configuration in a schema.
-func (s *CustomFieldSchemaService) CreateFieldConfigurationContext(ctx context.Context, schemaID string, configuration *CustomFieldSchemaFieldConfiguration) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
-	u := fmt.Sprintf("/customfields/schemas/%s/field_configurations", schemaID)
-	v := new(CustomFieldSchemaFieldConfigurationPayload)
-
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "POST", u, nil, &CustomFieldSchemaFieldConfigurationPayload{FieldConfiguration: configuration}, &v, customFieldsEarlyAccessHeader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v.FieldConfiguration, resp, nil
+//
+// Deprecated: No current replacement
+func (s *CustomFieldSchemaService) CreateFieldConfigurationContext(_ context.Context, _ string, _ *CustomFieldSchemaFieldConfiguration) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }
 
 // UpdateFieldConfiguration updates a field configuration in a schema.
+//
+// Deprecated: No current replacement
 func (s *CustomFieldSchemaService) UpdateFieldConfiguration(schemaID string, configurationID string, configuration *CustomFieldSchemaFieldConfiguration) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
 	return s.UpdateFieldConfigurationContext(context.Background(), schemaID, configurationID, configuration)
 }
 
 // UpdateFieldConfigurationContext updates a field configuration in a schema.
-func (s *CustomFieldSchemaService) UpdateFieldConfigurationContext(ctx context.Context, schemaID string, configurationID string, configuration *CustomFieldSchemaFieldConfiguration) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
-	u := fmt.Sprintf("/customfields/schemas/%s/field_configurations/%s", schemaID, configurationID)
-	v := new(CustomFieldSchemaFieldConfigurationPayload)
-
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "PUT", u, nil, CustomFieldSchemaFieldConfigurationPayload{FieldConfiguration: configuration}, &v, customFieldsEarlyAccessHeader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return v.FieldConfiguration, resp, nil
+//
+// Deprecated: No current replacement
+func (s *CustomFieldSchemaService) UpdateFieldConfigurationContext(_ context.Context, _ string, _ string, _ *CustomFieldSchemaFieldConfiguration) (*CustomFieldSchemaFieldConfiguration, *Response, error) {
+	return nil, nil, customFieldDeprecationError()
 }

@@ -69,8 +69,9 @@ func Provider() *schema.Provider {
 			"pagerduty_automation_actions_runner":       dataSourcePagerDutyAutomationActionsRunner(),
 			"pagerduty_automation_actions_action":       dataSourcePagerDutyAutomationActionsAction(),
 			"pagerduty_incident_workflow":               dataSourcePagerDutyIncidentWorkflow(),
-			"pagerduty_custom_field":                    dataSourcePagerDutyField(),
-			"pagerduty_custom_field_schema":             dataSourcePagerDutyFieldSchema(),
+			"pagerduty_custom_field":                    dataSourcePagerDutyField(),       // deprecated
+			"pagerduty_custom_field_schema":             dataSourcePagerDutyFieldSchema(), // deprecated
+			"pagerduty_incident_custom_field":           dataSourcePagerDutyIncidentCustomField(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -112,11 +113,13 @@ func Provider() *schema.Provider {
 			"pagerduty_incident_workflow":                             resourcePagerDutyIncidentWorkflow(),
 			"pagerduty_incident_workflow_trigger":                     resourcePagerDutyIncidentWorkflowTrigger(),
 			"pagerduty_automation_actions_action_service_association": resourcePagerDutyAutomationActionsActionServiceAssociation(),
-			"pagerduty_custom_field":                                  resourcePagerDutyCustomField(),
-			"pagerduty_custom_field_option":                           resourcePagerDutyCustomFieldOption(),
-			"pagerduty_custom_field_schema":                           resourcePagerDutyCustomFieldSchema(),
-			"pagerduty_custom_field_schema_field_configuration":       resourcePagerDutyCustomFieldSchemaFieldConfiguration(),
-			"pagerduty_custom_field_schema_assignment":                resourcePagerDutyCustomFieldSchemaAssignment(),
+			"pagerduty_custom_field":                                  resourcePagerDutyCustomField(),                         // deprecated
+			"pagerduty_custom_field_option":                           resourcePagerDutyCustomFieldOption(),                   // deprecated
+			"pagerduty_custom_field_schema":                           resourcePagerDutyCustomFieldSchema(),                   // deprecated
+			"pagerduty_custom_field_schema_field_configuration":       resourcePagerDutyCustomFieldSchemaFieldConfiguration(), // deprecated
+			"pagerduty_custom_field_schema_assignment":                resourcePagerDutyCustomFieldSchemaAssignment(),         // deprecated
+			"pagerduty_incident_custom_field":                         resourcePagerDutyIncidentCustomField(),
+			"pagerduty_incident_custom_field_option":                  resourcePagerDutyIncidentCustomFieldOption(),
 		},
 	}
 

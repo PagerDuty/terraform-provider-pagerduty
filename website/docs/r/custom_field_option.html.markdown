@@ -8,9 +8,15 @@ description: |-
 
 # pagerduty\_custom\_field\_option
 
+!> This Resource is no longer functional. Documentation is left here for the purpose of documenting migration steps.
+
 A Custom Field Option is a specific value that can be used for [Custom Fields](https://support.pagerduty.com/docs/custom-fields) that only allow values from a set of fixed option. 
 
--> The Custom Fields feature is currently available in Early Access.
+## Migration
+
+The [`incident_custom_field_option`](./incident_custom_field_option.html.markdown) resource provides similar functionality
+with largely the same arguments and attributes. The only significant change is that the `datatype` argument has been renamed `data_type`
+to match the Public API for the Custom Fields on Incidents feature.
 
 ## Example Usage
 

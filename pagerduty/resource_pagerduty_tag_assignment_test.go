@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyTagAssignment_User(t *testing.T) {
@@ -32,6 +33,15 @@ func TestAccPagerDutyTagAssignment_User(t *testing.T) {
 						"pagerduty_user.foo", "email", email),
 				),
 			},
+			// Validating that externally removed users with tag assigments are
+			// detected and tag assignment is planed for re-creation
+			{
+				Config: testAccCheckPagerDutyTagAssignmentConfig(tagLabel, username, email),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyTagAssignment("pagerduty_user.foo", "users"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -54,6 +64,15 @@ func TestAccPagerDutyTagAssignment_Team(t *testing.T) {
 						"pagerduty_team.foo", "name", team),
 				),
 			},
+			// Validating that externally removed teams with tag assigments are
+			// detected and tag assignment is planed for re-creation
+			{
+				Config: testAccCheckPagerDutyTagAssignmentTeamConfig(tagLabel, team),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyTagAssignment("pagerduty_team.foo", "teams"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -71,12 +90,21 @@ func TestAccPagerDutyTagAssignment_EP(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyTagAssignmentEPConfig(tagLabel, username, email, ep),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyTagAssignmentExists("pagerduty_tag_assignment.foo", "teams"),
+					testAccCheckPagerDutyTagAssignmentExists("pagerduty_tag_assignment.foo", "escalation_policies"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_tag.foo", "label", tagLabel),
 					resource.TestCheckResourceAttr(
 						"pagerduty_escalation_policy.foo", "name", ep),
 				),
+			},
+			// Validating that externally removed escalation policies with tag
+			// assigments are detected and tag assignment is planed for re-creation
+			{
+				Config: testAccCheckPagerDutyTagAssignmentEPConfig(tagLabel, username, email, ep),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyTagAssignment("pagerduty_escalation_policy.foo", "escalation_policies"),
+				),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -200,9 +228,47 @@ resource "pagerduty_escalation_policy" "foo" {
 	}
   }
 resource "pagerduty_tag_assignment" "foo" {
-	entity_type = "teams"
+	entity_type = "escalation_policies"
 	entity_id = pagerduty_escalation_policy.foo.id
 	tag_id = pagerduty_tag.foo.id
 }
 `, tagLabel, username, email, ep)
+}
+
+func testAccExternallyDestroyTagAssignment(n, entityType string) resource.TestCheckFunc {
+	deleteUser := func(id string, client *pagerduty.Client) (*pagerduty.Response, error) {
+		return client.Users.Delete(id)
+	}
+	deleteTeam := func(id string, client *pagerduty.Client) (*pagerduty.Response, error) {
+		return client.Teams.Delete(id)
+	}
+	deleteEscalationPolicy := func(id string, client *pagerduty.Client) (*pagerduty.Response, error) {
+		return client.EscalationPolicies.Delete(id)
+	}
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Tag Assignment ID is set")
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		var err error
+		if entityType == "users" {
+			_, err = deleteUser(rs.Primary.ID, client)
+		}
+		if entityType == "teams" {
+			_, err = deleteTeam(rs.Primary.ID, client)
+		}
+		if entityType == "escalation_policies" {
+			_, err = deleteEscalationPolicy(rs.Primary.ID, client)
+		}
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }

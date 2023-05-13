@@ -83,6 +83,15 @@ func TestAccPagerDutyTeam_Basic(t *testing.T) {
 						"pagerduty_team.foo", "description", "bar"),
 				),
 			},
+			// Validating that externally removed teams are detected and planed for
+			// re-creation
+			{
+				Config: testAccCheckPagerDutyTeamConfigUpdated(teamUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyTeam("pagerduty_team.foo"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -172,4 +181,24 @@ resource "pagerduty_team" "foo" {
 	description = "foo"
 	parent = pagerduty_team.parent.id
 }`, parent, team)
+}
+
+func testAccExternallyDestroyTeam(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Team ID is set")
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		_, err := client.Teams.Delete(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }

@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -106,6 +107,15 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 
 	log.Printf("[INFO] Reading PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
 
+	ok, err := isFoundTagAssignmentEntity(d.Get("entity_id").(string), d.Get("entity_type").(string), meta)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		d.SetId("")
+		return nil
+	}
+
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID); err != nil {
 			time.Sleep(2 * time.Second)
@@ -200,6 +210,50 @@ func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface
 	}
 
 	return []*schema.ResourceData{d}, err
+}
+
+func isFoundTagAssignmentEntity(entityID, entityType string, meta interface{}) (bool, error) {
+	var isFound bool
+	client, err := meta.(*Config).Client()
+	if err != nil {
+		return isFound, err
+	}
+
+	fetchUser := func(id string) (*pagerduty.User, *pagerduty.Response, error) {
+		return client.Users.Get(id, &pagerduty.GetUserOptions{})
+	}
+	fetchTeam := func(id string) (*pagerduty.Team, *pagerduty.Response, error) {
+		return client.Teams.Get(id)
+	}
+	fetchEscalationPolicy := func(id string) (*pagerduty.EscalationPolicy, *pagerduty.Response, error) {
+		return client.EscalationPolicies.Get(id, &pagerduty.GetEscalationPolicyOptions{})
+	}
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		var err error
+		if entityType == "users" {
+			_, _, err = fetchUser(entityID)
+		}
+		if entityType == "teams" {
+			_, _, err = fetchTeam(entityID)
+		}
+		if entityType == "escalation_policies" {
+			_, _, err = fetchEscalationPolicy(entityID)
+		}
+
+		if err != nil && isErrCode(err, http.StatusNotFound) {
+			return nil
+		}
+		if err != nil {
+			return resource.RetryableError(err)
+		}
+		isFound = true
+
+		return nil
+	})
+	if retryErr != nil {
+		return isFound, retryErr
+	}
+	return isFound, nil
 }
 
 func createAssignmentID(entityID, tagID string) string {

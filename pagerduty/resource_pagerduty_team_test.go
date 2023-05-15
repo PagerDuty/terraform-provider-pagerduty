@@ -92,6 +92,15 @@ func TestAccPagerDutyTeam_Basic(t *testing.T) {
 				),
 				ExpectNonEmptyPlan: true,
 			},
+			{
+				Config: testAccCheckPagerDutyTeamConfigUpdated(teamUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_team.foo", "id"),
+				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }

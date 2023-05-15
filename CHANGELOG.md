@@ -1,3 +1,10 @@
+## 2.14.5 (May 15, 2023)
+
+IMPROVEMENTS:
+* Plan recreation of tag assignments and teams on external to Terraform deletion ([#686](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/686))
+*  `resource/pagerduty_tag_assignment`
+*  `resource/pagerduty_team`
+
 ## 2.14.4 (May 2, 2023)
 
 IMPROVEMENTS:

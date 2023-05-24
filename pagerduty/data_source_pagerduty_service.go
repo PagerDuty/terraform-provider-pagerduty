@@ -24,11 +24,19 @@ func dataSourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
+			"last_incident_timestamp": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"acknowledgement_timeout": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"alert_creation": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -119,8 +127,10 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 		d.Set("name", found.Name)
 		d.Set("type", found.Type)
 		d.Set("auto_resolve_timeout", found.AutoResolveTimeout)
+		d.Set("last_incident_timestamp", found.LastIncidentTimestamp)
 		d.Set("acknowledgement_timeout", found.AcknowledgementTimeout)
 		d.Set("alert_creation", found.AlertCreation)
+		d.Set("status", found.Status)
 		d.Set("description", found.Description)
 		d.Set("teams", teams)
 		d.Set("escalation_policy", found.EscalationPolicy.ID)

@@ -150,15 +150,7 @@ func resourcePagerDutyService() *schema.Resource {
 				Optional: true,
 				Default:  "14400",
 			},
-			"last_incident_timestamp": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -505,7 +497,6 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	d.Set("name", service.Name)
 	d.Set("type", service.Type)
 	d.Set("html_url", service.HTMLURL)
-	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)
@@ -514,7 +505,6 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	} else {
 		d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
 	}
-	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
 	if service.AcknowledgementTimeout == nil {
 		d.Set("acknowledgement_timeout", "null")
 	} else {

@@ -161,9 +161,7 @@ resource "pagerduty_service" "foo" {
 The following attributes are exported:
 
   * `id` - The ID of the service.
-  * `last_incident_timestamp`- Last incident timestamp of the service.
   * `created_at`- Creation timestamp of the service.
-  * `status`- The status of the service.
   * `html_url`- URL at which the entity is uniquely displayed in the Web app.
   * `type` - The type of object. The value returned will be `service`. Can be used for passing to a service dependency.
 

@@ -28,13 +28,17 @@ func validateRFC3339(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
 	t, err := time.Parse(time.RFC3339, value)
 	if err != nil {
-		errors = append(errors, fmt.Errorf("%s is not a valid format for argument: %s. Expected format: %s (RFC3339)", value, k, time.RFC3339))
+		errors = append(errors, genErrorTimeFormatRFC339(value, k))
 	}
 	if t.Second() > 0 {
 		errors = append(errors, fmt.Errorf("please set the time %s to a full minute, e.g. 11:23:00, not 11:23:05", value))
 	}
 
 	return
+}
+
+func genErrorTimeFormatRFC339(value, k string) error {
+	return fmt.Errorf("%s is not a valid format for argument: %s. Expected format: %s (RFC3339)", value, k, time.RFC3339)
 }
 
 func suppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) bool {

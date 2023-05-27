@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -268,6 +269,84 @@ func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependant(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependantWithOneLayer(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	location := "America/New_York"
+	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicy1 := fmt.Sprintf("ts-%s", acctest.RandString(5))
+	escalationPolicy2 := fmt.Sprintf("ts-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckScheduleUsedByEPWithOneLayer(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithOneLayerConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy1),
+				),
+			},
+			// Validating that deleting a Schedule used by an Escalation Policy with
+			// one configured layer prompts the expected error.
+			{
+				Config:      testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantConfigUpdated(username, email, team, escalationPolicy1),
+				ExpectError: regexp.MustCompile("It is not possible to continue with the destruction of the Schedule \".*\", because it is being used by the Escalation Policy \".*\" which has only one layer configured"),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithMultipleLayersUsingTheSameScheduleAsTargetConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy1),
+				),
+			},
+			// Validating that deleting a Schedule used by an Escalation Policy with
+			// multiple configured layer but each layer has configured only the
+			// Schedule try to be deleted
+			{
+				Config:      testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithMultipleLayersUsingTheSameScheduleAsTargetConfigUpdated(username, email, team, escalationPolicy1),
+				ExpectError: regexp.MustCompile("It is not possible to continue with the destruction of the Schedule \".*\", because it is being used by the Escalation Policy \".*\" which has only one layer configured"),
+			},
+			{
+				Config: testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantMultipleWithOneLayerConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy1, escalationPolicy2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy1),
+				),
+			},
+			// Validation that deleting a Schedule used by multiple Escalation
+			// Policies with one configured layer prompts the expected error.
+			{
+				Config:      testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantMultipleWithOneLayerConfigUpdated(username, email, team, escalationPolicy1, escalationPolicy2),
+				ExpectError: regexp.MustCompile("It is not possible to continue with the destruction of the Schedule \".*\", because it is being used by multiple Escalation Policies which have only one layer configured."),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependantWithOpenIncidents(t *testing.T) {
 	service1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -305,7 +384,7 @@ func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependantWithOpenIncident
 			},
 			{
 				Config:      testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithOpenIncidentConfigUpdated(username, email, team, escalationPolicy1, service1),
-				ExpectError: regexp.MustCompile("Before Removing Schedule \".*\" You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule"),
+				ExpectError: regexp.MustCompile("Before destroying Schedule \".*\" You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule"),
 			},
 			{
 				// Extra intermediate step with the original plan for resolving the
@@ -392,7 +471,7 @@ func TestAccPagerDutySchedule_EscalationPolicyDependantWithOpenIncidents(t *test
 			},
 			{
 				Config:      testAccCheckPagerDutyScheduleEscalationPolicyDependantWithOpenIncidentConfigUpdated(username, email, escalationPolicy1, service1),
-				ExpectError: regexp.MustCompile("Before Removing Schedule \".*\" You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule"),
+				ExpectError: regexp.MustCompile("Before destroying Schedule \".*\" You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule"),
 			},
 			{
 				// Extra intermediate step with the original plan for resolving the
@@ -1212,6 +1291,251 @@ resource "pagerduty_escalation_policy" "foo" {
 }
 `, username, email, team, escalationPolicy)
 }
+func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithOneLayerConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "fighters"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  teams = [pagerduty_team.foo.id]
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+}
+`, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy)
+}
+func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithMultipleLayersUsingTheSameScheduleAsTargetConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "fighters"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  teams = [pagerduty_team.foo.id]
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+}
+`, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy)
+}
+
+func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantWithMultipleLayersUsingTheSameScheduleAsTargetConfigUpdated(username, email, team, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "bar"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+`, username, email, team, escalationPolicy)
+}
+func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantMultipleWithOneLayerConfig(username, email, schedule, location, start, rotationVirtualStart, team, escalationPolicy1, escaltionPolicy2 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "fighters"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  teams = [pagerduty_team.foo.id]
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "daily_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+}
+resource "pagerduty_escalation_policy" "bar" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.foo.id
+    }
+  }
+}
+`, username, email, team, schedule, location, start, rotationVirtualStart, escalationPolicy1, escaltionPolicy2)
+}
+func testAccCheckPagerDutyScheduleWithTeamsEscalationPolicyDependantMultipleWithOneLayerConfigUpdated(username, email, team, escalationPolicy1, escaltionPolicy2 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_team" "foo" {
+	name = "%s"
+	description = "fighters"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+resource "pagerduty_escalation_policy" "bar" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+`, username, email, team, escalationPolicy1, escaltionPolicy2)
+}
 
 func testAccCheckPagerDutyScheduleOpenIncidentOnService(p *string, sn, epn string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -1818,4 +2142,10 @@ resource "pagerduty_service" "foo" {
 	alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, service)
+}
+
+func testAccPreCheckScheduleUsedByEPWithOneLayer(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER"); v == "" {
+		t.Skip("PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER not set. Skipping Schedule related test")
+	}
 }

@@ -182,11 +182,13 @@ PAGERDUTY_ACC_INCIDENT_WORKFLOWS=1 make testacc TESTARGS="-run PagerDutyIncident
 PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.pagerduty.com" make testacc TESTARGS="-run PagerDutyServiceIntegration_GenericEmailNoFilters"
 PAGERDUTY_ACC_CUSTOM_FIELDS=1 make testacc TESTARGS="-run PagerDutyCustomField"
 PAGERDUTY_ACC_LICENSE_NAME="Full User" make testacc TESTARGS="-run DataSourcePagerDutyLicense_Basic"
+PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER=1 make testacc TESTARGS="-run PagerDutyScheduleWithTeams_EscalationPolicyDependantWithOneLayer"
 ```
 
 | Variable Name                                                | Feature Set         |
-| ------------------------------------------------------------ | ------------------- |
+|--------------------------------------------------------------|---------------------|
 | `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                           | Incident Workflows  |
 | `PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS` | Service Integration |
 | `PAGERDUTY_ACC_CUSTOM_FIELDS`                                | Custom Fields       |
 | `PAGERDUTY_ACC_LICENSE_NAME`                                 | Licenses            |
+| `PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER`                | Schedule            |

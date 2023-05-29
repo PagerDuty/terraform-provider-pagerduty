@@ -57,11 +57,10 @@ require (
 	github.com/zclconf/go-cty v1.9.1 // indirect
 	go.mongodb.org/mongo-driver v1.10.2 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sync v0.0.0-20220907140024-f12130a52804 // indirect
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
-	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.0.0-20201110124207-079ba7bd75cd // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.35.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect

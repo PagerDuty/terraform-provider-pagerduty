@@ -56,6 +56,8 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 	scheduleUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "America/New_York"
 	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	startWrongFormated := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC1123)
+	startNotRounded := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Add(5 * time.Second).Format(time.RFC3339)
 	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
 
 	resource.Test(t, resource.TestCase{
@@ -110,6 +112,22 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 			{
 				Config:      testAccCheckPagerDutyScheduleConfigRestrictionType(username, email, schedule, location, start, rotationVirtualStart),
 				ExpectError: regexp.MustCompile("start_day_of_week must only be set for a weekly_restriction schedule restriction type"),
+			},
+			// Validating that wrong formatted values for "start" attribute return a
+			// format error.
+			{
+				Config:      testAccCheckPagerDutyScheduleConfig(username, email, schedule, location, startWrongFormated, rotationVirtualStart),
+				ExpectError: regexp.MustCompile("is not a valid format for argument:"),
+			},
+			// Validating that dates not minute rounded for "start" attribute are
+			// acepted.
+			{
+				Config: testAccCheckPagerDutyScheduleConfig(username, email, schedule, location, startNotRounded, rotationVirtualStart),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.start", startNotRounded),
+				),
 			},
 		},
 	})

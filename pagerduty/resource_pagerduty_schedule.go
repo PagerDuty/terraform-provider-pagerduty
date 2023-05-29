@@ -86,9 +86,18 @@ func resourcePagerDutySchedule() *schema.Resource {
 						},
 
 						"start": {
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateFunc:     validateRFC3339,
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: func(v interface{}, k string) ([]string, []error) {
+								var errors []error
+								value := v.(string)
+								_, err := time.Parse(time.RFC3339, value)
+								if err != nil {
+									errors = append(errors, genErrorTimeFormatRFC339(value, k))
+								}
+
+								return nil, errors
+							},
 							DiffSuppressFunc: suppressScheduleLayerStartDiff,
 						},
 

@@ -1,3 +1,12 @@
+## 2.14.6 (May 29, 2023)
+
+IMPROVEMENTS:
+*  `resource/schedule`: Update handling of format errors on `pagerduty_schedule.start` ([#691](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/691))
+*  `chore`: Update go module directive go version to `1.17` ([#694](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/694))
+
+BUG FIXES:
+*  `resource/schedule`: Address Schedule can't be deleted when used by EP with one layer configured ([#693](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/693))
+
 ## 2.14.5 (May 15, 2023)
 
 IMPROVEMENTS:

@@ -1,3 +1,34 @@
+## 2.15.0 (May 30, 2023)
+
+BREAKING CHANGES:
+
+* The following data sources and resources has been deprecated ([#684](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/684))
+  - `data/pagerduty_custom_field`
+  - `data/pagerduty_custom_field_schema`
+  - `resource/pagerduty_custom_field`
+  - `resource/pagerduty_custom_field_option`
+  - `resource/pagerduty_custom_field_schema`
+  - `resource/pagerduty_custom_field_schema_field_configuration`
+  - `resource/pagerduty_custom_field_schema_assignment`
+
+NOTES:
+
+* The following data sources and resources shall be removed in the next **Major** release
+  - `data/pagerduty_custom_field`
+  - `data/pagerduty_custom_field_schema`
+  - `resource/pagerduty_custom_field`
+  - `resource/pagerduty_custom_field_option`
+  - `resource/pagerduty_custom_field_schema`
+  - `resource/pagerduty_custom_field_schema_field_configuration`
+  - `resource/pagerduty_custom_field_schema_assignment`
+
+FEATURES:
+
+* adapt Terraform provider to use reflect simplified Custom Fields API. The following data sources and resources were added ([#684](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/684))
+  - `data/pagerduty_incident_custom_field`
+  - `resource/pagerduty_incident_custom_field`
+  - `resource/pagerduty_incident_custom_field_option`
+
 ## 2.14.6 (May 29, 2023)
 
 IMPROVEMENTS:

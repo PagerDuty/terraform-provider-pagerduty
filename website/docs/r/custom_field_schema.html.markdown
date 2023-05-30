@@ -8,10 +8,14 @@ description: |-
 
 # pagerduty\_custom\_field\_schema
 
+!> This Resource is no longer functional. Documentation is left here for the purpose of documenting migration steps.
+
 A [Custom Field Schema](https://support.pagerduty.com/docs/custom-fields#schemas) is a set of Custom Fields which can be set on an incident.
 
--> The Custom Fields feature is currently available in Early Access.
+## Migration
 
+This resource has no currently functional counterpart. Custom Fields on Incidents are now applied globally
+to incidents within an account and have no notion of a Field Schema.
 
 ## Example Usage
 

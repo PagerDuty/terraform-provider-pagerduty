@@ -8,9 +8,16 @@ description: |-
 
 # pagerduty\_custom\_field
 
+!> This Data Source is no longer functional. Documentation is left here for the purpose of documenting migration steps.
+
 Use this data source to get information about a specific [Custom Field](https://support.pagerduty.com/docs/custom-fields) that you can add to a custom field schema.
 
--> The Custom Fields feature is currently available in Early Access.
+## Migration
+
+The [`incident_custom_field`](./incident_custom_field.html.markdown) data source provides similar functionality
+with the same arguments and attributes. The key distinction is that while custom fields returned by this data source
+may have only applied to a subset of incidents within the account, custom fields returned by the `incident_custom_field`
+data source are applied to all incidents in the account.
 
 ## Example Usage
 

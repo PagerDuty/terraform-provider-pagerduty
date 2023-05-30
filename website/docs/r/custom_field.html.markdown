@@ -8,9 +8,21 @@ description: |-
 
 # pagerduty\_custom\_field
 
+!> This Resource is no longer functional. Documentation is left here for the purpose of documenting migration steps.
+
 A [Custom Field](https://support.pagerduty.com/docs/custom-fields) is a resuable element which can be added to Custom Field Schemas.
 
--> The Custom Fields feature is currently available in Early Access.
+## Migration
+
+The [`incident_custom_field`](./incident_custom_field.html.markdown) resource provides similar functionality
+with largely the same arguments and attributes. The key distinction is that while custom fields created by this data source
+may have only applied to a subset of incidents within the account after being added to a schema and assigned to a service,
+custom fields managed by the `incident_custom_field` resource are applied to all incidents in the account.
+
+Additionally:
+* The separate `multi_value` and `fixed_options` arguments have been merged into a single argument
+named `field_type`.
+* The `datatype` argument has been renamed `data_type` to match the Public API for the Custom Fields on Incidents feature.
 
 ## Example Usage
 

@@ -121,12 +121,6 @@ type GetIncidentCustomFieldOptions struct {
 	Includes []string `url:"include,brackets,omitempty"`
 }
 
-var incidentCustomFieldsEarlyAccessHeader = RequestOptions{
-	Type:  "header",
-	Label: "X-EARLY-ACCESS",
-	Value: "flex-service-early-access",
-}
-
 // ListContext lists existing custom fields. If a non-zero Limit is passed as an option, only a single page of results will be
 // returned. Otherwise, the entire list of fields will be returned.
 func (s *IncidentCustomFieldService) ListContext(ctx context.Context, o *ListIncidentCustomFieldOptions) (*ListIncidentCustomFieldResponse, *Response, error) {
@@ -137,7 +131,7 @@ func (s *IncidentCustomFieldService) ListContext(ctx context.Context, o *ListInc
 		o = &ListIncidentCustomFieldOptions{}
 	}
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, o, nil, v, incidentCustomFieldsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, o, nil, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -150,7 +144,7 @@ func (s *IncidentCustomFieldService) GetContext(ctx context.Context, id string, 
 	u := fmt.Sprintf("/incidents/custom_fields/%s", id)
 	v := new(IncidentCustomFieldPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, o, nil, v, incidentCustomFieldsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, o, nil, v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -163,7 +157,7 @@ func (s *IncidentCustomFieldService) CreateContext(ctx context.Context, field *I
 	u := "/incidents/custom_fields"
 	v := new(IncidentCustomFieldPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "POST", u, nil, &IncidentCustomFieldPayload{Field: field}, &v, incidentCustomFieldsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "POST", u, nil, &IncidentCustomFieldPayload{Field: field}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -174,7 +168,7 @@ func (s *IncidentCustomFieldService) CreateContext(ctx context.Context, field *I
 // DeleteContext removes an existing custom field.
 func (s *IncidentCustomFieldService) DeleteContext(ctx context.Context, id string) (*Response, error) {
 	u := fmt.Sprintf("/incidents/custom_fields/%s", id)
-	return s.client.newRequestDoOptionsContext(ctx, "DELETE", u, nil, nil, nil, incidentCustomFieldsEarlyAccessHeader)
+	return s.client.newRequestDoContext(ctx, "DELETE", u, nil, nil, nil)
 }
 
 // UpdateContext updates an existing custom field.
@@ -182,7 +176,7 @@ func (s *IncidentCustomFieldService) UpdateContext(ctx context.Context, id strin
 	u := fmt.Sprintf("/incidents/custom_fields/%s", id)
 	v := new(IncidentCustomFieldPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "PUT", u, nil, &IncidentCustomFieldPayload{Field: field}, &v, incidentCustomFieldsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, &IncidentCustomFieldPayload{Field: field}, &v)
 	if err != nil {
 		return nil, nil, err
 	}

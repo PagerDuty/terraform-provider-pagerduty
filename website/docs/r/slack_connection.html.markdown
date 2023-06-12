@@ -94,7 +94,7 @@ The following attributes are exported:
 
 ## Import
 
-Slack connections can be imported using the related `slack_team(workspace)` ID and the `slack_connection` ID separated by a dot, e.g.
+Slack connections can be imported using the related `workspace` ID and the `slack_connection` ID separated by a dot, e.g.
 
 ```
 $ terraform import pagerduty_slack_connection.main T02A123LV1A.PUABCDL

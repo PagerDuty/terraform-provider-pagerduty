@@ -10,8 +10,6 @@ description: |-
 
 An [Incident Custom Field](https://support.pagerduty.com/docs/custom-fields-on-incidents) defines a field which can be set on incidents in the target account.
 
--> The Custom Fields on Incidents feature is currently available in Early Access.
-
 ## Example Usage
 
 ```hcl

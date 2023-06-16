@@ -33,7 +33,7 @@ func (s *IncidentCustomFieldService) CreateFieldOptionContext(ctx context.Contex
 	u := fmt.Sprintf("/incidents/custom_fields/%s/field_options", fieldID)
 	v := new(IncidentCustomFieldOptionPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "POST", u, nil, &IncidentCustomFieldOptionPayload{FieldOption: fieldOption}, &v, incidentCustomFieldsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "POST", u, nil, &IncidentCustomFieldOptionPayload{FieldOption: fieldOption}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -46,7 +46,7 @@ func (s *IncidentCustomFieldService) UpdateFieldOptionContext(ctx context.Contex
 	u := fmt.Sprintf("/incidents/custom_fields/%s/field_options/%s", fieldID, fieldOptionID)
 	v := new(IncidentCustomFieldOptionPayload)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "PUT", u, nil, &IncidentCustomFieldOptionPayload{FieldOption: fieldOption}, &v, incidentCustomFieldsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "PUT", u, nil, &IncidentCustomFieldOptionPayload{FieldOption: fieldOption}, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -75,7 +75,7 @@ func (s *IncidentCustomFieldService) ListFieldOptionsContext(ctx context.Context
 	u := fmt.Sprintf("/incidents/custom_fields/%s/field_options", fieldID)
 	v := new(ListIncidentCustomFieldOptionsResponse)
 
-	resp, err := s.client.newRequestDoOptionsContext(ctx, "GET", u, nil, nil, &v, incidentCustomFieldsEarlyAccessHeader)
+	resp, err := s.client.newRequestDoContext(ctx, "GET", u, nil, nil, &v)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -86,5 +86,5 @@ func (s *IncidentCustomFieldService) ListFieldOptionsContext(ctx context.Context
 // DeleteFieldOptionContext disables an existing field option.
 func (s *IncidentCustomFieldService) DeleteFieldOptionContext(ctx context.Context, fieldID string, fieldOptionID string) (*Response, error) {
 	u := fmt.Sprintf("/incidents/custom_fields/%s/field_options/%s", fieldID, fieldOptionID)
-	return s.client.newRequestDoOptionsContext(ctx, "DELETE", u, nil, nil, nil, incidentCustomFieldsEarlyAccessHeader)
+	return s.client.newRequestDoContext(ctx, "DELETE", u, nil, nil, nil)
 }

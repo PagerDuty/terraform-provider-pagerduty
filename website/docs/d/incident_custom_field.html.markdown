@@ -10,8 +10,6 @@ description: |-
 
 Use this data source to get information about a specific [Incident Custom Field](https://support.pagerduty.com/docs/custom-fields-on-incidents).
 
--> The Custom Fields on Incidents feature is currently available in Early Access.
-
 ## Example Usage
 
 ```hcl

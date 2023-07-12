@@ -1,3 +1,15 @@
+## 2.15.1 (Jul 12, 2023)
+
+IMPROVEMENTS:
+*  `resource/pagerduty_escalation_policy`, `resource/pagerduty_service`: Address name format validation on Escalation Policies ([#712](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/712))
+*  `dependency/google.golang.org/grpc`: bump google.golang.org/grpc from 1.33.2 to 1.53.0 ([#711](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/711))
+*  `resource/pagerduty_slack_connection`: fix slack_connection doc ([#587](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/587))
+*  Custom Fields - remove early access marker from incident custom fields pages ([#701](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/701))
+  - `data/pagerduty_incident_custom_field`
+  - `resource/pagerduty_incident_custom_field`
+  - `resource/pagerduty_incident_custom_field_option`
+
+
 ## 2.15.0 (May 30, 2023)
 
 BREAKING CHANGES:

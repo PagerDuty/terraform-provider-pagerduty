@@ -22,8 +22,9 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateCantBeBlankOrNotPrintableChars,
 			},
 			"description": {
 				Type:     schema.TypeString,

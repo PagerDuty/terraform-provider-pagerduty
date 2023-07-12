@@ -130,6 +130,32 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyService_FormatValidation(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			// Blank Name
+			{
+				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, ""),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
+			},
+			// Name with & in it
+			{
+				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, "this name has an ampersand (&)"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)

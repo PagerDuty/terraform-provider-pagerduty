@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -111,6 +112,24 @@ func validateValueDiagFunc(values []string) schema.SchemaValidateDiagFunc {
 		}
 		return diags
 	}
+}
+
+func validateCantBeBlankOrNotPrintableChars(v interface{}, p cty.Path) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	value := v.(string)
+	matcher := regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]`)
+	matches := matcher.MatchString(value)
+
+	if matches {
+		diags = append(diags, diag.Diagnostic{
+			Severity:      diag.Error,
+			Summary:       "Name can't be blank neither contain '\\', '/', '&', '<', '>', nor non-printable characters.",
+			AttributePath: p,
+		})
+	}
+
+	return diags
 }
 
 // Takes the result of flatmap.Expand for an array of strings

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
 	"strconv"
 	"time"
 
@@ -35,9 +34,9 @@ func resourcePagerDutyService() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringDoesNotMatch(regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]`), "Service name can't be blank or contain '\\', '/', '&', '<', '>' or non-printable characters. "),
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateCantBeBlankOrNotPrintableChars,
 			},
 			"html_url": {
 				Type:     schema.TypeString,

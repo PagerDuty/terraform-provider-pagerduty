@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -104,6 +105,31 @@ func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 					testAccExternallyDestroyEscalationPolicy("pagerduty_escalation_policy.foo"),
 				),
 				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyEscalationPolicy_FormatValidation(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyEscalationPolicyDestroy,
+		Steps: []resource.TestStep{
+			// Blank Name
+			{
+				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, ""),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
+			},
+			// Name with & in it
+			{
+				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, "this name has an ampersand (&)"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
 			},
 		},
 	})

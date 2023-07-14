@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -133,6 +134,10 @@ func fetchField(ctx context.Context, d *schema.ResourceData, meta interface{}, e
 		field, _, err := client.IncidentCustomFields.GetContext(ctx, d.Id(), nil)
 		if err != nil {
 			log.Printf("[WARN] Incident custom field read error")
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errorCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

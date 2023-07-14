@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -146,6 +147,10 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
 		if _, err := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, false); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 
@@ -250,6 +255,10 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
 		log.Printf("[INFO] Deleting Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 		if _, err := client.EventOrchestrationIntegrations.DeleteContext(ctx, oid, id); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else {
 			// Try reading an integration after deletion, retry if still found:
@@ -282,6 +291,10 @@ func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
 		if _, err := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, false); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

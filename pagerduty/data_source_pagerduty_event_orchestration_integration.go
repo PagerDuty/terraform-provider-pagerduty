@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -85,6 +86,10 @@ func getEventOrchestrationIntegrationById(ctx context.Context, d *schema.Resourc
 		log.Printf("[INFO] Reading Integration data source by ID '%s' for PagerDuty Event Orchestration '%s'", id, oid)
 
 		if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {
@@ -117,6 +122,10 @@ func getEventOrchestrationIntegrationByLabel(ctx context.Context, d *schema.Reso
 		resp, _, err := client.EventOrchestrationIntegrations.ListContext(ctx, oid)
 
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}

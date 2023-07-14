@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -138,6 +139,10 @@ func resourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta interf
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		orch, _, err := client.EventOrchestrations.Get(d.Id())
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

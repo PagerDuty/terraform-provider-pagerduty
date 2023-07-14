@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -98,6 +99,10 @@ func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if subscriberResponse, _, err := client.BusinessServiceSubscribers.List(businessServiceId); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if subscriberResponse != nil {

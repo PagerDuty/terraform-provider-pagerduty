@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -130,6 +131,10 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if businessService, _, err := client.BusinessServices.Get(d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if businessService != nil {
 			d.Set("name", businessService.Name)

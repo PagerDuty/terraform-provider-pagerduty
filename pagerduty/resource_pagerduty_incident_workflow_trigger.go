@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -155,6 +156,10 @@ func fetchIncidentWorkflowTrigger(ctx context.Context, d *schema.ResourceData, m
 		iwt, _, err := client.IncidentWorkflowTriggers.GetContext(ctx, d.Id())
 		if err != nil {
 			log.Printf("[WARN] Incident workflow trigger read error")
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errorCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

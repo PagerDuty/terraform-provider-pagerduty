@@ -191,6 +191,10 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 		path, _, err = client.EventOrchestrationPaths.GetContext(ctx, id, t)
 
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
@@ -214,6 +218,10 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 				return nil
 			}
 			if err != nil {
+				if isErrCode(err, http.StatusBadRequest) {
+					return resource.NonRetryableError(err)
+				}
+
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
@@ -254,6 +262,10 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 
 	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
 		if response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", payload); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if response != nil {
 			d.SetId(response.OrchestrationPath.Parent.ID)
@@ -279,6 +291,10 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 				return nil
 			}
 			if err != nil {
+				if isErrCode(err, http.StatusBadRequest) {
+					return resource.NonRetryableError(err)
+				}
+
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
@@ -329,6 +345,10 @@ func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d
 
 	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", emptyPath); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

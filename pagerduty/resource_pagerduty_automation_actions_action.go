@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"errors"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -262,6 +263,10 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if automationActionsAction, _, err := client.AutomationActionsAction.Get(d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if automationActionsAction != nil {
@@ -335,6 +340,10 @@ func resourcePagerDutyAutomationActionsActionDelete(d *schema.ResourceData, meta
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.AutomationActionsAction.Delete(d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

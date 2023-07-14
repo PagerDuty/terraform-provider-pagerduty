@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -184,6 +185,10 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		user, err := client.Users.GetWithLicense(d.Id(), &pagerduty.GetUserOptions{})
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

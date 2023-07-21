@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -124,6 +125,10 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(ctx context.Context, d *s
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", d.Id())
 
 		if routerPath, _, err := client.EventOrchestrationPaths.GetContext(ctx, d.Id(), "router"); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if routerPath != nil {
@@ -167,6 +172,10 @@ func resourcePagerDutyEventOrchestrationPathRouterDelete(ctx context.Context, d 
 
 	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerID, "router", emptyPath); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -196,6 +205,10 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx context.Context, d 
 	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
 		response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerPath.Parent.ID, "router", routerPath)
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		if response == nil {

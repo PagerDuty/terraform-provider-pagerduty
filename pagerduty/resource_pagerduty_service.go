@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -411,6 +412,10 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 		})
 		if err != nil {
 			log.Printf("[WARN] Service read error")
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

@@ -118,6 +118,10 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if tagResponse != nil {
@@ -246,6 +250,10 @@ func isFoundTagAssignmentEntity(entityID, entityType string, meta interface{}) (
 		if err != nil {
 			return resource.RetryableError(err)
 		}
+		if isErrCode(err, http.StatusBadRequest) {
+			return resource.NonRetryableError(err)
+		}
+
 		isFound = true
 
 		return nil

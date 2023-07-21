@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -68,6 +69,10 @@ func resourcePagerDutyEventRuleCreate(d *schema.ResourceData, meta interface{}) 
 
 	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if eventRule, _, err := client.EventRules.Create(eventRule); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if eventRule != nil {
 			d.SetId(eventRule.ID)
@@ -92,6 +97,10 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EventRules.List()
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}

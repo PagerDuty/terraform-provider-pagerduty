@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -238,6 +239,10 @@ func resourcePagerDutyResponsePlayCreate(d *schema.ResourceData, meta interface{
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if responsePlay, _, err := client.ResponsePlays.Create(responsePlay); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if responsePlay != nil {
 			d.SetId(responsePlay.ID)
@@ -264,6 +269,10 @@ func resourcePagerDutyResponsePlayRead(d *schema.ResourceData, meta interface{})
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if responsePlay, _, err := client.ResponsePlays.Get(d.Id(), from); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if responsePlay != nil {
@@ -305,6 +314,10 @@ func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, _, err := client.ResponsePlays.Update(d.Id(), responsePlay); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -327,6 +340,10 @@ func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, err := client.ResponsePlays.Delete(d.Id(), from); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

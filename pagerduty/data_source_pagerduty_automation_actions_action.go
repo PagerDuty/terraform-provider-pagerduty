@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -108,6 +109,10 @@ func dataSourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta
 	return resource.Retry(1*time.Minute, func() *resource.RetryError {
 		automationActionsAction, _, err := client.AutomationActionsAction.Get(d.Get("id").(string))
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)

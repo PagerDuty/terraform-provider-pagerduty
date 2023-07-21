@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -267,6 +268,10 @@ func fetchSchedule(d *schema.ResourceData, meta interface{}, errCallback func(er
 		schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
 		if err != nil {
 			log.Printf("[WARN] Schedule read error")
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
@@ -391,6 +396,10 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		resp, _, err := client.Schedules.Get(scheduleId, &pagerduty.GetScheduleOptions{})
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
@@ -653,6 +662,10 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerdu
 
 		incidents, err = c.Incidents.ListAll(options)
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
@@ -743,8 +756,10 @@ func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.
 
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		_, _, err := c.EscalationPolicies.Update(ep.ID, ep)
-		if err != nil && !isErrCode(err, 404) {
-			return resource.RetryableError(err)
+		if err != nil {
+			if !isErrCode(err, 404) {
+				return resource.RetryableError(err)
+			}
 		}
 		return nil
 	})
@@ -833,6 +848,10 @@ func fetchEPsDataUsingASchedule(eps []string, c *pagerduty.Client) ([]*pagerduty
 		retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 			ep, _, err := c.EscalationPolicies.Get(epID, &pagerduty.GetEscalationPolicyOptions{})
 			if err != nil {
+				if isErrCode(err, http.StatusBadRequest) {
+					return resource.NonRetryableError(err)
+				}
+
 				return resource.RetryableError(err)
 			}
 			fullEPs = append(fullEPs, ep)

@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -151,6 +152,10 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if slackConn != nil {
 			d.Set("source_id", slackConn.SourceID)

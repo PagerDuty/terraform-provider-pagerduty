@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -52,6 +53,10 @@ func dataSourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta inte
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Services.List(o)
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return handleError(err)
 		}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -168,6 +169,10 @@ func fetchFieldOption(ctx context.Context, fieldID string, d *schema.ResourceDat
 			log.Printf("[WARN] Field option read error")
 			errResp := errorCallback(err, d)
 			if errResp != nil {
+				if isErrCode(err, http.StatusBadRequest) {
+					return resource.NonRetryableError(err)
+				}
+
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)
 			}

@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -73,6 +74,10 @@ func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta inter
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.ListContactMethods(userId)
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

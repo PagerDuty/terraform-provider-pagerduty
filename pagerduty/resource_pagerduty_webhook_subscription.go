@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -171,6 +172,10 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Get(d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if webhook != nil {

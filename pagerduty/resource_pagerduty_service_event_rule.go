@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -341,6 +342,10 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Services.CreateEventRule(rule.Service.ID, rule); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
@@ -372,6 +377,10 @@ func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interfac
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Services.GetEventRule(serviceID, d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if rule != nil {
@@ -408,6 +417,10 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if updatedRule, _, err := client.Services.UpdateEventRule(serviceID, d.Id(), rule); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
 			log.Printf("[INFO] Service Event Rule %s position %v needs to be %v", updatedRule.ID, *updatedRule.Position, *rule.Position)
@@ -434,6 +447,10 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, err := client.Services.DeleteEventRule(serviceID, d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

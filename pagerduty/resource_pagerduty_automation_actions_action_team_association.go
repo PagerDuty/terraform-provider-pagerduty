@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -45,6 +46,10 @@ func resourcePagerDutyAutomationActionsActionTeamAssociationCreate(d *schema.Res
 
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		if teamRef, _, err := client.AutomationActionsAction.AssociateToTeam(actionID, teamID); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			if isErrCode(err, 429) {
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
@@ -74,6 +79,10 @@ func fetchPagerDutyAutomationActionsActionTeamAssociation(d *schema.ResourceData
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		resp, _, err := client.AutomationActionsAction.GetAssociationToTeam(actionID, teamID)
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
@@ -111,6 +120,10 @@ func resourcePagerDutyAutomationActionsActionTeamAssociationDelete(d *schema.Res
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.AutomationActionsAction.DissociateToTeam(actionID, teamID); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

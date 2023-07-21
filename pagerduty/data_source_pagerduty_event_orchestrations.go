@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 	"time"
 
@@ -86,6 +87,10 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		resp, _, err := client.EventOrchestrations.List()
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 
@@ -116,6 +121,10 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 		retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 			orch, _, err := client.EventOrchestrations.Get(orchestration.ID)
 			if err != nil {
+				if isErrCode(err, http.StatusBadRequest) {
+					return resource.NonRetryableError(err)
+				}
+
 				return resource.RetryableError(err)
 			}
 			orchestrations = append(orchestrations, orch)

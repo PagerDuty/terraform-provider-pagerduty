@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -95,6 +96,10 @@ func fetchPagerDutyExtension(d *schema.ResourceData, meta interface{}, errCallba
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		extension, _, err := client.Extensions.Get(d.Id())
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

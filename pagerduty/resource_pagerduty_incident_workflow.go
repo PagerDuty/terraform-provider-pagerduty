@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"context"
 	"log"
+	"net/http"
 	"regexp"
 	"strconv"
 	"time"
@@ -245,6 +246,10 @@ func fetchIncidentWorkflow(ctx context.Context, d *schema.ResourceData, meta int
 		iw, _, err := client.IncidentWorkflows.GetContext(ctx, d.Id())
 		if err != nil {
 			log.Printf("[WARN] Incident workflow read error")
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errorCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

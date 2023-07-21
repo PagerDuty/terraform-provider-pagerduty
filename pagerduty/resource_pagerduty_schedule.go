@@ -455,6 +455,12 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 				return resource.NonRetryableError(fmt.Errorf("Before destroying Schedule %q You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, urlLinksMessage))
 			}
 
+			// Returning at this point because the open incident (s) blocking the
+			// deletion of the Schedule can't be tracked.
+			if isErrorScheduleWOpenIncidents(e) && !hasToShowIncidentRemediationMessage {
+				return resource.NonRetryableError(e)
+			}
+
 			epsDataUsingThisSchedule, errFetchingFullEPs := fetchEPsDataUsingASchedule(epsUsingThisSchedule, client)
 			if errFetchingFullEPs != nil {
 				err = fmt.Errorf("%v; %w", err, errFetchingFullEPs)

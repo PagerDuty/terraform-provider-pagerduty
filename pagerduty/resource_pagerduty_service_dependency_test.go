@@ -38,6 +38,30 @@ func TestAccPagerDutyBusinessServiceDependency_Basic(t *testing.T) {
 		},
 	})
 }
+
+// Testing Parallel creation of Business Service Dependencies
+func TestAccPagerDutyBusinessServiceDependency_Parallel(t *testing.T) {
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	businessService := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	resCount := 30
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyBusinessServiceDependencyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyBusinessServiceDependencyParallelConfig(service, businessService, username, email, escalationPolicy, resCount),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyBusinessServiceDependencyParallelExists("pagerduty_service_dependency.foo", resCount),
+				),
+			},
+		},
+	})
+}
 func testAccCheckPagerDutyBusinessServiceDependencyExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -72,6 +96,50 @@ func testAccCheckPagerDutyBusinessServiceDependencyExists(n string) resource.Tes
 		return nil
 	}
 }
+func testAccCheckPagerDutyBusinessServiceDependencyParallelExists(n string, resCount int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs := []*terraform.ResourceState{}
+		for i := 0; i < resCount; i++ {
+			resName := fmt.Sprintf("%s.%d", n, i)
+			r, ok := s.RootModule().Resources[resName]
+			if !ok {
+				return fmt.Errorf("Not found: %s", resName)
+			}
+			rs = append(rs, r)
+		}
+
+		for _, r := range rs {
+			if r.Primary.ID == "" {
+				return fmt.Errorf("No Service Relationship ID is set")
+			}
+		}
+
+		for i := 0; i < resCount; i++ {
+			businessService, _ := s.RootModule().Resources["pagerduty_business_service.foo"]
+
+			client, _ := testAccProvider.Meta().(*Config).Client()
+
+			depResp, _, err := client.ServiceDependencies.GetServiceDependenciesForType(businessService.Primary.ID, "business_service")
+			if err != nil {
+				return fmt.Errorf("Business Service not found: %v", err)
+			}
+			var foundRel *pagerduty.ServiceDependency
+
+			// loop serviceRelationships until relationship.IDs match
+			for _, rel := range depResp.Relationships {
+				if rel.ID == rs[i].Primary.ID {
+					foundRel = rel
+					break
+				}
+			}
+			if foundRel == nil {
+				return fmt.Errorf("Service Dependency not found: %v", rs[i].Primary.ID)
+			}
+		}
+
+		return nil
+	}
+}
 
 func testAccCheckPagerDutyBusinessServiceDependencyDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
@@ -96,6 +164,57 @@ func testAccCheckPagerDutyBusinessServiceDependencyDestroy(s *terraform.State) e
 
 	}
 	return nil
+}
+func testAccCheckPagerDutyBusinessServiceDependencyParallelConfig(service, businessService, username, email, escalationPolicy string, resCount int) string {
+	return fmt.Sprintf(`
+resource "pagerduty_business_service" "foo" {
+	name = "%[1]s"
+}
+
+resource "pagerduty_user" "foo" {
+	name        = "%[2]s"
+	email       = "%[3]s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%[4]s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+resource "pagerduty_service" "supportBar" {
+  count = %[6]d
+	name = "%[5]s-${count.index}"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+resource "pagerduty_service_dependency" "foo" {
+  count = %[6]d
+	dependency {
+		dependent_service {
+			id = pagerduty_business_service.foo.id
+			type = "business_service"
+		}
+		supporting_service {
+			id = pagerduty_service.supportBar[count.index].id
+			type = "service"
+		}
+	}
+}
+`, businessService, username, email, escalationPolicy, service, resCount)
 }
 func testAccCheckPagerDutyBusinessServiceDependencyConfig(service, businessService, username, email, escalationPolicy string) string {
 	return fmt.Sprintf(`
@@ -158,7 +277,7 @@ func TestAccPagerDutyTechnicalServiceDependency_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTechnicalServiceDependencyDestroy,
+		CheckDestroy: testAccCheckPagerDutyTechnicalServiceDependencyDestroy("pagerduty_service.supportBar"),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTechnicalServiceDependencyConfig(dependentService, supportingService, username, email, escalationPolicy),
@@ -170,6 +289,30 @@ func TestAccPagerDutyTechnicalServiceDependency_Basic(t *testing.T) {
 						"pagerduty_service_dependency.bar", "dependency.0.supporting_service.#", "1"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_dependency.bar", "dependency.0.dependent_service.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+// Testing Parallel creation of Technical Service Dependencies
+func TestAccPagerDutyTechnicalServiceDependency_Parallel(t *testing.T) {
+	dependentService := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	supportingService := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	resCount := 30
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTechnicalServiceDependencyParallelDestroy("pagerduty_service.supportBar", resCount),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTechnicalServiceDependencyParallelConfig(dependentService, supportingService, username, email, escalationPolicy, resCount),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTechnicalServiceDependencyParallelExists("pagerduty_service_dependency.bar", resCount),
 				),
 			},
 		},
@@ -210,29 +353,88 @@ func testAccCheckPagerDutyTechnicalServiceDependencyExists(n string) resource.Te
 	}
 }
 
-func testAccCheckPagerDutyTechnicalServiceDependencyDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
-	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_service_dependency" {
-			continue
+func testAccCheckPagerDutyTechnicalServiceDependencyParallelExists(n string, resCount int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs := []*terraform.ResourceState{}
+		for i := 0; i < resCount; i++ {
+			resName := fmt.Sprintf("%s.%d", n, i)
+			r, ok := s.RootModule().Resources[resName]
+			if !ok {
+				return fmt.Errorf("Not found: %s", resName)
+			}
+			rs = append(rs, r)
 		}
-		supportService, _ := s.RootModule().Resources["pagerduty_service.supportBar"]
 
-		// get service dependencies
-		dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(supportService.Primary.ID, "service")
-		if err != nil {
-			// if the dependency doesn't exist, that's okay
-			return nil
-		}
-		// find desired dependency
-		for _, rel := range dependencies.Relationships {
-			if rel.ID == r.Primary.ID {
-				return fmt.Errorf("supporting service relationship still exists")
+		for _, r := range rs {
+			if r.Primary.ID == "" {
+				return fmt.Errorf("No Service Relationship ID is set")
 			}
 		}
 
+		for i := 0; i < resCount; i++ {
+			resName := fmt.Sprintf("pagerduty_service.supportBar.%d", i)
+			supportService, _ := s.RootModule().Resources[resName]
+
+			client, _ := testAccProvider.Meta().(*Config).Client()
+
+			depResp, _, err := client.ServiceDependencies.GetServiceDependenciesForType(supportService.Primary.ID, "service")
+			if err != nil {
+				return fmt.Errorf("Technical Service not found: %v", err)
+			}
+			var foundRel *pagerduty.ServiceDependency
+
+			// loop serviceRelationships until relationship.IDs match
+			for _, rel := range depResp.Relationships {
+				if rel.ID == rs[i].Primary.ID {
+					foundRel = rel
+					break
+				}
+			}
+			if foundRel == nil {
+				return fmt.Errorf("Service Dependency not found: %v", rs[i].Primary.ID)
+			}
+		}
+
+		return nil
 	}
-	return nil
+}
+
+func testAccCheckPagerDutyTechnicalServiceDependencyParallelDestroy(n string, resCount int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for i := 0; i < resCount; i++ {
+			if err := testAccCheckPagerDutyTechnicalServiceDependencyDestroy(fmt.Sprintf("%s.%d", n, i))(s); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyTechnicalServiceDependencyDestroy(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		for _, r := range s.RootModule().Resources {
+			if r.Type != "pagerduty_service_dependency" {
+				continue
+			}
+			supportService, _ := s.RootModule().Resources[n]
+
+			// get service dependencies
+			dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(supportService.Primary.ID, "service")
+			if err != nil {
+				// if the dependency doesn't exist, that's okay
+				return nil
+			}
+			// find desired dependency
+			for _, rel := range dependencies.Relationships {
+				if rel.ID == r.Primary.ID {
+					return fmt.Errorf("supporting service relationship still exists")
+				}
+			}
+
+		}
+		return nil
+	}
 }
 func testAccCheckPagerDutyTechnicalServiceDependencyConfig(dependentService, supportingService, username, email, escalationPolicy string) string {
 	return fmt.Sprintf(`
@@ -288,4 +490,60 @@ resource "pagerduty_service_dependency" "bar" {
 	}
 }
 `, username, email, escalationPolicy, supportingService, dependentService)
+}
+
+func testAccCheckPagerDutyTechnicalServiceDependencyParallelConfig(dependentService, supportingService, username, email, escalationPolicy string, resCount int) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "bar" {
+  name        = "%[1]s"
+  email       = "%[2]s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "bar" {
+  name        = "%[3]s"
+  description = "bar-desc"
+  num_loops   = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.bar.id
+    }
+  }
+}
+resource "pagerduty_service" "supportBar" {
+  count                   = %[6]d
+  name                    = "%[4]s-${count.index}"
+  description             = "supportBarDesc"
+  auto_resolve_timeout    = 1800
+  acknowledgement_timeout = 1800
+  escalation_policy       = pagerduty_escalation_policy.bar.id
+  alert_creation          = "create_incidents"
+}
+resource "pagerduty_service" "dependBar" {
+  name                    = "%[5]s"
+  description             = "dependBarDesc"
+  auto_resolve_timeout    = 1800
+  acknowledgement_timeout = 1800
+  escalation_policy       = pagerduty_escalation_policy.bar.id
+  alert_creation          = "create_incidents"
+}
+resource "pagerduty_service_dependency" "bar" {
+  count = %[6]d
+  dependency {
+    dependent_service {
+      id   = pagerduty_service.dependBar.id
+      type = "service"
+    }
+    supporting_service {
+      id   = pagerduty_service.supportBar[count.index].id
+      type = "service"
+    }
+  }
+}
+`, username, email, escalationPolicy, supportingService, dependentService, resCount)
 }

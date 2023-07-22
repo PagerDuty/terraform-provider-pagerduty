@@ -147,21 +147,23 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 
 	var dependencies *pagerduty.ListServiceDependencies
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
-		// Lock the mutex to ensure only one API call to `service_dependencies/associate` is created or updated at a time
+		// Lock the mutex to ensure only one API call to
+		// `service_dependencies/associate` is done at a time
 		dependencyAssociationMutex.Lock()
-		defer dependencyAssociationMutex.Unlock()
+		dependencies, _, err = client.ServiceDependencies.AssociateServiceDependencies(&input)
+		dependencyAssociationMutex.Unlock()
 
-		if dependencies, _, err = client.ServiceDependencies.AssociateServiceDependencies(&input); err != nil {
+		if err != nil {
 			if isErrCode(err, 404) {
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)
 		} else {
 			for _, r := range dependencies.Relationships {
-				d.SetId(r.ID)
 				if err := d.Set("dependency", flattenRelationship(r)); err != nil {
 					return resource.NonRetryableError(err)
 				}
+				d.SetId(r.ID)
 			}
 		}
 		return nil

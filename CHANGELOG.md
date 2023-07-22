@@ -3,69 +3,69 @@
 IMPROVEMENTS:
 *  `resource/pagerduty_schedule`: Stop retrying on Schedule deletion when open incidents are untraceable ([#714](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/714))
 *  Address: Too long and unneeded timeouts for call retries with 400 http errors ([#713](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/713))
-  - `data/pagerduty_automation_actions_action`
-  - `data/pagerduty_automation_actions_runner`
-  - `data/pagerduty_business_service`
-  - `data/pagerduty_escalation_policy`
-  - `data/pagerduty_event_orchestration`
-  - `data/pagerduty_event_orchestration_integration`
-  - `data/pagerduty_event_orchestrations`
-  - `data/pagerduty_extension_schema`
-  - `data/pagerduty_incident_custom_field`
-  - `data/pagerduty_incident_workflow`
-  - `data/pagerduty_license`
-  - `data/pagerduty_licenses`
-  - `data/pagerduty_priority`
-  - `data/pagerduty_ruleset`
-  - `data/pagerduty_schedule`
-  - `data/pagerduty_service`
-  - `data/pagerduty_service_integration`
-  - `data/pagerduty_tag`
-  - `data/pagerduty_team`
-  - `data/pagerduty_user`
-  - `data/pagerduty_user_contact_method`
-  - `data/pagerduty_users`
-  - `data/pagerduty_vendor`
-  - `resource/pagerduty_addon`
-  - `resource/pagerduty_automation_actions_action`
-  - `resource/pagerduty_automation_actions_action_service_association`
-  - `resource/pagerduty_automation_actions_action_team_association`
-  - `resource/pagerduty_automation_actions_runner`
-  - `resource/pagerduty_automation_actions_runner_team_association`
-  - `resource/pagerduty_business_service`
-  - `resource/pagerduty_business_service_subscriber`
-  - `resource/pagerduty_escalation_policy`
-  - `resource/pagerduty_event_orchestration`
-  - `resource/pagerduty_event_orchestration_integration`
-  - `resource/pagerduty_event_orchestration_path_global`
-  - `resource/pagerduty_event_orchestration_path_router`
-  - `resource/pagerduty_event_orchestration_path_service`
-  - `resource/pagerduty_event_orchestration_path_unrouted`
-  - `resource/pagerduty_event_rule`
-  - `resource/pagerduty_extension`
-  - `resource/pagerduty_extension_servicenow`
-  - `resource/pagerduty_incident_custom_field`
-  - `resource/pagerduty_incident_custom_field_option`
-  - `resource/pagerduty_incident_workflow`
-  - `resource/pagerduty_incident_workflow_trigger`
-  - `resource/pagerduty_maintenance_window`
-  - `resource/pagerduty_response_play`
-  - `resource/pagerduty_ruleset`
-  - `resource/pagerduty_ruleset_rule`
-  - `resource/pagerduty_schedule`
-  - `resource/pagerduty_service`
-  - `resource/pagerduty_service_dependency`
-  - `resource/pagerduty_service_event_rule`
-  - `resource/pagerduty_service_integration`
-  - `resource/pagerduty_slack_connection`
-  - `resource/pagerduty_tag`
-  - `resource/pagerduty_tag_assignment`
-  - `resource/pagerduty_team`
-  - `resource/pagerduty_team_membership`
-  - `resource/pagerduty_user`
-  - `resource/pagerduty_user_contact_method`
-  - `resource/pagerduty_user_notification_rule`
-  - `resource/pagerduty_webhook_subscription`
+    - `data/pagerduty_automation_actions_action`
+    - `data/pagerduty_automation_actions_runner`
+    - `data/pagerduty_business_service`
+    - `data/pagerduty_escalation_policy`
+    - `data/pagerduty_event_orchestration`
+    - `data/pagerduty_event_orchestration_integration`
+    - `data/pagerduty_event_orchestrations`
+    - `data/pagerduty_extension_schema`
+    - `data/pagerduty_incident_custom_field`
+    - `data/pagerduty_incident_workflow`
+    - `data/pagerduty_license`
+    - `data/pagerduty_licenses`
+    - `data/pagerduty_priority`
+    - `data/pagerduty_ruleset`
+    - `data/pagerduty_schedule`
+    - `data/pagerduty_service`
+    - `data/pagerduty_service_integration`
+    - `data/pagerduty_tag`
+    - `data/pagerduty_team`
+    - `data/pagerduty_user`
+    - `data/pagerduty_user_contact_method`
+    - `data/pagerduty_users`
+    - `data/pagerduty_vendor`
+    - `resource/pagerduty_addon`
+    - `resource/pagerduty_automation_actions_action`
+    - `resource/pagerduty_automation_actions_action_service_association`
+    - `resource/pagerduty_automation_actions_action_team_association`
+    - `resource/pagerduty_automation_actions_runner`
+    - `resource/pagerduty_automation_actions_runner_team_association`
+    - `resource/pagerduty_business_service`
+    - `resource/pagerduty_business_service_subscriber`
+    - `resource/pagerduty_escalation_policy`
+    - `resource/pagerduty_event_orchestration`
+    - `resource/pagerduty_event_orchestration_integration`
+    - `resource/pagerduty_event_orchestration_path_global`
+    - `resource/pagerduty_event_orchestration_path_router`
+    - `resource/pagerduty_event_orchestration_path_service`
+    - `resource/pagerduty_event_orchestration_path_unrouted`
+    - `resource/pagerduty_event_rule`
+    - `resource/pagerduty_extension`
+    - `resource/pagerduty_extension_servicenow`
+    - `resource/pagerduty_incident_custom_field`
+    - `resource/pagerduty_incident_custom_field_option`
+    - `resource/pagerduty_incident_workflow`
+    - `resource/pagerduty_incident_workflow_trigger`
+    - `resource/pagerduty_maintenance_window`
+    - `resource/pagerduty_response_play`
+    - `resource/pagerduty_ruleset`
+    - `resource/pagerduty_ruleset_rule`
+    - `resource/pagerduty_schedule`
+    - `resource/pagerduty_service`
+    - `resource/pagerduty_service_dependency`
+    - `resource/pagerduty_service_event_rule`
+    - `resource/pagerduty_service_integration`
+    - `resource/pagerduty_slack_connection`
+    - `resource/pagerduty_tag`
+    - `resource/pagerduty_tag_assignment`
+    - `resource/pagerduty_team`
+    - `resource/pagerduty_team_membership`
+    - `resource/pagerduty_user`
+    - `resource/pagerduty_user_contact_method`
+    - `resource/pagerduty_user_notification_rule`
+    - `resource/pagerduty_webhook_subscription`
 
 ## 2.15.1 (Jul 12, 2023)
 
@@ -74,9 +74,9 @@ IMPROVEMENTS:
 *  `dependency/google.golang.org/grpc`: bump google.golang.org/grpc from 1.33.2 to 1.53.0 ([#711](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/711))
 *  `resource/pagerduty_slack_connection`: fix slack_connection doc ([#587](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/587))
 *  Custom Fields - remove early access marker from incident custom fields pages ([#701](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/701))
-  - `data/pagerduty_incident_custom_field`
-  - `resource/pagerduty_incident_custom_field`
-  - `resource/pagerduty_incident_custom_field_option`
+    - `data/pagerduty_incident_custom_field`
+    - `resource/pagerduty_incident_custom_field`
+    - `resource/pagerduty_incident_custom_field_option`
 
 
 ## 2.15.0 (May 30, 2023)

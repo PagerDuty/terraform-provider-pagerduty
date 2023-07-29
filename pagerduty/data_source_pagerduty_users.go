@@ -41,6 +41,26 @@ func dataSourcePagerDutyUsers() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"role": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"job_title": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"time_zone": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"description": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -82,9 +102,13 @@ func dataSourcePagerDutyUsersRead(d *schema.ResourceData, meta interface{}) erro
 		var users []map[string]interface{}
 		for _, user := range resp {
 			users = append(users, map[string]interface{}{
-				"id":    user.ID,
-				"name":  user.Name,
-				"email": user.Email,
+				"id":          user.ID,
+				"name":        user.Name,
+				"email":       user.Email,
+				"role":        user.Role,
+				"job_title":   user.JobTitle,
+				"time_zone":   user.TimeZone,
+				"description": user.Description,
 			})
 		}
 

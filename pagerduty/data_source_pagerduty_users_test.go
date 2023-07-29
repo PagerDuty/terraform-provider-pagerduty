@@ -10,21 +10,34 @@ import (
 )
 
 func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
+	timeZone := "UTC"
 	teamname1 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 	teamname2 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
+
 	username1 := fmt.Sprintf("tf-user1-%s", acctest.RandString(5))
 	email1 := fmt.Sprintf("%s@foo.test", username1)
+	title1 := fmt.Sprintf("%s-title", username1)
+	timeZone1 := timeZone
+	description1 := fmt.Sprintf("%s-description", username1)
+
 	username2 := fmt.Sprintf("tf-user2-%s", acctest.RandString(5))
 	email2 := fmt.Sprintf("%s@foo.test", username2)
+	title2 := fmt.Sprintf("%s-title", username2)
+	timeZone2 := timeZone
+	description2 := fmt.Sprintf("%s-description", username2)
+
 	username3 := fmt.Sprintf("tf-user3-%s", acctest.RandString(5))
 	email3 := fmt.Sprintf("%s@foo.test", username3)
+	title3 := fmt.Sprintf("%s-title", username3)
+	description3 := fmt.Sprintf("%s-description", username3)
+	timeZone3 := timeZone
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, username2, email2, username3, email3),
+				Config: testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyUsersExists("data.pagerduty_users.test_all_users"),
 					testAccDataSourcePagerDutyUsersExists("data.pagerduty_users.test_by_1_team"),
@@ -58,6 +71,14 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_1_team", "users.0.email", email2),
 					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_1_team", "users.0.role", "user"),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_1_team", "users.0.title", title2),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_1_team", "users.0.time_zone", timeZone2),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_1_team", "users.0.description", description2),
+					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.#", "2"),
 					resource.TestCheckResourceAttrSet(
 						"data.pagerduty_users.test_by_2_team", "users.0.id"),
@@ -66,9 +87,25 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.0.email", email2),
 					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.0.role", "user"),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.0.title", title2),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.0.time_zone", timeZone2),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.0.description", description2),
+					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.1.name", username3),
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.1.email", email3),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.1.role", "user"),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.1.title", title3),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.1.time_zone", timeZone3),
+					resource.TestCheckResourceAttr(
+						"data.pagerduty_users.test_by_2_team", "users.1.description", description3),
 				),
 			},
 		},
@@ -89,7 +126,7 @@ func testAccDataSourcePagerDutyUsersExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, username2, email2, username3, email3 string) string {
+func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3 string) string {
 	return fmt.Sprintf(`
     resource "pagerduty_team" "test1" {
         name        = "%s"
@@ -101,14 +138,23 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
     resource "pagerduty_user" "test_wo_team" {
       name = "%s"
       email = "%s"
+      job_title = "%s"
+      time_zone = "%s"
+      description = "%s"
     }
     resource "pagerduty_user" "test_w_team1" {
       name = "%s"
       email = "%s"
+      job_title = "%s"
+      time_zone = "%s"
+      description = "%s"
     }
     resource "pagerduty_user" "test_w_team2" {
       name = "%s"
       email = "%s"
+      job_title = "%s"
+      time_zone = "%s"
+      description = "%s"
     }
 
     resource "pagerduty_team_membership" "test1" {
@@ -133,5 +179,5 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       depends_on = [pagerduty_team_membership.test2]
       team_ids = [pagerduty_team.test1.id, pagerduty_team.test2.id]
     }
-`, teamname1, teamname2, username1, email1, username2, email2, username3, email3)
+`, teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3)
 }

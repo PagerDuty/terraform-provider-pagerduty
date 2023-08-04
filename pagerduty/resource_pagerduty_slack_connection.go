@@ -179,17 +179,6 @@ func fetchSlackConnection(d *schema.ResourceData, meta interface{}, errCallback 
 	})
 }
 
-func flattenSlackConnection(d *schema.ResourceData, slackConn *pagerduty.SlackConnection) error {
-	d.Set("source_id", slackConn.SourceID)
-	d.Set("source_name", slackConn.SourceName)
-	d.Set("source_type", slackConn.SourceType)
-	d.Set("channel_id", slackConn.ChannelID)
-	d.Set("channel_name", slackConn.ChannelName)
-	d.Set("notification_type", slackConn.NotificationType)
-	d.Set("config", flattenConnectionConfig(slackConn.Config))
-	return nil
-}
-
 func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {

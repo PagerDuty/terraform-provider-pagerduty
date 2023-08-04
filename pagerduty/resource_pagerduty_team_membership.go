@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -35,7 +36,7 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "manager",
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"observer",
 					"responder",
 					"manager",
@@ -45,17 +46,51 @@ func resourcePagerDutyTeamMembership() *schema.Resource {
 	}
 }
 
+func maxRetries() int {
+	return 4
+}
+
+func retryDelayMs() int {
+	return 500
+}
+
+func calculateDelay(retryCount int) time.Duration {
+	return time.Duration(retryCount*retryDelayMs()) * time.Millisecond
+}
+
+func fetchPagerDutyTeamMembershipWithRetries(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error, retryCount int, neededRole string) error {
+	if retryCount >= maxRetries() {
+		return nil
+	}
+	if err := fetchPagerDutyTeamMembership(d, meta, errCallback); err != nil {
+		return err
+	}
+	fetchedRole, userId, teamId := d.Get("role").(string), d.Get("user_id"), d.Get("team_id")
+	if strings.Compare(neededRole, fetchedRole) == 0 {
+		return nil
+	}
+	log.Printf("[DEBUG] Warning role '%s' fetched from PD is different from the role '%s' from config for user: %s from team: %s, retrying...", fetchedRole, neededRole, userId, teamId)
+
+	retryCount++
+	time.Sleep(calculateDelay(retryCount))
+	return fetchPagerDutyTeamMembershipWithRetries(d, meta, errCallback, retryCount, neededRole)
+}
+
 func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
+	userID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
@@ -110,7 +145,7 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
-	return fetchPagerDutyTeamMembership(d, meta, genError)
+	return fetchPagerDutyTeamMembershipWithRetries(d, meta, genError, 0, d.Get("role").(string))
 }
 
 func resourcePagerDutyTeamMembershipRead(d *schema.ResourceData, meta interface{}) error {
@@ -147,7 +182,7 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 
 	d.SetId(fmt.Sprintf("%s:%s", userID, teamID))
 
-	return nil
+	return fetchPagerDutyTeamMembershipWithRetries(d, meta, genError, 0, d.Get("role").(string))
 }
 
 func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interface{}) error {
@@ -156,7 +191,7 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 		return err
 	}
 
-	userID, teamID := resourcePagerDutyTeamMembershipParseID(d.Id())
+	userID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
 
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 
@@ -212,6 +247,10 @@ func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, e
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		resp, _, err := c.OnCall.List(&pagerduty.ListOnCallOptions{UserIds: []string{userID}})
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		}
@@ -273,11 +312,6 @@ func associateEPsBackToTeam(c *pagerduty.Client, teamID string, eps []string) er
 		log.Printf("[DEBUG] EscalationPolicy %s added to team %s", ep, teamID)
 	}
 	return nil
-}
-
-func resourcePagerDutyTeamMembershipParseID(id string) (string, string) {
-	parts := strings.Split(id, ":")
-	return parts[0], parts[1]
 }
 
 func isTeamMember(user *pagerduty.User, teamID string) bool {

@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -26,6 +27,10 @@ func dataSourcePagerDutyEventOrchestration() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"label": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -65,6 +70,10 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EventOrchestrations.List()
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 

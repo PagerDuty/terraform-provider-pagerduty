@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -33,7 +34,7 @@ func resourcePagerDutyWebhookSubscription() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "http_delivery_method",
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"http_delivery_method",
 							}),
 						},
@@ -73,7 +74,7 @@ func resourcePagerDutyWebhookSubscription() *schema.Resource {
 				Type:     schema.TypeString,
 				Default:  "webhook_subscription",
 				Optional: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"webhook_subscription",
 				}),
 			},
@@ -105,7 +106,7 @@ func resourcePagerDutyWebhookSubscription() *schema.Resource {
 						"type": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"service_reference",
 								"team_reference",
 								"account_reference",
@@ -171,6 +172,10 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Get(d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if webhook != nil {

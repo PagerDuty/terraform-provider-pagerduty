@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -22,8 +23,9 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateCantBeBlankOrNotPrintableChars,
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -66,7 +68,7 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 										Default:  "user_reference",
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"user_reference",
 											"schedule_reference",
 										}),
@@ -130,7 +132,7 @@ func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interf
 		}
 
 		d.SetId(escalationPolicy.ID)
-		readErr = resourcePagerDutyEscalationPolicyRead(d, meta)
+		readErr = fetchEscalationPolicy(d, meta, genError)
 		if readErr != nil {
 			return resource.NonRetryableError(readErr)
 		}
@@ -139,20 +141,33 @@ func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interf
 }
 
 func resourcePagerDutyEscalationPolicyRead(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[INFO] Reading PagerDuty escalation policy: %s", d.Id())
+	return fetchEscalationPolicy(d, meta, handleNotFoundError)
+}
+
+func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
-
-	log.Printf("[INFO] Reading PagerDuty escalation policy: %s", d.Id())
 
 	o := &pagerduty.GetEscalationPolicyOptions{}
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 		if err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
+			errResp := errCallback(err, d)
+			log.Printf("[WARN] Escalation Policy read error")
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(err)
+			}
+
+			return nil
 		}
 
 		d.Set("name", escalationPolicy.Name)

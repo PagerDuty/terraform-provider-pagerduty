@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -44,7 +45,7 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "user",
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"admin",
 					"limited_user",
 					"observer",
@@ -105,6 +106,12 @@ func resourcePagerDutyUser() *schema.Resource {
 				Optional: true,
 				Default:  "Managed by Terraform",
 			},
+
+			"license": {
+				Computed: true,
+				Optional: true,
+				Type:     schema.TypeString,
+			},
 		},
 	}
 }
@@ -134,6 +141,15 @@ func buildUserStruct(d *schema.ResourceData) *pagerduty.User {
 	if attr, ok := d.GetOk("description"); ok {
 		user.Description = attr.(string)
 	}
+
+	if attr, ok := d.GetOk("license"); ok {
+		license := &pagerduty.LicenseReference{
+			ID:   attr.(string),
+			Type: "license_reference",
+		}
+		user.License = license
+	}
+
 	log.Printf("[DEBUG] buildUserStruct-- d: .%v. user:%v.", d.Get("name").(string), user.Name)
 	return user
 }
@@ -167,8 +183,12 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		user, _, err := client.Users.Get(d.Id(), &pagerduty.GetUserOptions{})
+		user, err := client.Users.GetWithLicense(d.Id(), &pagerduty.GetUserOptions{})
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
@@ -187,6 +207,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("avatar_url", user.AvatarURL)
 		d.Set("description", user.Description)
 		d.Set("job_title", user.JobTitle)
+		d.Set("license", user.License.ID)
 
 		if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
 			return resource.NonRetryableError(
@@ -298,4 +319,13 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 	// giving the API time to catchup
 	time.Sleep(time.Second)
 	return nil
+}
+
+func expandLicenseReference(v interface{}) (*pagerduty.LicenseReference, error) {
+	var license = &pagerduty.LicenseReference{
+		ID:   v.(string),
+		Type: "license_reference",
+	}
+
+	return license, nil
 }

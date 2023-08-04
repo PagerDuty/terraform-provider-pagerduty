@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -109,6 +110,10 @@ func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, errCallback
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		ruleset, _, err := client.Rulesets.Get(d.Id())
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

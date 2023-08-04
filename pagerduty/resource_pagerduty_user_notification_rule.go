@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -36,7 +37,7 @@ func resourcePagerDutyUserNotificationRule() *schema.Resource {
 			"urgency": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"high",
 					"low",
 				}),
@@ -82,6 +83,10 @@ func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

@@ -140,7 +140,7 @@ type Service struct {
 	CreatedAt                        string                            `json:"created_at,omitempty"`
 	Description                      string                            `json:"description,omitempty"`
 	EscalationPolicy                 *EscalationPolicyReference        `json:"escalation_policy,omitempty"`
-	ResponsePlay                     *ResponsePlayReference            `json:"response_play,omitempty"`
+	ResponsePlay                     *ResponsePlayReference            `json:"response_play"`
 	HTMLURL                          string                            `json:"html_url,omitempty"`
 	ID                               string                            `json:"id,omitempty"`
 	IncidentUrgencyRule              *IncidentUrgencyRule              `json:"incident_urgency_rule,omitempty"`

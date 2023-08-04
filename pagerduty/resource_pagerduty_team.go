@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -69,6 +70,10 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if team, _, err := client.Teams.Create(team); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if team != nil {
 			d.SetId(team.ID)
@@ -94,8 +99,15 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		if team, _, err := client.Teams.Get(d.Id()); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
 		} else if team != nil {
 			d.Set("name", team.Name)
 			d.Set("description", team.Description)
@@ -138,6 +150,10 @@ func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.Delete(d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

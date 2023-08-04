@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -45,6 +46,10 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Vendors.List(o)
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)

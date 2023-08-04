@@ -2,9 +2,9 @@ package pagerduty
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -28,10 +28,10 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 			t := diff.Get("type").(string)
 			if t == "sms_contact_method" || t == "phone_contact_method" {
 				if strings.HasPrefix(a, "0") {
-					return errors.New("phone numbers starting with a 0 are not supported")
+					return fmt.Errorf("phone numbers starting with a 0 are not supported was %q", a)
 				}
 				if _, err := strconv.Atoi(a); err != nil {
-					return errors.New("phone numbers should only contain digits")
+					return fmt.Errorf("phone number %q is not valid as it contains non-digit characters: %w", a, err)
 				}
 			}
 			return nil
@@ -45,7 +45,7 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"email_contact_method",
 					"phone_contact_method",
 					"push_notification_contact_method",
@@ -120,6 +120,10 @@ func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, e
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Users.GetContactMethod(userID, d.Id())
 		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

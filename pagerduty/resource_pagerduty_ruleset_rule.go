@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -160,7 +161,7 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 									"threshold_time_unit": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"minutes",
 											"seconds",
 											"hours",
@@ -181,7 +182,7 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 									"value": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"info",
 											"error",
 											"warning",
@@ -235,7 +236,7 @@ func resourcePagerDutyRulesetRule() *schema.Resource {
 									"value": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"trigger",
 											"resolve",
 										}),
@@ -796,6 +797,10 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.CreateRule(rule.Ruleset.ID, rule); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
@@ -827,6 +832,10 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			time.Sleep(2 * time.Second)
 			return resource.RetryableError(err)
 		} else if rule != nil {
@@ -867,6 +876,10 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 func performRulesetRuleUpdate(rulesetID string, id string, rule *pagerduty.RulesetRule, client *pagerduty.Client) error {
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, id, rule); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position && rule.CatchAll != true {
 			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position)
@@ -924,6 +937,10 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

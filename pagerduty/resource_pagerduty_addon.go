@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -51,6 +52,10 @@ func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, errCallback f
 		addon, _, err := client.Addons.Get(d.Id())
 		if err != nil {
 			log.Printf("[WARN] Service read error")
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

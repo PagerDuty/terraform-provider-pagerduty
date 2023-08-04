@@ -29,23 +29,31 @@ type NotificationRulePayload struct {
 
 // User represents a user.
 type User struct {
-	AvatarURL         string                    `json:"avatar_url,omitempty"`
-	Color             string                    `json:"color,omitempty"`
-	ContactMethods    []*ContactMethodReference `json:"contact_methods,omitempty"`
-	Description       string                    `json:"description,omitempty"`
-	Email             string                    `json:"email,omitempty"`
-	HTMLURL           string                    `json:"html_url,omitempty"`
-	ID                string                    `json:"id,omitempty"`
-	InvitationSent    bool                      `json:"invitation_sent,omitempty"`
-	JobTitle          string                    `json:"job_title,omitempty"`
-	Name              string                    `json:"name,omitempty"`
+	AvatarURL      string `json:"avatar_url,omitempty"`
+	Color          string `json:"color,omitempty"`
+	Description    string `json:"description,omitempty"`
+	Email          string `json:"email,omitempty"`
+	HTMLURL        string `json:"html_url,omitempty"`
+	ID             string `json:"id,omitempty"`
+	InvitationSent bool   `json:"invitation_sent,omitempty"`
+	JobTitle       string `json:"job_title,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Role           string `json:"role,omitempty"`
+	Self           string `json:"self,omitempty"`
+	Summary        string `json:"summary,omitempty"`
+	TimeZone       string `json:"time_zone,omitempty"`
+	Type           string `json:"type,omitempty"`
+
+	// User Associations
 	NotificationRules []*NotificationRule       `json:"notification_rules,omitempty"`
-	Role              string                    `json:"role,omitempty"`
-	Self              string                    `json:"self,omitempty"`
-	Summary           string                    `json:"summary,omitempty"`
 	Teams             []*TeamReference          `json:"teams,omitempty"`
-	TimeZone          string                    `json:"time_zone,omitempty"`
-	Type              string                    `json:"type,omitempty"`
+	ContactMethods    []*ContactMethodReference `json:"contact_methods,omitempty"`
+	License           *LicenseReference         `json:"license,omitempty"`
+}
+
+// LicensePayload represents a license.
+type LicensePayload struct {
+	License *License `json:"license,omitempty"`
 }
 
 // UserPayload represents a user.
@@ -53,26 +61,31 @@ type UserPayload struct {
 	User *User `json:"user,omitempty"`
 }
 
-// FullUser represents a user fetched with include[]=contact_methods,notification_rules.
-// This is only used when caching is enabled
+// FullUser represents a user fetched with:
+// `include[]=contact_methods,notification_rules`. This is only used when
+// caching is enabled. Since licenses are not fetched with the `include[]`
+// params, but instead require a new api route, they are not included in the
+// FullUser struct.
 type FullUser struct {
-	AvatarURL         string              `json:"avatar_url,omitempty"`
-	Color             string              `json:"color,omitempty"`
+	AvatarURL      string `json:"avatar_url,omitempty"`
+	Color          string `json:"color,omitempty"`
+	Description    string `json:"description,omitempty"`
+	Email          string `json:"email,omitempty"`
+	HTMLURL        string `json:"html_url,omitempty"`
+	ID             string `json:"id,omitempty"`
+	InvitationSent bool   `json:"invitation_sent,omitempty"`
+	JobTitle       string `json:"job_title,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Role           string `json:"role,omitempty"`
+	Self           string `json:"self,omitempty"`
+	Summary        string `json:"summary,omitempty"`
+	TimeZone       string `json:"time_zone,omitempty"`
+	Type           string `json:"type,omitempty"`
+
+	// User Associations fetched with `include[]` params
 	ContactMethods    []*ContactMethod    `json:"contact_methods,omitempty"`
-	Description       string              `json:"description,omitempty"`
-	Email             string              `json:"email,omitempty"`
-	HTMLURL           string              `json:"html_url,omitempty"`
-	ID                string              `json:"id,omitempty"`
-	InvitationSent    bool                `json:"invitation_sent,omitempty"`
-	JobTitle          string              `json:"job_title,omitempty"`
-	Name              string              `json:"name,omitempty"`
 	NotificationRules []*NotificationRule `json:"notification_rules,omitempty"`
-	Role              string              `json:"role,omitempty"`
-	Self              string              `json:"self,omitempty"`
-	Summary           string              `json:"summary,omitempty"`
 	Teams             []*Team             `json:"teams,omitempty"`
-	TimeZone          string              `json:"time_zone,omitempty"`
-	Type              string              `json:"type,omitempty"`
 }
 
 // FullUserPayload represents a user.
@@ -279,6 +292,81 @@ func (s *UserService) Get(id string, o *GetUserOptions) (*User, *Response, error
 	return v.User, resp, nil
 }
 
+// GetLicense retrieves a users assigned License.
+func (s *UserService) GetLicense(id string) (*License, *Response, error) {
+	u := fmt.Sprintf("/users/%s/license", id)
+	v := new(LicensePayload)
+
+	resp, err := s.client.newRequestDo("GET", u, nil, nil, v)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v.License, resp, nil
+}
+
+// GetWithLicense retrieves information about a user and their assigned License.
+// This function exists because the interface for GetLicense does not return
+// a user's assigned account Role, which is required in order to manage licenses
+func (s *UserService) GetWithLicense(id string, o *GetUserOptions) (*User, error) {
+	user, _, err := s.Get(id, o)
+	if err != nil {
+		return nil, err
+	}
+
+	license, _, err := s.GetLicense(id)
+	if err != nil {
+		return nil, err
+	}
+	user.License = &LicenseReference{ID: license.ID, Type: "license_reference"}
+
+	return user, nil
+}
+
+// ListAllWithLicenses lists users into User objects with assigned licenses
+// This function exists because licenses are not supported with the include[]
+// API Param and so 2 API calls are required in order to fetch all of the users
+// with their complete attributes including their assigned licenses.
+// This API supports the include params for expanded references and also
+// requires that the caller list all users since the users &
+// license_allocations API's are not sorted in the same way.
+func (s *UserService) ListAllWithLicenses(o *ListUsersOptions) ([]*User, error) {
+	users := make(map[string]*User)
+	o.More, o.Offset = true, 0
+
+	for o.More {
+		log.Printf("==== Getting users at offset %d", o.Offset)
+		v, _, err := s.List(o)
+		if err != nil {
+			return prepareUsers(users), err
+		}
+		for _, u := range v.Users {
+			users[u.ID] = u
+		}
+		o.More = v.More
+		o.Offset = o.Offset + v.Limit
+	}
+
+	licenseAllocations, err := s.client.Licenses.ListAllAllocations(&ListLicenseAllocationsOptions{})
+	if err != nil {
+		return prepareUsers(users), err
+	}
+	for _, la := range licenseAllocations {
+		users[la.User.ID].License = &LicenseReference{ID: la.License.ID, Type: "license_reference"}
+	}
+	return prepareUsers(users), nil
+}
+
+func prepareUsers(users map[string]*User) []*User {
+	usersSlice := make([]*User, 0, len(users))
+
+	for _, u := range users {
+		usersSlice = append(usersSlice, u)
+	}
+
+	return usersSlice
+}
+
 // GetFull retrieves information about a user including contact methods and notification rules.
 func (s *UserService) GetFull(id string) (*FullUser, *Response, error) {
 	u := fmt.Sprintf("/users/%s", id)
@@ -332,6 +420,11 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 	v := new(ContactMethodPayload)
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
+
+	return s.processCreateContactMethodResponse(userID, v, contactMethod, resp, err)
+}
+
+func (s *UserService) processCreateContactMethodResponse(userID string, v *ContactMethodPayload, contactMethod *ContactMethod, resp *Response, err error) (*ContactMethod, *Response, error) {
 	if err != nil {
 		if e, ok := err.(*Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") != 0 {
 			return nil, nil, err
@@ -350,7 +443,46 @@ func (s *UserService) CreateContactMethod(userID string, contactMethod *ContactM
 	} else {
 		log.Printf("===== Added contact method %q to cache", v.ContactMethod.ID)
 	}
+	return v.ContactMethod, resp, nil
+}
 
+func (s *UserService) processUpdateContactMethodResponse(userID, contactMethodId string, v *ContactMethodPayload, contactMethod *ContactMethod, resp *Response, err error) (*ContactMethod, *Response, error) {
+	if err != nil {
+		e, ok := err.(*Error)
+		isUniqueContactError := ok && strings.Compare(fmt.Sprintf("%v", e.Errors), "[User Contact method must be unique]") == 0
+		if !ok || !isUniqueContactError {
+			return nil, nil, err
+		}
+		sContact, sResp, sErr := s.findExistingContactMethod(userID, contactMethod)
+		if sErr != nil {
+			return nil, nil, sErr
+		}
+
+		if isUniqueContactError {
+			_, sErr = s.DeleteContactMethod(userID, sContact.ID)
+			if sErr != nil {
+				return nil, nil, sErr
+			}
+
+			sResp, sErr = s.updateContactMethodCall(userID, contactMethodId, contactMethod, v)
+			if sErr != nil {
+				return nil, nil, sErr
+			}
+
+			sContact, sResp, sErr = s.findExistingContactMethod(userID, contactMethod)
+			if sErr != nil {
+				return nil, nil, sErr
+			}
+		}
+		v.ContactMethod = sContact
+		resp = sResp
+	}
+
+	if err = cachePutContactMethod(v.ContactMethod); err != nil {
+		log.Printf("===== Error adding contact method %q to cache: %q", v.ContactMethod.ID, err)
+	} else {
+		log.Printf("===== Added contact method %q to cache", v.ContactMethod.ID)
+	}
 	return v.ContactMethod, resp, nil
 }
 
@@ -397,17 +529,19 @@ func (s *UserService) GetContactMethod(userID string, contactMethodID string) (*
 
 // UpdateContactMethod updates a contact method for a user.
 func (s *UserService) UpdateContactMethod(userID, contactMethodID string, contactMethod *ContactMethod) (*ContactMethod, *Response, error) {
-	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+	// u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
 	v := new(ContactMethodPayload)
 
-	resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
-	if err != nil {
-		return nil, nil, err
-	}
+	// resp, err := s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
+	resp, err := s.updateContactMethodCall(userID, contactMethodID, contactMethod, v)
 
-	cachePutContactMethod(v.ContactMethod)
+	return s.processUpdateContactMethodResponse(userID, contactMethodID, v, contactMethod, resp, err)
+}
 
-	return v.ContactMethod, resp, nil
+func (s *UserService) updateContactMethodCall(userID, contactMethodID string, contactMethod *ContactMethod, v interface{}) (*Response, error) {
+	u := fmt.Sprintf("/users/%s/contact_methods/%s", userID, contactMethodID)
+
+	return s.client.newRequestDo("PUT", u, nil, &ContactMethodPayload{ContactMethod: contactMethod}, &v)
 }
 
 // DeleteContactMethod deletes a contact method for a user.
@@ -443,6 +577,9 @@ func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRu
 	v := new(NotificationRulePayload)
 
 	resp, err := s.client.newRequestDo("POST", u, nil, &NotificationRulePayload{NotificationRule: rule}, &v)
+	return s.processNotificationRule(userID, v, rule, resp, err)
+}
+func (s *UserService) processNotificationRule(userID string, v *NotificationRulePayload, rule *NotificationRule, resp *Response, err error) (*NotificationRule, *Response, error) {
 	if err != nil {
 		if e, ok := err.(*Error); !ok || strings.Compare(fmt.Sprintf("%v", e.Errors), "[Channel Start delay must be unique for a given contact method]") != 0 {
 			return nil, nil, err
@@ -461,7 +598,6 @@ func (s *UserService) CreateNotificationRule(userID string, rule *NotificationRu
 	} else {
 		log.Printf("===== Added notification rule %q to cache", v.NotificationRule.ID)
 	}
-
 	return v.NotificationRule, resp, nil
 }
 
@@ -515,9 +651,7 @@ func (s *UserService) UpdateNotificationRule(userID, ruleID string, rule *Notifi
 		return nil, nil, err
 	}
 
-	cachePutNotificationRule(v.NotificationRule)
-
-	return v.NotificationRule, resp, nil
+	return s.processNotificationRule(userID, v, rule, resp, err)
 }
 
 // DeleteNotificationRule deletes a notification rule for a user.

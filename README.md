@@ -12,9 +12,9 @@
 -	[Terraform](https://www.terraform.io/downloads.html) 0.12.x
 -	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
 
-## Building The Provider
+## Building the Provider
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-pagerduty`
+Clone repository to: `$GOPATH/src/github.com/PagerDuty/terraform-provider-pagerduty`
 
 ```sh
 $ mkdir -p $GOPATH/src/github.com/PagerDuty; cd $GOPATH/src/github.com/PagerDuty
@@ -26,28 +26,125 @@ Enter the provider directory and build the provider
 ```sh
 $ cd $GOPATH/src/github.com/PagerDuty/terraform-provider-pagerduty
 $ make build
-```
-
-## Using the provider
-
-Please refer to https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs for
-examples on how to use the provider and detailed documentation about the
-Resources and Data Sources the provider has.
-
-## Developing the Provider
-
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
-
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
-
-```sh
-$ make build
 ...
 $ $GOPATH/bin/terraform-provider-pagerduty
 ...
 ```
 
-### Testing
+This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+
+## Usage
+
+Please refer to Terraform docs for [PagerDuty Provider](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs)
+for examples on how to use the provider and detailed documentation about the Resources and Data Sources the provider has.
+
+## Caching Support
+
+The `go-pagerduty` library relies on various APIs to interact with PagerDuty's resources. However, some of these APIs lack efficient ways to query specific resources by their attributes. When an implementation in the Terraform Provider requires such logic, the library lists all resources of a specific entity and performs a lookup in memory. This can result in inefficient use of the APIs, especially when dealing with a large number of resources, as the repetitive API calls for listing resource definitions can lead to significant time consumption and performance penalties. To address this issue, we have introduced caching to improve the user experience when interacting with Terraform resources that rely on API calls to list all available data for a specific entity, and then perform a lookup by attribute value in memory. With this improvement, the Terraform Provider users can expect better performance and faster response times when working with PagerDuty's resources.
+
+### Resources currently supporting cache of API calls
+
+* `pagerduty_team_membership`
+* `pagerduty_user_contact_method`
+* `pagerduty_user_notification_rule` 
+* `pagerduty_user`
+
+### Caching mechanisms available
+
+* In memory.
+* MongoDB.
+
+### To activate caching support
+
+| Environment Variable       | Example Value                                                                      | Description                                                                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| TF_PAGERDUTY_CACHE         | memory                                                                             | Activate **In Memory** cache.                                                                                                                |
+| TF_PAGERDUTY_CACHE         | `mongodb+srv://[mongouser]:[mongopass]@[mongodbname].[mongosubdomain].mongodb.net` | Activate MongoDB cache.                                                                                                                      |
+| TF_PAGERDUTY_CACHE_MAX_AGE | 30s                                                                                | Only applicable for MongoDB cache. Time in seconds for cached data to become staled. Default value `10s`.                                    |
+| TF_PAGERDUTY_CACHE_PREFILL | 1                                                                                  | Only applicable for MongoDB cache. Indicates to pre-fill data in cache for *Abilities*, *Users*, *Contact Methods* and *Notification Rules*. |
+
+
+## Development
+
+### Setup Local Environment
+
+Before developing the provider, ensure that you have go correctly installed.
+
+* Install [Go](http://www.golang.org) on your machine (version 1.11+ is *required*).
+* Correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+
+### Setup Local PagerDuty Provider
+
+Make changes to the PagerDuty provider and post a pull request for review.
+
+1. [Create a fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) of the **upstream** repository `https://github.com/PagerDuty/terraform-provider-pagerduty`
+2. Clone the new **origin** repository to your local go src path: `$GOPATH/src/github.com/<your-github-username>/terraform-provider-pagerduty`
+3. optionally make development easier by setting the [**upstream**](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-for-a-fork) repository
+   ```
+   $ git remote add upstream git@github.com:PagerDuty/terraform-provider-pagerduty.git
+   ```
+4. Make any changes on your local machine and post a PR to the **upstream** repository
+
+### Run Dev Build with Local Terraform Module
+
+> Note: Development overrides work only in Terraform v0.14 and later. Using a dev_overrides block in your CLI configuration will cause Terraform v0.13 to reject the configuration as invalid.
+
+1. Build the provider with your latest changes. (See [Building the Provider](https://github.com/PagerDuty/terraform-provider-pagerduty#building-the-provider))
+2. Override the pagerduty provider with your local build. (See [Development Overrides for Provider Developers](https://www.terraform.io/cli/config/config-file#development-overrides-for-provider-developers))
+   * Create the file `$HOME/.terraformrc` and paste the following content into it. Be sure to change the path to wherever your binary is located. It is currently set to the default for go builds.
+   ```terraform
+   provider_installation {
+      dev_overrides {
+         "pagerduty/pagerduty" = "/<ABSOLUTE_PATH_TO>/<YOUR_HOME_PATH>/go/bin"
+      }
+      direct {}
+   }
+   ```
+3. Goto a local terraform module and start running terraform. (See [Using the Provider](https://github.com/PagerDuty/terraform-provider-pagerduty#using-the-provider)). You may need to first install the latest module and provider
+   versions allowed within the new configured constraints. Verify with the below warning message.
+   ```sh
+   $ terraform init -upgrade
+   $ terraform plan
+   ...
+   │ Warning: Provider development overrides are in effect
+   ```
+4. See `api_url_override` from Terraform docs for [PagerDuty Provider](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs#argument-reference) to set a custom proxy endpoint as PagerDuty client api url overriding service_region setup.
+
+## Test a specific version of the go-pagerduty API client
+
+Modify the `go.mod` file using a [Go module replacement](https://go.dev/doc/modules/managing-dependencies#external_fork) for `github.com/heimweh/go-pagerduty:
+```
+$ go mod edit -replace github.com/heimweh/go-pagerduty=/PATH/TO/LOCAL/github.com/<USERNAME>/<REPO>
+```
+
+Or update the file directly:
+```
+replace github.com/heimweh/go-pagerduty => /PATH/TO/LOCAL/go-pagerduty
+```
+
+Update vendored dependencies or configure compiler to prefer using downloaded modules based on `go.mod` file:
+```
+$ export GOFLAGS="-mod=mod"
+```
+Or:
+```
+$ go mod vendor
+```
+
+### Setup Local Logs
+
+1. See [Debugging Terraform](https://www.terraform.io/internals/debugging). Either add this to your shell's profile
+   (example: `~/.bashrc`), or just execute these commands:
+   ```
+   export TF_LOG=trace
+   export TF_LOG_PATH="/PATH/TO/YOUR/LOG_FILE.log"
+   ```
+2. stream logs
+   ```
+   $ tail -f /PATH/TO/YOUR/LOG_FILE.log
+   ```
+
+## Testing
 
 In order to test the provider, you can simply run `make test`.
 
@@ -74,3 +171,24 @@ Run a specific subset of tests by name use the `TESTARGS="-run TestName"` option
 ```sh
 $ make testacc TESTARGS="-run TestAccPagerDutyTeam"
 ```
+
+Some tests require additional environment variables to be set to enable them due to account restrictions on certain
+features. Similarly to [`TF_ACC`](https://developer.hashicorp.com/terraform/plugin/sdkv2/testing/acceptance-tests#environment-variables),
+the value of the environment variable is not relevant.
+
+For example:
+```sh
+PAGERDUTY_ACC_INCIDENT_WORKFLOWS=1 make testacc TESTARGS="-run PagerDutyIncidentWorkflow"
+PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.pagerduty.com" make testacc TESTARGS="-run PagerDutyServiceIntegration_GenericEmailNoFilters"
+PAGERDUTY_ACC_INCIDENT_CUSTOM_FIELDS=1 make testacc TESTARGS="-run PagerDutyIncidentCustomField"
+PAGERDUTY_ACC_LICENSE_NAME="Full User" make testacc TESTARGS="-run DataSourcePagerDutyLicense_Basic"
+PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER=1 make testacc TESTARGS="-run PagerDutyScheduleWithTeams_EscalationPolicyDependantWithOneLayer"
+```
+
+| Variable Name                                                | Feature Set         |
+|--------------------------------------------------------------|---------------------|
+| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                           | Incident Workflows  |
+| `PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS` | Service Integration |
+| `PAGERDUTY_ACC_INCIDENT_CUSTOM_FIELDS`                       | Custom Fields       |
+| `PAGERDUTY_ACC_LICENSE_NAME`                                 | Licenses            |
+| `PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER`                | Schedule            |

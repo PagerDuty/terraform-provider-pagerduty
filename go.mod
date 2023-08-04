@@ -1,18 +1,74 @@
 module github.com/terraform-providers/terraform-provider-pagerduty
 
-go 1.16
+go 1.17
 
 require (
-	cloud.google.com/go v0.71.0 // indirect
+	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
+	github.com/hashicorp/go-version v1.6.0
+	github.com/hashicorp/hc-install v0.5.2
+	github.com/hashicorp/terraform-exec v0.15.0
+	github.com/hashicorp/terraform-json v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
-	github.com/heimweh/go-pagerduty v0.0.0-20220817230727-d04840835460
+	github.com/heimweh/go-pagerduty v0.0.0-20230615223713-346f1359a346
+)
+
+require (
+	cloud.google.com/go v0.107.0 // indirect
+	cloud.google.com/go/storage v1.27.0 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
+	github.com/agext/levenshtein v1.2.2 // indirect
+	github.com/apparentlymart/go-cidr v1.0.1 // indirect
+	github.com/apparentlymart/go-textseg v1.0.0 // indirect
+	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fatih/color v1.7.0 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-hclog v0.16.1 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/go-plugin v1.4.1 // indirect
+	github.com/hashicorp/go-uuid v1.0.2 // indirect
+	github.com/hashicorp/hcl/v2 v2.3.0 // indirect
+	github.com/hashicorp/logutils v1.0.0 // indirect
+	github.com/hashicorp/terraform-plugin-go v0.5.0 // indirect
+	github.com/hashicorp/terraform-plugin-log v0.2.0 // indirect
+	github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896 // indirect
+	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
+	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/mattn/go-colorable v0.1.4 // indirect
+	github.com/mattn/go-isatty v0.0.10 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
+	github.com/mitchellh/mapstructure v1.1.2 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
-	go.mongodb.org/mongo-driver v1.10.1 // indirect
-	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/tools v0.0.0-20201110124207-079ba7bd75cd // indirect
-	google.golang.org/api v0.35.0 // indirect
-	google.golang.org/genproto v0.0.0-20201109203340-2640f1f9cdfb // indirect
-	google.golang.org/grpc v1.33.2 // indirect
+	github.com/oklog/run v1.0.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
+	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
+	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
+	github.com/xdg-go/scram v1.1.1 // indirect
+	github.com/xdg-go/stringprep v1.0.3 // indirect
+	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	github.com/zclconf/go-cty v1.9.1 // indirect
+	go.mongodb.org/mongo-driver v1.10.2 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
+	google.golang.org/api v0.103.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
+	google.golang.org/grpc v1.53.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 )

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -19,17 +20,11 @@ const (
 
 func resourcePagerDutyServiceIntegration() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyServiceIntegrationCreate,
-		Read:   resourcePagerDutyServiceIntegrationRead,
-		Update: resourcePagerDutyServiceIntegrationUpdate,
-		Delete: resourcePagerDutyServiceIntegrationDelete,
-		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
-			t := diff.Get("type").(string)
-			if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" && diff.NewValueKnown("integration_email") {
-				return errors.New(errEmailIntegrationMustHaveEmail)
-			}
-			return nil
-		},
+		Create:        resourcePagerDutyServiceIntegrationCreate,
+		Read:          resourcePagerDutyServiceIntegrationRead,
+		Update:        resourcePagerDutyServiceIntegrationUpdate,
+		Delete:        resourcePagerDutyServiceIntegrationDelete,
+		CustomizeDiff: customizeServiceIntegrationDiff(),
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyServiceIntegrationImport,
 		},
@@ -49,7 +44,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				ForceNew:      true,
 				Computed:      true,
 				ConflictsWith: []string{"vendor"},
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"aws_cloudwatch_inbound_integration",
 					"cloudkick_inbound_integration",
 					"event_transformer_api_inbound_integration",
@@ -107,7 +102,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"action": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"resolve",
 								"trigger",
 							}),
@@ -137,7 +132,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 												"part": {
 													Type:     schema.TypeString,
 													Optional: true,
-													ValidateFunc: validateValueFunc([]string{
+													ValidateDiagFunc: validateValueDiagFunc([]string{
 														"body",
 														"from_addresses",
 														"subject",
@@ -156,7 +151,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 															"part": {
 																Type:     schema.TypeString,
 																Required: true,
-																ValidateFunc: validateValueFunc([]string{
+																ValidateDiagFunc: validateValueDiagFunc([]string{
 																	"body",
 																	"from_addresses",
 																	"subject",
@@ -165,7 +160,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 															"type": {
 																Type:     schema.TypeString,
 																Required: true,
-																ValidateFunc: validateValueFunc([]string{
+																ValidateDiagFunc: validateValueDiagFunc([]string{
 																	"contains",
 																	"exactly",
 																	"regex",
@@ -177,7 +172,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 												"type": {
 													Type:     schema.TypeString,
 													Required: true,
-													ValidateFunc: validateValueFunc([]string{
+													ValidateDiagFunc: validateValueDiagFunc([]string{
 														"contains",
 														"exactly",
 														"not",
@@ -190,7 +185,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 									"type": {
 										Type:     schema.TypeString,
 										Required: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"all",
 											"any",
 										}),
@@ -211,7 +206,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 									"part": {
 										Type:     schema.TypeString,
 										Required: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"body",
 											"subject",
 										}),
@@ -227,7 +222,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 									"type": {
 										Type:     schema.TypeString,
 										Required: true,
-										ValidateFunc: validateValueFunc([]string{
+										ValidateDiagFunc: validateValueDiagFunc([]string{
 											"between",
 											"entire",
 											"regex",
@@ -246,6 +241,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 			"email_filter": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -256,7 +252,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"subject_mode": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"always",
 								"match",
 								"no-match",
@@ -269,7 +265,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"body_mode": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"always",
 								"match",
 								"no-match",
@@ -282,7 +278,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						"from_email_mode": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"always",
 								"match",
 								"no-match",
@@ -296,6 +292,81 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				},
 			},
 		},
+	}
+}
+
+func customizeServiceIntegrationDiff() schema.CustomizeDiffFunc {
+	flattenEFConfigBlock := func(v interface{}) []map[string]interface{} {
+		var efConfigBlock []map[string]interface{}
+		if isNilFunc(v) {
+			return efConfigBlock
+		}
+		for _, ef := range v.([]interface{}) {
+			var efConfig map[string]interface{}
+			if !isNilFunc(ef) {
+				efConfig = ef.(map[string]interface{})
+			}
+			efConfigBlock = append(efConfigBlock, efConfig)
+		}
+		return efConfigBlock
+	}
+
+	isEFEmptyConfigBlock := func(ef map[string]interface{}) bool {
+		var isEmpty bool
+		if ef["body_mode"].(string) == "" &&
+			ef["body_regex"].(string) == "" &&
+			ef["from_email_mode"].(string) == "" &&
+			ef["from_email_regex"].(string) == "" &&
+			ef["subject_mode"].(string) == "" &&
+			ef["subject_regex"].(string) == "" {
+			isEmpty = true
+		}
+		return isEmpty
+	}
+
+	isEFDefaultConfigBlock := func(ef map[string]interface{}) bool {
+		var isDefault bool
+		if ef["body_mode"].(string) == "always" &&
+			ef["body_regex"].(string) == "" &&
+			ef["from_email_mode"].(string) == "always" &&
+			ef["from_email_regex"].(string) == "" &&
+			ef["subject_mode"].(string) == "always" &&
+			ef["subject_regex"].(string) == "" {
+			isDefault = true
+		}
+		return isDefault
+	}
+
+	return func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+		t := diff.Get("type").(string)
+		if t == "generic_email_inbound_integration" && diff.Get("integration_email").(string) == "" && diff.NewValueKnown("integration_email") {
+			return errors.New(errEmailIntegrationMustHaveEmail)
+		}
+
+		// All this custom diff logic is needed because the email_filters API
+		// response returns a default value for its structure even when this
+		// configuration is sent empty, so it produces a permanent diff on each Read
+		// that has an empty configuration for email_filter attribute on HCL code.
+		vOldEF, vNewEF := diff.GetChange("email_filter")
+		oldEF := flattenEFConfigBlock(vOldEF)
+		newEF := flattenEFConfigBlock(vNewEF)
+		if len(oldEF) > 0 && len(newEF) > 0 && len(oldEF) == len(newEF) {
+			var updatedEF []map[string]interface{}
+			for idx, new := range newEF {
+				old := oldEF[idx]
+				isSameEFConfig := old["id"] == new["id"]
+
+				efConfig := new
+				if isSameEFConfig && isEFDefaultConfigBlock(old) && isEFEmptyConfigBlock(new) {
+					efConfig = old
+				}
+				updatedEF = append(updatedEF, efConfig)
+			}
+
+			diff.SetNew("email_filter", updatedEF)
+		}
+
+		return nil
 	}
 }
 
@@ -557,6 +628,10 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
 		if err != nil {
 			log.Printf("[WARN] Service integration read error")
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)

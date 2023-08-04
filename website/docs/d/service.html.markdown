@@ -40,5 +40,11 @@ The following arguments are supported:
 * `id` - The ID of the found service.
 * `name` - The short name of the found service.
 * `type` - The type of object. The value returned will be `service`. Can be used for passing to a service dependency.
+* `auto_resolve_timeout` - Time in seconds that an incident is automatically resolved if left open for that long. Value is null if the feature is disabled. Value must not be negative. Setting this field to 0, null (or unset) will disable the feature.
+* `acknowledgement_timeout` - Time in seconds that an incident changes to the Triggered State after being Acknowledged. Value is null if the feature is disabled. Value must not be negative. Setting this field to 0, null (or unset) will disable the feature.
+* `alert_creation` - Whether a service creates only incidents, or both alerts and incidents. A service must create alerts in order to enable incident merging.
+* `description` - The user-provided description of the service.
+* `escalation_policy` - The escalation policy associated with this service.
+* `teams` - The set of teams associated with the service.
 
 [1]: https://api-reference.pagerduty.com/#!/Services/get_services

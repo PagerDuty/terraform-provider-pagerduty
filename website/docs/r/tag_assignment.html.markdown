@@ -15,7 +15,6 @@ A [tag](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODEwMA-assign-tags
 ```hcl
 resource "pagerduty_tag" "example" {
   label = "API"
-  type  = "tag"
 }
 resource "pagerduty_team" "engteam" {
   name = "Engineering"

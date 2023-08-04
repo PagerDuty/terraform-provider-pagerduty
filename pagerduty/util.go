@@ -6,9 +6,12 @@ import (
 	"log"
 	"math"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -26,13 +29,17 @@ func validateRFC3339(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
 	t, err := time.Parse(time.RFC3339, value)
 	if err != nil {
-		errors = append(errors, fmt.Errorf("%s is not a valid format for argument: %s. Expected format: %s (RFC3339)", value, k, time.RFC3339))
+		errors = append(errors, genErrorTimeFormatRFC339(value, k))
 	}
 	if t.Second() > 0 {
 		errors = append(errors, fmt.Errorf("please set the time %s to a full minute, e.g. 11:23:00, not 11:23:05", value))
 	}
 
 	return
+}
+
+func genErrorTimeFormatRFC339(value, k string) error {
+	return fmt.Errorf("%s is not a valid format for argument: %s. Expected format: %s (RFC3339)", value, k, time.RFC3339)
 }
 
 func suppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) bool {
@@ -83,8 +90,10 @@ func suppressCaseDiff(k, old, new string, d *schema.ResourceData) bool {
 }
 
 // Validate a value against a set of possible values
-func validateValueFunc(values []string) schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (we []string, errors []error) {
+func validateValueDiagFunc(values []string) schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+
 		value := v.(string)
 		valid := false
 		for _, val := range values {
@@ -95,10 +104,32 @@ func validateValueFunc(values []string) schema.SchemaValidateFunc {
 		}
 
 		if !valid {
-			errors = append(errors, fmt.Errorf("%#v is an invalid value for argument %s. Must be one of %#v", value, k, values))
+			diags = append(diags, diag.Diagnostic{
+				Severity:      diag.Error,
+				Summary:       fmt.Sprintf("%#v is an invalid value. Must be one of %#v", value, values),
+				AttributePath: p,
+			})
 		}
-		return
+		return diags
 	}
+}
+
+func validateCantBeBlankOrNotPrintableChars(v interface{}, p cty.Path) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	value := v.(string)
+	matcher := regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]`)
+	matches := matcher.MatchString(value)
+
+	if matches {
+		diags = append(diags, diag.Diagnostic{
+			Severity:      diag.Error,
+			Summary:       "Name can't be blank neither contain '\\', '/', '&', '<', '>', nor non-printable characters.",
+			AttributePath: p,
+		})
+	}
+
+	return diags
 }
 
 // Takes the result of flatmap.Expand for an array of strings
@@ -186,4 +217,9 @@ func unique(s []string) []string {
 		}
 	}
 	return result
+}
+
+func resourcePagerDutyParseColonCompoundID(id string) (string, string) {
+	parts := strings.Split(id, ":")
+	return parts[0], parts[1]
 }

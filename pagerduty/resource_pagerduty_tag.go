@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -88,10 +89,21 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty tag %s", d.Id())
 
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
-		if tag, _, err := client.Tags.Get(d.Id()); err != nil {
-			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
-		} else if tag != nil {
+		tag, _, err := client.Tags.Get(d.Id())
+		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
+			errResp := handleNotFoundError(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
+
+			return nil
+		}
+		if tag != nil {
 			log.Printf("Tag Type: %v", tag.Type)
 			d.Set("label", tag.Label)
 			d.Set("summary", tag.Summary)
@@ -111,6 +123,10 @@ func resourcePagerDutyTagDelete(d *schema.ResourceData, meta interface{}) error 
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Delete(d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
+			}
+
 			return resource.RetryableError(err)
 		}
 		return nil

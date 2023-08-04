@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -35,7 +36,7 @@ func resourcePagerDutySlackConnection() *schema.Resource {
 			"source_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"service_reference",
 					"team_reference",
 				}),
@@ -56,7 +57,7 @@ func resourcePagerDutySlackConnection() *schema.Resource {
 			"notification_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validateValueFunc([]string{
+				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"responder",
 					"stakeholder",
 				}),
@@ -83,7 +84,7 @@ func resourcePagerDutySlackConnection() *schema.Resource {
 						"urgency": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ValidateFunc: validateValueFunc([]string{
+							ValidateDiagFunc: validateValueDiagFunc([]string{
 								"high",
 								"low",
 							}),
@@ -153,21 +154,25 @@ func fetchSlackConnection(d *schema.ResourceData, meta interface{}, errCallback 
 	workspaceID := d.Get("workspace_id").(string)
 	log.Printf("[DEBUG] Read Slack Connection: workspace_id %s", workspaceID)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id())
-		if err != nil {
-			log.Printf("[WARN] Slack connection read error")
-			errResp := errCallback(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		if slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id()); err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return resource.NonRetryableError(err)
 			}
-
-			return nil
-		}
-
-		if err := flattenSlackConnection(d, slackConn); err != nil {
-			return resource.NonRetryableError(err)
+      
+      errResp := errCallback(err, d)
+      if errResp != nil {
+        return resource.RetryableError(err)
+      }
+      return nil
+		} else if slackConn != nil {
+			d.Set("source_id", slackConn.SourceID)
+			d.Set("source_name", slackConn.SourceName)
+			d.Set("source_type", slackConn.SourceType)
+			d.Set("channel_id", slackConn.ChannelID)
+			d.Set("channel_name", slackConn.ChannelName)
+			d.Set("notification_type", slackConn.NotificationType)
+			d.Set("config", flattenConnectionConfig(slackConn.Config))
 		}
 
 		return nil

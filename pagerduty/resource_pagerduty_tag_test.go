@@ -63,6 +63,15 @@ func TestAccPagerDutyTag_Basic(t *testing.T) {
 						"pagerduty_tag.foo", "label", tagLabel),
 				),
 			},
+			// Validating that externally removed tags are detected and planed for
+			// re-creation
+			{
+				Config: testAccCheckPagerDutyTagConfig(tagLabel),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyTag("pagerduty_tag.foo"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -97,6 +106,26 @@ func testAccCheckPagerDutyTagExists(n string) resource.TestCheckFunc {
 		}
 		if found.ID != rs.Primary.ID {
 			return fmt.Errorf("Tag not found: %v - %v", rs.Primary.ID, found)
+		}
+
+		return nil
+	}
+}
+
+func testAccExternallyDestroyTag(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Tag ID is set")
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		_, err := client.Tags.Delete(rs.Primary.ID)
+		if err != nil {
+			return err
 		}
 
 		return nil

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
@@ -53,6 +55,8 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 
 	// Return the previously-configured client if available.
 	if c.client != nil {
+		// Set caller name to x-terraform-function custom header if client was cached
+		c.client.SetXTerraformFunctionHeader(extractCallerName(2))
 		return c.client, nil
 	}
 
@@ -71,11 +75,12 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	config := &pagerduty.Config{
-		BaseURL:    apiUrl,
-		Debug:      logging.IsDebugOrHigher(),
-		HTTPClient: httpClient,
-		Token:      c.Token,
-		UserAgent:  c.UserAgent,
+		BaseURL:                  apiUrl,
+		Debug:                    logging.IsDebugOrHigher(),
+		HTTPClient:               httpClient,
+		Token:                    c.Token,
+		UserAgent:                c.UserAgent,
+		XTerraformFunctionHeader: extractCallerName(2),
 	}
 
 	client, err := pagerduty.NewClient(config)
@@ -134,4 +139,20 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 	log.Printf("[INFO] PagerDuty client configured for slack")
 
 	return c.slackClient, nil
+}
+
+func extractCallerName(skip int) string {
+	var callerName string
+
+	pc, _, _, ok := runtime.Caller(skip)
+	details := runtime.FuncForPC(pc)
+	if ok && details != nil {
+		name := details.Name()
+		idx := strings.LastIndex(name, ".")
+		if idx > 0 {
+			callerName = name[idx+1:]
+		}
+	}
+
+	return callerName
 }

@@ -65,3 +65,37 @@ func TestConfigCustomAppUrl(t *testing.T) {
 		t.Fatalf("error: expected the client to not fail: %v", err)
 	}
 }
+
+func TestConfigXTerraformFunctionHeader(t *testing.T) {
+	config := Config{
+		Token:               "foo",
+		AppUrl:              "https://app.domain.tld",
+		SkipCredsValidation: true,
+	}
+
+	client, err := config.Client()
+	if err != nil {
+		t.Fatalf("error: expected the client to not fail: %v", err)
+	}
+	want := "TestConfigXTerraformFunctionHeader"
+	if got := client.Config.XTerraformFunctionHeader; got != want {
+		t.Fatalf("error: expected %q as value for \"x-terraform-function-header\", but got %q", want, got)
+	}
+}
+
+func TestExtractCallerName(t *testing.T) {
+	cases := []struct {
+		skip int
+		want string
+	}{
+		{0, "extractCallerName"},
+		{1, "TestExtractCallerName"},
+		{2, "tRunner"},
+	}
+
+	for _, c := range cases {
+		if got := extractCallerName(c.skip); got != c.want {
+			t.Fatalf("error: expected %q, but got %q", c.want, got)
+		}
+	}
+}

@@ -507,7 +507,6 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	d.Set("name", service.Name)
 	d.Set("type", service.Type)
 	d.Set("html_url", service.HTMLURL)
-	d.Set("status", "unknown")
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)
@@ -516,7 +515,6 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	} else {
 		d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
 	}
-	d.Set("last_incident_timestamp", "1970-01-01T00:00:00.000Z")
 	if service.AcknowledgementTimeout == nil {
 		d.Set("acknowledgement_timeout", "null")
 	} else {

@@ -11,53 +11,20 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-func dataSourcePagerDutyService() *schema.Resource {
+func dataSourcePagerDutyServiceStatus() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyServiceRead,
+		Read: dataSourcePagerDutyServiceStatusRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"auto_resolve_timeout": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"acknowledgement_timeout": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"alert_creation": {
+			"last_incident_timestamp": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"escalation_policy": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"teams": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "The set of teams associated with the service",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-			"type": {
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -65,13 +32,13 @@ func dataSourcePagerDutyService() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyServiceStatusRead(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Reading PagerDuty service")
+	log.Printf("[INFO] Reading PagerDuty service status")
 
 	searchName := d.Get("name").(string)
 
@@ -117,13 +84,8 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
-		d.Set("type", found.Type)
-		d.Set("auto_resolve_timeout", found.AutoResolveTimeout)
-		d.Set("acknowledgement_timeout", found.AcknowledgementTimeout)
-		d.Set("alert_creation", found.AlertCreation)
-		d.Set("description", found.Description)
-		d.Set("teams", teams)
-		d.Set("escalation_policy", found.EscalationPolicy.ID)
+		d.Set("last_incident_timestamp", found.LastIncidentTimestamp)
+		d.Set("status", found.Status)
 
 		return nil
 	})

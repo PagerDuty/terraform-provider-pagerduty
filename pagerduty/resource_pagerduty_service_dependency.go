@@ -5,12 +5,17 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
+
+// This mutex was introduced in order to avoid race conditions in the backend
+// due to parallel calls to `/service_dependencies/associate` endpoint.
+var dependencyAssociationMutex sync.Mutex
 
 func resourcePagerDutyServiceDependency() *schema.Resource {
 	return &schema.Resource{
@@ -142,17 +147,23 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 
 	var dependencies *pagerduty.ListServiceDependencies
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
-		if dependencies, _, err = client.ServiceDependencies.AssociateServiceDependencies(&input); err != nil {
+		// Lock the mutex to ensure only one API call to
+		// `service_dependencies/associate` is done at a time
+		dependencyAssociationMutex.Lock()
+		dependencies, _, err = client.ServiceDependencies.AssociateServiceDependencies(&input)
+		dependencyAssociationMutex.Unlock()
+
+		if err != nil {
 			if isErrCode(err, 404) {
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)
 		} else {
 			for _, r := range dependencies.Relationships {
-				d.SetId(r.ID)
 				if err := d.Set("dependency", flattenRelationship(r)); err != nil {
 					return resource.NonRetryableError(err)
 				}
+				d.SetId(r.ID)
 			}
 		}
 		return nil

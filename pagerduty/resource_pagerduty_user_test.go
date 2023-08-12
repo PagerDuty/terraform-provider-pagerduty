@@ -85,7 +85,7 @@ func TestAccPagerDutyUser_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyUserConfigUpdated(usernameUpdated, emailUpdated),
+				Config: testAccCheckPagerDutyUserConfigUpdated(usernameUpdated, emailUpdated, "observer"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyUserExists("pagerduty_user.foo"),
 					resource.TestCheckResourceAttr(
@@ -100,6 +100,22 @@ func TestAccPagerDutyUser_Basic(t *testing.T) {
 						"pagerduty_user.foo", "job_title", "bar"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_user.foo", "description", "bar"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyUserConfigUpdated(usernameUpdated, emailUpdated, "read_only_user"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyUserExists("pagerduty_user.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_user.foo", "role", "read_only_user"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyUserConfigUpdated(usernameUpdated, emailUpdated, "restricted_access"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyUserExists("pagerduty_user.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_user.foo", "role", "restricted_access"),
 				),
 			},
 		},
@@ -274,17 +290,17 @@ resource "pagerduty_user" "foo" {
 }`, username, email)
 }
 
-func testAccCheckPagerDutyUserConfigUpdated(username, email string) string {
+func testAccCheckPagerDutyUserConfigUpdated(username, email, role string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%s"
   email       = "%s"
   color       = "red"
-  role        = "observer"
+  role        = "%s"
   job_title   = "bar"
   description = "bar"
   time_zone   = "Europe/Dublin"
-}`, username, email)
+}`, username, email, role)
 }
 
 func testAccCheckPagerDutyUserWithTeamsConfig(team, username, email string) string {

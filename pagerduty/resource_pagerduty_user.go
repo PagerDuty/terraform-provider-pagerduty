@@ -229,6 +229,12 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 
 	user := buildUserStruct(d)
 
+	if ok := d.HasChangeExcept("license"); ok {
+		// When not explicitely assigning a new license it's better to the backend
+		// logic assign the license's id.
+		user.License = nil
+	}
+
 	log.Printf("[INFO] Updating PagerDuty user %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete

@@ -1,3 +1,9 @@
+## 2.15.3 (Aug 14, 2023)
+
+IMPROVEMENTS:
+*  `resource/pagerduty_service_dependency`: [TFPROVDEV-27] Avoid Concurrent calls for Service Dependencies creation ([#724](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/724))
+*  `resource/pagerduty_user`: [TFPROVDEV-30] Address update user role failed as license is not re-computed correctly ([#725](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/725))
+
 ## 2.15.2 (Jul 21, 2023)
 
 IMPROVEMENTS:

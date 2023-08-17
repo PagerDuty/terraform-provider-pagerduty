@@ -57,3 +57,8 @@ The following arguments are supported:
 * `skip_credentials_validation` - (Optional) Skip validation of the token against the PagerDuty API.
 * `service_region` - (Optional) The PagerDuty service region to use. Default to empty (uses US region). Supported value: `eu`.
 * `api_url_override` - (Optional) It can be used to set a custom proxy endpoint as PagerDuty client api url overriding `service_region` setup.
+
+## Additional Resources
+
+- [PagerDuty Knowledge Base](https://support.pagerduty.com/)
+- [List of Incident Workflow Actions](https://support.pagerduty.com/docs/incident-workflows#add-actions)

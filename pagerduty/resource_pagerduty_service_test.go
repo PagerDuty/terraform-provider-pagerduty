@@ -141,6 +141,12 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
+			// Just a valid name
+			{
+				Config:             testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, "DB Technical Service"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 			// Blank Name
 			{
 				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, ""),

@@ -120,6 +120,12 @@ func TestAccPagerDutyEscalationPolicy_FormatValidation(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckPagerDutyEscalationPolicyDestroy,
 		Steps: []resource.TestStep{
+			// Just a valid name
+			{
+				Config:             testAccCheckPagerDutyEscalationPolicyConfig(username, email, "SRE Escalation Policy"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 			// Blank Name
 			{
 				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, ""),

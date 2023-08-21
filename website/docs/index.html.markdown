@@ -57,3 +57,22 @@ The following arguments are supported:
 * `skip_credentials_validation` - (Optional) Skip validation of the token against the PagerDuty API.
 * `service_region` - (Optional) The PagerDuty service region to use. Default to empty (uses US region). Supported value: `eu`.
 * `api_url_override` - (Optional) It can be used to set a custom proxy endpoint as PagerDuty client api url overriding `service_region` setup.
+
+## Debugging Provider Output Using Logs
+
+In addition to the [log levels provided by Terraform](https://developer.hashicorp.com/terraform/internals/debugging), namely `TRACE`, `DEBUG`, `INFO`, `WARN`, and `ERROR` (in descending order of verbosity), the PagerDuty Provider introduces an extra level called `SECURE`. This level offers verbosity similar to Terraform's debug logging level, specifically for the output of API calls and HTTP request/response logs. The key difference is that API keys within the request's Authorization header will be obfuscated, revealing only the last four characters. An example is provided below:
+
+```sh
+---[ REQUEST ]---------------------------------------
+GET /teams/DER8RFS HTTP/1.1
+Accept: application/vnd.pagerduty+json;version=2
+Authorization: <OBSCURED>kCjQ
+Content-Type: application/json
+User-Agent: (darwin arm64) Terraform/1.5.1
+```
+
+To enable the `SECURE` log level, you must set two environment variables:
+
+* `TF_LOG=INFO`
+* `TF_LOG_PROVIDER_PAGERDUTY=SECURE`
+

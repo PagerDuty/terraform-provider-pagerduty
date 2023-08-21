@@ -1,3 +1,12 @@
+## 2.16.0 (Aug 21, 2023)
+
+FEATURES:
+
+*  `pagerduty/pagerduty`: Add support for SECURE logging level ([#730](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/730))
+
+IMPROVEMENTS:
+  `resource/pagerduty_escalation_policy`, `resource/pagerduty_service`: Update name validation func to not accept white spaces at the end ([#731](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/731))
+
 ## 2.15.3 (Aug 14, 2023)
 
 IMPROVEMENTS:

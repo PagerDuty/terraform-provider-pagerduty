@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.15.0
 	github.com/hashicorp/terraform-json v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
-	github.com/heimweh/go-pagerduty v0.0.0-20230615223713-346f1359a346
+	github.com/heimweh/go-pagerduty v0.0.0-20230821205435-23a4af661dd7
 )
 
 require (

@@ -134,23 +134,42 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	errMessageMatcher := "Name must not be blank, nor contain the characters.*, or any non-printable characters. White spaces at the end are also not allowed."
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
+			// Just a valid name
+			{
+				Config:             testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, "DB Technical Service"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 			// Blank Name
 			{
 				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, ""),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
+				ExpectError: regexp.MustCompile(errMessageMatcher),
 			},
 			// Name with & in it
 			{
 				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, "this name has an ampersand (&)"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
+				ExpectError: regexp.MustCompile(errMessageMatcher),
+			},
+			// Name with one white space at the end
+			{
+				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, "this name has a white space at the end "),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(errMessageMatcher),
+			},
+			// Name with multiple white space at the end
+			{
+				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, "this name has white spaces at the end    "),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(errMessageMatcher),
 			},
 		},
 	})

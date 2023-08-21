@@ -113,6 +113,7 @@ func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 func TestAccPagerDutyEscalationPolicy_FormatValidation(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
+	errMessageMatcher := "Name must not be blank, nor contain the characters.*, or any non-printable characters. White spaces at the end are also not allowed."
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -123,13 +124,25 @@ func TestAccPagerDutyEscalationPolicy_FormatValidation(t *testing.T) {
 			{
 				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, ""),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
+				ExpectError: regexp.MustCompile(errMessageMatcher),
 			},
 			// Name with & in it
 			{
 				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, "this name has an ampersand (&)"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Name can't be blank neither contain.*, nor non-printable characters."),
+				ExpectError: regexp.MustCompile(errMessageMatcher),
+			},
+			// Name with one white space at the end
+			{
+				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, "this name has a white space at the end "),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(errMessageMatcher),
+			},
+			// Name with multiple white space at the end
+			{
+				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, "this name has white spaces at the end    "),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(errMessageMatcher),
 			},
 		},
 	})

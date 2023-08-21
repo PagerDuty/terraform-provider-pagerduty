@@ -118,13 +118,13 @@ func validateCantBeBlankOrNotPrintableChars(v interface{}, p cty.Path) diag.Diag
 	var diags diag.Diagnostics
 
 	value := v.(string)
-	matcher := regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]`)
+	matcher := regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]|\s+$`)
 	matches := matcher.MatchString(value)
 
 	if matches {
 		diags = append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Name can't be blank neither contain '\\', '/', '&', '<', '>', nor non-printable characters.",
+			Summary:       "Name must not be blank, nor contain the characters '\\', '/', '&', '<', '>', or any non-printable characters. White spaces at the end are also not allowed.",
 			AttributePath: p,
 		})
 	}

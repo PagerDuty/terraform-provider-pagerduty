@@ -1,23 +1,29 @@
+## 2.16.1 (Aug 24, 2023)
+
+IMPROVEMENTS:
+* `pagerduty/pagerduty`: bump terraform-plugin-sdk/v2 to solve #732 ([#733](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/733))
+* Docs: `README.md`: update README to ref SECURE logs level ([#734](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/734))
+
 ## 2.16.0 (Aug 21, 2023)
 
 FEATURES:
 
-*  `pagerduty/pagerduty`: Add support for SECURE logging level ([#730](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/730))
+* `pagerduty/pagerduty`: Add support for SECURE logging level ([#730](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/730))
 
 IMPROVEMENTS:
-  `resource/pagerduty_escalation_policy`, `resource/pagerduty_service`: Update name validation func to not accept white spaces at the end ([#731](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/731))
+* `resource/pagerduty_escalation_policy`, `resource/pagerduty_service`: Update name validation func to not accept white spaces at the end ([#731](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/731))
 
 ## 2.15.3 (Aug 14, 2023)
 
 IMPROVEMENTS:
-*  `resource/pagerduty_service_dependency`: [TFPROVDEV-27] Avoid Concurrent calls for Service Dependencies creation ([#724](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/724))
-*  `resource/pagerduty_user`: [TFPROVDEV-30] Address update user role failed as license is not re-computed correctly ([#725](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/725))
+* `resource/pagerduty_service_dependency`: [TFPROVDEV-27] Avoid Concurrent calls for Service Dependencies creation ([#724](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/724))
+* `resource/pagerduty_user`: [TFPROVDEV-30] Address update user role failed as license is not re-computed correctly ([#725](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/725))
 
 ## 2.15.2 (Jul 21, 2023)
 
 IMPROVEMENTS:
-*  `resource/pagerduty_schedule`: Stop retrying on Schedule deletion when open incidents are untraceable ([#714](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/714))
-*  Address: Too long and unneeded timeouts for call retries with 400 http errors ([#713](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/713))
+* `resource/pagerduty_schedule`: Stop retrying on Schedule deletion when open incidents are untraceable ([#714](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/714))
+* Address: Too long and unneeded timeouts for call retries with 400 http errors ([#713](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/713))
     - `data/pagerduty_automation_actions_action`
     - `data/pagerduty_automation_actions_runner`
     - `data/pagerduty_business_service`
@@ -85,10 +91,10 @@ IMPROVEMENTS:
 ## 2.15.1 (Jul 12, 2023)
 
 IMPROVEMENTS:
-*  `resource/pagerduty_escalation_policy`, `resource/pagerduty_service`: Address name format validation on Escalation Policies ([#712](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/712))
-*  `dependency/google.golang.org/grpc`: bump google.golang.org/grpc from 1.33.2 to 1.53.0 ([#711](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/711))
-*  `resource/pagerduty_slack_connection`: fix slack_connection doc ([#587](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/587))
-*  Custom Fields - remove early access marker from incident custom fields pages ([#701](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/701))
+* `resource/pagerduty_escalation_policy`, `resource/pagerduty_service`: Address name format validation on Escalation Policies ([#712](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/712))
+* `dependency/google.golang.org/grpc`: bump google.golang.org/grpc from 1.33.2 to 1.53.0 ([#711](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/711))
+* `resource/pagerduty_slack_connection`: fix slack_connection doc ([#587](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/587))
+* Custom Fields - remove early access marker from incident custom fields pages ([#701](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/701))
     - `data/pagerduty_incident_custom_field`
     - `resource/pagerduty_incident_custom_field`
     - `resource/pagerduty_incident_custom_field_option`

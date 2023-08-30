@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -19,11 +21,11 @@ var dependencyAssociationMutex sync.Mutex
 
 func resourcePagerDutyServiceDependency() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyServiceDependencyAssociate,
-		Read:   resourcePagerDutyServiceDependencyRead,
-		Delete: resourcePagerDutyServiceDependencyDisassociate,
+		CreateContext: resourcePagerDutyServiceDependencyAssociate,
+		ReadContext:   resourcePagerDutyServiceDependencyRead,
+		DeleteContext: resourcePagerDutyServiceDependencyDisassociate,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyServiceDependencyImport,
+			StateContext: resourcePagerDutyServiceDependencyImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"dependency": {
@@ -127,15 +129,15 @@ func expandService(v interface{}) *pagerduty.ServiceObj {
 
 	return so
 }
-func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceDependencyAssociate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	serviceDependency, err := buildServiceDependencyStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	var r []*pagerduty.ServiceDependency
 	r = append(r, serviceDependency)
@@ -146,7 +148,7 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 	log.Printf("[INFO] Associating PagerDuty dependency %s", serviceDependency.ID)
 
 	var dependencies *pagerduty.ListServiceDependencies
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
 		// Lock the mutex to ensure only one API call to
 		// `service_dependencies/associate` is done at a time
 		dependencyAssociationMutex.Lock()
@@ -170,20 +172,20 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 	})
 	if retryErr != nil {
 		time.Sleep(2 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	return nil
 }
 
-func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceDependencyDisassociate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	dependency, err := buildServiceDependencyStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[INFO] Disassociating PagerDuty dependency %s", dependency.DependentService.ID)
@@ -191,7 +193,7 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	var foundDep *pagerduty.ServiceDependency
 
 	// listServiceRelationships by calling get dependencies using the serviceDependency.DependentService.ID
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
 		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(dependency.DependentService.ID, dependency.DependentService.Type); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -214,7 +216,7 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	})
 	if retryErr != nil {
 		time.Sleep(5 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 	// If the dependency is not found, then chances are it had been deleted
 	// outside Terraform or be part of a stale state. So it's needed to be cleared
@@ -236,7 +238,7 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	input := pagerduty.ListServiceDependencies{
 		Relationships: r,
 	}
-	retryErr = resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr = resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
 		if _, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -252,21 +254,21 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	})
 	if retryErr != nil {
 		time.Sleep(5 * time.Second)
-		return retryErr
+		return diag.FromErr(retryErr)
 	}
 
 	return nil
 }
 
-func resourcePagerDutyServiceDependencyRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceDependencyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	serviceDependency, err := buildServiceDependencyStruct(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	log.Printf("[INFO] Reading PagerDuty dependency %s", serviceDependency.ID)
 
-	if err = findDependencySetState(d.Id(), serviceDependency.DependentService.ID, serviceDependency.DependentService.Type, d, meta); err != nil {
-		return err
+	if err = findDependencySetState(ctx, d.Id(), serviceDependency.DependentService.ID, serviceDependency.DependentService.Type, d, meta); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
@@ -307,7 +309,7 @@ func convertType(s string) string {
 	return s
 }
 
-func findDependencySetState(depID, serviceID, serviceType string, d *schema.ResourceData, meta interface{}) error {
+func findDependencySetState(ctx context.Context, depID, serviceID, serviceType string, d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
@@ -315,7 +317,7 @@ func findDependencySetState(depID, serviceID, serviceType string, d *schema.Reso
 
 	// Pausing to let the PD API sync.
 	time.Sleep(1 * time.Second)
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
 		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(serviceID, serviceType); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -327,14 +329,19 @@ func findDependencySetState(depID, serviceID, serviceType string, d *schema.Reso
 
 			return resource.RetryableError(err)
 		} else if dependencies != nil {
+			depFound := false
 			for _, rel := range dependencies.Relationships {
 				if rel.ID == depID {
-					d.SetId(rel.ID)
 					if err := d.Set("dependency", flattenRelationship(rel)); err != nil {
 						return resource.NonRetryableError(err)
 					}
+					d.SetId(rel.ID)
+					depFound = true
 					break
 				}
+			}
+			if !depFound {
+				d.SetId("")
 			}
 		}
 		return nil
@@ -347,7 +354,7 @@ func findDependencySetState(depID, serviceID, serviceType string, d *schema.Reso
 	return nil
 }
 
-func resourcePagerDutyServiceDependencyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerDutyServiceDependencyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	ids := strings.Split(d.Id(), ".")
 
 	if len(ids) != 3 {
@@ -355,7 +362,7 @@ func resourcePagerDutyServiceDependencyImport(d *schema.ResourceData, meta inter
 	}
 	sid, st, id := ids[0], ids[1], ids[2]
 
-	if err := findDependencySetState(id, sid, st, d, meta); err != nil {
+	if err := findDependencySetState(ctx, id, sid, st, d, meta); err != nil {
 		return []*schema.ResourceData{}, err
 	}
 

@@ -1,14 +1,17 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"runtime"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
+	"github.com/heimweh/go-pagerduty/persistentconfig"
 )
 
 // Provider represents a resource provider in Terraform
@@ -23,7 +26,7 @@ func Provider() *schema.Provider {
 
 			"token": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
 			},
 
@@ -37,6 +40,31 @@ func Provider() *schema.Provider {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
+			},
+
+			"use_app_oauth_scoped_token": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"pd_client_id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_CLIENT_ID", nil),
+						},
+						"pd_client_secret": {
+							Type:        schema.TypeString,
+							Required:    true,
+							DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_CLIENT_SECRET", nil),
+						},
+						"pd_subdomain": {
+							Type:        schema.TypeString,
+							Required:    true,
+							DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_SUBDOMAIN", nil),
+						},
+					},
+				},
 			},
 
 			"api_url_override": {
@@ -123,14 +151,14 @@ func Provider() *schema.Provider {
 		},
 	}
 
-	p.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
+	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		terraformVersion := p.TerraformVersion
 		if terraformVersion == "" {
 			// Terraform 0.12 introduced this field to the protocol
 			// We can therefore assume that if it's missing it's 0.10 or 0.11
 			terraformVersion = "0.11+compatible"
 		}
-		return providerConfigure(d, terraformVersion)
+		return providerConfigureContextFunc(ctx, d, terraformVersion)
 	}
 
 	return p
@@ -164,25 +192,74 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 	return genError(err, d)
 }
 
-func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
-	var ServiceRegion = strings.ToLower(data.Get("service_region").(string))
+func providerConfigureContextFunc(ctx context.Context, data *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	var serviceRegion = strings.ToLower(data.Get("service_region").(string))
 
-	if ServiceRegion == "us" || ServiceRegion == "" {
-		ServiceRegion = ""
+	var regionApiUrl string
+	if serviceRegion == "us" || serviceRegion == "" {
+		regionApiUrl = ""
 	} else {
-		ServiceRegion = ServiceRegion + "."
+		regionApiUrl = serviceRegion + "."
 	}
 
 	config := Config{
-		ApiUrl:              "https://api." + ServiceRegion + "pagerduty.com",
-		AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
+		ApiUrl:              "https://api." + regionApiUrl + "pagerduty.com",
+		AppUrl:              "https://app." + regionApiUrl + "pagerduty.com",
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
 		UserToken:           data.Get("user_token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
 		ApiUrlOverride:      data.Get("api_url_override").(string),
+		ServiceRegion:       serviceRegion,
 	}
 
+	useAuthTokenType := pagerduty.AuthTokenTypeAPIToken
+	if attr, ok := data.GetOk("use_app_oauth_scoped_token"); ok {
+		config.AppOauthScopedTokenParams = expandAppOauthTokenParams(attr)
+		config.AppOauthScopedTokenParams.Region = serviceRegion
+		useAuthTokenType = pagerduty.AuthTokenTypeUseAppCredentials
+		if err := validateAuthMethodConfig(data); err != nil {
+			diag := diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprint("`token` and `use_app_oauth_scoped_token` are both configured at the same time"),
+				Detail:   err.Error(),
+			}
+			diags = append(diags, diag)
+		}
+	}
+
+	config.APITokenType = &useAuthTokenType
+
 	log.Println("[INFO] Initializing PagerDuty client")
-	return &config, nil
+	return &config, diags
+}
+
+func expandAppOauthTokenParams(v interface{}) *persistentconfig.AppOauthScopedTokenParams {
+	aotp := &persistentconfig.AppOauthScopedTokenParams{}
+
+	i := v.([]interface{})[0]
+	if isNilFunc(i) {
+		return nil
+	}
+	mi := i.(map[string]interface{})
+
+	aotp.ClientID = mi["pd_client_id"].(string)
+	aotp.ClientSecret = mi["pd_client_secret"].(string)
+	aotp.PDSubDomain = mi["pd_subdomain"].(string)
+
+	return aotp
+}
+
+var validationAuthMethodConfigWarning = "PagerDuty Provider has been set to authenticate API calls utilizing API token and App Oauth token at same time, in this scenario the use of App Oauth token is prioritised over API token authentication configuration. It is recommended to explicitely set just one authentication method.\nWe also suggest you to check your environment variables in case `token` being automatically read by Provider configuration through `PAGERDUTY_TOKEN` environment variable."
+
+func validateAuthMethodConfig(data *schema.ResourceData) error {
+	_, isSetAPIToken := data.GetOk("token")
+	_, isSetUseAppOauthScopedToken := data.GetOk("use_app_oauth_scoped_token")
+
+	if isSetUseAppOauthScopedToken && isSetAPIToken {
+		return fmt.Errorf(validationAuthMethodConfigWarning)
+	}
+
+	return nil
 }

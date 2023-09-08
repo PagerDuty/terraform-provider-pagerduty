@@ -9,14 +9,39 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/google/go-querystring/query"
+	"github.com/heimweh/go-pagerduty/persistentconfig"
+	"github.com/spf13/afero"
 )
 
 const (
-	defaultBaseURL   = "https://api.pagerduty.com"
-	defaultUserAgent = "heimweh/go-pagerduty(terraform)"
+	defaultBaseURL                    = "https://api.pagerduty.com"
+	defaultAppOauthTokenGenerationURL = "https://identity.pagerduty.com/oauth/token"
+	defaultUserAgent                  = "heimweh/go-pagerduty(terraform)"
+	defaultRegion                     = "us"
 )
+
+// AuthTokenType is an enum of available tokens types
+// authenticating calls
+type AuthTokenType int64
+
+const (
+	AuthTokenTypeAPIToken AuthTokenType = iota
+	AuthTokenTypeScopedOauthToken
+	AuthTokenTypeUseAppCredentials
+)
+
+func (d AuthTokenType) String() string {
+	return authTokenTypeToStringMapping[d]
+}
+
+var authTokenTypeToStringMapping = map[AuthTokenType]string{
+	AuthTokenTypeAPIToken:          "api_token",
+	AuthTokenTypeScopedOauthToken:  "scoped_oauth_token",
+	AuthTokenTypeUseAppCredentials: "use_app_credentials",
+}
 
 type service struct {
 	client *Client
@@ -24,11 +49,14 @@ type service struct {
 
 // Config represents the configuration for a PagerDuty client
 type Config struct {
-	BaseURL    string
-	HTTPClient *http.Client
-	Token      string
-	UserAgent  string
-	Debug      bool
+	BaseURL                   string
+	HTTPClient                *http.Client
+	Token                     string
+	UserAgent                 string
+	Debug                     bool
+	APIAuthTokenType          *AuthTokenType
+	AppOauthScopedTokenParams *persistentconfig.AppOauthScopedTokenParams
+	clientPersistentConfig    *persistentconfig.ClientPersistentConfig
 }
 
 // Client manages the communication with the PagerDuty API
@@ -103,6 +131,22 @@ func NewClient(config *Config) (*Client, error) {
 	baseURL, err := url.Parse(config.BaseURL)
 	if err != nil {
 		return nil, err
+	}
+
+	if config.APIAuthTokenType == nil {
+		defaultTokenType := AuthTokenTypeAPIToken
+		config.APIAuthTokenType = &defaultTokenType
+	}
+
+	if *config.APIAuthTokenType == AuthTokenTypeUseAppCredentials {
+		clientPersistentConfig := persistentconfig.ClientPersistentConfig{
+			Fs: afero.NewOsFs(), // Using host file system
+		}
+		if err := clientPersistentConfig.Load(); err != nil {
+			return nil, err
+		}
+		config.AppOauthScopedTokenParams.Token = clientPersistentConfig.Token
+		config.clientPersistentConfig = &clientPersistentConfig
 	}
 
 	c := &Client{
@@ -186,11 +230,86 @@ func (c *Client) newRequestContext(ctx context.Context, method, url string, body
 		}
 	}
 	req.Header.Add("Accept", "application/vnd.pagerduty+json;version=2")
-	req.Header.Add("Authorization", fmt.Sprintf("Token token=%s", c.Config.Token))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", c.Config.UserAgent)
 
+	// Defaults to API Token Authorization header configuration
+	authHeader := fmt.Sprintf("Token token=%s", c.Config.Token)
+	if *c.Config.APIAuthTokenType == AuthTokenTypeUseAppCredentials || *c.Config.APIAuthTokenType == AuthTokenTypeScopedOauthToken {
+		log.Printf("[INFO] Pagerduty - Using Scoped Oauth")
+		authHeader = fmt.Sprintf("Bearer %s", c.Config.AppOauthScopedTokenParams.Token)
+	}
+	req.Header.Add("Authorization", authHeader)
+
 	return req, nil
+}
+
+type scopedOauthResponse struct {
+	AccessToken string `json:"access_token"`
+	Scope       string `json:"scope"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
+}
+
+func (c *Client) generateScopedOauthAccessToken() error {
+	aotp := c.Config.AppOauthScopedTokenParams
+	region := aotp.Region
+	if region == "" {
+		log.Printf("[INFO] Pagerduty - Using default region %q", defaultRegion)
+		region = defaultRegion
+	}
+	subdomain := aotp.PDSubDomain
+	u := defaultAppOauthTokenGenerationURL
+	scopes := strings.Join(availableOauthScopes(), " ")
+
+	data := url.Values{}
+	data.Add("grant_type", "client_credentials")
+	data.Add("client_id", aotp.ClientID)
+	data.Add("client_secret", aotp.ClientSecret)
+	data.Add("scope", fmt.Sprintf("as_account-%s.%s %s", region, subdomain, scopes))
+	encodedData := data.Encode()
+	payload := strings.NewReader(encodedData)
+
+	req, err := http.NewRequest("POST", u, payload)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("User-Agent", c.Config.UserAgent)
+
+	internalClient := &http.Client{}
+
+	v := new(scopedOauthResponse)
+	resp, err := internalClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode > 400 {
+		return fmt.Errorf("with status code %d", resp.StatusCode)
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(bodyBytes, v)
+	if err != nil {
+		return err
+	}
+
+	// clientPersistentConfig := persistentconfig.ClientPersistentConfig{}
+	// err = clientPersistentConfig.Load()
+	// if err != nil {
+	// 	return err
+	// }
+	c.Config.clientPersistentConfig.SetCredential("token", v.AccessToken)
+	c.Config.AppOauthScopedTokenParams.Token = v.AccessToken
+
+	return nil
 }
 
 func (c *Client) newRequestDo(method, url string, qryOptions, body, v interface{}) (*Response, error) {
@@ -212,7 +331,16 @@ func (c *Client) newRequestDoContext(ctx context.Context, method, url string, qr
 	if err != nil {
 		return nil, err
 	}
-	return c.do(req, v)
+	resp, err := c.do(req, v)
+	if err != nil {
+		if respErr, ok := err.(*Error); ok && respErr.needToRetry {
+			return c.newRequestDoContext(ctx, method, url, qryOptions, body, v)
+		}
+
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (c *Client) newRequestDoOptions(method, url string, qryOptions, body, v interface{}, reqOptions ...RequestOptions) (*Response, error) {
@@ -235,7 +363,16 @@ func (c *Client) newRequestDoOptionsContext(ctx context.Context, method, url str
 		return nil, err
 	}
 
-	return c.do(req, v)
+	resp, err := c.do(req, v)
+	if err != nil {
+		if respErr, ok := err.(*Error); ok && respErr.needToRetry {
+			return c.newRequestDoOptionsContext(ctx, method, url, qryOptions, body, v)
+		}
+
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
@@ -429,9 +566,83 @@ func (c *Client) checkResponse(res *Response) error {
 func (c *Client) decodeErrorResponse(res *Response) error {
 	// Try to decode error response or fallback with standard error
 	v := &errorResponse{Error: &Error{ErrorResponse: res}}
-	if err := c.DecodeJSON(res, v); err != nil {
-		return fmt.Errorf("%s API call to %s failed: %v", res.Response.Request.Method, res.Response.Request.URL.String(), res.Response.Status)
+	err := c.DecodeJSON(res, v)
+
+	isUsingScopedAPITokenFromCredentials := *c.Config.APIAuthTokenType == AuthTokenTypeUseAppCredentials
+	isOauthScopeMissing := isUsingScopedAPITokenFromCredentials && res.Response.StatusCode == http.StatusForbidden
+	needNewOauthScopedAccessToken := isUsingScopedAPITokenFromCredentials && res.Response.StatusCode == http.StatusUnauthorized
+	if isOauthScopeMissing {
+		return fmt.Errorf("%s API call to %s failed because %s API scope is required", res.Response.Request.Method, res.Response.Request.URL.String(), v.Error.RequiredScopes)
+	}
+	if needNewOauthScopedAccessToken {
+		err := c.generateScopedOauthAccessToken()
+		if err != nil {
+			return fmt.Errorf("API call to obtain a new Scoped Oauth Access Token failed: %v", err)
+		}
+		v.Error.needToRetry = true
+		return v.Error
 	}
 
+	if err != nil {
+		return fmt.Errorf("%s API call to %s failed: %v", res.Response.Request.Method, res.Response.Request.URL.String(), res.Response.Status)
+	}
+	log.Printf("[INFO] v.Error %+v", v.Error)
+
 	return v.Error
+}
+
+func availableOauthScopes() []string {
+	return []string{
+		"abilities.read",
+		"addons.read",
+		"addons.write",
+		"analytics.read",
+		"audit_records.read",
+		"change_events.read",
+		"change_events.write",
+		"custom_fields.read",
+		"custom_fields.write",
+		"escalation_policies.read",
+		"escalation_policies.write",
+		"event_orchestrations.read",
+		"event_orchestrations.write",
+		"event_rules.read",
+		"event_rules.write",
+		"extension_schemas.read",
+		"extensions.read",
+		"extensions.write",
+		"incident_workflows.read",
+		"incident_workflows.write",
+		"incident_workflows:instances.write",
+		"incidents.read",
+		"incidents.write",
+		"licenses.read",
+		"notifications.read",
+		"oncalls.read",
+		"priorities.read",
+		"response_plays.read",
+		"response_plays.write",
+		"schedules.read",
+		"schedules.write",
+		"services.read",
+		"services.write",
+		"standards.read",
+		"standards.write",
+		"status_dashboards.read",
+		"subscribers.read",
+		"subscribers.write",
+		"tags.read",
+		"tags.write",
+		"teams.read",
+		"teams.write",
+		"templates.read",
+		"templates.write",
+		"users.read",
+		"users.write",
+		"users:contact_methods.read",
+		"users:contact_methods.write",
+		"users:sessions.read",
+		"users:sessions.write",
+		"vendors.read",
+	}
 }

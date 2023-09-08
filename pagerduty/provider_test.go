@@ -1,12 +1,15 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -35,6 +38,199 @@ func TestProvider(t *testing.T) {
 
 func TestProviderImpl(t *testing.T) {
 	var _ *schema.Provider = Provider()
+}
+
+func TestAccPagerDutyProviderAuthMethods_Basic(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyProviderAuthWithAPITokenConfig(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout", "null"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_service.foo", "html_url"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "type", "service"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyProviderAuthWithAppOauthScopedTokenConfig(username, email, escalationPolicy, serviceUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", serviceUpdated),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "bar"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "3600"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyProviderAuthWithAPITokenConfig(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_incidents"
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyProviderAuthWithAppOauthScopedTokenConfig(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+provider "pagerduty" {
+  token = ""
+  use_app_oauth_scoped_token {}
+}
+
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "bar"
+	auto_resolve_timeout    = 3600
+	acknowledgement_timeout = 3600
+
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	incident_urgency_rule {
+		type    = "constant"
+		urgency = "high"
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+func testAccCheckPagerDutyProviderAuthWithMultipleMethodsConfig(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+provider "pagerduty" {
+  use_app_oauth_scoped_token {}
+}
+
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "bar"
+	auto_resolve_timeout    = 3600
+	acknowledgement_timeout = 3600
+
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	incident_urgency_rule {
+		type    = "constant"
+		urgency = "high"
+	}
+}
+`, username, email, escalationPolicy, service)
 }
 
 func testAccPreCheck(t *testing.T) {

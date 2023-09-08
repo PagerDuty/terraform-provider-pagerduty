@@ -1,3 +1,21 @@
+## 3.0.0 (Sep 8, 2023)
+
+BREAKING CHANGES:
+
+* `pagerduty/pagerduty`: Support for PagerDuty Apps Oauth scoped token ([#708](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/708))
+* The following data sources and resources has been deprecated ([#744](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/744))
+  - `data/pagerduty_custom_field`
+  - `data/pagerduty_custom_field_schema`
+  - `resource/pagerduty_custom_field`
+  - `resource/pagerduty_custom_field_option`
+  - `resource/pagerduty_custom_field_schema`
+  - `resource/pagerduty_custom_field_schema_field_configuration`
+  - `resource/pagerduty_custom_field_schema_assignment`
+
+NOTES:
+
+* Provider configuration attribute `token` has become `optional`.
+
 ## 2.16.2 (Aug 30, 2023)
 
 BUG FIXES:

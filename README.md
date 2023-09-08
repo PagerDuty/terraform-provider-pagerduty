@@ -201,14 +201,12 @@ PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS="user@<your_domain>.p
 PAGERDUTY_ACC_INCIDENT_CUSTOM_FIELDS=1 make testacc TESTARGS="-run PagerDutyIncidentCustomField"
 PAGERDUTY_ACC_LICENSE_NAME="Full User" make testacc TESTARGS="-run DataSourcePagerDutyLicense_Basic"
 PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER=1 make testacc TESTARGS="-run PagerDutyScheduleWithTeams_EscalationPolicyDependantWithOneLayer"
-PAGERDUTY_ACC_PROVIDER_SCOPED_OAUTH=1 make testacc TESTARGS="-run PagerDutyProviderScopedOauthTokenAuthentication_Basic"
 ```
 
-| Variable Name                                                | Feature Set                          |
-|--------------------------------------------------------------|--------------------------------------|
-| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                           | Incident Workflows                   |
-| `PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS` | Service Integration                  |
-| `PAGERDUTY_ACC_INCIDENT_CUSTOM_FIELDS`                       | Custom Fields                        |
-| `PAGERDUTY_ACC_LICENSE_NAME`                                 | Licenses                             |
-| `PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER`                | Schedule                             |
-| `PAGERDUTY_ACC_PROVIDER_SCOPED_OAUTH`                        | Provider Scoped Oauth Authentication |
+| Variable Name                                                | Feature Set         |
+|--------------------------------------------------------------|---------------------|
+| `PAGERDUTY_ACC_INCIDENT_WORKFLOWS`                           | Incident Workflows  |
+| `PAGERDUTY_ACC_SERVICE_INTEGRATION_GENERIC_EMAIL_NO_FILTERS` | Service Integration |
+| `PAGERDUTY_ACC_INCIDENT_CUSTOM_FIELDS`                       | Custom Fields       |
+| `PAGERDUTY_ACC_LICENSE_NAME`                                 | Licenses            |
+| `PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER`                | Schedule            |

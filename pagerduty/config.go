@@ -64,7 +64,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	// Validate that the PagerDuty token is set
-	if c.Token == "" && *c.APITokenType == pagerduty.AuthTokenTypeAPIToken {
+	if c.Token == "" && c.APITokenType != nil && *c.APITokenType == pagerduty.AuthTokenTypeAPIToken {
 		return nil, fmt.Errorf(invalidCreds)
 	}
 

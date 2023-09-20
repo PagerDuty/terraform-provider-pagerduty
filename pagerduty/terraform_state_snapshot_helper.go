@@ -29,7 +29,7 @@ func (state *tfStateSnapshot) GetResourceStateById(id string) *tfjson.StateResou
 		return resourceState
 	}
 	for _, s := range state.State.Values.RootModule.Resources {
-		if s.AttributeValues["id"].(string) == id {
+		if resId, ok := s.AttributeValues["id"].(string); ok && resId == id {
 			resourceState = s
 			break
 		}

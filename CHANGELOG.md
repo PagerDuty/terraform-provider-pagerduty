@@ -1,3 +1,8 @@
+## 3.0.1 (Sep 20, 2023)
+
+BUG FIXES:
+* `resource/pagerduty_schedule`: Fix - Provider crashing on Terraform state snapshot validation ([#747](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/747))
+
 ## 3.0.0 (Sep 8, 2023)
 
 BREAKING CHANGES:
@@ -19,7 +24,7 @@ NOTES:
 ## 2.16.2 (Aug 30, 2023)
 
 BUG FIXES:
-* `resource/service_dependency`: Address service dependency drift for external removals ([#741](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/741))
+* `resource/pagerduty_service_dependency`: Address service dependency drift for external removals ([#741](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/741))
 
 ## 2.16.1 (Aug 24, 2023)
 

@@ -75,6 +75,13 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 			Schema: eventOrchestrationPathExtractionsSchema,
 		},
 	},
+	"incident_custom_field_update": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: eventOrchestrationIncidentCustomFieldsObjectSchema,
+		},
+	},
 }
 
 var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPathServiceRuleActionsSchema()
@@ -456,6 +463,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		PagerdutyAutomationActions: []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction{},
 		Variables:                  []*pagerduty.EventOrchestrationPathActionVariables{},
 		Extractions:                []*pagerduty.EventOrchestrationPathActionExtractions{},
+		IncidentCustomFieldUpdates: []*pagerduty.EventOrchestrationPathIncidentCustomFieldUpdate{},
 	}
 
 	for _, i := range v.([]interface{}) {
@@ -475,6 +483,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.AutomationActions = expandEventOrchestrationPathAutomationActions(a["automation_action"])
 		actions.Variables = expandEventOrchestrationPathVariables(a["variable"])
 		actions.Extractions = expandEventOrchestrationPathExtractions(a["extraction"])
+		actions.IncidentCustomFieldUpdates = expandEventOrchestrationPathIncidentCustomFields(a["incident_custom_field_update"])
 	}
 
 	return actions
@@ -568,6 +577,9 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 	}
 	if actions.AutomationActions != nil {
 		flattenedAction["automation_action"] = flattenEventOrchestrationAutomationActions(actions.AutomationActions)
+	}
+	if actions.IncidentCustomFieldUpdates != nil {
+		flattenedAction["incident_custom_field_update"] = flattenEventOrchestrationIncidentCustomFieldUpdates(actions.IncidentCustomFieldUpdates)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)

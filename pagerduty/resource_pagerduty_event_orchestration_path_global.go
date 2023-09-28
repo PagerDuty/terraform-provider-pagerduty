@@ -65,6 +65,13 @@ var eventOrchestrationPathGlobalCatchAllActionsSchema = map[string]*schema.Schem
 			Schema: eventOrchestrationPathExtractionsSchema,
 		},
 	},
+	"incident_custom_field_update": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: eventOrchestrationIncidentCustomFieldsObjectSchema,
+		},
+	},
 }
 
 var eventOrchestrationPathGlobalRuleActionsSchema = buildEventOrchestrationPathGlobalRuleActionsSchema()
@@ -349,10 +356,11 @@ func expandGlobalPathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCa
 }
 
 func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	actions := &pagerduty.EventOrchestrationPathRuleActions{
-		AutomationActions: []*pagerduty.EventOrchestrationPathAutomationAction{},
-		Variables:         []*pagerduty.EventOrchestrationPathActionVariables{},
-		Extractions:       []*pagerduty.EventOrchestrationPathActionExtractions{},
+	var actions = &pagerduty.EventOrchestrationPathRuleActions{
+		AutomationActions:          []*pagerduty.EventOrchestrationPathAutomationAction{},
+		Variables:                  []*pagerduty.EventOrchestrationPathActionVariables{},
+		Extractions:                []*pagerduty.EventOrchestrationPathActionExtractions{},
+		IncidentCustomFieldUpdates: []*pagerduty.EventOrchestrationPathIncidentCustomFieldUpdate{},
 	}
 
 	for _, i := range v.([]interface{}) {
@@ -372,6 +380,7 @@ func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRul
 		actions.AutomationActions = expandEventOrchestrationPathAutomationActions(a["automation_action"])
 		actions.Variables = expandEventOrchestrationPathVariables(a["variable"])
 		actions.Extractions = expandEventOrchestrationPathExtractions(a["extraction"])
+		actions.IncidentCustomFieldUpdates = expandEventOrchestrationPathIncidentCustomFields(a["incident_custom_field_update"])
 	}
 
 	return actions
@@ -448,6 +457,9 @@ func flattenGlobalPathActions(actions *pagerduty.EventOrchestrationPathRuleActio
 	}
 	if actions.AutomationActions != nil {
 		flattenedAction["automation_action"] = flattenEventOrchestrationAutomationActions(actions.AutomationActions)
+	}
+	if actions.IncidentCustomFieldUpdates != nil {
+		flattenedAction["incident_custom_field_update"] = flattenEventOrchestrationIncidentCustomFieldUpdates(actions.IncidentCustomFieldUpdates)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)

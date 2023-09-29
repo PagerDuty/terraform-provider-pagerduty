@@ -330,12 +330,12 @@ func flattenEventOrchestrationIncidentCustomFieldUpdates(v []*pagerduty.EventOrc
 	var result []interface{}
 
 	for _, i := range v {
-		pdaa := map[string]string{
+		custom_field := map[string]string{
 			"id":    i.ID,
 			"value": i.Value,
 		}
 
-		result = append(result, pdaa)
+		result = append(result, custom_field)
 	}
 
 	return result

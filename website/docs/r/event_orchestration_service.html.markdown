@@ -186,6 +186,8 @@ The following arguments are supported:
 * `priority` - (Optional) The ID of the priority you want to set on resulting incident. Consider using the [`pagerduty_priority`](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) data source.
 * `annotate` - (Optional) Add this text as a note on the resulting incident.
 * `incident_custom_field_update` - (Optional) Assign a custom field to the resulting incident.
+  * `id` - (Required) The custom field id
+  * `value` - (Required) The value to assign this custom field
 * `pagerduty_automation_action` - (Optional) Configure a [Process Automation](https://support.pagerduty.com/docs/event-orchestration#process-automation) associated with the resulting incident.
   * `action_id` - (Required) Id of the Process Automation action to be triggered.
 * `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) associated with the resulting incident.

@@ -345,7 +345,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(ep, s strin
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 			}
@@ -361,17 +361,17 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(e
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 				rule {
 					label = "rule 1"
-					actions {							
+					actions {
 							automation_action {
 								name = "test"
 								url = "https://test.com"
 								auto_send = true
-		
+
 								header {
 									key = "foo"
 									value = "bar"
@@ -380,7 +380,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(e
 									key = "baz"
 									value = "buz"
 								}
-		
+
 								parameter {
 									key = "source"
 									value = "orch"
@@ -429,16 +429,16 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUp
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 				rule {
 					label = "rule 1"
-					actions {							
+					actions {
 							automation_action {
 								name = "test1"
 								url = "https://test1.com"
-		
+
 								header {
 									key = "foo1"
 									value = "bar1"
@@ -478,12 +478,12 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDe
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 				rule {
 					label = "rule 1"
-					actions {							
+					actions {
 							automation_action {
 								name = "test"
 								url = "https://test.com"
@@ -510,7 +510,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceInvalidExtractionsConfig(
 		createBaseServicePathConfig(ep, s),
 		fmt.Sprintf(`resource "pagerduty_event_orchestration_service" "serviceA" {
 				service = pagerduty_service.bar.id
-						
+
 				set {
 					id = "start"
 					rule {
@@ -533,7 +533,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 				rule {
@@ -573,6 +573,10 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 							regex = ".*"
 							source = "event.group"
 							target = "event.custom_details.message"
+						}
+						incident_custom_field_update {
+							id = "PIJ90N7"
+							value = "foo"
 						}
 					}
 				}
@@ -637,7 +641,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 				rule {
@@ -668,6 +672,10 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 						extraction {
 							target = "event.custom_details.message_upd"
 							template = "[UPD] High CPU usage on {{variables.hostname}}: {{variables.cpu_val}}"
+						}
+						incident_custom_field_update {
+							id = "PIJ90N7"
+							value = "bar"
 						}
 					}
 				}
@@ -726,7 +734,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 						path = "event.custom_details.updated_at"
 						type = "regex"
 						value = "UPD (.*)"
-					}					
+					}
 					extraction {
 						regex = ".*"
 						source = "event.custom_details.region_upd"
@@ -742,7 +750,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(ep
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 				rule {
@@ -775,7 +783,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceOneSetNoActionsConfig(ep,
 	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
-		
+
 			set {
 				id = "start"
 				rule {
@@ -800,7 +808,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceEnableU
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
       enable_event_orchestration_for_service = true
-		
+
 			set {
 				id = "start"
 			}
@@ -817,7 +825,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceDisable
 		`resource "pagerduty_event_orchestration_service" "serviceA" {
 			service = pagerduty_service.bar.id
       enable_event_orchestration_for_service = false
-		
+
 			set {
 				id = "start"
 			}

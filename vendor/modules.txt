@@ -549,3 +549,4 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/ini.v1 v1.67.0
 ## explicit
 gopkg.in/ini.v1
+# github.com/heimweh/go-pagerduty v0.0.0-20230908205257-a96e6c05f7ea => github.com/swbradshaw/go-pagerduty v0.0.0

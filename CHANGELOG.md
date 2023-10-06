@@ -1,3 +1,8 @@
+## 3.0.2 (Oct 6, 2023)
+
+BUG FIXES:
+* `resource/pagerduty_service`, `resource/pagerduty_escalation_policy`: Update name validation logic for technical services ([#752](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/752))
+
 ## 3.0.1 (Sep 20, 2023)
 
 BUG FIXES:

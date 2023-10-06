@@ -37,7 +37,7 @@ func resourcePagerDutyService() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validateCantBeBlankOrNotPrintableChars,
+				ValidateDiagFunc: validateIsAllowedString(NoNonPrintableChars),
 			},
 			"html_url": {
 				Type:     schema.TypeString,

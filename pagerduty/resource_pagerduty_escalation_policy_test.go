@@ -113,7 +113,7 @@ func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 func TestAccPagerDutyEscalationPolicy_FormatValidation(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
-	errMessageMatcher := "Name must not be blank, nor contain the characters.*, or any non-printable characters. White spaces at the end are also not allowed."
+	errMessageMatcher := "Name can not be blank, nor contain the characters.*, or any non-printable characters. Trailing white spaces are not allowed either."
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -147,6 +147,12 @@ func TestAccPagerDutyEscalationPolicy_FormatValidation(t *testing.T) {
 			// Name with multiple white space at the end
 			{
 				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, "this name has white spaces at the end    "),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(errMessageMatcher),
+			},
+			// Name with non printable characters
+			{
+				Config:      testAccCheckPagerDutyEscalationPolicyConfig(username, email, "this name has a non printable\\n character"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(errMessageMatcher),
 			},

@@ -25,7 +25,7 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validateCantBeBlankOrNotPrintableChars,
+				ValidateDiagFunc: validateIsAllowedString(NoNonPrintableCharsOrSpecialChars),
 			},
 			"description": {
 				Type:     schema.TypeString,

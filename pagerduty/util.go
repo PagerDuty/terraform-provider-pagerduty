@@ -6,9 +6,9 @@ import (
 	"log"
 	"math"
 	"reflect"
-	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -114,22 +114,65 @@ func validateValueDiagFunc(values []string) schema.SchemaValidateDiagFunc {
 	}
 }
 
-func validateCantBeBlankOrNotPrintableChars(v interface{}, p cty.Path) diag.Diagnostics {
-	var diags diag.Diagnostics
+type StringContentValidationMode int64
 
-	value := v.(string)
-	matcher := regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]|\s+$`)
-	matches := matcher.MatchString(value)
+const (
+	NoContentValidation StringContentValidationMode = iota
+	NoNonPrintableChars
+	NoNonPrintableCharsOrSpecialChars
+)
 
-	if matches {
-		diags = append(diags, diag.Diagnostic{
-			Severity:      diag.Error,
-			Summary:       "Name must not be blank, nor contain the characters '\\', '/', '&', '<', '>', or any non-printable characters. White spaces at the end are also not allowed.",
-			AttributePath: p,
-		})
+// validateIsAllowedString will always validate if string provided is not empty,
+// neither has trailing white spaces. Additionally the string content validation
+// will be done based on the `mode` set.
+//
+//	mode: NoContentValidation | NoNonPrintableChars | NoNonPrintableCharsOrSpecialChars
+func validateIsAllowedString(mode StringContentValidationMode) schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+
+		fillDiags := func() {
+			summary := "Name can not be blank. Trailing white spaces are not allowed either."
+			switch mode {
+			case NoNonPrintableChars:
+				summary = "Name can not be blank, nor contain non-printable characters. Trailing white spaces are not allowed either."
+			case NoNonPrintableCharsOrSpecialChars:
+				summary = "Name can not be blank, nor contain the characters '\\', '/', '&', '<', '>', or any non-printable characters. Trailing white spaces are not allowed either."
+			}
+			diags = append(diags, diag.Diagnostic{
+				Severity:      diag.Error,
+				Summary:       summary,
+				AttributePath: p,
+			})
+		}
+
+		value := v.(string)
+		if value == "" {
+			fillDiags()
+			return diags
+		}
+
+		for _, char := range value {
+			if (mode == NoNonPrintableChars || mode == NoNonPrintableCharsOrSpecialChars) && !unicode.IsPrint(char) {
+				fillDiags()
+				return diags
+			}
+			if mode == NoNonPrintableCharsOrSpecialChars {
+				switch char {
+				case '\\', '/', '&', '<', '>':
+					fillDiags()
+					return diags
+				}
+			}
+		}
+
+		if strings.HasSuffix(value, " ") {
+			fillDiags()
+			return diags
+		}
+
+		return diags
 	}
-
-	return diags
 }
 
 // Takes the result of flatmap.Expand for an array of strings

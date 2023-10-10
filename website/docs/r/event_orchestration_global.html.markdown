@@ -115,7 +115,7 @@ The following arguments are supported:
 * `annotate` - (Optional) Add this text as a note on the resulting incident.
 * `incident_custom_field_update` - (Optional) Assign a custom field to the resulting incident.
   * `id` - (Required) The custom field id
-  * `value` - (Required) The value to assign this custom field
+  * `value` - (Required) The value to assign to this custom field
 * `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) associated with the resulting incident.
   * `name` - (Required) Name of this Webhook.
   * `url` - (Required) The API endpoint where PagerDuty's servers will send the webhook request.

@@ -76,6 +76,9 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 
@@ -158,6 +161,7 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 
@@ -248,6 +252,7 @@ func isFoundTagAssignmentEntity(entityID, entityType string, meta interface{}) (
 			return nil
 		}
 		if err != nil {
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		}
 		if isErrCode(err, http.StatusBadRequest) {

@@ -346,6 +346,9 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 				return resource.NonRetryableError(err)
 			}
 
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
@@ -421,8 +424,10 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 				return resource.NonRetryableError(err)
 			}
 
+			time.Sleep(5 * time.Second)
 			return resource.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
+			time.Sleep(5 * time.Second)
 			log.Printf("[INFO] Service Event Rule %s position %v needs to be %v", updatedRule.ID, *updatedRule.Position, *rule.Position)
 			return resource.RetryableError(fmt.Errorf("Error updating service event rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}
@@ -451,6 +456,7 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 				return resource.NonRetryableError(err)
 			}
 
+			time.Sleep(5 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil

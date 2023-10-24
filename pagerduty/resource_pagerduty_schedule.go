@@ -372,6 +372,9 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Schedules.Update(d.Id(), schedule, opts); err != nil {
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -422,6 +425,9 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 	retryErr = resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Schedules.Delete(scheduleId); err != nil {
 			if !isErrCode(err, 400) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 			isErrorScheduleUsedByEP := func(e *pagerduty.Error) bool {
@@ -464,6 +470,9 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 			epsDataUsingThisSchedule, errFetchingFullEPs := fetchEPsDataUsingASchedule(epsUsingThisSchedule, client)
 			if errFetchingFullEPs != nil {
 				err = fmt.Errorf("%v; %w", err, errFetchingFullEPs)
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 
@@ -478,6 +487,9 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 			if workaroundErr != nil {
 				err = fmt.Errorf("%v; %w", err, workaroundErr)
 			}
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -764,6 +776,7 @@ func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.
 		_, _, err := c.EscalationPolicies.Update(ep.ID, ep)
 		if err != nil {
 			if !isErrCode(err, 404) {
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
@@ -858,6 +871,7 @@ func fetchEPsDataUsingASchedule(eps []string, c *pagerduty.Client) ([]*pagerduty
 					return resource.NonRetryableError(err)
 				}
 
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 			fullEPs = append(fullEPs, ep)

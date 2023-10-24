@@ -634,77 +634,115 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
+				return resource.RetryableError(err)
 			}
 
 			return nil
 		}
 
 		if err := d.Set("name", serviceIntegration.Name); err != nil {
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 
 		if err := d.Set("type", serviceIntegration.Type); err != nil {
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 
 		if serviceIntegration.Service != nil {
 			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.Vendor != nil {
 			if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.IntegrationKey != "" {
 			if err := d.Set("integration_key", serviceIntegration.IntegrationKey); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.IntegrationEmail != "" {
 			if err := d.Set("integration_email", serviceIntegration.IntegrationEmail); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailIncidentCreation != "" {
 			if err := d.Set("email_incident_creation", serviceIntegration.EmailIncidentCreation); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailFilterMode != "" {
 			if err := d.Set("email_filter_mode", serviceIntegration.EmailFilterMode); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailParsingFallback != "" {
 			if err := d.Set("email_parsing_fallback", serviceIntegration.EmailParsingFallback); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.HTMLURL != "" {
 			if err := d.Set("html_url", serviceIntegration.HTMLURL); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailFilters != nil {
 			if err := d.Set("email_filter", flattenEmailFilters(serviceIntegration.EmailFilters)); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailParsers != nil {
 			if err := d.Set("email_parser", flattenEmailParsers(serviceIntegration.EmailParsers)); err != nil {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 		}

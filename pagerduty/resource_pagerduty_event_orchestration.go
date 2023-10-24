@@ -110,6 +110,7 @@ func resourcePagerDutyEventOrchestrationCreate(d *schema.ResourceData, meta inte
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		if orch, _, err := client.EventOrchestrations.Create(payload); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 
@@ -171,6 +172,7 @@ func resourcePagerDutyEventOrchestrationUpdate(d *schema.ResourceData, meta inte
 	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
 		if _, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
+				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)

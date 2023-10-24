@@ -131,6 +131,9 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 
@@ -168,6 +171,9 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 
@@ -210,6 +216,9 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
 			if isErrCode(err, 400) {
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 

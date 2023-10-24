@@ -107,6 +107,9 @@ func resourcePagerDutyBusinessServiceCreate(d *schema.ResourceData, meta interfa
 		}
 		log.Printf("[INFO] Creating PagerDuty business service %s", businessService.Name)
 		if businessService, _, err = client.BusinessServices.Create(businessService); err != nil {
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if businessService != nil {
 			d.SetId(businessService.ID)
@@ -135,6 +138,9 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 				return resource.NonRetryableError(err)
 			}
 
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if businessService != nil {
 			d.Set("name", businessService.Name)

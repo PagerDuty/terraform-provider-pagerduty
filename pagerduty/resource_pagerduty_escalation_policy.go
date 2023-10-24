@@ -198,6 +198,9 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 
 	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
+			// Delaying retry by 30s as recommended by PagerDuty
+			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -222,6 +225,7 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
+				time.Sleep(10 * time.Second)
 				return resource.RetryableError(err)
 			}
 

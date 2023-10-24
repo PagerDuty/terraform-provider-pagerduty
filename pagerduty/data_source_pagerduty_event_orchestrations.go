@@ -91,6 +91,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 				return resource.NonRetryableError(err)
 			}
 
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		}
 
@@ -125,6 +126,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 					return resource.NonRetryableError(err)
 				}
 
+				time.Sleep(10 * time.Second)
 				return resource.RetryableError(err)
 			}
 			orchestrations = append(orchestrations, orch)

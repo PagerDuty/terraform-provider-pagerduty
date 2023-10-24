@@ -266,6 +266,7 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 				return resource.NonRetryableError(err)
 			}
 
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		} else if response != nil {
 			d.SetId(response.OrchestrationPath.Parent.ID)
@@ -349,6 +350,7 @@ func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d
 				return resource.NonRetryableError(err)
 			}
 
+			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil

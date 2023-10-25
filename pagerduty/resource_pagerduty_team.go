@@ -37,6 +37,11 @@ func resourcePagerDutyTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"default_role": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -54,6 +59,9 @@ func buildTeamStruct(d *schema.ResourceData) *pagerduty.Team {
 			ID:   attr.(string),
 			Type: "team_reference",
 		}
+	}
+	if attr, ok := d.GetOk("default_role"); ok {
+		team.DefaultRole = attr.(string)
 	}
 	return team
 }
@@ -115,6 +123,7 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set("name", team.Name)
 			d.Set("description", team.Description)
 			d.Set("html_url", team.HTMLURL)
+			d.Set("default_role", team.DefaultRole)
 		}
 		return nil
 	})

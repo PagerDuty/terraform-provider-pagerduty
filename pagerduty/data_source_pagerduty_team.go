@@ -29,6 +29,10 @@ func dataSourcePagerDutyTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"default_role": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -79,6 +83,7 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 		d.Set("name", found.Name)
 		d.Set("description", found.Description)
 		d.Set("parent", found.Parent)
+		d.Set("default_role", found.DefaultRole)
 
 		return nil
 	})

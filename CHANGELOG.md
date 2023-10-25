@@ -1,3 +1,9 @@
+## 3.1.0 (Oct 25, 2023)
+
+FEATURES:
+
+* `resource/pagerduty_team`, `data/pagerduty_team`: teams: add support for private teams ([#612](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/612))
+
 ## 3.0.3 (Oct 24, 2023)
 
 IMPROVEMENTS:

@@ -35,6 +35,7 @@ The following arguments are supported:
   * `description` - (Optional) A human-friendly description of the team.
     If not set, a placeholder of "Managed by Terraform" will be set.
   * `parent` - (Optional) ID of the parent team. This is available to accounts with the Team Hierarchy feature enabled. Please contact your account manager for more information.
+  * `default_role` - (Optional) The team is private if the value is "none", or public if it is "manager" (the default permissions for a non-member of the team are either "none", or their base role up until "manager").
 
 ## Attributes Reference
 

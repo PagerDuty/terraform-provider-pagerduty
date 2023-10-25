@@ -49,5 +49,6 @@ The following arguments are supported:
 * `name` - The name of the found team.
 * `description` - A description of the found team.
 * `parent` - ID of the parent team. This is available to accounts with the Team Hierarchy feature enabled. Please contact your account manager for more information.
+* `default_role` - (Optional) The team is private if the value is "none", or public if it is "manager" (the default permissions for a non-member of the team are either "none", or their base role up until "manager").
 
 [1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIyMw-list-teams

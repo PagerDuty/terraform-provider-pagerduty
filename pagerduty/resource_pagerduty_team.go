@@ -40,6 +40,7 @@ func resourcePagerDutyTeam() *schema.Resource {
 			"default_role": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 		},
 	}

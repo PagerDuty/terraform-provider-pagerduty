@@ -105,6 +105,39 @@ func TestAccPagerDutyTeam_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyTeam_DefaultRole(t *testing.T) {
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	defaultRole := "manager"
+	defaultRoleUpdated := "none"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamDefaultRoleConfig(team, defaultRole),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamExists("pagerduty_team.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team.foo", "name", team),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team.foo", "default_role", defaultRole),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_team.foo", "html_url"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyTeamDefaultRoleConfig(team, defaultRoleUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_team.foo", "default_role", defaultRoleUpdated),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyTeam_Parent(t *testing.T) {
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	parent := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -177,6 +210,17 @@ resource "pagerduty_team" "foo" {
 	name        = "%s"
 	description = "bar"
 }`, team)
+}
+
+func testAccCheckPagerDutyTeamDefaultRoleConfig(team, defaultRole string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_team" "foo" {
+  name         = "%s"
+  description  = "foo"
+  default_role = "%s"
+}
+`, team, defaultRole)
 }
 
 func testAccCheckPagerDutyTeamWithParentConfig(team, parent string) string {

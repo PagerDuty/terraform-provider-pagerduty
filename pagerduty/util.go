@@ -262,7 +262,12 @@ func unique(s []string) []string {
 	return result
 }
 
-func resourcePagerDutyParseColonCompoundID(id string) (string, string) {
+func resourcePagerDutyParseColonCompoundID(id string) (string, string, error) {
 	parts := strings.Split(id, ":")
-	return parts[0], parts[1]
+
+	if len(parts) < 2 {
+		return "", "", fmt.Errorf("%s: expected colon compound ID to have at least two components", id)
+	}
+
+	return parts[0], parts[1], nil
 }

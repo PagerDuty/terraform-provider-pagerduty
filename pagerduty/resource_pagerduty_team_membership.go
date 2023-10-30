@@ -82,7 +82,11 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 		return err
 	}
 
-	userID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
+	userID, teamID, err := resourcePagerDutyParseColonCompoundID(d.Id())
+	if err != nil {
+		return err
+	}
+
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
@@ -191,7 +195,10 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 		return err
 	}
 
-	userID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
+	userID, teamID, err := resourcePagerDutyParseColonCompoundID(d.Id())
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 

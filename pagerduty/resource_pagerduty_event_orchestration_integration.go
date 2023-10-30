@@ -281,7 +281,10 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 }
 
 func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	oid, id := resourcePagerDutyParseColonCompoundID(d.Id())
+	oid, id, err := resourcePagerDutyParseColonCompoundID(d.Id())
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
 
 	if oid == "" || id == "" {
 		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestration_id>:<integration_id>")

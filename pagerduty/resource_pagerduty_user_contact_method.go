@@ -62,7 +62,7 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 			"country_code": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  1,
+				Computed: true,
 			},
 
 			"enabled": {

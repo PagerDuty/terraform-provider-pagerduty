@@ -126,6 +126,29 @@ func TestAccPagerDutyUserContactMethodSMS_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyUserContactMethodPhone_NoPermaDiffWhenOmittingCountryCode(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyUserContactMethodPhoneNoPermaDiffWhenOmittingCountryCodeConfig(username, email, "4153013250"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyUserContactMethodExists("pagerduty_user_contact_method.foo"),
+				),
+			},
+			{
+				Config:   testAccCheckPagerDutyUserContactMethodPhoneNoPermaDiffWhenOmittingCountryCodeConfig(username, email, "4153013250"),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyUserContactMethodDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -298,4 +321,24 @@ resource "pagerduty_user_contact_method" "foo" {
   label        = "%[1]v"
 }
 `, username, email)
+}
+
+func testAccCheckPagerDutyUserContactMethodPhoneNoPermaDiffWhenOmittingCountryCodeConfig(username, email, phone string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%[1]v"
+  email       = "%[2]v"
+  color       = "red"
+  role        = "user"
+  job_title   = "bar"
+  description = "bar"
+}
+
+resource "pagerduty_user_contact_method" "foo" {
+  user_id      = pagerduty_user.foo.id
+  type         = "phone_contact_method"
+  address      = "%[3]s"
+  label        = "%[1]v"
+}
+`, username, email, phone)
 }

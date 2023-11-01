@@ -117,6 +117,125 @@ func TestAccPagerDutyIncidentWorkflow_Team(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyIncidentWorkflow_InlineInputs(t *testing.T) {
+	workflowName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowInlineInputsConfig(workflowName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowExists("pagerduty_incident_workflow.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow.test", "name", workflowName),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "description", "Managed by Terraform"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.#", "3"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.name", "Step 1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.action", "pagerduty.com:incident-workflows:send-status-update:1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.name", "Message"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.value", "first update"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.generated", "false"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.name", "Step 2"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.action", "pagerduty.com:logic:incident-workflows-loop-until:2"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.#", "3"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.0.name", "Condition"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.0.value", "incident.status matches 'resolved'"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.0.generated", "false"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.1.name", "Delay between loops"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.1.value", "10"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.1.generated", "false"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.2.name", "Maximum loops"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.2.value", "20"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.2.generated", "true"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.name", "Actions"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.step.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.step.0.name", "Step 2a"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.step.0.action", "pagerduty.com:incident-workflows:send-status-update:1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.step.0.input.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.step.0.input.0.name", "Message"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.step.0.input.0.value", "Loop update"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.inline_steps_input.0.step.0.input.0.generated", "false"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.name", "Step 3"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.action", "pagerduty.com:incident-workflows:add-conference-bridge:5"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.#", "3"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.0.name", "Conference Number"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.0.value", "+1 415-555-1212,,,,1234#,"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.0.generated", "false"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.1.name", "Conference URL"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.1.value", "https://www.testconferenceurl.com/"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.1.generated", "false"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.2.name", "Overwrite existing conference bridge"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.2.value", "No"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.2.input.2.generated", "true"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowInlineInputsConfigUpdate(workflowName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowExists("pagerduty_incident_workflow.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow.test", "name", workflowName),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow.test", "description", "some description"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.#", "2"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.name", "Step 1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.action", "pagerduty.com:logic:incident-workflows-loop-until:2"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.#", "3"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.name", "Condition"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.value", "incident.status matches 'resolved'"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.generated", "false"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.1.name", "Delay between loops"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.1.value", "10"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.1.generated", "false"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.2.name", "Maximum loops"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.2.value", "20"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.2.generated", "true"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.name", "Actions"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.#", "2"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.0.name", "Step 1a"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.0.action", "pagerduty.com:incident-workflows:send-status-update:1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.0.input.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.0.input.0.name", "Message"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.0.input.0.value", "Loop update 1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.0.input.0.generated", "false"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.1.name", "Step 1b"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.1.action", "pagerduty.com:incident-workflows:send-status-update:1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.1.input.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.1.input.0.name", "Message"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.1.input.0.value", "Loop update 2"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.inline_steps_input.0.step.1.input.0.generated", "false"),
+
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.name", "Step 2"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.action", "pagerduty.com:incident-workflows:add-conference-bridge:5"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.#", "2"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.0.name", "Conference Number"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.0.value", "+1 415-555-1212,,,,1234#,"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.0.generated", "false"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.1.name", "Overwrite existing conference bridge"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.1.value", "Yes"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.1.input.1.generated", "false"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyIncidentWorkflowConfigWithTeam(name, team string) string {
 	return fmt.Sprintf(`
 %s
@@ -152,6 +271,57 @@ resource "pagerduty_incident_workflow" "test" {
 `, name)
 }
 
+func testAccCheckPagerDutyIncidentWorkflowInlineInputsConfig(name string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_incident_workflow" "test" {
+  name = "%s"
+  step {
+    name           = "Step 1"
+    action         = "pagerduty.com:incident-workflows:send-status-update:1"
+    input {
+      name = "Message"
+      value = "first update"
+    }
+  }
+  step {
+    name           = "Step 2"
+    action         = "pagerduty.com:logic:incident-workflows-loop-until:2"
+    input {
+      name = "Condition"
+      value = "incident.status matches 'resolved'"
+    }
+    input {
+      name = "Delay between loops"
+      value = "10"
+    }
+    inline_steps_input {
+      name = "Actions"
+      step {
+        name = "Step 2a"
+        action = "pagerduty.com:incident-workflows:send-status-update:1"
+        input {
+          name = "Message"
+          value = "Loop update"
+        }
+      }
+    }
+  }
+  step {
+    name          = "Step 3"
+    action        = "pagerduty.com:incident-workflows:add-conference-bridge:5"
+    input {
+      name = "Conference URL"
+      value = "https://www.testconferenceurl.com/"
+    }
+    input {
+      name = "Conference Number"
+      value = "+1 415-555-1212,,,,1234#,"
+    }
+  }
+}
+`, name)
+}
+
 func testAccCheckPagerDutyIncidentWorkflowConfigUpdate(name string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_incident_workflow" "test" {
@@ -171,6 +341,58 @@ resource "pagerduty_incident_workflow" "test" {
     input {
       name = "Message"
       value = "second update updated"
+    }
+  }
+}
+`, name)
+}
+
+func testAccCheckPagerDutyIncidentWorkflowInlineInputsConfigUpdate(name string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_incident_workflow" "test" {
+  name = "%s"
+  description = "some description"
+  step {
+    name           = "Step 1"
+    action         = "pagerduty.com:logic:incident-workflows-loop-until:2"
+    input {
+      name = "Condition"
+      value = "incident.status matches 'resolved'"
+    }
+    input {
+      name = "Delay between loops"
+      value = "10"
+    }
+    inline_steps_input {
+      name = "Actions"
+      step {
+        name = "Step 1a"
+        action = "pagerduty.com:incident-workflows:send-status-update:1"
+        input {
+          name = "Message"
+          value = "Loop update 1"
+        }
+      }
+      step {
+        name = "Step 1b"
+        action = "pagerduty.com:incident-workflows:send-status-update:1"
+        input {
+          name = "Message"
+          value = "Loop update 2"
+        }
+      }
+    }
+  }
+  step {
+    name          = "Step 2"
+    action        = "pagerduty.com:incident-workflows:add-conference-bridge:5"
+    input {
+      name = "Conference Number"
+      value = "+1 415-555-1212,,,,1234#,"
+    }
+    input {
+      name = "Overwrite existing conference bridge"
+      value = "Yes"
     }
   }
 }
@@ -219,46 +441,152 @@ func testAccCheckPagerDutyIncidentWorkflowExists(n string) resource.TestCheckFun
 
 func TestFlattenIncidentWorkflowStepsOneGenerated(t *testing.T) {
 
-	n := &pagerduty.IncidentWorkflow{
+	iw := &pagerduty.IncidentWorkflow{
 		Steps: []*pagerduty.IncidentWorkflowStep{
 			{
 				ID:   "abc-123",
-				Name: "something",
+				Name: "step1",
 				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "step1-action-id",
 					Inputs: []*pagerduty.IncidentWorkflowActionInput{
 						{
-							Name:  "test1-value",
+							Name:  "step1-input1",
 							Value: "test1-value",
 						},
 						{
-							Name:  "test2-value",
+							Name:  "step1-input2",
 							Value: "test2-value",
 						},
 						{
-							Name:  "test3-value",
+							Name:  "step1-input3",
 							Value: "test3-value",
+						},
+					},
+					InlineStepsInputs: []*pagerduty.IncidentWorkflowActionInlineStepsInput{
+						{
+							Name: "step1-inlineinput1",
+							Value: &pagerduty.IncidentWorkflowActionInlineStepsInputValue{
+								Steps: []*pagerduty.IncidentWorkflowActionInlineStep{
+									{
+										Name: "step1a",
+										Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+											ActionID: "step1a-action-id",
+											Inputs: []*pagerduty.IncidentWorkflowActionInput{
+												{
+													Name:  "step1a-input1",
+													Value: "inlineval1",
+												},
+												{
+													Name:  "step1a-input2",
+													Value: "inlineval2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							Name: "step1-inlineinput2",
+							Value: &pagerduty.IncidentWorkflowActionInlineStepsInputValue{
+								Steps: []*pagerduty.IncidentWorkflowActionInlineStep{
+									{
+										Name: "step1b",
+										Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+											ActionID: "step1b-action-id",
+											Inputs: []*pagerduty.IncidentWorkflowActionInput{
+												{
+													Name:  "step1b-input1",
+													Value: "inlineval3",
+												},
+												{
+													Name:  "step1b-input2",
+													Value: "inlineval4",
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 	}
-	o := map[string][]string{
-		"abc-123": {"test1-value", "test2-value"},
+	specifiedSteps := []*SpecifiedStep{
+		{
+			// "step1-input1" is generated
+			SpecifiedInputNames: []string{"step1-input2", "step1-input3"},
+			SpecifiedInlineInputs: map[string][]*SpecifiedStep{
+				"step1-inlineinput1": {
+					{
+						// "step1a-input1" is generated
+						SpecifiedInputNames:   []string{"step1a-input2"},
+						SpecifiedInlineInputs: map[string][]*SpecifiedStep{},
+					},
+				},
+				"step1-inlineinput2": {
+					{
+						// "step1b-input2" is generated
+						SpecifiedInputNames:   []string{"step1b-input1"},
+						SpecifiedInlineInputs: map[string][]*SpecifiedStep{},
+					},
+				},
+			},
+		},
 	}
-	r := flattenIncidentWorkflowSteps(n, o)
-	l := r[0]["input"].(*[]interface{})
-	if len(*l) != 3 {
-		t.Errorf("flattened step had wrong number of inputs. want 2 got %v", len(*l))
+	flattenedSteps := flattenIncidentWorkflowSteps(iw, specifiedSteps)
+	step1Inputs := flattenedSteps[0]["input"].(*[]interface{})
+	if len(*step1Inputs) != 3 {
+		t.Errorf("flattened step1 had wrong number of inputs. want 3 got %v", len(*step1Inputs))
 	}
-	for i, v := range *l {
-		if i < 2 {
-			if _, hadGen := v.(map[string]interface{})["generated"]; hadGen {
-				t.Errorf("was not expecting input %v to be generated", i)
+	for i, v := range *step1Inputs {
+		if i == 0 {
+			if generated, hadGen := v.(map[string]interface{})["generated"]; !hadGen || !generated.(bool) {
+				t.Errorf("was not expecting step1 input %v to have generated=false", i)
 			}
 		} else {
-			if gen, hadGen := v.(map[string]interface{})["generated"]; !hadGen || !(gen.(bool)) {
-				t.Errorf("was expecting input %v to be generated", i)
+			if _, hadGen := v.(map[string]interface{})["generated"]; hadGen {
+				t.Errorf("was not expecting step1 input %v to have generated key set", i)
+			}
+		}
+	}
+
+	step1aInlineStepInputs := flattenedSteps[0]["inline_steps_input"].(*[]interface{})
+	step1aInlineStepInputs1 := (*step1aInlineStepInputs)[0].(map[string]interface{})
+	step1aInlineStepInputs1Steps := step1aInlineStepInputs1["step"].(*[]interface{})
+	step1aInputs := (*step1aInlineStepInputs1Steps)[0].(map[string]interface{})["input"].(*[]interface{})
+	if len(*step1aInputs) != 2 {
+		t.Errorf("flattened step1a had wrong number of inputs. want 2 got %v", len(*step1aInputs))
+	}
+	for i, v := range *step1aInputs {
+		if i == 0 {
+			if generated, hadGen := v.(map[string]interface{})["generated"]; !hadGen || !generated.(bool) {
+				t.Errorf("was not expecting step1a input %v to have generated=false", i)
+			}
+		} else {
+			if _, hadGen := v.(map[string]interface{})["generated"]; hadGen {
+				t.Errorf("was not expecting step1a input %v to have generated key set", i)
+			}
+		}
+	}
+
+	step1bInlineStepInputs := flattenedSteps[0]["inline_steps_input"].(*[]interface{})
+	step1bInlineStepInputs2 := (*step1bInlineStepInputs)[1].(map[string]interface{})
+	step1bInlineStepInputs2Steps := step1bInlineStepInputs2["step"].(*[]interface{})
+	step1bInputs := (*step1bInlineStepInputs2Steps)[0].(map[string]interface{})["input"].(*[]interface{})
+	if len(*step1bInputs) != 2 {
+		t.Errorf("flattened step1b had wrong number of inputs. want 2 got %v", len(*step1aInputs))
+	}
+	for i, v := range *step1bInputs {
+		if i == 0 {
+			if _, hadGen := v.(map[string]interface{})["generated"]; hadGen {
+				t.Errorf("was not expecting step1b input %v to have generated key set", i)
+			}
+		} else {
+			if generated, hadGen := v.(map[string]interface{})["generated"]; !hadGen || !generated.(bool) {
+				t.Errorf("was not expecting step1b input %v to have generated=false", i)
 			}
 		}
 	}

@@ -39,13 +39,19 @@ The following arguments are supported:
 Each incident workflow step (`step`) supports the following:
 
 * `name` - (Required) The name of the workflow step.
-* `action` - (Required) The action id for the workflow step, including the version. A list of actions available can be retrieved using the [PagerDuty API](https://developer.pagerduty.com/api-reference/aa192a25fac39-list-actions). 
-* `input` - (Optional) The list of inputs for the workflow action.
+* `action` - (Required) The action id for the workflow step, including the version. A list of actions available can be retrieved using the [PagerDuty API](https://developer.pagerduty.com/api-reference/aa192a25fac39-list-actions).
+* `input` - (Optional) The list of standard inputs for the workflow action.
+* `inline_steps_input` - (Optional) The list of inputs that contain a series of inline steps for the workflow action.
 
-Each incident workflow step input (`input`) supports the following:
+Each incident workflow step standard input (`input`) supports the following:
 
 * `name` - (Required) The name of the input.
 * `value` - (Required) The value of the input.
+
+Each incident workflow step inline steps input (`inline_steps_input`) points to an input whose metadata describes the `format` as `inlineSteps` and supports the following:
+
+* `name` - (Required) The name of the input.
+* `step` - (Required) The inline steps of the input. An inline step adheres to the step schema described above.
 
 ## Attributes Reference
 

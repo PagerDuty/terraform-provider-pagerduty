@@ -418,7 +418,9 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
-				time.Sleep(2 * time.Second)
+				// Delaying retry by 30s as recommended by PagerDuty
+				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+				time.Sleep(30 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 

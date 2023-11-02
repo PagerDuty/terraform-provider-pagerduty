@@ -1,3 +1,10 @@
+## 3.1.1 (Nov 2, 2023)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_user_contact_method`: Specify the default country code for contact methods ([#723](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/723))
+* `resource/pagerduty_service`: Update retry delay for Technical Service state read ([#763](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/763))
+
 ## 3.1.0 (Oct 25, 2023)
 
 FEATURES:

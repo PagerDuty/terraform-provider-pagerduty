@@ -114,6 +114,13 @@ func TestAccPagerDutySchedule_Basic(t *testing.T) {
 				Config:      testAccCheckPagerDutyScheduleConfigRestrictionType(username, email, schedule, location, start, rotationVirtualStart),
 				ExpectError: regexp.MustCompile("start_day_of_week must only be set for a weekly_restriction schedule restriction type"),
 			},
+			// Validating that a Weekly Restriction with no Start Day of Week set
+			// returns a format error.
+			{
+				Config:      testAccCheckPagerDutyScheduleConfigRestrictionTypeWeeklyWithoutStartDayOfWeekSet(username, email, schedule, location, start, rotationVirtualStart),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("start_day_of_week must be set for a weekly_restriction schedule restriction type"),
+			},
 			// Validating that wrong formatted values for "start" attribute return a
 			// format error.
 			{
@@ -864,6 +871,36 @@ resource "pagerduty_schedule" "foo" {
       start_time_of_day = "08:00:00"
       duration_seconds  = 32101
 	  start_day_of_week = 5
+    }
+  }
+}
+`, username, email, schedule, location, start, rotationVirtualStart)
+}
+
+func testAccCheckPagerDutyScheduleConfigRestrictionTypeWeeklyWithoutStartDayOfWeekSet(username, email, schedule, location, start, rotationVirtualStart string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "foo"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    users                        = [pagerduty_user.foo.id]
+
+    restriction {
+      type              = "weekly_restriction"
+      start_time_of_day = "08:00:00"
+      duration_seconds  = 32101
     }
   }
 }

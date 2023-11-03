@@ -27,8 +27,13 @@ func resourcePagerDutySchedule() *schema.Resource {
 				rn := diff.Get(fmt.Sprintf("layer.%d.restriction.#", li)).(int)
 				for ri := 0; ri <= rn; ri++ {
 					t := diff.Get(fmt.Sprintf("layer.%d.restriction.%d.type", li, ri)).(string)
-					if t == "daily_restriction" && diff.Get(fmt.Sprintf("layer.%d.restriction.%d.start_day_of_week", li, ri)).(int) != 0 {
+					isStartDayOfWeekSetWhenDailyRestrictionType := t == "daily_restriction" && diff.Get(fmt.Sprintf("layer.%d.restriction.%d.start_day_of_week", li, ri)).(int) != 0
+					if isStartDayOfWeekSetWhenDailyRestrictionType {
 						return fmt.Errorf("start_day_of_week must only be set for a weekly_restriction schedule restriction type")
+					}
+					isStartDayOfWeekNotSetWhenWeeklyRestrictionType := t == "weekly_restriction" && diff.Get(fmt.Sprintf("layer.%d.restriction.%d.start_day_of_week", li, ri)).(int) == 0
+					if isStartDayOfWeekNotSetWhenWeeklyRestrictionType {
+						return fmt.Errorf("start_day_of_week must be set for a weekly_restriction schedule restriction type")
 					}
 					ds := diff.Get(fmt.Sprintf("layer.%d.restriction.%d.duration_seconds", li, ri)).(int)
 					if t == "daily_restriction" && ds >= 3600*24 {

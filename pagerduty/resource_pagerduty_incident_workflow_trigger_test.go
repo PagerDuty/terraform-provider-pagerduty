@@ -102,6 +102,30 @@ resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
 	})
 }
 
+func TestAccPagerDutyIncidentWorkflowTrigger_BasicConditionalNoCondition(t *testing.T) {
+	workflow := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalNoCondition(workflow),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow_trigger.test", "subscribed_to_all_services", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyIncidentWorkflowTrigger_SubscribedToAllWithInvalidServices(t *testing.T) {
 	config := `
 resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
@@ -217,6 +241,19 @@ resource "pagerduty_incident_workflow_trigger" "test" {
   subscribed_to_all_services = true
 }
 `, testAccCheckPagerDutyIncidentWorkflowConfig(workflow), condition)
+}
+
+func testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalNoCondition(workflow string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "pagerduty_incident_workflow_trigger" "test" {
+  type       = "conditional"
+  workflow   = pagerduty_incident_workflow.test.id
+  services   = []
+  subscribed_to_all_services = true
+}
+`, testAccCheckPagerDutyIncidentWorkflowConfig(workflow))
 }
 
 func testAccCheckPagerDutyIncidentWorkflowTriggerDestroy(s *terraform.State) error {

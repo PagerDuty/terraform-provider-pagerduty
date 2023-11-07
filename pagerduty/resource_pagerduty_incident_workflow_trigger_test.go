@@ -102,29 +102,6 @@ resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
 	})
 }
 
-func TestAccPagerDutyIncidentWorkflowTrigger_ConditionalTypeWithoutCondition(t *testing.T) {
-	config := `
-resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
-  type             = "conditional"
-  workflow         = "ignored"
-  subscribed_to_all_services = true
-}
-`
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-			testAccPreCheckIncidentWorkflows(t)
-		},
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      config,
-				ExpectError: regexp.MustCompile("when trigger type conditional is used, condition must be specified"),
-			},
-		},
-	})
-}
-
 func TestAccPagerDutyIncidentWorkflowTrigger_SubscribedToAllWithInvalidServices(t *testing.T) {
 	config := `
 resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {

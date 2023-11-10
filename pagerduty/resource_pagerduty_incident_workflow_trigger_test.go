@@ -228,6 +228,41 @@ func TestAccPagerDutyIncidentWorkflowTrigger_BasicConditionalAllServices(t *test
 	})
 }
 
+func TestAccPagerDutyIncidentWorkflowTrigger_ChangeTypeCausesReplace(t *testing.T) {
+	workflow := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, "incident.priority matches 'P1'"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", "incident.priority matches 'P1'"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow_trigger.test", "subscribed_to_all_services", "true"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualAllServices(workflow),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "manual"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow_trigger.test", "subscribed_to_all_services", "true"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, condition string) string {
 	return fmt.Sprintf(`
 %s
@@ -240,6 +275,55 @@ resource "pagerduty_incident_workflow_trigger" "test" {
   subscribed_to_all_services = true
 }
 `, testAccCheckPagerDutyIncidentWorkflowConfig(workflow), condition)
+}
+
+func testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualAllServices(workflow string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "pagerduty_incident_workflow_trigger" "test" {
+  type       = "manual"
+  workflow   = pagerduty_incident_workflow.test.id
+  services   = []
+  subscribed_to_all_services = true
+}
+`, testAccCheckPagerDutyIncidentWorkflowConfig(workflow))
+}
+
+func TestAccPagerDutyIncidentWorkflowTrigger_CannotChangeType(t *testing.T) {
+	workflow := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, "incident.priority matches 'P1'"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", "incident.priority matches 'P1'"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow_trigger.test", "subscribed_to_all_services", "true"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, "incident.priority matches 'P2'"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", "incident.priority matches 'P2'"),
+				),
+			},
+		},
+	})
 }
 
 func testAccCheckPagerDutyIncidentWorkflowTriggerDestroy(s *terraform.State) error {

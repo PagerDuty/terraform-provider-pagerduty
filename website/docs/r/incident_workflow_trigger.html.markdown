@@ -54,7 +54,7 @@ resource "pagerduty_incident_workflow_trigger" "manual_trigger" {
 
 The following arguments are supported:
 
-* `type` - (Required) May be either `manual` or `conditional`.
+* `type` - (Required) [Updating causes resource replacement] May be either `manual` or `conditional`.
 * `workflow` - (Required) The workflow ID for the workflow to trigger.
 * `services` - (Optional) A list of service IDs. Incidents in any of the listed services are eligible to fire this trigger.
 * `subscribed_to_all_services` - (Required) Set to `true` if the trigger should be eligible for firing on all services. Only allowed to be `true` if the services list is not defined or empty.

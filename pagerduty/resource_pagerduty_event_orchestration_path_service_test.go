@@ -206,6 +206,23 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceResourceDeleteConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationServicePathNotExists(resourceName),
+				),
+			},
+			// Disabling Service Orchestration at creation by setting
+			// `enable_event_orchestration_for_service`  attribute to false
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceDisableUpdateConfig(escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "enable_event_orchestration_for_service", "false"),
+					)...,
+				),
+			},
+			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
 					append(

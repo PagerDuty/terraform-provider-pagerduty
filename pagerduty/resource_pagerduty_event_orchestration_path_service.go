@@ -107,6 +107,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 			"enable_event_orchestration_for_service": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
 			},
 			"set": {
 				Type:     schema.TypeList,
@@ -318,14 +319,22 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 
 func needToUpdateServiceActiveStatus(d *schema.ResourceData) bool {
 	var needToUpdate bool
-	if d.HasChange("enable_event_orchestration_for_service") {
-		o, n := d.GetChange("enable_event_orchestration_for_service")
-		old := o.(bool)
-		new := n.(bool)
-		_, ok := d.GetOkExists("enable_event_orchestration_for_service")
-		if ok || old != new && new == false {
-			needToUpdate = true
-		}
+	o, n := d.GetChange("enable_event_orchestration_for_service")
+	hasChanged := o != n
+	attrVal, isAttrSet := d.GetOkExists("enable_event_orchestration_for_service")
+	isNewResource := d.IsNewResource()
+
+	isNewResAndAttrIsOmitted := !isAttrSet && !attrVal.(bool) && isNewResource
+	isNewResAndAttrIsSetToFalse := isAttrSet && !attrVal.(bool) && isNewResource
+	isNewResAndAttrIsSetToTrue := isAttrSet && attrVal.(bool) && isNewResource
+	isNotNewResAndAttrHasChange := hasChanged && !isNewResource
+
+	if isNewResAndAttrIsOmitted {
+		return false
+	}
+
+	if isNewResAndAttrIsSetToFalse || isNewResAndAttrIsSetToTrue || isNotNewResAndAttrHasChange {
+		needToUpdate = true
 	}
 
 	return needToUpdate

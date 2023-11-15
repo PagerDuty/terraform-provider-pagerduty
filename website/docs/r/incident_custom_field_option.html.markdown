@@ -15,15 +15,16 @@ i.e. has the `field_type` of `single_value_fixed` or `multi_value_fixed`.
 
 ```hcl
 resource "pagerduty_incident_custom_field" "sre_environment" {
-  name       = "environment"
-  data_type   = "string"
-  field_type = "single_value_fixed"
+  name         = "environment"
+  display_name = "Environment"
+  data_type    = "string"
+  field_type   = "single_value_fixed"
 }
 
 resource "pagerduty_incident_custom_field_option" "dev_environment" {
-  field    = pagerduty_incident_custom_field.sre_environment.id
+  field     = pagerduty_incident_custom_field.sre_environment.id
   data_type = "string"
-  value    = "dev"
+  value     = "dev"
 }
 
 resource "pagerduty_incident_custom_field_option" "stage_environment" {

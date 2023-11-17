@@ -28,6 +28,21 @@ func resourcePagerDutyService() *schema.Resource {
 					return fmt.Errorf("general urgency cannot be set for a use_support_hours incident urgency rule type")
 				}
 			}
+
+			// Due to alert_grouping_parameters.type = null is a valid configuration
+			// for disabling Service's Alert Grouping configuration and having an
+			// empty alert_grouping_parameters.config block is also valid, API ignore
+			// this input fields, and turns out that API response for Service
+			// configuration doesn't bring a representation of this HCL, which leads
+			// to a permadiff, described in
+			// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/700
+			//
+			// So, bellow is the formated representation alert_grouping_parameters
+			// value when this permadiff appears and must be ignored.
+			ignoreThisAlertGroupingParamsConfigDiff := `[]interface {}{map[string]interface {}{"config":[]interface {}{interface {}(nil)}, "type":""}}`
+			if agpdiff, ok := diff.Get("alert_grouping_parameters").([]interface{}); ok && diff.NewValueKnown("alert_grouping_parameters") && fmt.Sprintf("%#v", agpdiff) == ignoreThisAlertGroupingParamsConfigDiff {
+				diff.Clear("alert_grouping_parameters")
+			}
 			return nil
 		},
 		Importer: &schema.ResourceImporter{
@@ -96,6 +111,7 @@ func resourcePagerDutyService() *schema.Resource {
 						"config": {
 							Type:     schema.TypeList,
 							Optional: true,
+							Computed: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -584,6 +600,7 @@ func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParame
 
 	// For Intelligent grouping type, config is null
 	alertGroupingParameters.Config = nil
+	log.Printf("[MYDEBUG] config: %#v", alertGroupingParameters.Config)
 	if groupingType == "content_based" || groupingType == "time" {
 		alertGroupingParameters.Config = expandAlertGroupingConfig(riur["config"], groupingType)
 	}

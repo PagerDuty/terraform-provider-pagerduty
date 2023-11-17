@@ -1,3 +1,12 @@
+## 3.1.2 (Nov 17, 2023)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_schedule`: Address `pagerduty_schedule` validation error on weekly restriction wihtout Start of week day ([#764](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/764))
+* `resource/pagerduty_event_orchestration_service`: Patch - Service Orchestration enable status doesn't opt in ([#769](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/769))
+* `resource/pagerduty_incident_custom_field`,  `resource/pagerduty_incident_custom_field_option`: add missing properties to incident_custom_field resource documentation ([#751](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/751))
+* `resource/pagerduty_service`: Address Service Alert Grouping parameters config permadiff ([#771](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/771))
+
 ## 3.1.1 (Nov 2, 2023)
 
 IMPROVEMENTS:

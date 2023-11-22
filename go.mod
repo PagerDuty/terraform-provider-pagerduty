@@ -18,7 +18,7 @@ require (
 	github.com/heimweh/go-pagerduty v0.0.0-20240206151700-a2cbd995ef76
 )
 
-replace github.com/heimweh/go-pagerduty v0.0.0-20230908205257-a96e6c05f7ea => github.com/swbradshaw/go-pagerduty v0.0.0
+replace github.com/heimweh/go-pagerduty v0.0.0-20231025174125-1492ec59406f => github.com/swbradshaw/go-pagerduty v0.0.0
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect

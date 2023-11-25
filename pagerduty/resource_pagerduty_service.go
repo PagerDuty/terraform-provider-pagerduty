@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -16,35 +18,11 @@ import (
 
 func resourcePagerDutyService() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyServiceCreate,
-		Read:   resourcePagerDutyServiceRead,
-		Update: resourcePagerDutyServiceUpdate,
-		Delete: resourcePagerDutyServiceDelete,
-		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
-			in := diff.Get("incident_urgency_rule.#").(int)
-			for i := 0; i <= in; i++ {
-				t := diff.Get(fmt.Sprintf("incident_urgency_rule.%d.type", i)).(string)
-				if t == "use_support_hours" && diff.Get(fmt.Sprintf("incident_urgency_rule.%d.urgency", i)).(string) != "" {
-					return fmt.Errorf("general urgency cannot be set for a use_support_hours incident urgency rule type")
-				}
-			}
-
-			// Due to alert_grouping_parameters.type = null is a valid configuration
-			// for disabling Service's Alert Grouping configuration and having an
-			// empty alert_grouping_parameters.config block is also valid, API ignore
-			// this input fields, and turns out that API response for Service
-			// configuration doesn't bring a representation of this HCL, which leads
-			// to a permadiff, described in
-			// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/700
-			//
-			// So, bellow is the formated representation alert_grouping_parameters
-			// value when this permadiff appears and must be ignored.
-			ignoreThisAlertGroupingParamsConfigDiff := `[]interface {}{map[string]interface {}{"config":[]interface {}{interface {}(nil)}, "type":""}}`
-			if agpdiff, ok := diff.Get("alert_grouping_parameters").([]interface{}); ok && diff.NewValueKnown("alert_grouping_parameters") && fmt.Sprintf("%#v", agpdiff) == ignoreThisAlertGroupingParamsConfigDiff {
-				diff.Clear("alert_grouping_parameters")
-			}
-			return nil
-		},
+		Create:        resourcePagerDutyServiceCreate,
+		Read:          resourcePagerDutyServiceRead,
+		Update:        resourcePagerDutyServiceUpdate,
+		Delete:        resourcePagerDutyServiceDelete,
+		CustomizeDiff: customizePagerDutyServiceDiff,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -133,6 +111,12 @@ func resourcePagerDutyService() *schema.Resource {
 											"all",
 											"any",
 										}),
+									},
+									"time_window": {
+										Type:             schema.TypeInt,
+										Optional:         true,
+										Computed:         true,
+										ValidateDiagFunc: validateIntelligentTimeWindow,
 									},
 								},
 							},
@@ -325,6 +309,68 @@ func resourcePagerDutyService() *schema.Resource {
 			},
 		},
 	}
+}
+
+func customizePagerDutyServiceDiff(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+	in := diff.Get("incident_urgency_rule.#").(int)
+	for i := 0; i <= in; i++ {
+		t := diff.Get(fmt.Sprintf("incident_urgency_rule.%d.type", i)).(string)
+		if t == "use_support_hours" && diff.Get(fmt.Sprintf("incident_urgency_rule.%d.urgency", i)).(string) != "" {
+			return fmt.Errorf("general urgency cannot be set for a use_support_hours incident urgency rule type")
+		}
+	}
+
+	// Due to alert_grouping_parameters.type = null is a valid configuration
+	// for disabling Service's Alert Grouping configuration and having an
+	// empty alert_grouping_parameters.config block is also valid, API ignore
+	// this input fields, and turns out that API response for Service
+	// configuration doesn't bring a representation of this HCL, which leads
+	// to a permadiff, described in
+	// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/700
+	//
+	// So, bellow is the formated representation alert_grouping_parameters
+	// value when this permadiff appears and must be ignored.
+	ignoreThisAlertGroupingParamsConfigDiff := `[]interface {}{map[string]interface {}{"config":[]interface {}{interface {}(nil)}, "type":""}}`
+	if agpdiff, ok := diff.Get("alert_grouping_parameters").([]interface{}); ok && diff.NewValueKnown("alert_grouping_parameters") && fmt.Sprintf("%#v", agpdiff) == ignoreThisAlertGroupingParamsConfigDiff {
+		diff.Clear("alert_grouping_parameters")
+	}
+
+	if agpType, ok := diff.Get("alert_grouping_parameters.0.type").(string); ok {
+		agppath := "alert_grouping_parameters.0.config.0."
+		timeoutVal := diff.Get(agppath + "timeout").(int)
+		aggregateVal := diff.Get(agppath + "aggregate").(string)
+		fieldsVal := diff.Get(agppath + "fields").([]interface{})
+		timeWindowVal := diff.Get(agppath + "time_window").(int)
+
+		if agpType == "time" && (aggregateVal != "" || len(fieldsVal) > 0 || timeWindowVal > 0) {
+			return fmt.Errorf("Alert grouping parameters configuration of type \"time\" only supports setting \"timeout\" attribute")
+		}
+		if agpType == "content_based" && (timeoutVal > 0 || timeWindowVal > 0) {
+			return fmt.Errorf("Alert grouping parameters configuration of type \"content_based\" only supports setting \"aggregate\" and \"fields\" attributes")
+		}
+		if agpType == "content_based" && (aggregateVal == "" || len(fieldsVal) == 0) {
+			return fmt.Errorf("When using Alert grouping parameters configuration of type \"content_based\" is in use, attributes \"aggregate\" and \"fields\" are required")
+		}
+		if agpType == "intelligent" && (aggregateVal != "" || len(fieldsVal) > 0 || timeoutVal > 0) {
+			return fmt.Errorf("Alert grouping parameters configuration of type \"intelligent\" only supports setting the optional attribute \"time_window\"")
+		}
+	}
+
+	return nil
+}
+
+func validateIntelligentTimeWindow(v interface{}, p cty.Path) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	tw := v.(int)
+	if tw < 300 || tw > 3600 {
+		diags = append(diags, diag.Diagnostic{
+			Severity:      diag.Error,
+			Summary:       fmt.Sprintf("Intelligent alert grouping time window value must be between 300 and 3600, current setting is %d", tw),
+			AttributePath: p,
+		})
+	}
+	return diags
 }
 
 func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
@@ -587,23 +633,18 @@ func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParame
 	}
 	// First We capture a possible nil value for the interface to avoid the a
 	// panic
-	pre := v.([]interface{})[0]
-	if isNilFunc(pre) {
+	ragp, ok := v.([]interface{})
+	if !ok || isNilFunc(ragp[0]) {
 		return nil
 	}
-	riur := pre.(map[string]interface{})
+	ragpVal := ragp[0].(map[string]interface{})
 	groupingType := ""
-	if riur["type"].(string) != "" {
-		groupingType = riur["type"].(string)
+	if ragpVal["type"].(string) != "" {
+		groupingType = ragpVal["type"].(string)
 		alertGroupingParameters.Type = &groupingType
 	}
 
-	// For Intelligent grouping type, config is null
-	alertGroupingParameters.Config = nil
-	log.Printf("[MYDEBUG] config: %#v", alertGroupingParameters.Config)
-	if groupingType == "content_based" || groupingType == "time" {
-		alertGroupingParameters.Config = expandAlertGroupingConfig(riur["config"], groupingType)
-	}
+	alertGroupingParameters.Config = expandAlertGroupingConfig(ragpVal["config"])
 	return alertGroupingParameters
 }
 
@@ -619,26 +660,31 @@ func expandAutoPauseNotificationsParameters(v interface{}) *pagerduty.AutoPauseN
 	return autoPauseNotificationsParameters
 }
 
-func expandAlertGroupingConfig(v interface{}, groupingType string) *pagerduty.AlertGroupingConfig {
+func expandAlertGroupingConfig(v interface{}) *pagerduty.AlertGroupingConfig {
 	alertGroupingConfig := &pagerduty.AlertGroupingConfig{}
-	if len(v.([]interface{})) == 0 || v.([]interface{})[0] == nil {
+	rconfig := v.([]interface{})
+	if len(rconfig) == 0 || rconfig[0] == nil {
 		return nil
 	}
-	riur := v.([]interface{})[0].(map[string]interface{})
+	config := rconfig[0].(map[string]interface{})
 
 	alertGroupingConfig.Fields = []string{}
-	if val, ok := riur["fields"]; ok {
+	if val, ok := config["fields"]; ok {
 		for _, field := range val.([]interface{}) {
 			alertGroupingConfig.Fields = append(alertGroupingConfig.Fields, field.(string))
 		}
 	}
-	if val, ok := riur["aggregate"]; ok {
+	if val, ok := config["aggregate"]; ok {
 		agg := val.(string)
 		alertGroupingConfig.Aggregate = &agg
 	}
-	if val, ok := riur["timeout"]; ok && groupingType == "time" {
+	if val, ok := config["timeout"]; ok {
 		to := val.(int)
 		alertGroupingConfig.Timeout = &to
+	}
+	if val, ok := config["time_window"]; ok {
+		to := val.(int)
+		alertGroupingConfig.TimeWindow = &to
 	}
 	return alertGroupingConfig
 }
@@ -648,7 +694,7 @@ func flattenAlertGroupingParameters(v *pagerduty.AlertGroupingParameters) interf
 	if v.Config == nil && v.Type == nil {
 		return []interface{}{alertGroupingParameters}
 	} else {
-		alertGroupingParameters = map[string]interface{}{"type": "", "config": []map[string]interface{}{{"aggregate": nil, "fields": nil, "timeout": nil}}}
+		alertGroupingParameters = map[string]interface{}{"type": "", "config": []map[string]interface{}{{"aggregate": nil, "fields": nil, "timeout": nil, "time_window": nil}}}
 	}
 
 	if v.Type != nil {
@@ -664,9 +710,10 @@ func flattenAlertGroupingParameters(v *pagerduty.AlertGroupingParameters) interf
 func flattenAlertGroupingConfig(v *pagerduty.AlertGroupingConfig) interface{} {
 
 	alertGroupingConfig := map[string]interface{}{
-		"aggregate": v.Aggregate,
-		"fields":    v.Fields,
-		"timeout":   v.Timeout,
+		"aggregate":   v.Aggregate,
+		"fields":      v.Fields,
+		"timeout":     v.Timeout,
+		"time_window": v.TimeWindow,
 	}
 
 	return []interface{}{alertGroupingConfig}

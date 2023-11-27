@@ -18,8 +18,6 @@ require (
 	github.com/heimweh/go-pagerduty v0.0.0-20240206151700-a2cbd995ef76
 )
 
-replace github.com/heimweh/go-pagerduty v0.0.0-20231025174125-1492ec59406f => github.com/swbradshaw/go-pagerduty v0.0.0
-
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
@@ -77,3 +75,5 @@ require (
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
+
+replace github.com/heimweh/go-pagerduty => github.com/swbradshaw/go-pagerduty v0.0.1

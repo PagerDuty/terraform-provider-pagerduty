@@ -31,33 +31,14 @@ type IncidentWorkflowStep struct {
 
 // IncidentWorkflowActionConfiguration represents the configuration for an incident workflow action
 type IncidentWorkflowActionConfiguration struct {
-	ActionID          string                                    `json:"action_id,omitempty"`
-	Description       *string                                   `json:"description,omitempty"`
-	Inputs            []*IncidentWorkflowActionInput            `json:"inputs,omitempty"`
-	InlineStepsInputs []*IncidentWorkflowActionInlineStepsInput `json:"inline_steps_inputs,omitempty"`
+	ActionID    string                         `json:"action_id,omitempty"`
+	Description *string                        `json:"description,omitempty"`
+	Inputs      []*IncidentWorkflowActionInput `json:"inputs,omitempty"`
 }
 
-// IncidentWorkflowActionInput represents the configuration for an incident workflow action input with a serialized string as the value
 type IncidentWorkflowActionInput struct {
 	Name  string `json:"name,omitempty"`
 	Value string `json:"value,omitempty"`
-}
-
-// IncidentWorkflowActionInlineStepsInput represents the configuration for an incident workflow action input with a series of inlined steps as the value
-type IncidentWorkflowActionInlineStepsInput struct {
-	Name  string `json:"name,omitempty"`
-	Value *IncidentWorkflowActionInlineStepsInputValue `json:"value,omitempty"`
-}
-
-// IncidentWorkflowActionInlineStepsInputValue represents the value for an inline_steps_input input
-type IncidentWorkflowActionInlineStepsInputValue struct {
-	Steps []*IncidentWorkflowActionInlineStep `json:"steps,omitempty"`
-}
-
-// IncidentWorkflowActionInlineStep represents a single step within an inline_steps_input input's value
-type IncidentWorkflowActionInlineStep struct {
-	Name          string                               `json:"name,omitempty"`
-	Configuration *IncidentWorkflowActionConfiguration `json:"action_configuration,omitempty"`
 }
 
 // ListIncidentWorkflowResponse represents a list response of incident workflows.

@@ -65,9 +65,10 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				Computed:      true,
 			},
 			"integration_key": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:       schema.TypeString,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: "Assignments or updates to this attribute are not supported by Service Integrations API, it is a read-only value. Input support will be dropped in upcomming major release",
 			},
 			"integration_email": {
 				Type:     schema.TypeString,

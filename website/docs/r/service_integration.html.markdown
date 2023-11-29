@@ -49,7 +49,6 @@ resource "pagerduty_service_integration" "example" {
 resource "pagerduty_service_integration" "apiv2" {
   name            = "API V2"
   type            = "events_api_v2_inbound_integration"
-  integration_key = "12345678910testtesttesttesttes"
   service         = pagerduty_service.example.id
 }
 
@@ -166,7 +165,7 @@ The following arguments are supported:
     To integrate with a **vendor** (e.g. Datadog or Amazon Cloudwatch) use the `vendor` field instead.
 
   * `vendor` - (Optional) The ID of the vendor the integration should integrate with (e.g. Datadog or Amazon Cloudwatch).
-  * `integration_key` - (Optional) This is the unique key used to route events to this integration when received via the PagerDuty Events API.
+  * `integration_key` - (Optional) (Deprecated) This is the unique key used to route events to this integration when received via the PagerDuty Events API.
   * `integration_email` - (Optional) This is the unique fully-qualified email address used for routing emails to this integration for processing.
 
   * `email_incident_creation` - (Optional) Behaviour of Email Management feature ([explained in PD docs](https://support.pagerduty.com/docs/email-management-filters-and-rules#control-when-a-new-incident-or-alert-is-triggered)). Can be `on_new_email`, `on_new_email_subject`, `only_if_no_open_incidents` or `use_rules`.

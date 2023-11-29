@@ -182,7 +182,7 @@ github.com/hashicorp/terraform-svchost
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 ## explicit
 github.com/hashicorp/yamux
-# github.com/heimweh/go-pagerduty v0.0.0-20231125004736-fa2590da432f
+# github.com/heimweh/go-pagerduty v0.0.0-20231201163338-a11b2f79dfcf
 ## explicit; go 1.17
 github.com/heimweh/go-pagerduty/pagerduty
 github.com/heimweh/go-pagerduty/persistentconfig

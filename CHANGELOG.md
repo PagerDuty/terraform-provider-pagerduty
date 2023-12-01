@@ -1,3 +1,9 @@
+## 3.2.1 (Dec 1, 2023)
+
+IMPROVEMENTS:
+
+* `resource/*`,  `data/*`: Support rate limiting throttling ([#777](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/777))
+
 ## 3.2.0 (Dec 1, 2023)
 
 FEATURES:

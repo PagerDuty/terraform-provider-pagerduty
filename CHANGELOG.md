@@ -1,3 +1,46 @@
+## 3.2.0 (Dec 1, 2023)
+
+FEATURES:
+
+* `resource/pagerduty_incident_workflow`: Feat/add iw inline steps inputs support ([#768](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/768))
+* `resource/pagerduty_service`: Support for Intelligent Time Window to Alert Grouping Parameters ([#773](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/773))
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_service_integration`: Deprecate integration_key attribute mutation for Service Integrations ([#775](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/775))
+
+BUG FIXES:
+
+* Revert add remaining delays for retries ([#776](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/776))
+  - `data/source_pagerduty_event_orchestration`
+  - `data/source_pagerduty_event_orchestrations`
+  - `resource/pagerduty_automation_actions_action_service_association`
+  - `resource/pagerduty_automation_actions_action_team_association`
+  - `resource/pagerduty_automation_actions_action`
+  - `resource/pagerduty_automation_actions_runner_team_association`
+  - `resource/pagerduty_automation_actions_runner`
+  - `resource/pagerduty_business_service_subscriber`
+  - `resource/pagerduty_business_service`
+  - `resource/pagerduty_escalation_policy`
+  - `resource/pagerduty_event_orchestration_integration`
+  - `resource/pagerduty_event_orchestration_path_global`
+  - `resource/pagerduty_event_orchestration_path_router`
+  - `resource/pagerduty_event_orchestration_path_service`
+  - `resource/pagerduty_event_orchestration_path_unrouted`
+  - `resource/pagerduty_event_orchestration`
+  - `resource/pagerduty_schedule`
+  - `resource/pagerduty_service_dependency`
+  - `resource/pagerduty_service_event_rule`
+  - `resource/pagerduty_service_integration`
+  - `resource/pagerduty_service`
+  - `resource/pagerduty_slack_connection`
+  - `resource/pagerduty_tag_assignment`
+  - `resource/pagerduty_tag`
+  - `resource/pagerduty_team_membership`
+  - `resource/pagerduty_team`
+  - `resource/pagerduty_user`
+  - `resource/pagerduty_webhook_subscription`
+
 ## 3.1.2 (Nov 17, 2023)
 
 IMPROVEMENTS:
@@ -23,6 +66,7 @@ FEATURES:
 ## 3.0.3 (Oct 24, 2023)
 
 IMPROVEMENTS:
+
 * Add delays to API calls retries lacking of them on various TF Objects ([#758](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/758))
   - `data/source_pagerduty_event_orchestration`
   - `data/source_pagerduty_event_orchestrations`

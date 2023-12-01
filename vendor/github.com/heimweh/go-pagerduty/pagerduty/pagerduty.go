@@ -9,7 +9,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-querystring/query"
 	"github.com/heimweh/go-pagerduty/persistentconfig"
@@ -567,6 +569,21 @@ func (c *Client) decodeErrorResponse(res *Response) error {
 	// Try to decode error response or fallback with standard error
 	v := &errorResponse{Error: &Error{ErrorResponse: res}}
 	err := c.DecodeJSON(res, v)
+
+	// Delaying retry based on ratelimit-reset recommended by PagerDuty
+	// https://developer.pagerduty.com/docs/72d3b724589e3-rest-api-rate-limits#reaching-the-limit
+	ratelimitReset := res.Response.Header.Get("ratelimit-reset")
+	if res.Response.StatusCode == http.StatusTooManyRequests && ratelimitReset != "" {
+		waitFor, err := strconv.ParseInt(ratelimitReset, 10, 0)
+		if err == nil {
+			reqMethod := res.Response.Request.Method
+			reqEndpoint := res.Response.Request.URL
+			log.Printf("[INFO] Rate limit hit, throttling by %d seconds until next retry to %s: %s", waitFor, strings.ToUpper(reqMethod), reqEndpoint)
+			time.Sleep(time.Duration(waitFor) * time.Second)
+			v.Error.needToRetry = true
+			return v.Error
+		}
+	}
 
 	isUsingScopedAPITokenFromCredentials := *c.Config.APIAuthTokenType == AuthTokenTypeUseAppCredentials
 	isOauthScopeMissing := isUsingScopedAPITokenFromCredentials && res.Response.StatusCode == http.StatusForbidden

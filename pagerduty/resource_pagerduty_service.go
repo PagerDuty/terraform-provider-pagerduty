@@ -480,7 +480,6 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
-				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 

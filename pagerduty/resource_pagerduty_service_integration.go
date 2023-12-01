@@ -635,7 +635,6 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
-				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)
 			}
 
@@ -732,7 +731,6 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
 		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
 			if isErrCode(err, 400) {
-				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
 

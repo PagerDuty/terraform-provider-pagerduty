@@ -70,9 +70,6 @@ func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, me
 
 		log.Printf("[INFO] Creating PagerDuty business service %s subscriber %s type %s", businessServiceId, businessServiceSubscriber.ID, businessServiceSubscriber.Type)
 		if _, err = client.BusinessServiceSubscribers.Create(businessServiceId, businessServiceSubscriber); err != nil {
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if businessServiceSubscriber != nil {
 			// create subscriber assignment it as PagerDuty API does not return one

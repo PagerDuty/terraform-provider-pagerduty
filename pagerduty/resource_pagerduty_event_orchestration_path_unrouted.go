@@ -226,7 +226,6 @@ func resourcePagerDutyEventOrchestrationPathUnroutedDelete(ctx context.Context, 
 				return resource.NonRetryableError(err)
 			}
 
-			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -260,7 +259,6 @@ func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(ctx context.Context, 
 				return resource.NonRetryableError(err)
 			}
 
-			time.Sleep(10 * time.Second)
 			return resource.RetryableError(err)
 		}
 

@@ -74,9 +74,6 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 
@@ -99,9 +96,6 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 		// since the list ndpoint does not return it
 		orch, _, err := client.EventOrchestrations.Get(found.ID)
 		if err != nil {
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 

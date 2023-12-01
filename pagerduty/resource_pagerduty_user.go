@@ -241,9 +241,6 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Users.Update(d.Id(), user); err != nil {
 			if isErrCode(err, 400) {
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 
@@ -311,9 +308,6 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Users.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 

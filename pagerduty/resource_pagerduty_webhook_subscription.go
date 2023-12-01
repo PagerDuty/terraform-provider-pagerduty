@@ -144,9 +144,6 @@ func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta int
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Create(webhook); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 

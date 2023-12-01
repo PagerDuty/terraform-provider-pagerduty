@@ -157,9 +157,6 @@ func resourcePagerDutyServiceDependencyAssociate(ctx context.Context, d *schema.
 
 		if err != nil {
 			if isErrCode(err, 404) {
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)
@@ -205,6 +202,7 @@ func resourcePagerDutyServiceDependencyDisassociate(ctx context.Context, d *sche
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
+
 			return resource.RetryableError(err)
 		} else if dependencies != nil {
 			for _, rel := range dependencies.Relationships {
@@ -249,6 +247,7 @@ func resourcePagerDutyServiceDependencyDisassociate(ctx context.Context, d *sche
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
+
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -327,6 +326,7 @@ func findDependencySetState(ctx context.Context, depID, serviceID, serviceType s
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
+
 			return resource.RetryableError(err)
 		} else if dependencies != nil {
 			depFound := false

@@ -120,14 +120,10 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 			if isErrCode(err, 400) {
 				return resource.NonRetryableError(err)
 			}
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if integration != nil {
 			// Try reading an integration after creation, retry if not found:
 			if _, readErr := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, integration.ID, true); readErr != nil {
-				time.Sleep(30 * time.Second)
 				log.Printf("[WARN] Cannot locate Integration '%s' on PagerDuty Event Orchestration '%s'. Retrying creation...", integration.ID, oid)
 				return resource.RetryableError(readErr)
 			}
@@ -155,9 +151,6 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 
@@ -192,9 +185,6 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 				if isErrCode(err, 400) {
 					return resource.NonRetryableError(err)
 				}
-				// Delaying retry by 30s as recommended by PagerDuty
-				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			} else {
 				// try reading the migrated integration from destination and source:
@@ -203,14 +193,12 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 
 				// retry migration if the read request returned an error:
 				if readDestErr != nil {
-					time.Sleep(30 * time.Second)
 					log.Printf("[WARN] Integration '%s' cannot be found on the destination PagerDuty Event Orchestration '%s'. Retrying migration....", id, destinationOrchId)
 					return resource.RetryableError(readDestErr)
 				}
 
 				// retry migration if the integration still exists on the source:
 				if readSrcErr == nil && srcInt != nil {
-					time.Sleep(30 * time.Second)
 					log.Printf("[WARN] Integration '%s' still exists on the source PagerDuty Event Orchestration '%s'. Retrying migration....", id, sourceOrchId)
 					return resource.RetryableError(fmt.Errorf("Integration '%s' still exists on the source PagerDuty Event Orchestration '%s'.", id, sourceOrchId))
 				}
@@ -239,9 +227,6 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 			} else if integration != nil {
 				// Try reading an integration after updating the label, retry if the label is not updated:
 				if updInt, readErr := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, true); readErr != nil && updInt != nil {
-					// Delaying retry by 30s as recommended by PagerDuty
-					// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-					time.Sleep(30 * time.Second)
 					log.Printf("[WARN] Label for Integration '%s' on PagerDuty Event Orchestration '%s' was not updated. Expected: '%s', actual: '%s'. Retrying update...", id, oid, payload.Label, updInt.Label)
 					return resource.RetryableError(readErr)
 				}
@@ -274,14 +259,10 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else {
 			// Try reading an integration after deletion, retry if still found:
 			if integr, _, readErr := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); readErr == nil && integr != nil {
-				time.Sleep(30 * time.Second)
 				log.Printf("[WARN] Integration '%s' still exists on PagerDuty Event Orchestration '%s'. Retrying deletion...", id, oid)
 				return resource.RetryableError(fmt.Errorf("Integration '%s' still exists on PagerDuty Event Orchestration '%s'.", id, oid))
 			}
@@ -314,9 +295,6 @@ func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil

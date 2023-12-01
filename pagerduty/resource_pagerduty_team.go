@@ -82,9 +82,6 @@ func resourcePagerDutyTeamCreate(d *schema.ResourceData, meta interface{}) error
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if team != nil {
 			d.SetId(team.ID)
@@ -141,7 +138,6 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 
 	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		if _, _, err := client.Teams.Update(d.Id(), team); err != nil {
-			time.Sleep(5 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil
@@ -167,9 +163,6 @@ func resourcePagerDutyTeamDelete(d *schema.ResourceData, meta interface{}) error
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 		return nil

@@ -125,9 +125,6 @@ func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interfa
 		log.Printf("[INFO] Creating PagerDuty slack connection for source %s and slack channel %s", slackConn.SourceID, slackConn.ChannelID)
 
 		if slackConn, _, err = client.SlackConnections.Create(slackConn.WorkspaceID, slackConn); err != nil {
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if slackConn != nil {
 			d.SetId(slackConn.ID)
@@ -159,9 +156,6 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		} else if slackConn != nil {
 			d.Set("source_id", slackConn.SourceID)

@@ -131,6 +131,7 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 }
 
 func TestAccPagerDutyService_FormatValidation(t *testing.T) {
+	service := fmt.Sprintf("ts-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -170,6 +171,126 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				Config:      testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, "this name has a non printable\\n character"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(errMessageMatcher),
+			},
+			// Alert grouping parameters "Content Based" type input validation
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "content_based"
+            config {}
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("When using Alert grouping parameters configuration of type \"content_based\" is in use, attributes \"aggregate\" and \"fields\" are required"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "content_based"
+            config {
+              aggregate = "all"
+              fields    = ["custom_details.source_id"]
+            }
+          }
+          `,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "time"
+            config {
+              aggregate = "all"
+              fields    = ["custom_details.source_id"]
+            }
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Alert grouping parameters configuration attributes \"aggregate\" and \"fields\" are only supported by \"content_based\" type Alert Grouping"),
+			},
+			// Alert grouping parameters "time" type input validation
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "time"
+            config {
+              timeout = 5
+            }
+          }
+          `,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "intelligent"
+            config {
+              timeout = 5
+            }
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Alert grouping parameters configuration attribute \"timeout\" is only supported by \"time\" type Alert Grouping"),
+			},
+			// Alert grouping parameters "intelligent" type input validation
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "time"
+            config {
+              time_window = 600
+            }
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" type Alert Grouping"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "intelligent"
+            config {}
+          }
+          `,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "intelligent"
+            config {
+              time_window = 5
+            }
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Intelligent alert grouping time window value must be between 300 and 3600"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "intelligent"
+            config {
+              time_window = 300
+            }
+          }
+          `,
+				),
+				PlanOnly: true,
 			},
 		},
 	})
@@ -284,7 +405,11 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGroupingUpdated(username, email, escalationPolicy, service),
+				Config:   testAccCheckPagerDutyServiceConfigWithAlertContentGrouping(username, email, escalationPolicy, service),
+				PlanOnly: true,
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAlertIntelligentGroupingUpdated(username, email, escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
 					resource.TestCheckResourceAttr(
@@ -298,7 +423,31 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_grouping", "rules"),
+						"pagerduty_service.foo", "alert_grouping_parameters.0.type", "intelligent"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_parameters.0.config.0"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGroupingUpdated(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping_parameters.0.config"),
 					resource.TestCheckNoResourceAttr(
@@ -1134,6 +1283,42 @@ resource "pagerduty_service" "foo" {
 	alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service, alertGroupingParams string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "bar"
+  num_loops   = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%s"
+  description             = "foo"
+  auto_resolve_timeout    = 1800
+  acknowledgement_timeout = 1800
+  escalation_policy       = pagerduty_escalation_policy.foo.id
+  alert_creation          = "create_alerts_and_incidents"
+  %s
+}
+`, username, email, escalationPolicy, service, alertGroupingParams)
 }
 
 func testAccCheckPagerDutyServiceConfigWithAlertGrouping(username, email, escalationPolicy, service string) string {

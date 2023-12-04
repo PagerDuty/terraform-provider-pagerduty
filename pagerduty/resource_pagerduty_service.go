@@ -341,18 +341,19 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		aggregateVal := diff.Get(agppath + "aggregate").(string)
 		fieldsVal := diff.Get(agppath + "fields").([]interface{})
 		timeWindowVal := diff.Get(agppath + "time_window").(int)
+		hasChangeAgpType := diff.HasChange("alert_grouping_parameters")
 
-		if agpType == "time" && (aggregateVal != "" || len(fieldsVal) > 0 || timeWindowVal > 0) {
-			return fmt.Errorf("Alert grouping parameters configuration of type \"time\" only supports setting \"timeout\" attribute")
-		}
-		if agpType == "content_based" && (timeoutVal > 0 || timeWindowVal > 0) {
-			return fmt.Errorf("Alert grouping parameters configuration of type \"content_based\" only supports setting \"aggregate\" and \"fields\" attributes")
-		}
 		if agpType == "content_based" && (aggregateVal == "" || len(fieldsVal) == 0) {
 			return fmt.Errorf("When using Alert grouping parameters configuration of type \"content_based\" is in use, attributes \"aggregate\" and \"fields\" are required")
 		}
-		if agpType == "intelligent" && (aggregateVal != "" || len(fieldsVal) > 0 || timeoutVal > 0) {
-			return fmt.Errorf("Alert grouping parameters configuration of type \"intelligent\" only supports setting the optional attribute \"time_window\"")
+		if (aggregateVal != "" || len(fieldsVal) > 0) && (agpType != "" && !hasChangeAgpType && agpType != "content_based") {
+			return fmt.Errorf("Alert grouping parameters configuration attributes \"aggregate\" and \"fields\" are only supported by \"content_based\" type Alert Grouping")
+		}
+		if timeoutVal > 0 && (agpType != "" && !hasChangeAgpType && agpType != "time") {
+			return fmt.Errorf("Alert grouping parameters configuration attribute \"timeout\" is only supported by \"time\" type Alert Grouping")
+		}
+		if (timeWindowVal > 300) && (agpType != "" && !hasChangeAgpType && agpType != "intelligent") {
+			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" type Alert Grouping")
 		}
 	}
 

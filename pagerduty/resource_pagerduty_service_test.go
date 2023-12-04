@@ -284,7 +284,11 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGroupingUpdated(username, email, escalationPolicy, service),
+				Config:   testAccCheckPagerDutyServiceConfigWithAlertContentGrouping(username, email, escalationPolicy, service),
+				PlanOnly: true,
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAlertIntelligentGroupingUpdated(username, email, escalationPolicy, service),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
 					resource.TestCheckResourceAttr(
@@ -298,7 +302,31 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_grouping", "rules"),
+						"pagerduty_service.foo", "alert_grouping_parameters.0.type", "intelligent"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_parameters.0.config.0"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGroupingUpdated(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping_parameters.0.config"),
 					resource.TestCheckNoResourceAttr(

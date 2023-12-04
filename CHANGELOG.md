@@ -1,3 +1,9 @@
+## 3.2.2 (Dec 4, 2023)
+
+BUG FIXES:
+
+* `resource/pagerduty_service`: Hotfix - Alert grouping parameters input validation broken ([#779](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/779))
+
 ## 3.2.1 (Dec 1, 2023)
 
 IMPROVEMENTS:

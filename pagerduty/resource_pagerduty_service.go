@@ -346,13 +346,13 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		if agpType == "content_based" && (aggregateVal == "" || len(fieldsVal) == 0) {
 			return fmt.Errorf("When using Alert grouping parameters configuration of type \"content_based\" is in use, attributes \"aggregate\" and \"fields\" are required")
 		}
-		if (aggregateVal != "" || len(fieldsVal) > 0) && (agpType != "" && !hasChangeAgpType && agpType != "content_based") {
+		if (aggregateVal != "" || len(fieldsVal) > 0) && (agpType != "" && hasChangeAgpType && agpType != "content_based") {
 			return fmt.Errorf("Alert grouping parameters configuration attributes \"aggregate\" and \"fields\" are only supported by \"content_based\" type Alert Grouping")
 		}
-		if timeoutVal > 0 && (agpType != "" && !hasChangeAgpType && agpType != "time") {
+		if timeoutVal > 0 && (agpType != "" && hasChangeAgpType && agpType != "time") {
 			return fmt.Errorf("Alert grouping parameters configuration attribute \"timeout\" is only supported by \"time\" type Alert Grouping")
 		}
-		if (timeWindowVal > 300) && (agpType != "" && !hasChangeAgpType && agpType != "intelligent") {
+		if (timeWindowVal > 300) && (agpType != "" && hasChangeAgpType && agpType != "intelligent") {
 			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" type Alert Grouping")
 		}
 	}

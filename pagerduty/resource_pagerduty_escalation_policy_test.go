@@ -110,6 +110,57 @@ func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyEscalationPolicyWithRoundRobinAssignmentStrategy(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyEscalationPolicyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyEscalationPolicyConfig(username, email, escalationPolicy),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "rule.0.escalation_rule_assignment_strategy.0.type", "assign_to_everyone"),
+				),
+			},
+			{
+				Config:      testAccCheckPagerDutyEscalationPolicyWithRoundRoundAssignmentStrategyConfig(username, email, escalationPolicy, "not_valid_strategy"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Must be one of \[\]string{"assign_to_everyone", "round_robin"}`),
+			},
+			{
+				Config: testAccCheckPagerDutyEscalationPolicyWithRoundRoundAssignmentStrategyConfig(username, email, escalationPolicy, "round_robin"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", escalationPolicy),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "num_loops", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "rule.0.escalation_rule_assignment_strategy.0.type", "round_robin"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEscalationPolicyWithRoundRoundAssignmentStrategyConfig(username, email, escalationPolicy, "assign_to_everyone"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "rule.0.escalation_rule_assignment_strategy.0.type", "assign_to_everyone"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyEscalationPolicy_FormatValidation(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
@@ -212,6 +263,37 @@ func TestAccPagerDutyEscalationPolicyWithTeams_Basic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccCheckPagerDutyEscalationPolicyWithRoundRoundAssignmentStrategyConfig(name, email, escalationPolicy, strategy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "foo"
+  num_loops   = 1
+
+  rule {
+    escalation_delay_in_minutes = 10
+    escalation_rule_assignment_strategy {
+      type = "%s"
+    }
+
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+`, name, email, escalationPolicy, strategy)
 }
 
 func testAccCheckPagerDutyEscalationPolicyDestroy(s *terraform.State) error {

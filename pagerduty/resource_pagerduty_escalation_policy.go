@@ -59,6 +59,25 @@ func resourcePagerDutyEscalationPolicy() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.IntAtLeast(1),
 						},
+						"escalation_rule_assignment_strategy": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"type": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
+										ValidateDiagFunc: validateValueDiagFunc([]string{
+											"assign_to_everyone",
+											"round_robin",
+										}),
+									},
+								},
+							},
+						},
 						"target": {
 							Type:     schema.TypeList,
 							Required: true,
@@ -151,7 +170,7 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 		return err
 	}
 
-	o := &pagerduty.GetEscalationPolicyOptions{}
+	o := &pagerduty.GetEscalationPolicyOptions{Includes: []string{"escalation_rule_assignment_strategies"}}
 
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
@@ -247,7 +266,8 @@ func expandEscalationRules(v interface{}) []*pagerduty.EscalationRule {
 	for _, er := range v.([]interface{}) {
 		rer := er.(map[string]interface{})
 		escalationRule := &pagerduty.EscalationRule{
-			EscalationDelayInMinutes: rer["escalation_delay_in_minutes"].(int),
+			EscalationDelayInMinutes:         rer["escalation_delay_in_minutes"].(int),
+			EscalationRuleAssignmentStrategy: expandEscalationRuleAssignmentStrategy(rer["escalation_rule_assignment_strategy"]),
 		}
 
 		for _, ert := range rer["target"].([]interface{}) {
@@ -266,6 +286,21 @@ func expandEscalationRules(v interface{}) []*pagerduty.EscalationRule {
 	return escalationRules
 }
 
+func expandEscalationRuleAssignmentStrategy(v interface{}) *pagerduty.EscalationRuleAssignmentStrategy {
+	log.Printf("expandEscalationRuleAssignmentStrategy_v is %+v", v)
+	escalationRuleAssignmentStrategy := &pagerduty.EscalationRuleAssignmentStrategy{}
+	pre := v.([]interface{})
+	if len(pre) == 0 || isNilFunc(pre[0]) {
+		return nil
+	}
+
+	eras := pre[0].(map[string]interface{})
+	teras := eras["type"].(string)
+	log.Printf("expandEscalationRuleAssignmentStrategy_teras is %#v", teras)
+	escalationRuleAssignmentStrategy.Type = teras
+	return escalationRuleAssignmentStrategy
+}
+
 func flattenEscalationRules(v []*pagerduty.EscalationRule) []map[string]interface{} {
 	var escalationRules []map[string]interface{}
 
@@ -274,6 +309,13 @@ func flattenEscalationRules(v []*pagerduty.EscalationRule) []map[string]interfac
 			"id":                          er.ID,
 			"escalation_delay_in_minutes": er.EscalationDelayInMinutes,
 		}
+
+		var escalationRuleAssignmentStrategy []map[string]interface{}
+		if er.EscalationRuleAssignmentStrategy != nil {
+			eras := map[string]interface{}{"type": er.EscalationRuleAssignmentStrategy.Type}
+			escalationRuleAssignmentStrategy = append(escalationRuleAssignmentStrategy, eras)
+		}
+		escalationRule["escalation_rule_assignment_strategy"] = escalationRuleAssignmentStrategy
 
 		var targets []map[string]interface{}
 

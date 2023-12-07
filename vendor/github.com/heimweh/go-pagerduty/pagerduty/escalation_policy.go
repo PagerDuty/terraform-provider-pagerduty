@@ -6,11 +6,18 @@ import "fmt"
 // related methods of the PagerDuty API.
 type EscalationPolicyService service
 
+// EscalationRuleAssignmentStrategy represents an Escalation rule assignment
+// strategy
+type EscalationRuleAssignmentStrategy struct {
+	Type string `json:"type,omitempty"`
+}
+
 // EscalationRule represents an escalation rule.
 type EscalationRule struct {
-	EscalationDelayInMinutes int                          `json:"escalation_delay_in_minutes,omitempty"`
-	ID                       string                       `json:"id,omitempty"`
-	Targets                  []*EscalationTargetReference `json:"targets,omitempty"`
+	EscalationDelayInMinutes         int                               `json:"escalation_delay_in_minutes,omitempty"`
+	EscalationRuleAssignmentStrategy *EscalationRuleAssignmentStrategy `json:"escalation_rule_assignment_strategy,omitempty"`
+	ID                               string                            `json:"id,omitempty"`
+	Targets                          []*EscalationTargetReference      `json:"targets,omitempty"`
 }
 
 // EscalationPolicy represents an escalation policy.

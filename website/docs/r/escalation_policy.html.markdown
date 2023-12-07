@@ -58,7 +58,12 @@ The following arguments are supported:
 Escalation rules (`rule`) supports the following:
 
   * `escalation_delay_in_minutes` - (Required) The number of minutes before an unacknowledged incident escalates away from this rule.
+  * `escalation_rule_assignment_strategy` - (Optional) The strategy used to assign the escalation rule to an incident. Documented below.
   * `targets` - (Required) A target block. Target blocks documented below.
+
+Incident assignment strategy for Escalation Rule (`escalation_rule_assignment_strategy`) supports the following:
+
+* `type` - (Optional) Can be `round_robin` or `assign_to_everyone`.
 
 Targets (`target`) supports the following:
 

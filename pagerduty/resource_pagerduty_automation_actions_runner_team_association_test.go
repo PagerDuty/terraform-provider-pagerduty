@@ -47,7 +47,11 @@ func testAccCheckPagerDutyAutomationActionsRunnerTeamAssociationDestroy(s *terra
 		if r.Type != "pagerduty_automation_actions_runner_team_association" {
 			continue
 		}
-		runnerID, teamID := resourcePagerDutyParseColonCompoundID(r.Primary.ID)
+		runnerID, teamID, err := resourcePagerDutyParseColonCompoundID(r.Primary.ID)
+		if err != nil {
+			return err
+		}
+
 		if _, _, err := client.AutomationActionsRunner.GetAssociationToTeam(runnerID, teamID); err == nil {
 			return fmt.Errorf("Automation Actions Runner Team association still exists")
 		}
@@ -66,7 +70,11 @@ func testAccCheckPagerDutyAutomationActionsRunnerTeamAssociationExists(n string)
 		}
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		runnerID, teamID := resourcePagerDutyParseColonCompoundID(rs.Primary.ID)
+		runnerID, teamID, err := resourcePagerDutyParseColonCompoundID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
 		found, _, err := client.AutomationActionsRunner.GetAssociationToTeam(runnerID, teamID)
 		if err != nil {
 			return err

@@ -71,7 +71,11 @@ func fetchPagerDutyAutomationActionsRunnerTeamAssociation(d *schema.ResourceData
 		return err
 	}
 
-	runnerID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
+	runnerID, teamID, err := resourcePagerDutyParseColonCompoundID(d.Id())
+	if err != nil {
+		return err
+	}
+
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		resp, _, err := client.AutomationActionsRunner.GetAssociationToTeam(runnerID, teamID)
 		if err != nil {
@@ -111,7 +115,11 @@ func resourcePagerDutyAutomationActionsRunnerTeamAssociationDelete(d *schema.Res
 		return err
 	}
 
-	runnerID, teamID := resourcePagerDutyParseColonCompoundID(d.Id())
+	runnerID, teamID, err := resourcePagerDutyParseColonCompoundID(d.Id())
+	if err != nil {
+		return err
+	}
+
 	log.Printf("[INFO] Deleting PagerDuty AutomationActionsRunnerTeamAssociation %s", d.Id())
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {

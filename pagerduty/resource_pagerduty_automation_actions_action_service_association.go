@@ -71,7 +71,11 @@ func fetchPagerDutyAutomationActionsActionServiceAssociation(d *schema.ResourceD
 		return err
 	}
 
-	actionID, serviceID := resourcePagerDutyParseColonCompoundID(d.Id())
+	actionID, serviceID, err := resourcePagerDutyParseColonCompoundID(d.Id())
+	if err != nil {
+		return err
+	}
+
 	return resource.Retry(30*time.Second, func() *resource.RetryError {
 		resp, _, err := client.AutomationActionsAction.GetAssociationToService(actionID, serviceID)
 		if err != nil {
@@ -111,7 +115,11 @@ func resourcePagerDutyAutomationActionsActionServiceAssociationDelete(d *schema.
 		return err
 	}
 
-	actionID, serviceID := resourcePagerDutyParseColonCompoundID(d.Id())
+	actionID, serviceID, err := resourcePagerDutyParseColonCompoundID(d.Id())
+	if err != nil {
+		return err
+	}
+
 	log.Printf("[INFO] Deleting PagerDuty AutomationActionsActionServiceAssociation %s", d.Id())
 
 	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {

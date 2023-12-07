@@ -50,7 +50,11 @@ func testAccCheckPagerDutyAutomationActionsActionServiceAssociationDestroy(s *te
 		if r.Type != "pagerduty_automation_actions_action_service_association" {
 			continue
 		}
-		actionID, serviceID := resourcePagerDutyParseColonCompoundID(r.Primary.ID)
+		actionID, serviceID, err := resourcePagerDutyParseColonCompoundID(r.Primary.ID)
+		if err != nil {
+			return err
+		}
+
 		if _, _, err := client.AutomationActionsAction.GetAssociationToService(actionID, serviceID); err == nil {
 			return fmt.Errorf("Automation Actions Runner still exists")
 		}
@@ -69,7 +73,11 @@ func testAccCheckPagerDutyAutomationActionsActionServiceAssociationExists(n stri
 		}
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		actionID, serviceID := resourcePagerDutyParseColonCompoundID(rs.Primary.ID)
+		actionID, serviceID, err := resourcePagerDutyParseColonCompoundID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
 		found, _, err := client.AutomationActionsAction.GetAssociationToService(actionID, serviceID)
 		if err != nil {
 			return err

@@ -1,3 +1,18 @@
+## 3.3.0 (Dec 7, 2023)
+
+FEATURES:
+
+* `resource/pagerduty_escalation_policy`: Add Round Robin support to `pagerduty_escalation_policy` ([#781](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/781))
+
+BUG FIXES:
+
+* More gracefully reject colonCompoundIDs that aren't compound IDs ([#762](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/762))
+  - `resource/pagerduty_automation-actions_action_service_association`
+  - `resource/pagerduty_automation-actions_action_team_association`
+  - `resource/pagerduty_automation-actions_runner_team_association`
+  - `resource/pagerduty_event_orchestration_integration`
+  - `resource/pagerduty_team_membership`
+
 ## 3.2.2 (Dec 4, 2023)
 
 BUG FIXES:

@@ -68,6 +68,40 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyUserContactMethodPhone_FormatValidation(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	tooLongNumber := "4153013250415301325041530132504153013250,415301325041530132504,530132504153013250"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckPagerDutyUserContactMethodPhoneFormatValidationConfig(username, email, "phone_contact_method", "1", tooLongNumber),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("phone numbers may not exceed 40 characters"),
+			},
+			{
+				Config:      testAccCheckPagerDutyUserContactMethodPhoneFormatValidationConfig(username, email, "phone_contact_method", "1", "+4153013250"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("phone numbers may only include digits from 0-9 and the symbols"),
+			},
+			{
+				Config:      testAccCheckPagerDutyUserContactMethodPhoneFormatValidationConfig(username, email, "phone_contact_method", "44", "01332412251"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Trunk prefixes are not supported for following countries and regions: France, Romania, UK, Denmark, Germany, Australia, Thailand, India and North America, so must be formatted for international use without the leading 0"),
+			},
+			{
+				Config:      testAccCheckPagerDutyUserContactMethodPhoneFormatValidationConfig(username, email, "sms_contact_method", "52", "15558889999"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Mexico-based SMS numbers should be free of area code prefixes, so please remove the leading 1 in the number"),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyUserContactMethodPhone_EnforceUpdateIfAlreadyExist(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
@@ -279,6 +313,27 @@ resource "pagerduty_user_contact_method" "foo" {
   label        = "%[1]v"
 }
 `, username, email, phone)
+}
+
+func testAccCheckPagerDutyUserContactMethodPhoneFormatValidationConfig(username, email, method_type, countryCode, phone string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%[1]v"
+  email       = "%[2]v"
+  color       = "red"
+  role        = "user"
+  job_title   = "bar"
+  description = "bar"
+}
+
+resource "pagerduty_user_contact_method" "foo" {
+  user_id      = pagerduty_user.foo.id
+  type         = "%[3]s"
+  country_code = "+%[4]s"
+  address      = "%[5]s"
+  label        = "%[1]v"
+}
+`, username, email, method_type, countryCode, phone)
 }
 
 func testAccCheckPagerDutyUserContactMethodSMSConfig(username, email string) string {

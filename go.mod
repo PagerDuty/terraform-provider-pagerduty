@@ -3,12 +3,17 @@ module github.com/terraform-providers/terraform-provider-pagerduty
 go 1.20
 
 require (
+	github.com/PagerDuty/go-pagerduty v1.8.1-0.20240118191642-803061c27c20
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/hc-install v0.6.2
 	github.com/hashicorp/terraform-exec v0.20.0
 	github.com/hashicorp/terraform-json v0.20.0
+	github.com/hashicorp/terraform-plugin-framework v1.5.0
+	github.com/hashicorp/terraform-plugin-go v0.20.0
+	github.com/hashicorp/terraform-plugin-mux v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
+	github.com/hashicorp/terraform-plugin-testing v1.6.0
 	github.com/heimweh/go-pagerduty v0.0.0-20231212192829-0de11cddf326
 )
 
@@ -31,7 +36,6 @@ require (
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/hcl/v2 v2.19.1 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
-	github.com/hashicorp/terraform-plugin-go v0.20.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.9.0 // indirect
 	github.com/hashicorp/terraform-registry-address v0.2.3 // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
@@ -57,8 +61,10 @@ require (
 	github.com/zclconf/go-cty v1.14.1 // indirect
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/oauth2 v0.15.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

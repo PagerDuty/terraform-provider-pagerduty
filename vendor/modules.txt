@@ -1,3 +1,6 @@
+# github.com/PagerDuty/go-pagerduty v1.8.1-0.20240118191642-803061c27c20
+## explicit; go 1.19
+github.com/PagerDuty/go-pagerduty
 # github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
 ## explicit; go 1.13
 github.com/ProtonMail/go-crypto/bitcurves
@@ -56,6 +59,7 @@ github.com/golang/snappy
 # github.com/google/go-cmp v0.6.0
 ## explicit; go 1.13
 github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
@@ -130,6 +134,42 @@ github.com/hashicorp/terraform-exec/tfexec
 # github.com/hashicorp/terraform-json v0.20.0
 ## explicit; go 1.18
 github.com/hashicorp/terraform-json
+# github.com/hashicorp/terraform-plugin-framework v1.5.0
+## explicit; go 1.20
+github.com/hashicorp/terraform-plugin-framework/attr
+github.com/hashicorp/terraform-plugin-framework/attr/xattr
+github.com/hashicorp/terraform-plugin-framework/datasource
+github.com/hashicorp/terraform-plugin-framework/datasource/schema
+github.com/hashicorp/terraform-plugin-framework/diag
+github.com/hashicorp/terraform-plugin-framework/function
+github.com/hashicorp/terraform-plugin-framework/internal/fromproto5
+github.com/hashicorp/terraform-plugin-framework/internal/fromproto6
+github.com/hashicorp/terraform-plugin-framework/internal/fromtftypes
+github.com/hashicorp/terraform-plugin-framework/internal/fwschema
+github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema
+github.com/hashicorp/terraform-plugin-framework/internal/fwschemadata
+github.com/hashicorp/terraform-plugin-framework/internal/fwserver
+github.com/hashicorp/terraform-plugin-framework/internal/logging
+github.com/hashicorp/terraform-plugin-framework/internal/privatestate
+github.com/hashicorp/terraform-plugin-framework/internal/proto5server
+github.com/hashicorp/terraform-plugin-framework/internal/proto6server
+github.com/hashicorp/terraform-plugin-framework/internal/reflect
+github.com/hashicorp/terraform-plugin-framework/internal/toproto5
+github.com/hashicorp/terraform-plugin-framework/internal/toproto6
+github.com/hashicorp/terraform-plugin-framework/internal/totftypes
+github.com/hashicorp/terraform-plugin-framework/path
+github.com/hashicorp/terraform-plugin-framework/provider
+github.com/hashicorp/terraform-plugin-framework/provider/metaschema
+github.com/hashicorp/terraform-plugin-framework/provider/schema
+github.com/hashicorp/terraform-plugin-framework/providerserver
+github.com/hashicorp/terraform-plugin-framework/resource
+github.com/hashicorp/terraform-plugin-framework/resource/schema
+github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults
+github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier
+github.com/hashicorp/terraform-plugin-framework/schema/validator
+github.com/hashicorp/terraform-plugin-framework/tfsdk
+github.com/hashicorp/terraform-plugin-framework/types
+github.com/hashicorp/terraform-plugin-framework/types/basetypes
 # github.com/hashicorp/terraform-plugin-go v0.20.0
 ## explicit; go 1.20
 github.com/hashicorp/terraform-plugin-go/internal/logging
@@ -155,6 +195,10 @@ github.com/hashicorp/terraform-plugin-log/internal/hclogutils
 github.com/hashicorp/terraform-plugin-log/internal/logging
 github.com/hashicorp/terraform-plugin-log/tflog
 github.com/hashicorp/terraform-plugin-log/tfsdklog
+# github.com/hashicorp/terraform-plugin-mux v0.13.0
+## explicit; go 1.20
+github.com/hashicorp/terraform-plugin-mux/internal/logging
+github.com/hashicorp/terraform-plugin-mux/tf5muxserver
 # github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 ## explicit; go 1.20
 github.com/hashicorp/terraform-plugin-sdk/v2/diag
@@ -178,6 +222,22 @@ github.com/hashicorp/terraform-plugin-sdk/v2/internal/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/v2/meta
 github.com/hashicorp/terraform-plugin-sdk/v2/plugin
 github.com/hashicorp/terraform-plugin-sdk/v2/terraform
+# github.com/hashicorp/terraform-plugin-testing v1.6.0
+## explicit; go 1.20
+github.com/hashicorp/terraform-plugin-testing/config
+github.com/hashicorp/terraform-plugin-testing/helper/acctest
+github.com/hashicorp/terraform-plugin-testing/helper/resource
+github.com/hashicorp/terraform-plugin-testing/internal/addrs
+github.com/hashicorp/terraform-plugin-testing/internal/configs/configschema
+github.com/hashicorp/terraform-plugin-testing/internal/configs/hcl2shim
+github.com/hashicorp/terraform-plugin-testing/internal/logging
+github.com/hashicorp/terraform-plugin-testing/internal/plugintest
+github.com/hashicorp/terraform-plugin-testing/internal/teststep
+github.com/hashicorp/terraform-plugin-testing/internal/tfdiags
+github.com/hashicorp/terraform-plugin-testing/plancheck
+github.com/hashicorp/terraform-plugin-testing/terraform
+github.com/hashicorp/terraform-plugin-testing/tfjsonpath
+github.com/hashicorp/terraform-plugin-testing/tfversion
 # github.com/hashicorp/terraform-registry-address v0.2.3
 ## explicit; go 1.19
 github.com/hashicorp/terraform-registry-address
@@ -334,6 +394,9 @@ golang.org/x/crypto/scrypt
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+# golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819
+## explicit; go 1.20
+golang.org/x/exp/constraints
 # golang.org/x/mod v0.14.0
 ## explicit; go 1.18
 golang.org/x/mod/internal/lazyregexp
@@ -348,6 +411,11 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
+# golang.org/x/oauth2 v0.15.0
+## explicit; go 1.18
+golang.org/x/oauth2
+golang.org/x/oauth2/clientcredentials
+golang.org/x/oauth2/internal
 # golang.org/x/sync v0.5.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
@@ -377,6 +445,8 @@ google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status

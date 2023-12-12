@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -23,6 +24,7 @@ const (
 	defaultAppOauthTokenGenerationURL = "https://identity.pagerduty.com/oauth/token"
 	defaultUserAgent                  = "heimweh/go-pagerduty(terraform)"
 	defaultRegion                     = "us"
+	jitterPercent                     = 0.3
 )
 
 // AuthTokenType is an enum of available tokens types
@@ -336,7 +338,7 @@ func (c *Client) newRequestDoContext(ctx context.Context, method, url string, qr
 	resp, err := c.do(req, v)
 	if err != nil {
 		if respErr, ok := err.(*Error); ok && respErr.needToRetry {
-			return c.newRequestDoContext(ctx, method, url, qryOptions, body, v)
+			return c.newRequestDoContext(ctx, method, url, nil, body, v)
 		}
 
 		return nil, err
@@ -368,7 +370,7 @@ func (c *Client) newRequestDoOptionsContext(ctx context.Context, method, url str
 	resp, err := c.do(req, v)
 	if err != nil {
 		if respErr, ok := err.(*Error); ok && respErr.needToRetry {
-			return c.newRequestDoOptionsContext(ctx, method, url, qryOptions, body, v)
+			return c.newRequestDoOptionsContext(ctx, method, url, nil, body, v)
 		}
 
 		return nil, err
@@ -570,21 +572,23 @@ func (c *Client) decodeErrorResponse(res *Response) error {
 	v := &errorResponse{Error: &Error{ErrorResponse: res}}
 	err := c.DecodeJSON(res, v)
 
-	// Delaying retry based on ratelimit-reset recommended by PagerDuty
-	// https://developer.pagerduty.com/docs/72d3b724589e3-rest-api-rate-limits#reaching-the-limit
-	ratelimitReset := res.Response.Header.Get("ratelimit-reset")
-	if res.Response.StatusCode == http.StatusTooManyRequests && ratelimitReset != "" {
-		waitFor, err := strconv.ParseInt(ratelimitReset, 10, 0)
-		if err == nil {
-			reqMethod := res.Response.Request.Method
-			reqEndpoint := res.Response.Request.URL
-			log.Printf("[INFO] Rate limit hit, throttling by %d seconds until next retry to %s: %s", waitFor, strings.ToUpper(reqMethod), reqEndpoint)
-			time.Sleep(time.Duration(waitFor) * time.Second)
-			v.Error.needToRetry = true
-			return v.Error
-		}
+	if handledError := handleRatelimitError(res, v); handledError != nil {
+		return handledError
 	}
 
+	if handledError := c.handleScopedOAuthError(res, v); handledError != nil {
+		return handledError
+	}
+
+	if err != nil {
+		return fmt.Errorf("%s API call to %s failed: %v", res.Response.Request.Method, res.Response.Request.URL.String(), res.Response.Status)
+	}
+	log.Printf("[INFO] v.Error %+v", v.Error)
+
+	return v.Error
+}
+
+func (c *Client) handleScopedOAuthError(res *Response, v *errorResponse) error {
 	isUsingScopedAPITokenFromCredentials := *c.Config.APIAuthTokenType == AuthTokenTypeUseAppCredentials
 	isOauthScopeMissing := isUsingScopedAPITokenFromCredentials && res.Response.StatusCode == http.StatusForbidden
 	needNewOauthScopedAccessToken := isUsingScopedAPITokenFromCredentials && res.Response.StatusCode == http.StatusUnauthorized
@@ -600,12 +604,51 @@ func (c *Client) decodeErrorResponse(res *Response) error {
 		return v.Error
 	}
 
-	if err != nil {
-		return fmt.Errorf("%s API call to %s failed: %v", res.Response.Request.Method, res.Response.Request.URL.String(), res.Response.Status)
-	}
-	log.Printf("[INFO] v.Error %+v", v.Error)
+	return nil
+}
 
-	return v.Error
+// handleRatelimitError will handle rate limit errors from responses with http
+// code 429. Delaying retry based on ratelimit-reset recommended by PagerDuty
+// https://developer.pagerduty.com/docs/72d3b724589e3-rest-api-rate-limits#reaching-the-limit
+func handleRatelimitError(res *Response, v *errorResponse) error {
+	var markErrorAsRetryable = func(waitFor time.Duration) error {
+		reqMethod := res.Response.Request.Method
+		reqEndpoint := res.Response.Request.URL
+		log.Printf(
+			"[INFO] Rate limit hit, throttling by %v seconds until next retry to %s: %s",
+			strconv.FormatFloat(waitFor.Seconds(), 'f', 1, 64),
+			strings.ToUpper(reqMethod),
+			reqEndpoint)
+		time.Sleep(waitFor)
+		v.Error.needToRetry = true
+		return v.Error
+	}
+
+	ratelimitReset := res.Response.Header.Get("ratelimit-reset")
+
+	if res.Response.StatusCode == http.StatusTooManyRequests && ratelimitReset == "" {
+		baseDelay := 5 * time.Second
+		jitter := 1 + (jitterPercent * rand.Float64())
+		waitFor := time.Duration(float64(baseDelay) * jitter)
+
+		return markErrorAsRetryable(waitFor)
+	}
+
+	if res.Response.StatusCode == http.StatusTooManyRequests && ratelimitReset != "" {
+		headerWaitSeconds, err := strconv.ParseInt(ratelimitReset, 10, 0)
+		if err == nil {
+			baseDelay := 500 * time.Millisecond
+			headerWait := time.Duration(headerWaitSeconds) * time.Second
+			jitter := 1 + (jitterPercent * rand.Float64())
+			extraWait := time.Duration(float64(baseDelay) * jitter)
+
+			waitFor := headerWait + extraWait
+
+			return markErrorAsRetryable(waitFor)
+		}
+	}
+
+	return nil
 }
 
 func availableOauthScopes() []string {

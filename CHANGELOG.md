@@ -1,3 +1,9 @@
+## 3.3.1 (Dec 12, 2023)
+
+IMPROVEMENTS:
+
+* `resource/*`,  `data/*`: Add jitter correction to ratelimit headers handling ([#784](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/784))
+
 ## 3.3.0 (Dec 7, 2023)
 
 FEATURES:

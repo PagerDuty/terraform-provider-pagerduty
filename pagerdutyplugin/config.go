@@ -34,8 +34,8 @@ type Config struct {
 	// Skip validation of the token against the PagerDuty API
 	SkipCredsValidation bool
 
-	// UserAgent for API Client
-	UserAgent string
+	// Target version for terraform
+	TerraformVersion string
 
 	// Region where the server of the service is deployed
 	ServiceRegion string
@@ -77,7 +77,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	client := pagerduty.NewClient(c.Token, []pagerduty.ClientOptions{
 		pagerduty.WithAPIEndpoint(apiUrl),
 		WithHTTPClient(httpClient),
-		// TODO: c.UserAgent
+		pagerduty.WithTerraformProvider(c.TerraformVersion),
 		// TODO: c.AppOauthScopedTokenParams
 		// TODO: c.APITokenType
 	}...)

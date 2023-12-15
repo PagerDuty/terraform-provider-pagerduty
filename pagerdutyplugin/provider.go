@@ -2,10 +2,8 @@ package pagerduty
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
-	"runtime"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -119,7 +117,7 @@ func ReadConfig(ctx context.Context, req provider.ConfigureRequest) (*Config, di
 		SkipCredsValidation: skipCredentialsValidation,
 		Token:               args.Token.ValueString(),
 		UserToken:           args.UserToken.ValueString(),
-		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, req.TerraformVersion),
+		TerraformVersion:    req.TerraformVersion,
 		ApiUrlOverride:      args.ApiUrlOverride.ValueString(),
 		ServiceRegion:       serviceRegion,
 	}

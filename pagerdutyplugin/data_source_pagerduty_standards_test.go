@@ -18,7 +18,10 @@ func TestAccDataSourcePagerDutyStandards_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyStandardsConfig(name),
-				Check:  testAccDataSourcePagerDutyStandards(fmt.Sprintf("data.pagerduty_standards.%s", name)),
+				Check: testAccCheckAttributes(
+					fmt.Sprintf("data.pagerduty_standards.%s", name),
+					testStandards,
+				),
 			},
 		},
 	})
@@ -77,15 +80,6 @@ func testAccDataSourcePagerDutyStandardsWithResourceType(path, rt string) resour
 		if val, ok := a["resource_type"]; !ok || val != rt {
 			return fmt.Errorf("Expected %s to match provided value: %s", val, rt)
 		}
-
-		return testStandards(a)
-	}
-}
-
-func testAccDataSourcePagerDutyStandards(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		r := s.RootModule().Resources[n]
-		a := r.Primary.Attributes
 
 		return testStandards(a)
 	}

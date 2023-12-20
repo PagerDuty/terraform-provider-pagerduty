@@ -47,6 +47,7 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 func (p *Provider) DataSources(ctx context.Context) [](func() datasource.DataSource) {
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceStandards{} },
+		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
 	}
 }
 

@@ -23,19 +23,7 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerDutyUserContactMethodImport,
 		},
-		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
-			a := diff.Get("address").(string)
-			t := diff.Get("type").(string)
-			if t == "sms_contact_method" || t == "phone_contact_method" {
-				if strings.HasPrefix(a, "0") {
-					return fmt.Errorf("phone numbers starting with a 0 are not supported was %q", a)
-				}
-				if _, err := strconv.Atoi(a); err != nil {
-					return fmt.Errorf("phone number %q is not valid as it contains non-digit characters: %w", a, err)
-				}
-			}
-			return nil
-		},
+		CustomizeDiff: customizeDiffResourceUserContactMethod,
 		Schema: map[string]*schema.Schema{
 			"user_id": {
 				Type:     schema.TypeString,
@@ -86,6 +74,47 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 			},
 		},
 	}
+}
+
+func customizeDiffResourceUserContactMethod(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+	a := diff.Get("address").(string)
+	t := diff.Get("type").(string)
+	c := diff.Get("country_code").(int)
+
+	if t == "sms_contact_method" || t == "phone_contact_method" {
+		// Validation logic based on https://support.pagerduty.com/docs/user-profile#phone-number-formatting
+		maxLength := 40
+		if len(a) > maxLength {
+			return fmt.Errorf("phone numbers may not exceed 40 characters")
+		}
+		for _, char := range a {
+			isAllowedChar := char == ',' || char == '*' || char == '#'
+			if _, err := strconv.ParseInt(string(char), 10, 64); err != nil && !isAllowedChar {
+				return fmt.Errorf("phone numbers may only include digits from 0-9 and the symbols: comma (,), asterisk (*), and pound (#)")
+			}
+		}
+
+		isMexicoNumber := c == 52
+		if t == "sms_contact_method" && isMexicoNumber && strings.HasPrefix(a, "1") {
+			return fmt.Errorf("Mexico-based SMS numbers should be free of area code prefixes, so please remove the leading 1 in the number %q", a)
+		}
+
+		isTrunkPrefixNotSupported := map[int]string{
+			33: "0", // France (33-0)
+			40: "0", // Romania (40-0)
+			44: "0", // UK (44-0)
+			45: "0", // Denmark (45-0)
+			49: "0", // Germany (49-0)
+			61: "0", // Australia (61-0)
+			66: "0", // Thailand (66-0)
+			91: "0", // India (91-0)
+			1:  "1", // North America (1-1)
+		}
+		if prefix, ok := isTrunkPrefixNotSupported[c]; ok && strings.HasPrefix(a, prefix) {
+			return fmt.Errorf("Trunk prefixes are not supported for following countries and regions: France, Romania, UK, Denmark, Germany, Australia, Thailand, India and North America, so must be formatted for international use without the leading %s", prefix)
+		}
+	}
+	return nil
 }
 
 func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMethod {

@@ -36,11 +36,8 @@ The following arguments are supported:
 ### Members (`members`) supports the following:
 
 * `id` - The ID of the found user.
-* `name` - The short name of the found user.
-* `email` - The email of the found user.
 * `role` - The team role of the found user.
-* `job_title` - The job title of the found user.
-* `time_zone` - The timezone of the found user.
-* `description` - The human-friendly description of the found user.
+* `type` - The type of object. The value returned will be `user_reference`. Can be used for passing to another object as dependency.
+* `summary` - A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to name, though it is not intended to be an identifier.
 
 [1]: https://developer.pagerduty.com/api-reference/e35802f3c4ba4-list-members-of-a-team

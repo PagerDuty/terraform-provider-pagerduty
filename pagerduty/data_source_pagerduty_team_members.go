@@ -1,11 +1,13 @@
 package pagerduty
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -13,7 +15,7 @@ import (
 
 func dataSourcePagerDutyTeamMembers() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePagerDutyTeamMembersRead,
+		ReadContext: dataSourcePagerDutyTeamMembersRead,
 
 		Schema: map[string]*schema.Schema{
 			"team_id": {
@@ -50,17 +52,17 @@ func dataSourcePagerDutyTeamMembers() *schema.Resource {
 	}
 }
 
-func dataSourcePagerDutyTeamMembersRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePagerDutyTeamMembersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	teamID := d.Get("team_id").(string)
 
 	log.Printf("[INFO] Reading PagerDuty team members of %s", teamID)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
@@ -89,4 +91,10 @@ func dataSourcePagerDutyTeamMembersRead(d *schema.ResourceData, meta interface{}
 
 		return nil
 	})
+
+	if retryErr != nil {
+		return diag.FromErr(retryErr)
+	}
+
+	return nil
 }

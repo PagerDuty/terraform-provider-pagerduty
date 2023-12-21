@@ -58,15 +58,12 @@ func (d *dataSourceStandardsResourceScores) Read(ctx context.Context, req dataso
 		return
 	}
 
-	data.ID = types.StringValue(scores.ResourceID)
-	data.ResourceType = types.StringValue(scores.ResourceType)
-
-	standards, diags := resourceStandardsToModel(scores.Standards, &data)
-	resp.Diagnostics.Append(diags...)
+	standards, di := resourceStandardsToModel(scores.Standards)
+	resp.Diagnostics.Append(di...)
 	data.Standards = standards
 
-	score, diags := resourceScoreToModel(scores.Score)
-	resp.Diagnostics.Append(diags...)
+	score, di := resourceScoreToModel(scores.Score)
+	resp.Diagnostics.Append(di...)
 	data.Score = score
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -104,7 +101,7 @@ var resourceStandardObjectType = types.ObjectType{
 	},
 }
 
-func resourceStandardsToModel(standards []pagerduty.ResourceStandard, data *dataSourceStandardsResourceScoresModel) (types.List, diag.Diagnostics) {
+func resourceStandardsToModel(standards []pagerduty.ResourceStandard) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var list []attr.Value
 	for _, standard := range standards {

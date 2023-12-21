@@ -15,9 +15,13 @@ resource][1].
 ## Example Usage
 
 ```hcl
+data "pagerduty_service" "example" {
+  name = "My Service"
+}
+
 data "pagerduty_standards_resource_scores" "scores" {
     resource_type = "technical_services"
-    id = "P703E9Q"
+    id = data.pagerduty_service.example.id
 }
 ```
 
@@ -25,7 +29,7 @@ data "pagerduty_standards_resource_scores" "scores" {
 
 The following arguments are supported:
 
-* `resource_type` - Type of the object the standards are associated to. Allowed values are `technical_service`.
+* `resource_type` - Type of the object the standards are associated to. Allowed values are `technical_services`.
 * `id` - Identifier of said resource.
 
 ## Attributes Reference
@@ -35,17 +39,17 @@ The following arguments are supported:
 
 ### Score (`score`) is a map with following attributes:
 
-* `passing` - Number of standards this resource successfully complies to
-* `total` - Number of standards associated to this resource
+* `passing` - Number of standards this resource successfully complies to.
+* `total` - Number of standards associated to this resource.
 
 ### Standards (`standards`) is a list of objects that support the following:
 
-* `id` - A unique identifier for the standard
-* `name` - The human-readable name of the standard
-* `active` - Indicates whether the standard is currently active and applicable to the resource
-* `description` - Provides a textual description of the standard
-* `type` - The type of the standard
-* `resource_type` - Specifies the type of resource to which the standard applies
-* `pass` - Indicates whether the resource complies to this standard
+* `id` - A unique identifier for the standard.
+* `name` - The human-readable name of the standard.
+* `active` - Indicates whether the standard is currently active and applicable to the resource.
+* `description` - Provides a textual description of the standard.
+* `type` - The type of the standard.
+* `resource_type` - Specifies the type of resource to which the standard applies.
+* `pass` - Indicates whether the resource complies to this standard.
 
 [1]: https://developer.pagerduty.com/api-reference/f339354b607d5-list-a-resource-s-standards-scores

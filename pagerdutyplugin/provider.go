@@ -48,6 +48,7 @@ func (p *Provider) DataSources(ctx context.Context) [](func() datasource.DataSou
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceStandards{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
+		func() datasource.DataSource { return &dataSourceStandardsResourcesScores{} },
 	}
 }
 

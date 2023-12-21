@@ -12,7 +12,7 @@ import (
 func TestAccDataSourcePagerDutyTeamMembers_Basic(t *testing.T) {
 	teamName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	userName := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	userEmail := fmt.Sprintf("%s@pagerduty.com", userName)
+	userEmail := fmt.Sprintf("%s@foo.test", userName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -21,6 +21,7 @@ func TestAccDataSourcePagerDutyTeamMembers_Basic(t *testing.T) {
 			{
 				Config: testAccDataSourcePagerDutyTeamMembersConfig(teamName, userName, userEmail),
 				Check: resource.ComposeTestCheckFunc(
+					testAccDataSourcePagerDutyTeamMembers("pagerduty_team.test", "pagerduty_user.test", "data.pagerduty_team_members.test"),
 					resource.TestCheckResourceAttr("data.pagerduty_team_members.test", "members.#", "1"),
 					resource.TestCheckResourceAttr("data.pagerduty_team_members.test", "members.0.summary", userName),
 					resource.TestCheckResourceAttr("data.pagerduty_team_members.test", "members.0.role", "manager"),
@@ -36,11 +37,18 @@ func testAccDataSourcePagerDutyTeamMembers(teamResource, userResource, teamMembe
 		userR := s.RootModule().Resources[userResource]
 		userRAs := userR.Primary.Attributes
 
+		teamR := s.RootModule().Resources[teamResource]
+		teamRAS := teamR.Primary.Attributes
+
 		teamMembershipDS := s.RootModule().Resources[teamMembershipDataSource]
 		as := teamMembershipDS.Primary.Attributes
 
-		if as["id"] != "" {
+		if as["id"] == "" {
 			return fmt.Errorf("Expected team members ID not to be empty")
+		}
+
+		if as["team_id"] != teamRAS["id"] {
+			return fmt.Errorf("Expected team ID to be %s, but got %s", teamRAS["id"], as["team_id"])
 		}
 
 		if as["members.0.id"] != userRAs["id"] {
@@ -59,7 +67,7 @@ resource "pagerduty_team" "test" {
 }
 
 resource "pagerduty_user" "test" {
-  name = "%s"
+  name  = "%s"
   email = "%s"
 }
 
@@ -69,7 +77,11 @@ resource "pagerduty_team_membership" "test" {
 }
 
 data "pagerduty_team_members" "test" {
-	team_id = pagerduty_team.test.id
+  depends_on = [
+    pagerduty_team_membership.test,
+  ]
+
+  team_id = pagerduty_team.test.id
 }
 `, teamName, teamName, userName, userEmail)
 }

@@ -56,25 +56,22 @@ func dataSourcePagerDutyTeamMembersRead(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	log.Printf("[INFO] Reading PagerDuty team members")
-
 	teamID := d.Get("team_id").(string)
 
+	log.Printf("[INFO] Reading PagerDuty team members of %s", teamID)
+
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
-		allMembers, err := collectAllTeamMembers(client, teamID)
+		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
 			}
 
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
 			return resource.RetryableError(err)
 		}
 
 		var mems []map[string]interface{}
-		for _, member := range allMembers {
+		for _, member := range resp.Members {
 			mems = append(mems, map[string]interface{}{
 				"id":      member.User.ID,
 				"type":    member.User.Type,
@@ -92,26 +89,4 @@ func dataSourcePagerDutyTeamMembersRead(d *schema.ResourceData, meta interface{}
 
 		return nil
 	})
-}
-
-func collectAllTeamMembers(c *pagerduty.Client, teamID string) ([]*pagerduty.Member, error) {
-	var members []*pagerduty.Member
-	opts := &pagerduty.GetMembersOptions{
-		Limit:  100,
-		Offset: 0,
-	}
-
-	for {
-		resp, _, err := c.Teams.GetMembers(teamID, opts)
-		if err != nil {
-			return nil, err
-		}
-
-		members = append(members, resp.Members...)
-		if !resp.More {
-			return members, nil
-		}
-
-		opts.Offset = opts.Offset + opts.Limit
-	}
 }

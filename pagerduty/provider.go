@@ -98,6 +98,7 @@ func Provider() *schema.Provider {
 			"pagerduty_automation_actions_action":       dataSourcePagerDutyAutomationActionsAction(),
 			"pagerduty_incident_workflow":               dataSourcePagerDutyIncidentWorkflow(),
 			"pagerduty_incident_custom_field":           dataSourcePagerDutyIncidentCustomField(),
+			"pagerduty_team_members":                    dataSourcePagerDutyTeamMembers(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{

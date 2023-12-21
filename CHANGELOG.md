@@ -1,3 +1,14 @@
+## 3.4.0 (Dec 21, 2023)
+
+FEATURES:
+
+* `data/pagerduty_team_members`: add `pagerduty_team_members` data source ([#717](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/717))
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_contact_method`: Update `pagerduty_user_contact_method` address validation logic ([#792](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/792))
+* `resource/*`,  `data/*`: Bump golang.org/x/crypto from 0.11.0 to 0.17.0 ([#790](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/790))
+
 ## 3.3.1 (Dec 12, 2023)
 
 IMPROVEMENTS:

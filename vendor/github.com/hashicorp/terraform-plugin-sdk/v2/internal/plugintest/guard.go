@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package plugintest
 
 import (
@@ -19,6 +22,7 @@ type TestControl interface {
 	Log(args ...interface{})
 	FailNow()
 	SkipNow()
+	Name() string
 }
 
 // testingT wraps a TestControl to recover some of the convenience behaviors

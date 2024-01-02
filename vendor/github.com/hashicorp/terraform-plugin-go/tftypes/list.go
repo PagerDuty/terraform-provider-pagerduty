@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
@@ -13,6 +16,23 @@ type List struct {
 	// see https://golang.org/ref/spec#Comparison_operators
 	// this enforces the use of Is, instead
 	_ []struct{}
+}
+
+// ApplyTerraform5AttributePathStep applies an AttributePathStep to a List,
+// returning the Type found at that AttributePath within the List. If the
+// AttributePathStep cannot be applied to the List, an ErrInvalidStep error
+// will be returned.
+func (l List) ApplyTerraform5AttributePathStep(step AttributePathStep) (interface{}, error) {
+	switch s := step.(type) {
+	case ElementKeyInt:
+		if int64(s) < 0 {
+			return nil, ErrInvalidStep
+		}
+
+		return l.ElementType, nil
+	default:
+		return nil, ErrInvalidStep
+	}
 }
 
 // Equal returns true if the two Lists are exactly equal. Unlike Is, passing in

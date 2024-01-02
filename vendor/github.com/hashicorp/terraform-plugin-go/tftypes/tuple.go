@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
@@ -17,6 +20,23 @@ type Tuple struct {
 	// see https://golang.org/ref/spec#Comparison_operators
 	// this enforces the use of Is, instead
 	_ []struct{}
+}
+
+// ApplyTerraform5AttributePathStep applies an AttributePathStep to a Tuple,
+// returning the Type found at that AttributePath within the Tuple. If the
+// AttributePathStep cannot be applied to the Tuple, an ErrInvalidStep error
+// will be returned.
+func (tu Tuple) ApplyTerraform5AttributePathStep(step AttributePathStep) (interface{}, error) {
+	switch s := step.(type) {
+	case ElementKeyInt:
+		if int64(s) < 0 || int64(s) >= int64(len(tu.ElementTypes)) {
+			return nil, ErrInvalidStep
+		}
+
+		return tu.ElementTypes[int64(s)], nil
+	default:
+		return nil, ErrInvalidStep
+	}
 }
 
 // Equal returns true if the two Tuples are exactly equal. Unlike Is, passing

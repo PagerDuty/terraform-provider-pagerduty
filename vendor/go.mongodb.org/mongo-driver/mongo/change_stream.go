@@ -17,7 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/internal"
+	"go.mongodb.org/mongo-driver/internal/csot"
 	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
@@ -80,6 +80,7 @@ type ChangeStream struct {
 	err             error
 	sess            *session.Client
 	client          *Client
+	bsonOpts        *options.BSONOptions
 	registry        *bsoncodec.Registry
 	streamType      StreamType
 	options         *options.ChangeStreamOptions
@@ -92,6 +93,7 @@ type changeStreamConfig struct {
 	readConcern    *readconcern.ReadConcern
 	readPreference *readpref.ReadPref
 	client         *Client
+	bsonOpts       *options.BSONOptions
 	registry       *bsoncodec.Registry
 	streamType     StreamType
 	collectionName string
@@ -105,8 +107,13 @@ func newChangeStream(ctx context.Context, config changeStreamConfig, pipeline in
 		ctx = context.Background()
 	}
 
+	cursorOpts := config.client.createBaseCursorOptions()
+
+	cursorOpts.MarshalValueEncoderFn = newEncoderFn(config.bsonOpts, config.registry)
+
 	cs := &ChangeStream{
 		client:     config.client,
+		bsonOpts:   config.bsonOpts,
 		registry:   config.registry,
 		streamType: config.streamType,
 		options:    options.MergeChangeStreamOptions(opts...),
@@ -114,15 +121,12 @@ func newChangeStream(ctx context.Context, config changeStreamConfig, pipeline in
 			description.ReadPrefSelector(config.readPreference),
 			description.LatencySelector(config.client.localThreshold),
 		}),
-		cursorOptions: config.client.createBaseCursorOptions(),
+		cursorOptions: cursorOpts,
 	}
 
 	cs.sess = sessionFromContext(ctx)
 	if cs.sess == nil && cs.client.sessionPool != nil {
-		cs.sess, cs.err = session.NewClientSession(cs.client.sessionPool, cs.client.id, session.Implicit)
-		if cs.err != nil {
-			return nil, cs.Err()
-		}
+		cs.sess = session.NewImplicitClientSession(cs.client.sessionPool, cs.client.id)
 	}
 	if cs.err = cs.client.validSession(cs.sess); cs.err != nil {
 		closeImplicitSession(cs.sess)
@@ -141,7 +145,7 @@ func newChangeStream(ctx context.Context, config changeStreamConfig, pipeline in
 	if comment := cs.options.Comment; comment != nil {
 		cs.aggregate.Comment(*comment)
 
-		commentVal, err := transformValue(cs.registry, comment, true, "comment")
+		commentVal, err := marshalValue(comment, cs.bsonOpts, cs.registry)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +244,6 @@ func (cs *ChangeStream) createOperationDeployment(server driver.Server, connecti
 func (cs *ChangeStream) executeOperation(ctx context.Context, resuming bool) error {
 	var server driver.Server
 	var conn driver.Connection
-	var err error
 
 	if server, cs.err = cs.client.deployment.SelectServer(ctx, cs.selector); cs.err != nil {
 		return cs.Err()
@@ -277,55 +280,69 @@ func (cs *ChangeStream) executeOperation(ctx context.Context, resuming bool) err
 	// If no deadline is set on the passed-in context, cs.client.timeout is set, and context is not already
 	// a Timeout context, honor cs.client.timeout in new Timeout context for change stream operation execution
 	// and potential retry.
-	if _, deadlineSet := ctx.Deadline(); !deadlineSet && cs.client.timeout != nil && !internal.IsTimeoutContext(ctx) {
-		newCtx, cancelFunc := internal.MakeTimeoutContext(ctx, *cs.client.timeout)
+	if _, deadlineSet := ctx.Deadline(); !deadlineSet && cs.client.timeout != nil && !csot.IsTimeoutContext(ctx) {
+		newCtx, cancelFunc := csot.MakeTimeoutContext(ctx, *cs.client.timeout)
 		// Redefine ctx to be the new timeout-derived context.
 		ctx = newCtx
 		// Cancel the timeout-derived context at the end of executeOperation to avoid a context leak.
 		defer cancelFunc()
 	}
-	if original := cs.aggregate.Execute(ctx); original != nil {
-		retryableRead := cs.client.retryReads && cs.wireVersion != nil && cs.wireVersion.Max >= 6
-		if !retryableRead {
-			cs.err = replaceErrors(original)
-			return cs.err
+
+	// Execute the aggregate, retrying on retryable errors once (1) if retryable reads are enabled and
+	// infinitely (-1) if context is a Timeout context.
+	var retries int
+	if cs.client.retryReads {
+		retries = 1
+	}
+	if csot.IsTimeoutContext(ctx) {
+		retries = -1
+	}
+
+	var err error
+AggregateExecuteLoop:
+	for {
+		err = cs.aggregate.Execute(ctx)
+		// If no error or no retries remain, do not retry.
+		if err == nil || retries == 0 {
+			break AggregateExecuteLoop
 		}
 
-		cs.err = original
-		switch tt := original.(type) {
+		switch tt := err.(type) {
 		case driver.Error:
+			// If error is not retryable, do not retry.
 			if !tt.RetryableRead() {
-				break
+				break AggregateExecuteLoop
 			}
 
+			// If error is retryable: subtract 1 from retries, redo server selection, checkout
+			// a connection, and restart loop.
+			retries--
 			server, err = cs.client.deployment.SelectServer(ctx, cs.selector)
 			if err != nil {
-				break
+				break AggregateExecuteLoop
 			}
 
 			conn.Close()
 			conn, err = server.Connection(ctx)
 			if err != nil {
-				break
+				break AggregateExecuteLoop
 			}
 			defer conn.Close()
+
+			// Update the wire version with data from the new connection.
 			cs.wireVersion = conn.Description().WireVersion
 
-			if cs.wireVersion == nil || cs.wireVersion.Max < 6 {
-				break
-			}
-
+			// Reset deployment.
 			cs.aggregate.Deployment(cs.createOperationDeployment(server, conn))
-			cs.err = cs.aggregate.Execute(ctx)
+		default:
+			// Do not retry if error is not a driver error.
+			break AggregateExecuteLoop
 		}
-
-		if cs.err != nil {
-			cs.err = replaceErrors(cs.err)
-			return cs.Err()
-		}
-
 	}
-	cs.err = nil
+	if err != nil {
+		cs.err = replaceErrors(err)
+		return cs.err
+	}
 
 	cr := cs.aggregate.ResultCursorResponse()
 	cr.Server = server
@@ -379,7 +396,7 @@ func (cs *ChangeStream) storeResumeToken() error {
 func (cs *ChangeStream) buildPipelineSlice(pipeline interface{}) error {
 	val := reflect.ValueOf(pipeline)
 	if !val.IsValid() || !(val.Kind() == reflect.Slice) {
-		cs.err = errors.New("can only transform slices and arrays into aggregation pipelines, but got invalid")
+		cs.err = errors.New("can only marshal slices and arrays into aggregation pipelines, but got invalid")
 		return cs.err
 	}
 
@@ -400,7 +417,7 @@ func (cs *ChangeStream) buildPipelineSlice(pipeline interface{}) error {
 
 	for i := 0; i < val.Len(); i++ {
 		var elem []byte
-		elem, cs.err = transformBsoncoreDocument(cs.registry, val.Index(i).Interface(), true, fmt.Sprintf("pipeline stage :%v", i))
+		elem, cs.err = marshal(val.Index(i).Interface(), cs.bsonOpts, cs.registry)
 		if cs.err != nil {
 			return cs.err
 		}
@@ -418,13 +435,8 @@ func (cs *ChangeStream) createPipelineOptionsDoc() (bsoncore.Document, error) {
 		plDoc = bsoncore.AppendBooleanElement(plDoc, "allChangesForCluster", true)
 	}
 
-	if cs.options.FullDocument != nil {
-		// Only append a default "fullDocument" field if wire version is less than 6 (3.6). Otherwise,
-		// the server will assume users want the default behavior, and "fullDocument" does not need to be
-		// specified.
-		if *cs.options.FullDocument != options.Default || (cs.wireVersion != nil && cs.wireVersion.Max < 6) {
-			plDoc = bsoncore.AppendStringElement(plDoc, "fullDocument", string(*cs.options.FullDocument))
-		}
+	if cs.options.FullDocument != nil && *cs.options.FullDocument != options.Default {
+		plDoc = bsoncore.AppendStringElement(plDoc, "fullDocument", string(*cs.options.FullDocument))
 	}
 
 	if cs.options.FullDocumentBeforeChange != nil {
@@ -433,7 +445,7 @@ func (cs *ChangeStream) createPipelineOptionsDoc() (bsoncore.Document, error) {
 
 	if cs.options.ResumeAfter != nil {
 		var raDoc bsoncore.Document
-		raDoc, cs.err = transformBsoncoreDocument(cs.registry, cs.options.ResumeAfter, true, "resumeAfter")
+		raDoc, cs.err = marshal(cs.options.ResumeAfter, cs.bsonOpts, cs.registry)
 		if cs.err != nil {
 			return nil, cs.err
 		}
@@ -447,7 +459,7 @@ func (cs *ChangeStream) createPipelineOptionsDoc() (bsoncore.Document, error) {
 
 	if cs.options.StartAfter != nil {
 		var saDoc bsoncore.Document
-		saDoc, cs.err = transformBsoncoreDocument(cs.registry, cs.options.StartAfter, true, "startAfter")
+		saDoc, cs.err = marshal(cs.options.StartAfter, cs.bsonOpts, cs.registry)
 		if cs.err != nil {
 			return nil, cs.err
 		}
@@ -519,6 +531,16 @@ func (cs *ChangeStream) ID() int64 {
 	return cs.cursor.ID()
 }
 
+// SetBatchSize sets the number of documents to fetch from the database with
+// each iteration of the ChangeStream's "Next" or "TryNext" method. This setting
+// only affects subsequent document batches fetched from the database.
+func (cs *ChangeStream) SetBatchSize(size int32) {
+	// Set batch size on the cursor options also so any "resumed" change stream
+	// cursors will pick up the latest batch size setting.
+	cs.cursorOptions.BatchSize = size
+	cs.cursor.SetBatchSize(size)
+}
+
 // Decode will unmarshal the current event document into val and return any errors from the unmarshalling process
 // without any modification. If val is nil or is a typed nil, an error will be returned.
 func (cs *ChangeStream) Decode(val interface{}) error {
@@ -526,7 +548,11 @@ func (cs *ChangeStream) Decode(val interface{}) error {
 		return ErrNilCursor
 	}
 
-	return bson.UnmarshalWithRegistry(cs.registry, cs.Current, val)
+	dec, err := getDecoder(cs.Current, cs.bsonOpts, cs.registry)
+	if err != nil {
+		return fmt.Errorf("error configuring BSON decoder: %w", err)
+	}
+	return dec.Decode(val)
 }
 
 // Err returns the last error seen by the change stream, or nil if no errors has occurred.

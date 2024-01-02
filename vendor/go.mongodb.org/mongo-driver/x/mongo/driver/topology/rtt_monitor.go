@@ -39,11 +39,16 @@ type rttConfig struct {
 }
 
 type rttMonitor struct {
-	mu            sync.RWMutex // mu guards samples, offset, minRTT, averageRTT, and averageRTTSet
+	mu sync.RWMutex // mu guards samples, offset, minRTT, averageRTT, and averageRTTSet
+
+	// connMu guards connecting and disconnecting. This is necessary since
+	// disconnecting will await the cancellation of a started connection. The
+	// use case for rttMonitor.connect needs to be goroutine safe.
+	connMu        sync.Mutex
 	samples       []time.Duration
 	offset        int
 	minRTT        time.Duration
-	RTT90         time.Duration
+	rtt90         time.Duration
 	averageRTT    time.Duration
 	averageRTTSet bool
 
@@ -51,7 +56,10 @@ type rttMonitor struct {
 	cfg      *rttConfig
 	ctx      context.Context
 	cancelFn context.CancelFunc
+	started  bool
 }
+
+var _ driver.RTTMonitor = &rttMonitor{}
 
 func newRTTMonitor(cfg *rttConfig) *rttMonitor {
 	if cfg.interval <= 0 {
@@ -72,19 +80,34 @@ func newRTTMonitor(cfg *rttConfig) *rttMonitor {
 }
 
 func (r *rttMonitor) connect() {
+	r.connMu.Lock()
+	defer r.connMu.Unlock()
+
+	r.started = true
 	r.closeWg.Add(1)
-	go r.start()
+
+	go func() {
+		defer r.closeWg.Done()
+
+		r.start()
+	}()
 }
 
 func (r *rttMonitor) disconnect() {
-	// Signal for the routine to stop.
+	r.connMu.Lock()
+	defer r.connMu.Unlock()
+
+	if !r.started {
+		return
+	}
+
 	r.cancelFn()
+
+	// Wait for the existing connection to complete.
 	r.closeWg.Wait()
 }
 
 func (r *rttMonitor) start() {
-	defer r.closeWg.Done()
-
 	var conn *connection
 	defer func() {
 		if conn != nil {
@@ -179,7 +202,7 @@ func (r *rttMonitor) reset() {
 	}
 	r.offset = 0
 	r.minRTT = 0
-	r.RTT90 = 0
+	r.rtt90 = 0
 	r.averageRTT = 0
 	r.averageRTTSet = false
 }
@@ -196,7 +219,7 @@ func (r *rttMonitor) addSample(rtt time.Duration) {
 	// setting these to prevent noisy samples on startup from artificially increasing RTT and to allow the
 	// calculation of a 90th percentile.
 	r.minRTT = min(r.samples, minSamples)
-	r.RTT90 = percentile(90.0, r.samples, minSamples)
+	r.rtt90 = percentile(90.0, r.samples, minSamples)
 
 	if !r.averageRTTSet {
 		r.averageRTT = rtt
@@ -249,26 +272,57 @@ func percentile(perc float64, samples []time.Duration, minSamples int) time.Dura
 	return time.Duration(p)
 }
 
-// getRTT returns the exponentially weighted moving average observed round-trip time.
-func (r *rttMonitor) getRTT() time.Duration {
+// EWMA returns the exponentially weighted moving average observed round-trip time.
+func (r *rttMonitor) EWMA() time.Duration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	return r.averageRTT
 }
 
-// getMinRTT returns the minimum observed round-trip time over the window period.
-func (r *rttMonitor) getMinRTT() time.Duration {
+// Min returns the minimum observed round-trip time over the window period.
+func (r *rttMonitor) Min() time.Duration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	return r.minRTT
 }
 
-// getRTT90 returns the 90th percentile observed round-trip time over the window period.
-func (r *rttMonitor) getRTT90() time.Duration {
+// P90 returns the 90th percentile observed round-trip time over the window period.
+func (r *rttMonitor) P90() time.Duration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return r.RTT90
+	return r.rtt90
+}
+
+// Stats returns stringified stats of the current state of the monitor.
+func (r *rttMonitor) Stats() string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	// Calculate standard deviation and average (non-EWMA) of samples.
+	var sum float64
+	floatSamples := make([]float64, 0, len(r.samples))
+	for _, sample := range r.samples {
+		if sample > 0 {
+			floatSamples = append(floatSamples, float64(sample))
+			sum += float64(sample)
+		}
+	}
+
+	var avg, stdDev float64
+	if len(floatSamples) > 0 {
+		avg = sum / float64(len(floatSamples))
+
+		var err error
+		stdDev, err = stats.StandardDeviation(floatSamples)
+		if err != nil {
+			panic(fmt.Errorf("x/mongo/driver/topology: error calculating standard deviation RTT: %v for samples:\n%v", err, floatSamples))
+		}
+	}
+
+	return fmt.Sprintf(`Round-trip-time monitor statistics:`+"\n"+
+		`average RTT: %v, minimum RTT: %v, 90th percentile RTT: %v, standard dev: %v`+"\n",
+		time.Duration(avg), r.minRTT, r.rtt90, time.Duration(stdDev))
 }

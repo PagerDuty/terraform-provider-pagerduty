@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tf6server
 
 import (
@@ -16,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/internal/logging"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/fromproto"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/tf6serverlogging"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/tfplugin6"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/toproto"
 	"google.golang.org/grpc"
@@ -44,7 +48,7 @@ const (
 	//
 	// In the future, it may be possible to include this information directly
 	// in the protocol buffers rather than recreating a constant here.
-	protocolVersionMinor uint = 0
+	protocolVersionMinor uint = 4
 )
 
 // protocolVersion represents the combined major and minor version numbers of
@@ -482,6 +486,43 @@ func New(name string, serve tfprotov6.ProviderServer, opts ...ServeOpt) tfplugin
 	}
 }
 
+func (s *server) GetMetadata(ctx context.Context, req *tfplugin6.GetMetadata_Request) (*tfplugin6.GetMetadata_Response, error) {
+	rpc := "GetMetadata"
+	ctx = s.loggingContext(ctx)
+	ctx = logging.RpcContext(ctx, rpc)
+	ctx = s.stoppableContext(ctx)
+	logging.ProtocolTrace(ctx, "Received request")
+	defer logging.ProtocolTrace(ctx, "Served request")
+
+	r, err := fromproto.GetMetadataRequest(req)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error converting request from protobuf", map[string]interface{}{logging.KeyError: err})
+		return nil, err
+	}
+
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
+
+	resp, err := s.downstream.GetMetadata(ctx, r)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
+		return nil, err
+	}
+
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
+	tf6serverlogging.ServerCapabilities(ctx, resp.ServerCapabilities)
+
+	ret, err := toproto.GetMetadata_Response(resp)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
+		return nil, err
+	}
+
+	return ret, nil
+}
+
 func (s *server) GetProviderSchema(ctx context.Context, req *tfplugin6.GetProviderSchema_Request) (*tfplugin6.GetProviderSchema_Response, error) {
 	rpc := "GetProviderSchema"
 	ctx = s.loggingContext(ctx)
@@ -494,13 +535,14 @@ func (s *server) GetProviderSchema(ctx context.Context, req *tfplugin6.GetProvid
 		logging.ProtocolError(ctx, "Error converting request from protobuf", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.GetProviderSchema(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
+	tf6serverlogging.ServerCapabilities(ctx, resp.ServerCapabilities)
 	ret, err := toproto.GetProviderSchema_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -522,13 +564,13 @@ func (s *server) ConfigureProvider(ctx context.Context, req *tfplugin6.Configure
 		return nil, err
 	}
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ConfigureProvider(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	ret, err := toproto.Configure_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -549,13 +591,13 @@ func (s *server) ValidateProviderConfig(ctx context.Context, req *tfplugin6.Vali
 		return nil, err
 	}
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ValidateProviderConfig(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	ret, err := toproto.ValidateProviderConfig_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -577,7 +619,7 @@ func (s *server) stop() {
 	s.stopCh = make(chan struct{})
 }
 
-func (s *server) Stop(ctx context.Context, req *tfplugin6.StopProvider_Request) (*tfplugin6.StopProvider_Response, error) {
+func (s *server) StopProvider(ctx context.Context, req *tfplugin6.StopProvider_Request) (*tfplugin6.StopProvider_Response, error) {
 	rpc := "StopProvider"
 	ctx = s.loggingContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
@@ -589,13 +631,13 @@ func (s *server) Stop(ctx context.Context, req *tfplugin6.StopProvider_Request) 
 		logging.ProtocolError(ctx, "Error converting request from protobuf", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.StopProvider(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, nil)
 	logging.ProtocolTrace(ctx, "Closing all our contexts")
 	s.stop()
 	logging.ProtocolTrace(ctx, "Closed all our contexts")
@@ -621,13 +663,13 @@ func (s *server) ValidateDataResourceConfig(ctx context.Context, req *tfplugin6.
 		return nil, err
 	}
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ValidateDataResourceConfig(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	ret, err := toproto.ValidateDataResourceConfig_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -651,13 +693,13 @@ func (s *server) ReadDataSource(ctx context.Context, req *tfplugin6.ReadDataSour
 	}
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "ProviderMeta", r.ProviderMeta)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ReadDataSource(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Response", "State", resp.State)
 	ret, err := toproto.ReadDataSource_Response(resp)
 	if err != nil {
@@ -681,13 +723,13 @@ func (s *server) ValidateResourceConfig(ctx context.Context, req *tfplugin6.Vali
 		return nil, err
 	}
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ValidateResourceConfig(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	ret, err := toproto.ValidateResourceConfig_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -709,13 +751,13 @@ func (s *server) UpgradeResourceState(ctx context.Context, req *tfplugin6.Upgrad
 		logging.ProtocolError(ctx, "Error converting request from protobuf", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.UpgradeResourceState(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Response", "UpgradedState", resp.UpgradedState)
 	ret, err := toproto.UpgradeResourceState_Response(resp)
 	if err != nil {
@@ -740,14 +782,16 @@ func (s *server) ReadResource(ctx context.Context, req *tfplugin6.ReadResource_R
 	}
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "CurrentState", r.CurrentState)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "ProviderMeta", r.ProviderMeta)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	logging.ProtocolPrivateData(ctx, s.protocolDataDir, rpc, "Request", "Private", r.Private)
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ReadResource(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Response", "NewState", resp.NewState)
+	logging.ProtocolPrivateData(ctx, s.protocolDataDir, rpc, "Response", "Private", resp.Private)
 	ret, err := toproto.ReadResource_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -773,14 +817,16 @@ func (s *server) PlanResourceChange(ctx context.Context, req *tfplugin6.PlanReso
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "PriorState", r.PriorState)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "ProposedNewState", r.ProposedNewState)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "ProviderMeta", r.ProviderMeta)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	logging.ProtocolPrivateData(ctx, s.protocolDataDir, rpc, "Request", "PriorPrivate", r.PriorPrivate)
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.PlanResourceChange(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Response", "PlannedState", resp.PlannedState)
+	logging.ProtocolPrivateData(ctx, s.protocolDataDir, rpc, "Response", "PlannedPrivate", resp.PlannedPrivate)
 	ret, err := toproto.PlanResourceChange_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -804,16 +850,18 @@ func (s *server) ApplyResourceChange(ctx context.Context, req *tfplugin6.ApplyRe
 	}
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "PlannedState", r.PlannedState)
-	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
-	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "Config", r.Config)
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "PriorState", r.PriorState)
+	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", "ProviderMeta", r.ProviderMeta)
+	logging.ProtocolPrivateData(ctx, s.protocolDataDir, rpc, "Request", "PlannedPrivate", r.PlannedPrivate)
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ApplyResourceChange(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Response", "NewState", resp.NewState)
+	logging.ProtocolPrivateData(ctx, s.protocolDataDir, rpc, "Response", "Private", resp.Private)
 	ret, err := toproto.ApplyResourceChange_Response(resp)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]interface{}{logging.KeyError: err})
@@ -835,15 +883,16 @@ func (s *server) ImportResourceState(ctx context.Context, req *tfplugin6.ImportR
 		logging.ProtocolError(ctx, "Error converting request from protobuf", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Calling downstream")
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
 	resp, err := s.downstream.ImportResourceState(ctx, r)
 	if err != nil {
 		logging.ProtocolError(ctx, "Error from downstream", map[string]interface{}{logging.KeyError: err})
 		return nil, err
 	}
-	logging.ProtocolTrace(ctx, "Called downstream")
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
 	for _, importedResource := range resp.ImportedResources {
 		logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Response_ImportedResource", "State", importedResource.State)
+		logging.ProtocolPrivateData(ctx, s.protocolDataDir, rpc, "Response_ImportedResource", "Private", importedResource.Private)
 	}
 	ret, err := toproto.ImportResourceState_Response(resp)
 	if err != nil {
@@ -851,4 +900,124 @@ func (s *server) ImportResourceState(ctx context.Context, req *tfplugin6.ImportR
 		return nil, err
 	}
 	return ret, nil
+}
+
+func (s *server) CallFunction(ctx context.Context, protoReq *tfplugin6.CallFunction_Request) (*tfplugin6.CallFunction_Response, error) {
+	rpc := "CallFunction"
+	ctx = s.loggingContext(ctx)
+	ctx = logging.RpcContext(ctx, rpc)
+	ctx = s.stoppableContext(ctx)
+	logging.ProtocolTrace(ctx, "Received request")
+	defer logging.ProtocolTrace(ctx, "Served request")
+
+	// Remove this check and error in preference of s.downstream.CallFunction
+	// below once ProviderServer interface requires FunctionServer.
+	// Reference: https://github.com/hashicorp/terraform-plugin-go/issues/353
+	functionServer, ok := s.downstream.(tfprotov6.FunctionServer)
+
+	if !ok {
+		logging.ProtocolError(ctx, "ProviderServer does not implement FunctionServer")
+
+		protoResp := &tfplugin6.CallFunction_Response{
+			Diagnostics: []*tfplugin6.Diagnostic{
+				{
+					Severity: tfplugin6.Diagnostic_ERROR,
+					Summary:  "Provider Functions Not Implemented",
+					Detail: "A provider-defined function call was received by the provider, however the provider does not implement functions. " +
+						"Either upgrade the provider to a version that implements provider-defined functions or this is a bug in Terraform that should be reported to the Terraform maintainers.",
+				},
+			},
+		}
+
+		return protoResp, nil
+	}
+
+	req, err := fromproto.CallFunctionRequest(protoReq)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error converting request from protobuf", map[string]any{logging.KeyError: err})
+
+		return nil, err
+	}
+
+	for position, argument := range req.Arguments {
+		logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Request", fmt.Sprintf("Arguments_%d", position), argument)
+	}
+
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-go/issues/353
+	// resp, err := s.downstream.CallFunction(ctx, req)
+	resp, err := functionServer.CallFunction(ctx, req)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error from downstream", map[string]any{logging.KeyError: err})
+		return nil, err
+	}
+
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
+	logging.ProtocolData(ctx, s.protocolDataDir, rpc, "Response", "Result", resp.Result)
+
+	protoResp, err := toproto.CallFunction_Response(resp)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]any{logging.KeyError: err})
+		return nil, err
+	}
+
+	return protoResp, nil
+}
+
+func (s *server) GetFunctions(ctx context.Context, protoReq *tfplugin6.GetFunctions_Request) (*tfplugin6.GetFunctions_Response, error) {
+	rpc := "GetFunctions"
+	ctx = s.loggingContext(ctx)
+	ctx = logging.RpcContext(ctx, rpc)
+	ctx = s.stoppableContext(ctx)
+	logging.ProtocolTrace(ctx, "Received request")
+	defer logging.ProtocolTrace(ctx, "Served request")
+
+	// Remove this check and response in preference of s.downstream.GetFunctions
+	// below once ProviderServer interface requires FunctionServer.
+	// Reference: https://github.com/hashicorp/terraform-plugin-go/issues/353
+	functionServer, ok := s.downstream.(tfprotov6.FunctionServer)
+
+	if !ok {
+		logging.ProtocolWarn(ctx, "ProviderServer does not implement FunctionServer")
+
+		protoResp := &tfplugin6.GetFunctions_Response{
+			Functions: map[string]*tfplugin6.Function{},
+		}
+
+		return protoResp, nil
+	}
+
+	req, err := fromproto.GetFunctionsRequest(protoReq)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error converting request from protobuf", map[string]any{logging.KeyError: err})
+
+		return nil, err
+	}
+
+	ctx = tf6serverlogging.DownstreamRequest(ctx)
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-go/issues/353
+	// resp, err := s.downstream.GetFunctions(ctx, req)
+	resp, err := functionServer.GetFunctions(ctx, req)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error from downstream", map[string]any{logging.KeyError: err})
+		return nil, err
+	}
+
+	tf6serverlogging.DownstreamResponse(ctx, resp.Diagnostics)
+
+	protoResp, err := toproto.GetFunctions_Response(resp)
+
+	if err != nil {
+		logging.ProtocolError(ctx, "Error converting response to protobuf", map[string]any{logging.KeyError: err})
+		return nil, err
+	}
+
+	return protoResp, nil
 }

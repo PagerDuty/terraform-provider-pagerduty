@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
@@ -14,6 +17,19 @@ type Map struct {
 	// see https://golang.org/ref/spec#Comparison_operators
 	// this enforces the use of Is, instead
 	_ []struct{}
+}
+
+// ApplyTerraform5AttributePathStep applies an AttributePathStep to a Map,
+// returning the Type found at that AttributePath within the Map. If the
+// AttributePathStep cannot be applied to the Map, an ErrInvalidStep error
+// will be returned.
+func (m Map) ApplyTerraform5AttributePathStep(step AttributePathStep) (interface{}, error) {
+	switch step.(type) {
+	case ElementKeyString:
+		return m.ElementType, nil
+	default:
+		return nil, ErrInvalidStep
+	}
 }
 
 // Equal returns true if the two Maps are exactly equal. Unlike Is, passing in

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/event"
+	"go.mongodb.org/mongo-driver/internal/driverutil"
 	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 	"go.mongodb.org/mongo-driver/x/mongo/driver"
@@ -21,7 +22,7 @@ import (
 // ListIndexes performs a listIndexes operation.
 type ListIndexes struct {
 	batchSize  *int32
-	maxTimeMS  *int64
+	maxTime    *time.Duration
 	session    *session.Client
 	clock      *session.ClusterClock
 	collection string
@@ -75,6 +76,7 @@ func (li *ListIndexes) Execute(ctx context.Context) error {
 		CommandMonitor: li.monitor,
 		Database:       li.database,
 		Deployment:     li.deployment,
+		MaxTime:        li.maxTime,
 		Selector:       li.selector,
 		Crypt:          li.crypt,
 		Legacy:         driver.LegacyListIndexes,
@@ -82,23 +84,18 @@ func (li *ListIndexes) Execute(ctx context.Context) error {
 		Type:           driver.Read,
 		ServerAPI:      li.serverAPI,
 		Timeout:        li.timeout,
-	}.Execute(ctx, nil)
+		Name:           driverutil.ListIndexesOp,
+	}.Execute(ctx)
 
 }
 
-func (li *ListIndexes) command(dst []byte, desc description.SelectedServer) ([]byte, error) {
+func (li *ListIndexes) command(dst []byte, _ description.SelectedServer) ([]byte, error) {
 	dst = bsoncore.AppendStringElement(dst, "listIndexes", li.collection)
 	cursorIdx, cursorDoc := bsoncore.AppendDocumentStart(nil)
 
 	if li.batchSize != nil {
 
 		cursorDoc = bsoncore.AppendInt32Element(cursorDoc, "batchSize", *li.batchSize)
-	}
-
-	// Only append specified maxTimeMS if timeout is not also specified.
-	if li.maxTimeMS != nil && li.timeout == nil {
-
-		dst = bsoncore.AppendInt64Element(dst, "maxTimeMS", *li.maxTimeMS)
 	}
 	cursorDoc, _ = bsoncore.AppendDocumentEnd(cursorDoc, cursorIdx)
 	dst = bsoncore.AppendDocumentElement(dst, "cursor", cursorDoc)
@@ -116,13 +113,13 @@ func (li *ListIndexes) BatchSize(batchSize int32) *ListIndexes {
 	return li
 }
 
-// MaxTimeMS specifies the maximum amount of time to allow the query to run.
-func (li *ListIndexes) MaxTimeMS(maxTimeMS int64) *ListIndexes {
+// MaxTime specifies the maximum amount of time to allow the query to run on the server.
+func (li *ListIndexes) MaxTime(maxTime *time.Duration) *ListIndexes {
 	if li == nil {
 		li = new(ListIndexes)
 	}
 
-	li.maxTimeMS = &maxTimeMS
+	li.maxTime = maxTime
 	return li
 }
 

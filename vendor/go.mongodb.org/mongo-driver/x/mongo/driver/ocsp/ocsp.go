@@ -149,7 +149,7 @@ func processStaple(cfg config, staple []byte) (*ResponseDetails, error) {
 	// If the server has a Must-Staple certificate and the server does not present a stapled OCSP response, error.
 	if mustStaple && len(staple) == 0 {
 		return nil, errors.New("server provided a certificate with the Must-Staple extension but did not " +
-			"provde a stapled OCSP response")
+			"provide a stapled OCSP response")
 	}
 
 	if len(staple) == 0 {
@@ -240,7 +240,7 @@ func contactResponders(ctx context.Context, cfg config) *ResponseDetails {
 			}
 			request = request.WithContext(ctx)
 
-			httpResponse, err := http.DefaultClient.Do(request)
+			httpResponse, err := cfg.httpClient.Do(request)
 			if err != nil {
 				return nil
 			}

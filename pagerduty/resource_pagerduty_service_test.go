@@ -253,7 +253,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
           `,
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" type Alert Grouping"),
+				ExpectError: regexp.MustCompile("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" and \"content_based\" type Alert Grouping"),
 			},
 			{
 				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
@@ -277,13 +277,39 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
           `,
 				),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Intelligent alert grouping time window value must be between 300 and 3600"),
+				ExpectError: regexp.MustCompile("Content-based alert grouping time window value must be between 300 and 3600"),
 			},
 			{
 				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "intelligent"
+            config {
+              time_window = 300
+            }
+          }
+          `,
+				),
+				PlanOnly: true,
+			},
+		},
+	},
+          alert_grouping_parameters {
+            type = "content_based"
+            config {
+              time_window = 3605
+            }
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Content-based alert grouping time window value must be between 300 and 3600"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "content_based"
             config {
               time_window = 300
             }

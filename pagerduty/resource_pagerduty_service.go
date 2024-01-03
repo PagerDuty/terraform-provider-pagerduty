@@ -367,7 +367,7 @@ func validateTimeWindow(v interface{}, p cty.Path) diag.Diagnostics {
 	if tw < 300 || tw > 3600 {
 		diags = append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       fmt.Sprintf("Intelligent alert grouping time window value must be between 300 and 3600, current setting is %d", tw),
+			Summary:       fmt.Sprintf("Alert grouping time window value must be between 300 and 3600, current setting is %d", tw),
 			AttributePath: p,
 		})
 	}

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -65,10 +67,32 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				Computed:      true,
 			},
 			"integration_key": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: "Assignments or updates to this attribute are not supported by Service Integrations API, it is a read-only value. Input support will be dropped in upcomming major release",
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+					v, ok := i.(string)
+					if !ok {
+						return diag.Diagnostics{
+							{
+								Severity:      diag.Error,
+								Summary:       "Expected String",
+								AttributePath: path,
+							},
+						}
+					}
+
+					if v != "" {
+						return diag.Diagnostics{
+							{
+								Severity:      diag.Warning,
+								Summary:       "Assignments or updates to this attribute are not supported by Service Integrations API, it is a read-only value. Input support will be dropped in upcomming major release",
+								AttributePath: path,
+							},
+						}
+					}
+					return diag.Diagnostics{}
+				},
 			},
 			"integration_email": {
 				Type:     schema.TypeString,

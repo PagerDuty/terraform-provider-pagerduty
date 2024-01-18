@@ -1,3 +1,14 @@
+## 3.4.1 (Jan 18, 2024)
+
+BUG FIXES:
+
+* `resource/pagerduty_service_integration`: Fix attribute deprecation warning ([#801](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/801))
+
+IMPROVEMENTS:
+
+* `resource/*`, `data/*`: Update go version to 1.20 ([#794](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/794))
+* `resource/pagerduty_service`: Allow time_window to be set for content-based grouping (issue 788) ([#795](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/795))
+
 ## 3.4.0 (Dec 21, 2023)
 
 FEATURES:

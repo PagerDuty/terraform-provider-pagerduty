@@ -116,7 +116,7 @@ func resourcePagerDutyService() *schema.Resource {
 										Type:             schema.TypeInt,
 										Optional:         true,
 										Computed:         true,
-										ValidateDiagFunc: validateIntelligentTimeWindow,
+										ValidateDiagFunc: validateTimeWindow,
 									},
 								},
 							},
@@ -352,22 +352,22 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		if timeoutVal > 0 && (agpType != "" && hasChangeAgpType && agpType != "time") {
 			return fmt.Errorf("Alert grouping parameters configuration attribute \"timeout\" is only supported by \"time\" type Alert Grouping")
 		}
-		if (timeWindowVal > 300) && (agpType != "" && hasChangeAgpType && agpType != "intelligent") {
-			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" type Alert Grouping")
+		if (timeWindowVal > 300) && (agpType != "" && hasChangeAgpType && (agpType != "intelligent" && agpType != "content_based")) {
+			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" and \"content-based\" type Alert Grouping")
 		}
 	}
 
 	return nil
 }
 
-func validateIntelligentTimeWindow(v interface{}, p cty.Path) diag.Diagnostics {
+func validateTimeWindow(v interface{}, p cty.Path) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	tw := v.(int)
 	if tw < 300 || tw > 3600 {
 		diags = append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       fmt.Sprintf("Intelligent alert grouping time window value must be between 300 and 3600, current setting is %d", tw),
+			Summary:       fmt.Sprintf("Alert grouping time window value must be between 300 and 3600, current setting is %d", tw),
 			AttributePath: p,
 		})
 	}

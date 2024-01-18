@@ -14,6 +14,8 @@ import (
 	pd "github.com/PagerDuty/terraform-provider-pagerduty/pagerduty"
 )
 
+var testAccProvider = New()
+
 func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("PAGERDUTY_PARALLEL"); v != "" {
 		t.Parallel()
@@ -36,13 +38,24 @@ func testAccCheckAttributes(n string, fn func(map[string]string) error) resource
 	}
 }
 
+func testAccExternalProviders() map[string]resource.ExternalProvider {
+	version := "~> 3.4"
+	if v := os.Getenv("PAGERDUTY_ACC_EXTERNAL_PROVIDER_VERSION"); v != "" {
+		version = v
+	}
+	m := map[string]resource.ExternalProvider{
+		"pagerduty": {Source: "pagerduty/pagerduty", VersionConstraint: version},
+	}
+	return m
+}
+
 func testAccProtoV5ProviderFactories() map[string]func() (tfprotov5.ProviderServer, error) {
 	return map[string]func() (tfprotov5.ProviderServer, error){
 		"pagerduty": func() (tfprotov5.ProviderServer, error) {
 			ctx := context.Background()
 			providers := []func() tfprotov5.ProviderServer{
 				pd.Provider().GRPCProvider,
-				providerserver.NewProtocol5(New()),
+				providerserver.NewProtocol5(testAccProvider),
 			}
 
 			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -14,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type Provider struct{}
+type Provider struct {
+	client *pagerduty.Client
+}
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "pagerduty"
@@ -53,10 +56,12 @@ func (p *Provider) DataSources(ctx context.Context) [](func() datasource.DataSou
 }
 
 func (p *Provider) Resources(ctx context.Context) [](func() resource.Resource) {
-	return [](func() resource.Resource){}
+	return [](func() resource.Resource){
+		func() resource.Resource { return &resourceBusinessService{} },
+	}
 }
 
-func New() provider.Provider {
+func New() *Provider {
 	return &Provider{}
 }
 
@@ -159,7 +164,9 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	if err != nil {
 		resp.Diagnostics.AddError("Cannot obtain plugin client", err.Error())
 	}
+	p.client = client
 	resp.DataSourceData = client
+	resp.ResourceData = client
 }
 
 type UseAppOauthScopedToken struct {

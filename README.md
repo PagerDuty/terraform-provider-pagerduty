@@ -210,3 +210,4 @@ PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER=1 make testacc TESTARGS="-run PagerD
 | `PAGERDUTY_ACC_INCIDENT_CUSTOM_FIELDS`                       | Custom Fields       |
 | `PAGERDUTY_ACC_LICENSE_NAME`                                 | Licenses            |
 | `PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER`                | Schedule            |
+| `PAGERDUTY_ACC_EXTERNAL_PROVIDER_VERSION`                    |                     |

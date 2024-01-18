@@ -86,7 +86,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 						return diag.Diagnostics{
 							{
 								Severity:      diag.Warning,
-								Summary:       "Assignments or updates to this attribute are not supported by Service Integrations API, it is a read-only value. Input support will be dropped in upcomming major release",
+								Summary:       "Argument is deprecated. Assignments or updates to this attribute are not supported by Service Integrations API, it is a read-only value. Input support will be dropped in upcomming major release",
 								AttributePath: path,
 							},
 						}

@@ -15,28 +15,20 @@ import (
 
 type Provider struct{}
 
-func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	config, diags := ReadConfig(ctx, req)
-	if len(diags) > 0 {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
-
-	client, err := config.Client()
-	if err != nil {
-		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
-			"Cannot obtain plugin client",
-			err.Error(),
-		))
-	}
-	resp.DataSourceData = client
-}
-
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "pagerduty"
 }
 
 func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+	useAppOauthScopedTokenBlock := schema.ListNestedBlock{
+		NestedObject: schema.NestedBlockObject{
+			Attributes: map[string]schema.Attribute{
+				"pd_client_id":     schema.StringAttribute{Optional: true},
+				"pd_client_secret": schema.StringAttribute{Optional: true},
+				"pd_subdomain":     schema.StringAttribute{Optional: true},
+			},
+		},
+	}
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"api_url_override":            schema.StringAttribute{Optional: true},
@@ -45,26 +37,8 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 			"token":                       schema.StringAttribute{Optional: true},
 			"user_token":                  schema.StringAttribute{Optional: true},
 		},
-
 		Blocks: map[string]schema.Block{
-			"use_app_oauth_scoped_token": schema.ListNestedBlock{
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"pd_client_id": schema.StringAttribute{
-							Required: true,
-							// DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_CLIENT_ID", nil),
-						},
-						"pd_client_secret": schema.StringAttribute{
-							Required: true,
-							// DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_CLIENT_SECRET", nil),
-						},
-						"pd_subdomain": schema.StringAttribute{
-							Required: true,
-							// DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_SUBDOMAIN", nil),
-						},
-					},
-				},
-			},
+			"use_app_oauth_scoped_token": useAppOauthScopedTokenBlock,
 		},
 	}
 }
@@ -83,27 +57,20 @@ func New() provider.Provider {
 	return &Provider{}
 }
 
-type providerArguments struct {
-	Token                     types.String `tfsdk:"token"`
-	UserToken                 types.String `tfsdk:"user_token"`
-	SkipCredentialsValidation types.Bool   `tfsdk:"skip_credentials_validation"`
-	ServiceRegion             types.String `tfsdk:"service_region"`
-	ApiUrlOverride            types.String `tfsdk:"api_url_override"`
-	UseAppOauthScopedToken    *struct {
-		PdClientId     types.String `tfsdk:"pd_client_id"`
-		PdClientSecret types.String `tfsdk:"pd_client_secret"`
-		PdDomain       types.String `tfsdk:"pd_domain"`
-	} `tfsdk:"use_app_oauth_scoped_token"`
-}
-
-func ReadConfig(ctx context.Context, req provider.ConfigureRequest) (*Config, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var args providerArguments
-	diags.Append(req.Config.Get(ctx, &args)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &args)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	serviceRegion := args.ServiceRegion.ValueString()
+	if serviceRegion == "" {
+		serviceRegion = "us"
+	}
+
 	var regionApiUrl string
-	if serviceRegion == "us" || serviceRegion == "" {
+	if serviceRegion == "us" {
 		regionApiUrl = ""
 	} else {
 		regionApiUrl = serviceRegion + "."
@@ -122,13 +89,61 @@ func ReadConfig(ctx context.Context, req provider.ConfigureRequest) (*Config, di
 		ServiceRegion:       serviceRegion,
 	}
 
-	if config.Token == "" {
-		config.Token = os.Getenv("PAGERDUTY_TOKEN")
+	if !args.UseAppOauthScopedToken.IsNull() {
+		blockList := []UseAppOauthScopedToken{}
+		resp.Diagnostics.Append(args.UseAppOauthScopedToken.ElementsAs(ctx, &blockList, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		config.AppOauthScopedToken = &AppOauthScopedToken{
+			ClientId:     blockList[0].PdClientId.ValueString(),
+			ClientSecret: blockList[0].PdClientSecret.ValueString(),
+			Subdomain:    blockList[0].PdSubdomain.ValueString(),
+		}
 	}
-	if config.UserToken == "" {
-		config.UserToken = os.Getenv("PAGERDUTY_USER_TOKEN")
+
+	if args.UseAppOauthScopedToken.IsNull() {
+		if config.Token == "" {
+			config.Token = os.Getenv("PAGERDUTY_TOKEN")
+		}
+		if config.UserToken == "" {
+			config.UserToken = os.Getenv("PAGERDUTY_USER_TOKEN")
+		}
+	} else {
+		if config.AppOauthScopedToken.ClientId == "" {
+			config.AppOauthScopedToken.ClientId = os.Getenv("PAGERDUTY_CLIENT_ID")
+		}
+		if config.AppOauthScopedToken.ClientSecret == "" {
+			config.AppOauthScopedToken.ClientSecret = os.Getenv("PAGERDUTY_CLIENT_SECRET")
+		}
+		if config.AppOauthScopedToken.Subdomain == "" {
+			config.AppOauthScopedToken.Subdomain = os.Getenv("PAGERDUTY_SUBDOMAIN")
+		}
 	}
 
 	log.Println("[INFO] Initializing PagerDuty plugin client")
-	return &config, diags
+
+	client, err := config.Client()
+	if err != nil {
+		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
+			"Cannot obtain plugin client",
+			err.Error(),
+		))
+	}
+	resp.DataSourceData = client
+}
+
+type UseAppOauthScopedToken struct {
+	PdClientId     types.String `tfsdk:"pd_client_id"`
+	PdClientSecret types.String `tfsdk:"pd_client_secret"`
+	PdSubdomain    types.String `tfsdk:"pd_subdomain"`
+}
+
+type providerArguments struct {
+	Token                     types.String `tfsdk:"token"`
+	UserToken                 types.String `tfsdk:"user_token"`
+	SkipCredentialsValidation types.Bool   `tfsdk:"skip_credentials_validation"`
+	ServiceRegion             types.String `tfsdk:"service_region"`
+	ApiUrlOverride            types.String `tfsdk:"api_url_override"`
+	UseAppOauthScopedToken    types.List   `tfsdk:"use_app_oauth_scoped_token"`
 }

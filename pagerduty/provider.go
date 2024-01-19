@@ -50,17 +50,17 @@ func Provider() *schema.Provider {
 					Schema: map[string]*schema.Schema{
 						"pd_client_id": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_CLIENT_ID", nil),
 						},
 						"pd_client_secret": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_CLIENT_SECRET", nil),
 						},
 						"pd_subdomain": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_SUBDOMAIN", nil),
 						},
 					},
@@ -188,7 +188,7 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 
 func providerConfigureContextFunc(ctx context.Context, data *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	var serviceRegion = strings.ToLower(data.Get("service_region").(string))
+	serviceRegion := strings.ToLower(data.Get("service_region").(string))
 
 	var regionApiUrl string
 	if serviceRegion == "us" || serviceRegion == "" {

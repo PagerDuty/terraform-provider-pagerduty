@@ -1,3 +1,9 @@
+## 3.5.1 (Jan 24, 2024)
+
+BUG FIXES:
+
+* `resource/*`, `data/*`: Revert "Support for sourcing the provider service region from env var" ([#804](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/804))
+
 ## 3.5.0 (Jan 23, 2024)
 
 FEATURES:

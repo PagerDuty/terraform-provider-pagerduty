@@ -56,7 +56,7 @@ The following arguments are supported:
 * `user_token` - (Optional) The v2 user level authorization token. It can also be sourced from the `PAGERDUTY_USER_TOKEN` environment variable. See [API Documentation](https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTUx-authentication) for more information.
 * `use_app_oauth_scoped_token` - (Optional) Defines the configuration needed for making use of [App Oauth Scoped API token](https://developer.pagerduty.com/docs/e518101fde5f3-obtaining-an-app-o-auth-token) for authenticating API calls.
 * `skip_credentials_validation` - (Optional) Skip validation of the token against the PagerDuty API.
-* `service_region` - (Optional) The PagerDuty service region to use. Default to empty (uses US region). Supported value: `eu`. This setting also affects configuration of `use_app_oauth_scoped_token` for setting Region of *App Oauth token credentials*. It can also be sourced from the `PAGERDUTY_SERVICE_REGION` environment variable.
+* `service_region` - (Optional) The PagerDuty service region to use. Default to empty (uses US region). Supported value: `eu`. This setting also affects configuration of `use_app_oauth_scoped_token` for setting Region of *App Oauth token credentials*.
 * `api_url_override` - (Optional) It can be used to set a custom proxy endpoint as PagerDuty client api url overriding `service_region` setup.
 
 The `use_app_oauth_scoped_token` block contains the following arguments:
@@ -123,3 +123,4 @@ To enable the `SECURE` log level, you must set two environment variables:
 
 * `TF_LOG=INFO`
 * `TF_LOG_PROVIDER_PAGERDUTY=SECURE`
+

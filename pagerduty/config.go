@@ -3,8 +3,11 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"runtime"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -70,7 +73,18 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 
 	var httpClient *http.Client
 	httpClient = http.DefaultClient
-	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
+	httpClient.Transport = logging.NewTransport(
+		"PagerDuty",
+		&http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			IdleConnTimeout:     60 * time.Second,
+			TLSHandshakeTimeout: 10 * time.Second,
+			MaxIdleConnsPerHost: runtime.GOMAXPROCS(0) + 1,
+		})
 
 	var apiUrl = c.ApiUrl
 	if c.ApiUrlOverride != "" {

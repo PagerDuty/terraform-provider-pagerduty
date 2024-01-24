@@ -1,3 +1,13 @@
+## 3.5.0 (Jan 23, 2024)
+
+FEATURES:
+
+* `resource/*`, `data/*`: feat: support for sourcing the provider service region from an env var ([#797](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/797))
+
+IMPROVEMENTS:
+
+* `resource/*`, `data/*`: Add API Client timeouts configuration for http transport ([#802](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/802))
+
 ## 3.4.1 (Jan 18, 2024)
 
 BUG FIXES:

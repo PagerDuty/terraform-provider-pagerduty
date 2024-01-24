@@ -39,7 +39,7 @@ func Provider() *schema.Provider {
 			"service_region": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  schema.EnvDefaultFunc("PAGERDUTY_SERVICE_REGION", ""),
+				Default:  "",
 			},
 
 			"use_app_oauth_scoped_token": {

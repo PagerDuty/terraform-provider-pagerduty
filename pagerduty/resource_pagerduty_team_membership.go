@@ -251,7 +251,7 @@ func buildEPsIdsList(l []*pagerduty.OnCall) []string {
 
 func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, error) {
 	var oncalls []*pagerduty.OnCall
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := c.OnCall.List(&pagerduty.ListOnCallOptions{UserIds: []string{userID}})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
@@ -274,7 +274,7 @@ func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, e
 func dissociateEPsFromTeam(c *pagerduty.Client, teamID string, eps []string) ([]string, error) {
 	epsDissociatedFromTeam := []string{}
 	for _, ep := range eps {
-		retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 			_, err := c.Teams.RemoveEscalationPolicy(teamID, ep)
 			if err != nil && !isErrCode(err, 404) {
 				time.Sleep(2 * time.Second)
@@ -299,7 +299,7 @@ func dissociateEPsFromTeam(c *pagerduty.Client, teamID string, eps []string) ([]
 
 func associateEPsBackToTeam(c *pagerduty.Client, teamID string, eps []string) error {
 	for _, ep := range eps {
-		retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 			_, err := c.Teams.AddEscalationPolicy(teamID, ep)
 			if err != nil && !isErrCode(err, 404) {
 				time.Sleep(2 * time.Second)

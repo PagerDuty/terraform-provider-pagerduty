@@ -105,7 +105,7 @@ func resourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty team %s", d.Id())
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if team, _, err := client.Teams.Get(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -136,7 +136,7 @@ func resourcePagerDutyTeamUpdate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Updating PagerDuty team %s", d.Id())
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.Teams.Update(d.Id(), team); err != nil {
 			return resource.RetryableError(err)
 		}

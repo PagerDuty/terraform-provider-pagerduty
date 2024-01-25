@@ -238,7 +238,7 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 
 	// Retrying to give other resources (such as services) to delete
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
 				return resource.RetryableError(err)

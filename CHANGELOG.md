@@ -1,3 +1,9 @@
+## 3.5.2 (Jan 25, 2024)
+
+IMPROVEMENTS:
+
+* `resource/*`, `data/*`: Address: timeout while waiting for state to become 'success' ([#807](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/807))
+
 ## 3.5.1 (Jan 24, 2024)
 
 BUG FIXES:

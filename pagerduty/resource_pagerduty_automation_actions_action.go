@@ -212,7 +212,7 @@ func resourcePagerDutyAutomationActionsActionCreate(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Creating PagerDuty AutomationActionsAction %s", automationActionsAction.Name)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if automationActionsAction, _, err := client.AutomationActionsAction.Create(automationActionsAction); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				time.Sleep(2 * time.Second)
@@ -261,7 +261,7 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 	log.Printf("[INFO] Reading PagerDuty AutomationActionsAction %s", d.Id())
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if automationActionsAction, _, err := client.AutomationActionsAction.Get(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)

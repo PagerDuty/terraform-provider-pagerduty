@@ -59,7 +59,7 @@ func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error 
 
 	log.Printf("[INFO] Creating PagerDuty tag %s", tag.Label)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if tag, _, err := client.Tags.Create(tag); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -88,7 +88,7 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty tag %s", d.Id())
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		tag, _, err := client.Tags.Get(d.Id())
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {

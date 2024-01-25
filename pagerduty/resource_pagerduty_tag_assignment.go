@@ -116,7 +116,7 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 		return nil
 	}
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -155,7 +155,7 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 	}
 	log.Printf("[INFO] Deleting PagerDuty tag assignment with tagID %s for entityID %s", assignment.TagID, assignment.EntityID)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -232,7 +232,7 @@ func isFoundTagAssignmentEntity(entityID, entityType string, meta interface{}) (
 	fetchEscalationPolicy := func(id string) (*pagerduty.EscalationPolicy, *pagerduty.Response, error) {
 		return client.EscalationPolicies.Get(id, &pagerduty.GetEscalationPolicyOptions{})
 	}
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		var err error
 		if entityType == "users" {
 			_, _, err = fetchUser(entityID)

@@ -107,7 +107,7 @@ func resourcePagerDutyEventOrchestrationCreate(d *schema.ResourceData, meta inte
 
 	log.Printf("[INFO] Creating PagerDuty Event Orchestration: %s", payload.Name)
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if orch, _, err := client.EventOrchestrations.Create(payload); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)
@@ -168,7 +168,7 @@ func resourcePagerDutyEventOrchestrationUpdate(d *schema.ResourceData, meta inte
 
 	log.Printf("[INFO] Updating PagerDuty Event Orchestration: %s", d.Id())
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				return resource.RetryableError(err)

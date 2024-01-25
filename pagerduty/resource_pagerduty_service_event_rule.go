@@ -415,7 +415,7 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Updating PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if updatedRule, _, err := client.Services.UpdateEventRule(serviceID, d.Id(), rule); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -445,7 +445,7 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Deleting PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Services.DeleteEventRule(serviceID, d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)

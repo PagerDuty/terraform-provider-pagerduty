@@ -874,7 +874,7 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 }
 
 func performRulesetRuleUpdate(rulesetID string, id string, rule *pagerduty.RulesetRule, client *pagerduty.Client) error {
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, id, rule); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -935,7 +935,7 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)

@@ -44,7 +44,7 @@ func resourcePagerDutyAutomationActionsRunnerTeamAssociationCreate(d *schema.Res
 
 	log.Printf("[INFO] Creating PagerDuty AutomationActionsRunnerTeamAssociation %s:%s", d.Get("runner_id").(string), d.Get("team_id").(string))
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if teamRef, _, err := client.AutomationActionsRunner.AssociateToTeam(runnerID, teamID); err != nil {
 			if isErrCode(err, 429) {
 				time.Sleep(2 * time.Second)
@@ -76,7 +76,7 @@ func fetchPagerDutyAutomationActionsRunnerTeamAssociation(d *schema.ResourceData
 		return err
 	}
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.AutomationActionsRunner.GetAssociationToTeam(runnerID, teamID)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {

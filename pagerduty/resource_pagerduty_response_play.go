@@ -312,7 +312,7 @@ func resourcePagerDutyResponsePlayUpdate(d *schema.ResourceData, meta interface{
 
 	log.Printf("[INFO] Updating PagerDuty response play: %s", d.Id())
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, _, err := client.ResponsePlays.Update(d.Id(), responsePlay); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
@@ -338,7 +338,7 @@ func resourcePagerDutyResponsePlayDelete(d *schema.ResourceData, meta interface{
 	log.Printf("[INFO] Deleting PagerDuty response play: %s", d.Id())
 	from := d.Get("from").(string)
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if _, err := client.ResponsePlays.Delete(d.Id(), from); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)

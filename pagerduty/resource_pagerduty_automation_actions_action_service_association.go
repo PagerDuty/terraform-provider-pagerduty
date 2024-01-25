@@ -44,7 +44,7 @@ func resourcePagerDutyAutomationActionsActionServiceAssociationCreate(d *schema.
 
 	log.Printf("[INFO] Creating PagerDuty AutomationActionsActionServiceAssociation %s:%s", d.Get("action_id").(string), d.Get("service_id").(string))
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if serviceRef, _, err := client.AutomationActionsAction.AssociateToService(actionID, serviceID); err != nil {
 			if isErrCode(err, 429) {
 				time.Sleep(2 * time.Second)
@@ -76,7 +76,7 @@ func fetchPagerDutyAutomationActionsActionServiceAssociation(d *schema.ResourceD
 		return err
 	}
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.AutomationActionsAction.GetAssociationToService(actionID, serviceID)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {

@@ -170,7 +170,7 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 
 	log.Printf("[INFO] Reading PagerDuty webhook subscription %s", d.Id())
 
-	return resource.Retry(30*time.Second, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Get(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)

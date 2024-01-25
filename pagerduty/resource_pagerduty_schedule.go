@@ -269,7 +269,7 @@ func fetchSchedule(d *schema.ResourceData, meta interface{}, errCallback func(er
 		return err
 	}
 
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
 		if err != nil {
 			log.Printf("[WARN] Schedule read error")
@@ -398,7 +398,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Starting deletion process of Schedule %s", scheduleId)
 	var scheduleData *pagerduty.Schedule
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Schedules.Get(scheduleId, &pagerduty.GetScheduleOptions{})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
@@ -658,7 +658,7 @@ func flattenScheFinalSchedule(finalSche *pagerduty.SubSchedule) []map[string]int
 
 func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerduty.Schedule, epIDs []string) ([]string, error) {
 	var incidents []*pagerduty.Incident
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		var err error
 		options := &pagerduty.ListIncidentsOptions{
 			DateRange: "all",
@@ -765,7 +765,7 @@ func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.
 	}
 	ep.EscalationRules = epr
 
-	retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		_, _, err := c.EscalationPolicies.Update(ep.ID, ep)
 		if err != nil {
 			if !isErrCode(err, 404) {
@@ -856,7 +856,7 @@ func detectUseOfScheduleByEPsWithOneLayer(scheduleId string, eps []*pagerduty.Es
 func fetchEPsDataUsingASchedule(eps []string, c *pagerduty.Client) ([]*pagerduty.EscalationPolicy, error) {
 	fullEPs := []*pagerduty.EscalationPolicy{}
 	for _, epID := range eps {
-		retryErr := resource.Retry(10*time.Second, func() *resource.RetryError {
+		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 			ep, _, err := c.EscalationPolicies.Get(epID, &pagerduty.GetEscalationPolicyOptions{})
 			if err != nil {
 				if isErrCode(err, http.StatusBadRequest) {

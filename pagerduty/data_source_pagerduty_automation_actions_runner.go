@@ -61,7 +61,7 @@ func dataSourcePagerDutyAutomationActionsRunnerRead(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Reading PagerDuty automation actions runner")
 
-	return resource.Retry(1*time.Minute, func() *resource.RetryError {
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		runner, _, err := client.AutomationActionsRunner.Get(d.Get("id").(string))
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {

@@ -84,7 +84,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 	nameFilter := d.Get("name_filter").(string)
 
 	var eoList []*pagerduty.EventOrchestration
-	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.EventOrchestrations.List()
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
@@ -118,7 +118,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 	for _, orchestration := range eoList {
 		// Get orchestration matched by ID so we can set the integrations property
 		// since the list endpoint does not return it
-		retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
 			orch, _, err := client.EventOrchestrations.Get(orchestration.ID)
 			if err != nil {
 				if isErrCode(err, http.StatusBadRequest) {

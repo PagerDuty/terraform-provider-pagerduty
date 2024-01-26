@@ -1,3 +1,13 @@
+## 3.6.0 (Jan 26, 2024)
+
+FEATURES:
+
+* `resource/*`, `data/*`: feat: support for sourcing the provider service region from env var (take 2) ([#805](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/805))
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_user`: Address permadiff when user name has repeated whitespaces ([#810](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/810))
+
 ## 3.5.2 (Jan 25, 2024)
 
 IMPROVEMENTS:

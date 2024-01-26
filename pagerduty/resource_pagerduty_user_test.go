@@ -53,10 +53,10 @@ func testSweepUser(region string) error {
 }
 
 func TestAccPagerDutyUser_Basic(t *testing.T) {
-	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	usernameSpaces := " " + username + " "
+	username := fmt.Sprintf("tf %s", acctest.RandString(5))
+	usernameSpaces := " " + strings.ReplaceAll(username, " ", "  ") + " "
 	usernameUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@foo.test", username)
+	email := fmt.Sprintf("%s@foo.test", strings.ReplaceAll(username, " ", ""))
 	emailUpdated := fmt.Sprintf("%s@foo.test", usernameUpdated)
 
 	resource.Test(t, resource.TestCase{

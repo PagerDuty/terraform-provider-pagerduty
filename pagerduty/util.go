@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -82,7 +83,9 @@ func parseRFC3339Time(k, oldTime, newTime string) (time.Time, time.Time, error) 
 }
 
 func suppressLeadTrailSpaceDiff(k, old, new string, d *schema.ResourceData) bool {
-	return old == strings.TrimSpace(new)
+	trimmedInput := strings.TrimSpace(new)
+	repeatedSpaceMatcher := regexp.MustCompile(`\s+`)
+	return old == repeatedSpaceMatcher.ReplaceAllLiteralString(trimmedInput, " ")
 }
 
 func suppressCaseDiff(k, old, new string, d *schema.ResourceData) bool {

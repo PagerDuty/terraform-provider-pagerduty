@@ -66,7 +66,11 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	serviceRegion := args.ServiceRegion.ValueString()
 	if serviceRegion == "" {
-		serviceRegion = "us"
+		if v, ok := os.LookupEnv("PAGERDUTY_SERVICE_REGION"); ok && v != "" {
+			serviceRegion = v
+		} else {
+			serviceRegion = "us"
+		}
 	}
 
 	var regionApiUrl string

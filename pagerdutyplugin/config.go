@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -71,6 +72,7 @@ func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 	}
 
 	httpClient := http.DefaultClient
+	httpClient.Timeout = 1 * time.Minute
 	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
 	apiUrl := c.ApiUrl

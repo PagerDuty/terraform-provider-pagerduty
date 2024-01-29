@@ -123,7 +123,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	log.Println("[INFO] Initializing PagerDuty plugin client")
 
-	client, err := config.Client()
+	client, err := config.Client(ctx)
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
 			"Cannot obtain plugin client",

@@ -15,7 +15,7 @@ type dataSourceStandards struct {
 	client *pagerduty.Client
 }
 
-var _ datasource.DataSource = (*dataSourceStandards)(nil)
+var _ datasource.DataSourceWithConfigure = (*dataSourceStandards)(nil)
 
 func (d *dataSourceStandards) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "pagerduty_standards"
@@ -51,19 +51,18 @@ func (d *dataSourceStandards) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	standards, diags := flattenStandards(list.Standards)
+	standards, diags := flattenStandards(ctx, list.Standards)
 	resp.Diagnostics.Append(diags...)
 	data.Standards = standards
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (d *dataSourceStandards) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	ConfigurePagerdutyClient(&d.client, req, resp)
+	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 
-func flattenStandards(list []pagerduty.Standard) (types.List, diag.Diagnostics) {
+func flattenStandards(ctx context.Context, list []pagerduty.Standard) (types.List, diag.Diagnostics) {
 	var diagnostics diag.Diagnostics
-	ctx := context.Background()
 	mapList := make([]types.Object, 0, len(list))
 	for _, standard := range list {
 		exclusions := make([]types.Object, 0, len(standard.Exclusions))

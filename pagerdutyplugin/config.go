@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/PagerDuty/go-pagerduty"
-	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/terraform-providers/terraform-provider-pagerduty/util"
 )
@@ -61,7 +61,7 @@ for more information on providing credentials for this provider.
 `
 
 // Client returns a PagerDuty client, initializing when necessary.
-func (c *Config) Client() (*pagerduty.Client, error) {
+func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -90,7 +90,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		accountAndScopes := []string{account}
 		accountAndScopes = append(accountAndScopes, availableOauthScopes()...)
 		opt := pagerduty.WithScopedOAuthAppTokenSource(pagerduty.NewFileTokenSource(
-			context.Background(),
+			ctx,
 			c.AppOauthScopedToken.ClientId,
 			c.AppOauthScopedToken.ClientSecret,
 			accountAndScopes,
@@ -101,19 +101,17 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 
 	// Validate that the PagerDuty token is set
 	if c.Token == "" && c.AppOauthScopedToken == nil {
-		log.Println("[CG] Stop")
 		return nil, fmt.Errorf(invalidCreds)
 	}
 	client := pagerduty.NewClient(c.Token, clientOpts...)
 
-	// TODO: oauth validation
-	// if !c.SkipCredsValidation {
-	// 	// Validate the credentials by calling the abilities endpoint,
-	// 	// if we get a 401 response back we return an error to the user
-	// 	if err := client.ValidateAuth(); err != nil {
-	// 		return nil, fmt.Errorf(fmt.Sprintf("%s\n%s", err, invalidCreds))
-	// 	}
-	// }
+	if !c.SkipCredsValidation {
+		// Validate the credentials by calling the abilities endpoint,
+		// if we get a 401 response back we return an error to the user
+		if _, err := client.ListAbilitiesWithContext(ctx); err != nil {
+			return nil, fmt.Errorf(fmt.Sprintf("%s\n%s", err, invalidCreds))
+		}
+	}
 	c.client = client
 
 	log.Printf("[INFO] PagerDuty plugin client configured")
@@ -130,13 +128,16 @@ func WithHTTPClient(httpClient pagerduty.HTTPClient) pagerduty.ClientOptions {
 }
 
 func getTokenFilepath() string {
-	homeDir, err := os.UserHomeDir()
+	dir, err := os.UserHomeDir()
 	if err == nil {
-		homeDir = filepath.Join(homeDir, ".pagerduty")
+		dir = filepath.Join(dir, ".pagerduty")
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			os.Mkdir(dir, os.ModeDir|0o755)
+		}
 	} else {
-		homeDir = ""
+		dir = ""
 	}
-	return filepath.Join(homeDir, "token.json")
+	return filepath.Join(dir, "token.json")
 }
 
 func availableOauthScopes() []string {
@@ -197,26 +198,33 @@ func availableOauthScopes() []string {
 	}
 }
 
-// ConfigurePagerdutyClient sets a pagerduty API client in a pointer to the
-// property of any data source struct from the general configuration of the
-// provider.
-func ConfigurePagerdutyClient(clientPtr **pagerduty.Client, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
+// ConfigurePagerdutyClient sets a pagerduty API client in a pointer `dst` to
+// the property of any datasource or resource struct from the general
+// configuration of the provider.
+func ConfigurePagerdutyClient(dst **pagerduty.Client, providerData any) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if providerData == nil {
+		return diags
 	}
-	client, ok := req.ProviderData.(*pagerduty.Client)
+	client, ok := providerData.(*pagerduty.Client)
 	if !ok {
-		resp.Diagnostics.AddError(
+		diags.AddError(
 			"Unexpected Data Source Configure Type",
 			fmt.Sprintf(
 				"Expected *github.com/PagerDuty/go-pagerduty.Client, got: %T."+
 					"Please report this issue to the provider developers.",
-				req.ProviderData,
+				providerData,
 			),
 		)
-		return
+		return diags
 	}
-	if clientPtr != nil {
-		*clientPtr = client
+	if dst == nil {
+		diags.Append(diag.NewErrorDiagnostic(
+			"Bad usage of ConfigurePagerdutyClient",
+			"Received a null client destination",
+		))
+		return diags
 	}
+	*dst = client
+	return diags
 }

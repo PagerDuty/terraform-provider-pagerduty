@@ -12,8 +12,6 @@ import (
 	pagerdutyplugin "github.com/terraform-providers/terraform-provider-pagerduty/pagerdutyplugin"
 )
 
-var address = "registry.terraform.io/pagerduty/pagerduty"
-
 func main() {
 	Serve()
 }
@@ -33,6 +31,8 @@ func Serve() {
 	}
 
 	var serveOpts []tf5server.ServeOpt
+
+	address := "registry.terraform.io/pagerduty/pagerduty"
 	err = tf5server.Serve(address, muxServer.ProviderServer, serveOpts...)
 	if err != nil {
 		log.Fatal(err)

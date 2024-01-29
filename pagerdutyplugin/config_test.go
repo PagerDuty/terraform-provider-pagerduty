@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"testing"
 )
 
@@ -10,7 +11,7 @@ func TestConfigEmptyToken(t *testing.T) {
 		Token: "",
 	}
 
-	if _, err := config.Client(); err == nil {
+	if _, err := config.Client(context.Background()); err == nil {
 		t.Fatalf("expected error, but got nil")
 	}
 }
@@ -22,7 +23,7 @@ func TestConfigSkipCredsValidation(t *testing.T) {
 		SkipCredsValidation: true,
 	}
 
-	if _, err := config.Client(); err != nil {
+	if _, err := config.Client(context.Background()); err != nil {
 		t.Fatalf("error: expected the client to not fail: %v", err)
 	}
 }
@@ -35,7 +36,7 @@ func TestConfigCustomApiUrl(t *testing.T) {
 		SkipCredsValidation: true,
 	}
 
-	if _, err := config.Client(); err != nil {
+	if _, err := config.Client(context.Background()); err != nil {
 		t.Fatalf("error: expected the client to not fail: %v", err)
 	}
 }
@@ -48,7 +49,7 @@ func TestConfigCustomApiUrlOverride(t *testing.T) {
 		SkipCredsValidation: true,
 	}
 
-	if _, err := config.Client(); err != nil {
+	if _, err := config.Client(context.Background()); err != nil {
 		t.Fatalf("error: expected the client to not fail: %v", err)
 	}
 }
@@ -61,7 +62,7 @@ func TestConfigCustomAppUrl(t *testing.T) {
 		SkipCredsValidation: true,
 	}
 
-	if _, err := config.Client(); err != nil {
+	if _, err := config.Client(context.Background()); err != nil {
 		t.Fatalf("error: expected the client to not fail: %v", err)
 	}
 }

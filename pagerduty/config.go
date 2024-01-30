@@ -74,7 +74,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	httpClient.Timeout = 1 * time.Minute
 	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
-	var apiUrl = c.ApiUrl
+	apiUrl := c.ApiUrl
 	if c.ApiUrlOverride != "" {
 		apiUrl = c.ApiUrlOverride
 	}

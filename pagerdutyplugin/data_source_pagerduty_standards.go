@@ -44,10 +44,7 @@ func (d *dataSourceStandards) Read(ctx context.Context, req datasource.ReadReque
 
 	list, err := d.client.ListStandards(ctx, opts)
 	if err != nil {
-		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
-			"Error calling ListStandards",
-			err.Error(),
-		))
+		resp.Diagnostics.AddError("Error calling ListStandards", err.Error())
 		return
 	}
 

@@ -221,10 +221,10 @@ func ConfigurePagerdutyClient(dst **pagerduty.Client, providerData any) diag.Dia
 		return diags
 	}
 	if dst == nil {
-		diags.Append(diag.NewErrorDiagnostic(
+		diags.AddError(
 			"Bad usage of ConfigurePagerdutyClient",
 			"Received a null client destination",
-		))
+		)
 		return diags
 	}
 	*dst = client

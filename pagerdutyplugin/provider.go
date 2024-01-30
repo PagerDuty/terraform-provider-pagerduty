@@ -2,11 +2,12 @@ package pagerduty
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -125,14 +126,36 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		}
 	}
 
+	if config.AppOauthScopedToken != nil {
+		// While doing migration to terraform plugin framework, because
+		// of a limitation of the provider mux
+		// https://github.com/hashicorp/terraform-plugin-framework/issues/539
+		// We had to define pd_client_id, pd_client_secret, and pd_subdomain
+		// as Optional and manually check its presence here.
+		li := []string{}
+		if config.AppOauthScopedToken.ClientId == "" {
+			li = append(li, "pd_client_id")
+		}
+		if config.AppOauthScopedToken.ClientSecret == "" {
+			li = append(li, "pd_client_secret")
+		}
+		if config.AppOauthScopedToken.Subdomain == "" {
+			li = append(li, "pd_subdomain")
+		}
+		if len(li) > 0 {
+			resp.Diagnostics.AddError(
+				fmt.Sprintf(`Missing required arguments: "%v"`, strings.Join(li, `", "`)),
+				"Despite being defined as Optional, its value is required and no definition was found.",
+			)
+			return
+		}
+	}
+
 	log.Println("[INFO] Initializing PagerDuty plugin client")
 
 	client, err := config.Client(ctx)
 	if err != nil {
-		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
-			"Cannot obtain plugin client",
-			err.Error(),
-		))
+		resp.Diagnostics.AddError("Cannot obtain plugin client", err.Error())
 	}
 	resp.DataSourceData = client
 }

@@ -1,3 +1,9 @@
+## 3.7.0 (Jan 31, 2024)
+
+FEATURES:
+
+* `data/pagerduty_standards`: Add provider and a Standards datasource using Terraform Plugin Framework ([#787](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/787))
+
 ## 3.6.0 (Jan 26, 2024)
 
 FEATURES:

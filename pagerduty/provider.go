@@ -124,7 +124,6 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_ruleset":                                       resourcePagerDutyRuleset(),
 			"pagerduty_ruleset_rule":                                  resourcePagerDutyRulesetRule(),
 			"pagerduty_business_service":                              resourcePagerDutyBusinessService(),
-			"pagerduty_service_dependency":                            resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":                                 resourcePagerDutyResponsePlay(),
 			"pagerduty_tag":                                           resourcePagerDutyTag(),
 			"pagerduty_tag_assignment":                                resourcePagerDutyTagAssignment(),

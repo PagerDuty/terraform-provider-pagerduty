@@ -140,6 +140,10 @@ func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface{}) error {
+	return fetchSlackConnection(d, meta, handleNotFoundError)
+}
+
+func fetchSlackConnection(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client, err := meta.(*Config).SlackClient()
 	if err != nil {
 		return err
@@ -155,8 +159,12 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 			if isErrCode(err, http.StatusBadRequest) {
 				return resource.NonRetryableError(err)
 			}
-
-			return resource.RetryableError(err)
+      
+      errResp := errCallback(err, d)
+      if errResp != nil {
+        return resource.RetryableError(err)
+      }
+      return nil
 		} else if slackConn != nil {
 			d.Set("source_id", slackConn.SourceID)
 			d.Set("source_name", slackConn.SourceName)
@@ -166,15 +174,9 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 			d.Set("notification_type", slackConn.NotificationType)
 			d.Set("config", flattenConnectionConfig(slackConn.Config))
 		}
+
 		return nil
 	})
-
-	if retryErr != nil {
-		time.Sleep(2 * time.Second)
-		return retryErr
-	}
-
-	return nil
 }
 
 func resourcePagerDutySlackConnectionUpdate(d *schema.ResourceData, meta interface{}) error {

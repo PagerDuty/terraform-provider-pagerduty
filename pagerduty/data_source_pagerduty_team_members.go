@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -62,14 +62,14 @@ func dataSourcePagerDutyTeamMembersRead(ctx context.Context, d *schema.ResourceD
 
 	log.Printf("[INFO] Reading PagerDuty team members of %s", teamID)
 
-	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		var mems []map[string]interface{}

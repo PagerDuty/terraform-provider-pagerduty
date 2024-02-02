@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -88,17 +88,17 @@ func dataSourcePagerDutyLicenseRead(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Fetching PagerDuty Licenses")
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		licenses, _, err := client.Licenses.List()
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		id, name, description := d.Get("id").(string), d.Get("name").(string), d.Get("description").(string)
@@ -106,7 +106,7 @@ func dataSourcePagerDutyLicenseRead(d *schema.ResourceData, meta interface{}) er
 
 		if found == nil {
 			ids := licensesToStringOfIds(licenses)
-			return resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("Unable to locate any license with ids in [%s] with the configured id: '%s', name: '%s' or description: '%s'", ids, id, name, description))
 		}
 

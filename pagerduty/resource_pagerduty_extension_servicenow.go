@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -109,7 +109,7 @@ func buildExtensionServiceNowStruct(d *schema.ResourceData) *pagerduty.Extension
 		ExtensionObjects: expandServiceNowServiceObjects(d.Get("extension_objects")),
 	}
 
-	var config = &PagerDutyExtensionServiceNowConfig{
+	config := &PagerDutyExtensionServiceNowConfig{
 		User:        d.Get("snow_user").(string),
 		Password:    d.Get("snow_password").(string),
 		SyncOptions: d.Get("sync_options").(string),
@@ -128,17 +128,17 @@ func fetchPagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interf
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		extension, _, err := client.Extensions.Get(d.Id())
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -154,7 +154,7 @@ func fetchPagerDutyExtensionServiceNowCreate(d *schema.ResourceData, meta interf
 		d.Set("extension_schema", extension.ExtensionSchema.ID)
 
 		b, _ := json.Marshal(extension.Config)
-		var config = new(PagerDutyExtensionServiceNowConfig)
+		config := new(PagerDutyExtensionServiceNowConfig)
 		json.Unmarshal(b, config)
 		d.Set("snow_user", config.User)
 		d.Set("snow_password", config.Password)
@@ -236,7 +236,6 @@ func resourcePagerDutyExtensionServiceNowImport(d *schema.ResourceData, meta int
 	}
 
 	extension, _, err := client.Extensions.Get(d.Id())
-
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_extension. Expecting an importation ID for extension")
 	}

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -269,18 +269,18 @@ func fetchSchedule(d *schema.ResourceData, meta interface{}, errCallback func(er
 		return err
 	}
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		schedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
 		if err != nil {
 			log.Printf("[WARN] Schedule read error")
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			return nil
 		}
@@ -291,17 +291,17 @@ func fetchSchedule(d *schema.ResourceData, meta interface{}, errCallback func(er
 
 			layers, err := flattenScheduleLayers(schedule.ScheduleLayers)
 			if err != nil {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			if err := d.Set("layer", layers); err != nil {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 			if err := d.Set("teams", flattenShedTeams(schedule.Teams)); err != nil {
-				return resource.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
+				return retry.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
 			}
 			if err := d.Set("final_schedule", flattenScheFinalSchedule(schedule.FinalSchedule)); err != nil {
-				return resource.NonRetryableError(fmt.Errorf("error setting final_schedule: %s", err))
+				return retry.NonRetryableError(fmt.Errorf("error setting final_schedule: %s", err))
 			}
 
 		}
@@ -375,9 +375,9 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Updating PagerDuty schedule: %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.Schedules.Update(d.Id(), schedule, opts); err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -398,15 +398,15 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Starting deletion process of Schedule %s", scheduleId)
 	var scheduleData *pagerduty.Schedule
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.Schedules.Get(scheduleId, &pagerduty.GetScheduleOptions{})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		scheduleData = resp
 		return nil
@@ -424,10 +424,10 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Deleting PagerDuty schedule: %s", scheduleId)
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr = resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr = retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Schedules.Delete(scheduleId); err != nil {
 			if !isErrCode(err, 400) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			isErrorScheduleUsedByEP := func(e *pagerduty.Error) bool {
 				return strings.Compare(fmt.Sprintf("%v", e.Errors), "[Schedule can't be deleted if it's being used by escalation policies]") == 0
@@ -439,7 +439,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 			// Handling of specific http 400 errors from API call DELETE /schedules
 			e, ok := err.(*pagerduty.Error)
 			if !ok || !isErrorScheduleUsedByEP(e) && !isErrorScheduleWOpenIncidents(e) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			var workaroundErr error
@@ -448,7 +448,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 			linksToIncidentsOpen, workaroundErr := listIncidentsOpenedRelatedToSchedule(client, scheduleData, epsUsingThisSchedule)
 			if workaroundErr != nil {
 				err = fmt.Errorf("%v; %w", err, workaroundErr)
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			hasToShowIncidentRemediationMessage := len(linksToIncidentsOpen) > 0
@@ -457,24 +457,24 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 				for _, incident := range linksToIncidentsOpen {
 					urlLinksMessage = fmt.Sprintf("%s\n%s", urlLinksMessage, incident)
 				}
-				return resource.NonRetryableError(fmt.Errorf("Before destroying Schedule %q You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, urlLinksMessage))
+				return retry.NonRetryableError(fmt.Errorf("Before destroying Schedule %q You must first resolve or reassign the following incidents related with Escalation Policies using this Schedule... %s", scheduleId, urlLinksMessage))
 			}
 
 			// Returning at this point because the open incident (s) blocking the
 			// deletion of the Schedule can't be tracked.
 			if isErrorScheduleWOpenIncidents(e) && !hasToShowIncidentRemediationMessage {
-				return resource.NonRetryableError(e)
+				return retry.NonRetryableError(e)
 			}
 
 			epsDataUsingThisSchedule, errFetchingFullEPs := fetchEPsDataUsingASchedule(epsUsingThisSchedule, client)
 			if errFetchingFullEPs != nil {
 				err = fmt.Errorf("%v; %w", err, errFetchingFullEPs)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
 			errBlockingBecauseOfEPs := detectUseOfScheduleByEPsWithOneLayer(scheduleId, epsDataUsingThisSchedule)
 			if errBlockingBecauseOfEPs != nil {
-				return resource.NonRetryableError(errBlockingBecauseOfEPs)
+				return retry.NonRetryableError(errBlockingBecauseOfEPs)
 			}
 
 			// Workaround for Schedule being used by escalation policies error
@@ -483,7 +483,7 @@ func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) e
 			if workaroundErr != nil {
 				err = fmt.Errorf("%v; %w", err, workaroundErr)
 			}
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -658,7 +658,7 @@ func flattenScheFinalSchedule(finalSche *pagerduty.SubSchedule) []map[string]int
 
 func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerduty.Schedule, epIDs []string) ([]string, error) {
 	var incidents []*pagerduty.Incident
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		var err error
 		options := &pagerduty.ListIncidentsOptions{
 			DateRange: "all",
@@ -674,11 +674,11 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerdu
 		incidents, err = c.Incidents.ListAll(options)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -708,6 +708,7 @@ func listIncidentsOpenedRelatedToSchedule(c *pagerduty.Client, schedule *pagerdu
 	}
 	return linksToIncidents, nil
 }
+
 func extractEPsUsingASchedule(c *pagerduty.Client, schedule *pagerduty.Schedule) ([]string, error) {
 	eps := []string{}
 	for _, ep := range schedule.EscalationPolicies {
@@ -765,11 +766,11 @@ func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.
 	}
 	ep.EscalationRules = epr
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		_, _, err := c.EscalationPolicies.Update(ep.ID, ep)
 		if err != nil {
 			if !isErrCode(err, 404) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 		return nil
@@ -856,14 +857,14 @@ func detectUseOfScheduleByEPsWithOneLayer(scheduleId string, eps []*pagerduty.Es
 func fetchEPsDataUsingASchedule(eps []string, c *pagerduty.Client) ([]*pagerduty.EscalationPolicy, error) {
 	fullEPs := []*pagerduty.EscalationPolicy{}
 	for _, epID := range eps {
-		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 			ep, _, err := c.EscalationPolicies.Get(epID, &pagerduty.GetEscalationPolicyOptions{})
 			if err != nil {
 				if isErrCode(err, http.StatusBadRequest) {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			fullEPs = append(fullEPs, ep)
 			return nil

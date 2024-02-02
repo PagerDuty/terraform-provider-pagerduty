@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -106,17 +106,17 @@ func dataSourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Reading PagerDuty AutomationActionsAction")
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		automationActionsAction, _, err := client.AutomationActionsAction.Get(d.Get("id").(string))
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		d.SetId(automationActionsAction.ID)
@@ -131,7 +131,7 @@ func dataSourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta
 
 		f_adr := flattenActionDataReference(automationActionsAction.ActionDataReference)
 		if err := d.Set("action_data_reference", f_adr); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		if automationActionsAction.ModifyTime != nil {

@@ -7,13 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-const AppBaseUrl = "https://app.pagerduty.com"
-const StarWildcardConfig = "*"
+const (
+	AppBaseUrl         = "https://app.pagerduty.com"
+	StarWildcardConfig = "*"
+)
 
 func resourcePagerDutySlackConnection() *schema.Resource {
 	return &schema.Resource{
@@ -116,16 +118,15 @@ func resourcePagerDutySlackConnectionCreate(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
-
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		slackConn, err := buildSlackConnectionStruct(d)
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		log.Printf("[INFO] Creating PagerDuty slack connection for source %s and slack channel %s", slackConn.SourceID, slackConn.ChannelID)
 
 		if slackConn, _, err = client.SlackConnections.Create(slackConn.WorkspaceID, slackConn); err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if slackConn != nil {
 			d.SetId(slackConn.ID)
 			d.Set("workspace_id", slackConn.WorkspaceID)
@@ -150,13 +151,13 @@ func resourcePagerDutySlackConnectionRead(d *schema.ResourceData, meta interface
 	workspaceID := d.Get("workspace_id").(string)
 	log.Printf("[DEBUG] Read Slack Connection: workspace_id %s", workspaceID)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if slackConn, _, err := client.SlackConnections.Get(workspaceID, d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if slackConn != nil {
 			d.Set("source_id", slackConn.SourceID)
 			d.Set("source_name", slackConn.SourceName)

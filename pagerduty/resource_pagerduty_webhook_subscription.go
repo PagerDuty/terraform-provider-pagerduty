@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -141,13 +141,13 @@ func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta int
 
 	log.Printf("[INFO] Creating PagerDuty webhook subscription to be delivered to %s", webhook.DeliveryMethod.URL)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Create(webhook); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if webhook != nil {
 			d.SetId(webhook.ID)
 		}
@@ -159,7 +159,6 @@ func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta int
 	}
 
 	return resourcePagerDutyWebhookSubscriptionRead(d, meta)
-
 }
 
 func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta interface{}) error {
@@ -170,20 +169,21 @@ func resourcePagerDutyWebhookSubscriptionRead(d *schema.ResourceData, meta inter
 
 	log.Printf("[INFO] Reading PagerDuty webhook subscription %s", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if webhook, _, err := client.WebhookSubscriptions.Get(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if webhook != nil {
 			setWebhookResourceData(d, webhook)
 		}
 		return nil
 	})
 }
+
 func resourcePagerDutyWebhookSubscriptionUpdate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -251,6 +251,7 @@ func expandDeliveryMethod(v interface{}) pagerduty.DeliveryMethod {
 	}
 	return method
 }
+
 func expandFilter(v interface{}) pagerduty.Filter {
 	filterMap := v.([]interface{})[0].(map[string]interface{})
 

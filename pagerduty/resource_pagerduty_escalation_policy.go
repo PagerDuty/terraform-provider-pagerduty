@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -137,23 +137,23 @@ func resourcePagerDutyEscalationPolicyCreate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Creating PagerDuty escalation policy: %s", escalationPolicy.Name)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Create(escalationPolicy)
 		if err != nil {
 			if isErrCode(err, 429) {
 				// Delaying retry by 30s as recommended by PagerDuty
 				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 				time.Sleep(30 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		d.SetId(escalationPolicy.ID)
 		readErr = fetchEscalationPolicy(d, meta, genError)
 		if readErr != nil {
-			return resource.NonRetryableError(readErr)
+			return retry.NonRetryableError(readErr)
 		}
 		return nil
 	})
@@ -172,18 +172,18 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 
 	o := &pagerduty.GetEscalationPolicyOptions{Includes: []string{"escalation_rule_assignment_strategies"}}
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			log.Printf("[WARN] Escalation Policy read error")
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
 			return nil
@@ -194,11 +194,11 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 		d.Set("num_loops", escalationPolicy.NumLoops)
 
 		if err := d.Set("teams", flattenTeams(escalationPolicy.Teams)); err != nil {
-			return resource.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
+			return retry.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
 		}
 
 		if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules)); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		return nil
@@ -215,9 +215,9 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Updating PagerDuty escalation policy: %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -238,13 +238,13 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Deleting PagerDuty escalation policy: %s", d.Id())
 
 	// Retrying to give other resources (such as services) to delete
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.EscalationPolicies.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
 	})

@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -113,19 +113,19 @@ func resourcePagerDutyEventOrchestrationIntegrationCreate(ctx context.Context, d
 
 	oid, payload := getEventOrchestrationIntegrationPayloadData(d)
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Creating Integration '%s' for PagerDuty Event Orchestration '%s'", payload.Label, oid)
 
 		if integration, _, err := client.EventOrchestrationIntegrations.CreateContext(ctx, oid, payload); err != nil {
 			if isErrCode(err, 400) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if integration != nil {
 			// Try reading an integration after creation, retry if not found:
 			if _, readErr := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, integration.ID, true); readErr != nil {
 				log.Printf("[WARN] Cannot locate Integration '%s' on PagerDuty Event Orchestration '%s'. Retrying creation...", integration.ID, oid)
-				return resource.RetryableError(readErr)
+				return retry.RetryableError(readErr)
 			}
 		}
 		return nil
@@ -143,15 +143,15 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 	id := d.Id()
 	oid := d.Get("event_orchestration").(string)
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
 		if _, err := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, false); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		return nil
@@ -178,14 +178,14 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 		sourceOrchId := o.(string)
 		destinationOrchId := n.(string)
 
-		retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+		retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 			log.Printf("[INFO] Migrating Event Orchestration Integration '%s': source - '%s', destination - '%s'", id, sourceOrchId, destinationOrchId)
 
 			if _, _, err := client.EventOrchestrationIntegrations.MigrateFromOrchestrationContext(ctx, destinationOrchId, sourceOrchId, id); err != nil {
 				if isErrCode(err, 400) {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			} else {
 				// try reading the migrated integration from destination and source:
 				_, _, readDestErr := client.EventOrchestrationIntegrations.GetContext(ctx, destinationOrchId, id)
@@ -194,13 +194,13 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 				// retry migration if the read request returned an error:
 				if readDestErr != nil {
 					log.Printf("[WARN] Integration '%s' cannot be found on the destination PagerDuty Event Orchestration '%s'. Retrying migration....", id, destinationOrchId)
-					return resource.RetryableError(readDestErr)
+					return retry.RetryableError(readDestErr)
 				}
 
 				// retry migration if the integration still exists on the source:
 				if readSrcErr == nil && srcInt != nil {
 					log.Printf("[WARN] Integration '%s' still exists on the source PagerDuty Event Orchestration '%s'. Retrying migration....", id, sourceOrchId)
-					return resource.RetryableError(fmt.Errorf("Integration '%s' still exists on the source PagerDuty Event Orchestration '%s'.", id, sourceOrchId))
+					return retry.RetryableError(fmt.Errorf("Integration '%s' still exists on the source PagerDuty Event Orchestration '%s'.", id, sourceOrchId))
 				}
 			}
 			return nil
@@ -216,19 +216,19 @@ func resourcePagerDutyEventOrchestrationIntegrationUpdate(ctx context.Context, d
 	if d.HasChange("label") {
 		oid, payload := getEventOrchestrationIntegrationPayloadData(d)
 
-		retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+		retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 			log.Printf("[INFO] Updating Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
 			if integration, _, err := client.EventOrchestrationIntegrations.UpdateContext(ctx, oid, id, payload); err != nil {
 				if isErrCode(err, 400) {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			} else if integration != nil {
 				// Try reading an integration after updating the label, retry if the label is not updated:
 				if updInt, readErr := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, true); readErr != nil && updInt != nil {
 					log.Printf("[WARN] Label for Integration '%s' on PagerDuty Event Orchestration '%s' was not updated. Expected: '%s', actual: '%s'. Retrying update...", id, oid, payload.Label, updInt.Label)
-					return resource.RetryableError(readErr)
+					return retry.RetryableError(readErr)
 				}
 			}
 			return nil
@@ -252,19 +252,19 @@ func resourcePagerDutyEventOrchestrationIntegrationDelete(ctx context.Context, d
 	id := d.Id()
 	oid, _ := getEventOrchestrationIntegrationPayloadData(d)
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Deleting Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 		if _, err := client.EventOrchestrationIntegrations.DeleteContext(ctx, oid, id); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else {
 			// Try reading an integration after deletion, retry if still found:
 			if integr, _, readErr := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); readErr == nil && integr != nil {
 				log.Printf("[WARN] Integration '%s' still exists on PagerDuty Event Orchestration '%s'. Retrying deletion...", id, oid)
-				return resource.RetryableError(fmt.Errorf("Integration '%s' still exists on PagerDuty Event Orchestration '%s'.", id, oid))
+				return retry.RetryableError(fmt.Errorf("Integration '%s' still exists on PagerDuty Event Orchestration '%s'.", id, oid))
 			}
 		}
 		return nil
@@ -290,15 +290,15 @@ func resourcePagerDutyEventOrchestrationIntegrationImport(ctx context.Context, d
 		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_event_orchestration_integration. Expected import ID format: <orchestration_id>:<integration_id>")
 	}
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading Integration '%s' for PagerDuty Event Orchestration: %s", id, oid)
 
 		if _, err := fetchPagerDutyEventOrchestrationIntegration(ctx, d, meta, oid, id, false); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})

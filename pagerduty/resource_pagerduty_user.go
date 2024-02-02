@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -182,17 +182,17 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] pooh Reading PagerDuty user %s", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		user, err := client.Users.GetWithLicense(d.Id(), &pagerduty.GetUserOptions{})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -210,7 +210,7 @@ func resourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("license", user.License.ID)
 
 		if err := d.Set("teams", flattenTeams(user.Teams)); err != nil {
-			return resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("error setting teams: %s", err),
 			)
 		}
@@ -238,13 +238,13 @@ func resourcePagerDutyUserUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[INFO] Updating PagerDuty user %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.Users.Update(d.Id(), user); err != nil {
 			if isErrCode(err, 400) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
 	})
@@ -305,13 +305,13 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[INFO] Deleting PagerDuty user %s", d.Id())
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Users.Delete(d.Id()); err != nil {
 			if isErrCode(err, 400) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
 	})
@@ -328,7 +328,7 @@ func resourcePagerDutyUserDelete(d *schema.ResourceData, meta interface{}) error
 }
 
 func expandLicenseReference(v interface{}) (*pagerduty.LicenseReference, error) {
-	var license = &pagerduty.LicenseReference{
+	license := &pagerduty.LicenseReference{
 		ID:   v.(string),
 		Type: "license_reference",
 	}

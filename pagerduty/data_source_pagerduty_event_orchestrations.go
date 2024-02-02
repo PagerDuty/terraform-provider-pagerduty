@@ -7,7 +7,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -84,19 +85,19 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 	nameFilter := d.Get("name_filter").(string)
 
 	var eoList []*pagerduty.EventOrchestration
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.EventOrchestrations.List()
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		re, err := regexp.Compile(nameFilter)
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("invalid regexp for name_filter provided %s", nameFilter))
+			return retry.NonRetryableError(fmt.Errorf("invalid regexp for name_filter provided %s", nameFilter))
 		}
 		for _, orchestration := range resp.Orchestrations {
 			if re.MatchString(orchestration.Name) {
@@ -104,7 +105,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 			}
 		}
 		if len(eoList) == 0 {
-			return resource.NonRetryableError(fmt.Errorf("Unable to locate any Event Orchestration matching the expression: %s", nameFilter))
+			return retry.NonRetryableError(fmt.Errorf("Unable to locate any Event Orchestration matching the expression: %s", nameFilter))
 		}
 
 		return nil
@@ -118,14 +119,14 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 	for _, orchestration := range eoList {
 		// Get orchestration matched by ID so we can set the integrations property
 		// since the list endpoint does not return it
-		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 			orch, _, err := client.EventOrchestrations.Get(orchestration.ID)
 			if err != nil {
 				if isErrCode(err, http.StatusBadRequest) {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			orchestrations = append(orchestrations, orch)
 			return nil
@@ -136,7 +137,7 @@ func dataSourcePagerDutyEventOrchestrationsRead(d *schema.ResourceData, meta int
 		}
 	}
 
-	d.SetId(resource.UniqueId())
+	d.SetId(id.UniqueId())
 	d.Set("name_filter", nameFilter)
 	d.Set("event_orchestrations", flattenPagerDutyEventOrchestrations(orchestrations))
 

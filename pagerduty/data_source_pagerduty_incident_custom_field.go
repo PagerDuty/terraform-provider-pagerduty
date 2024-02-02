@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -51,17 +51,17 @@ func dataSourcePagerDutyIncidentCustomFieldRead(ctx context.Context, d *schema.R
 
 	searchName := d.Get("name").(string)
 
-	err = resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
+	err = retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.IncidentCustomFields.ListContext(ctx, nil)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		var found *pagerduty.IncidentCustomField
@@ -74,14 +74,14 @@ func dataSourcePagerDutyIncidentCustomFieldRead(ctx context.Context, d *schema.R
 		}
 
 		if found == nil {
-			return resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("unable to locate any field with name: %s", searchName),
 			)
 		}
 
 		err = flattenIncidentCustomField(d, found)
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		return nil

@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -39,26 +40,26 @@ func dataSourcePagerDutyLicensesRead(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] Fetching PagerDuty Licenses")
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		licenses, _, err := client.Licenses.List()
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		newLicenses := flattenLicenses(licenses)
 		d.Set("licenses", newLicenses)
 
-		if id, ok := d.GetOk("id"); !ok {
-			d.SetId(resource.UniqueId())
+		if idValue, ok := d.GetOk("id"); !ok {
+			d.SetId(id.UniqueId())
 		} else {
-			d.SetId(id.(string))
+			d.SetId(idValue.(string))
 		}
 		return nil
 	})
@@ -74,7 +75,7 @@ func flattenLicenses(licenses []*pagerduty.License) []map[string]interface{} {
 }
 
 func flattenLicense(l *pagerduty.License) map[string]interface{} {
-	var license = map[string]interface{}{
+	license := map[string]interface{}{
 		"id":                    l.ID,
 		"type":                  l.Type,
 		"name":                  l.Name,

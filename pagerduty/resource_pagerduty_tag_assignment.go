@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -73,13 +73,13 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 
 	log.Printf("[INFO] Creating PagerDuty tag assignment with tagID %s for %s entity with ID %s", assignment.TagID, assignment.EntityType, assignment.EntityID)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else {
 			// create tag_assignment id using the entityID.tagID as PagerDuty API does not return one
 			assignmentID := createAssignmentID(assignment.EntityID, assignment.TagID)
@@ -94,7 +94,6 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 	// give PagerDuty 2 seconds to save the assignment correctly
 	time.Sleep(2 * time.Second)
 	return resourcePagerDutyTagAssignmentRead(d, meta)
-
 }
 
 func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}) error {
@@ -116,14 +115,14 @@ func resourcePagerDutyTagAssignmentRead(d *schema.ResourceData, meta interface{}
 		return nil
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if tagResponse, _, err := client.Tags.ListTagsForEntity(assignment.EntityType, assignment.EntityID); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if tagResponse != nil {
 			var foundTag *pagerduty.Tag
 
@@ -155,13 +154,13 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 	}
 	log.Printf("[INFO] Deleting PagerDuty tag assignment with tagID %s for entityID %s", assignment.TagID, assignment.EntityID)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else {
 			d.SetId("")
 		}
@@ -190,7 +189,6 @@ func resourcePagerDutyTagAssignmentImport(d *schema.ResourceData, meta interface
 	// give PagerDuty 2 seconds to save the assignment correctly
 	time.Sleep(2 * time.Second)
 	tagResponse, _, err := client.Tags.ListTagsForEntity(entityType, entityID)
-
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_tag_assignment: %s", err.Error())
 	}
@@ -232,7 +230,7 @@ func isFoundTagAssignmentEntity(entityID, entityType string, meta interface{}) (
 	fetchEscalationPolicy := func(id string) (*pagerduty.EscalationPolicy, *pagerduty.Response, error) {
 		return client.EscalationPolicies.Get(id, &pagerduty.GetEscalationPolicyOptions{})
 	}
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		var err error
 		if entityType == "users" {
 			_, _, err = fetchUser(entityID)
@@ -248,10 +246,10 @@ func isFoundTagAssignmentEntity(entityID, entityType string, meta interface{}) (
 			return nil
 		}
 		if err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		if isErrCode(err, http.StatusBadRequest) {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		isFound = true

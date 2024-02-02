@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -369,7 +369,7 @@ func expandConditions(v interface{}) *pagerduty.RuleConditions {
 }
 
 func expandTimeFrame(v interface{}) *pagerduty.RuleTimeFrame {
-	var tFrame = new(pagerduty.RuleTimeFrame)
+	tFrame := new(pagerduty.RuleTimeFrame)
 
 	for _, tfi := range v.([]interface{}) {
 		tfm := tfi.(map[string]interface{})
@@ -426,7 +426,7 @@ func expandActiveBetween(v interface{}) *pagerduty.ActiveBetween {
 }
 
 func expandActions(v interface{}) *pagerduty.RuleActions {
-	var actions = new(pagerduty.RuleActions)
+	actions := new(pagerduty.RuleActions)
 
 	for _, ai := range v.([]interface{}) {
 		am := ai.(map[string]interface{})
@@ -475,6 +475,7 @@ func expandSubConditions(v interface{}) []*pagerduty.RuleSubcondition {
 	}
 	return sc
 }
+
 func expandSubConditionParameters(v interface{}) *pagerduty.ConditionParameter {
 	var parms *pagerduty.ConditionParameter
 
@@ -502,6 +503,7 @@ func expandActionParameters(v interface{}) *pagerduty.RuleActionParameter {
 	}
 	return rap
 }
+
 func expandActionIntParameters(v interface{}) *pagerduty.RuleActionIntParameter {
 	var rap *pagerduty.RuleActionIntParameter
 
@@ -546,6 +548,7 @@ func expandExtractions(v interface{}) []*pagerduty.RuleActionExtraction {
 	}
 	return rae
 }
+
 func expandRuleVariables(v interface{}) []*pagerduty.RuleVariable {
 	var ruleVariables []*pagerduty.RuleVariable
 
@@ -577,6 +580,7 @@ func expandVariableParameters(v interface{}) *pagerduty.RuleVariableParameter {
 	}
 	return parm
 }
+
 func flattenRuleVariables(v []*pagerduty.RuleVariable) []map[string]interface{} {
 	var ruleVariables []map[string]interface{}
 
@@ -594,7 +598,6 @@ func flattenRuleVariables(v []*pagerduty.RuleVariable) []map[string]interface{} 
 }
 
 func flattenVariableParamters(p *pagerduty.RuleVariableParameter) []interface{} {
-
 	flattenedParams := map[string]interface{}{
 		"path":  p.Path,
 		"value": p.Value,
@@ -629,7 +632,6 @@ func flattenSubconditions(subconditions []*pagerduty.RuleSubcondition) []interfa
 }
 
 func flattenSubconditionParameters(p *pagerduty.ConditionParameter) []interface{} {
-
 	flattenedParams := map[string]interface{}{
 		"path":  p.Path,
 		"value": p.Value,
@@ -673,7 +675,6 @@ func flattenActions(actions *pagerduty.RuleActions) []map[string]interface{} {
 }
 
 func flattenSuppress(s *pagerduty.RuleActionSuppress) []interface{} {
-
 	sup := map[string]interface{}{
 		"value":                 s.Value,
 		"threshold_value":       s.ThresholdValue,
@@ -682,15 +683,15 @@ func flattenSuppress(s *pagerduty.RuleActionSuppress) []interface{} {
 	}
 	return []interface{}{sup}
 }
-func flattenActionParameter(ap *pagerduty.RuleActionParameter) []interface{} {
 
+func flattenActionParameter(ap *pagerduty.RuleActionParameter) []interface{} {
 	param := map[string]interface{}{
 		"value": ap.Value,
 	}
 	return []interface{}{param}
 }
-func flattenActionIntParameter(ap *pagerduty.RuleActionIntParameter) []interface{} {
 
+func flattenActionIntParameter(ap *pagerduty.RuleActionIntParameter) []interface{} {
 	param := map[string]interface{}{
 		"value": ap.Value,
 	}
@@ -729,7 +730,6 @@ func flattenTimeFrame(timeframe *pagerduty.RuleTimeFrame) []map[string]interface
 }
 
 func flattenScheduledWeekly(s *pagerduty.ScheduledWeekly) []interface{} {
-
 	fsw := map[string]interface{}{
 		"timezone":   s.Timezone,
 		"start_time": s.StartTime,
@@ -740,7 +740,6 @@ func flattenScheduledWeekly(s *pagerduty.ScheduledWeekly) []interface{} {
 }
 
 func flattenActiveBetween(ab *pagerduty.ActiveBetween) []interface{} {
-
 	fab := map[string]interface{}{
 		"start_time": ab.StartTime,
 		"end_time":   ab.EndTime,
@@ -765,7 +764,6 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 		log.Printf("[INFO] Found catch_all rule for ruleset: %s", rule.Ruleset.ID)
 
 		rulesetrules, _, err := client.Rulesets.ListRules(rule.Ruleset.ID)
-
 		if err != nil {
 			return err
 		}
@@ -795,20 +793,20 @@ func resourcePagerDutyRulesetRuleCreate(d *schema.ResourceData, meta interface{}
 		return resourcePagerDutyRulesetRuleRead(d, meta)
 	}
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if rule, _, err := client.Rulesets.CreateRule(rule.Ruleset.ID, rule); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
 			// Verifying the position that was defined in terraform is the same position set in PagerDuty
 			pos := d.Get("position").(int)
 			if *rule.Position != pos {
 				if err := resourcePagerDutyRulesetRuleUpdate(d, meta); err != nil {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 			}
 		}
@@ -830,14 +828,14 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[INFO] Reading PagerDuty ruleset rule: %s", d.Id())
 	rulesetID := d.Get("ruleset").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if rule != nil {
 			if rule.Conditions != nil {
 				d.Set("conditions", flattenConditions(rule.Conditions))
@@ -874,16 +872,16 @@ func resourcePagerDutyRulesetRuleUpdate(d *schema.ResourceData, meta interface{}
 }
 
 func performRulesetRuleUpdate(rulesetID string, id string, rule *pagerduty.RulesetRule, client *pagerduty.Client) error {
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if updatedRule, _, err := client.Rulesets.UpdateRule(rulesetID, id, rule); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position && rule.CatchAll != true {
 			log.Printf("[INFO] PagerDuty ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position)
-			return resource.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
+			return retry.RetryableError(fmt.Errorf("Error updating ruleset rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}
 		return nil
 	})
@@ -908,7 +906,6 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 		log.Printf("[INFO] Rule %s is a catch_all rule, don't delete it, reset it instead", d.Id())
 
 		rule, _, err := client.Rulesets.GetRule(rulesetID, d.Id())
-
 		if err != nil {
 			return err
 		}
@@ -935,13 +932,13 @@ func resourcePagerDutyRulesetRuleDelete(d *schema.ResourceData, meta interface{}
 
 	log.Printf("[INFO] Deleting PagerDuty ruleset rule: %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Rulesets.DeleteRule(rulesetID, d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})

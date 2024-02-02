@@ -39,7 +39,7 @@ func (d *dataSourceStandardsResourceScores) Schema(ctx context.Context, req data
 }
 
 func (d *dataSourceStandardsResourceScores) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	ConfigurePagerdutyClient(&d.client, req, resp)
+	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 
 func (d *dataSourceStandardsResourceScores) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -48,8 +48,12 @@ func (d *dataSourceStandardsResourceScores) Read(ctx context.Context, req dataso
 
 	id := data.ID.ValueString()
 	rt := data.ResourceType.ValueString()
+	rtUrl, ok := resourceStandardsToURLMapping[rt]
+	if !ok {
+		rtUrl = rt
+	}
 
-	scores, err := d.client.ListResourceStandardScores(ctx, id, rt)
+	scores, err := d.client.ListResourceStandardScores(ctx, id, rtUrl)
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
 			"Error calling ListResourceStandardScores",
@@ -119,4 +123,8 @@ func resourceStandardsToModel(standards []pagerduty.ResourceStandard) (types.Lis
 	modelStandards, di := types.ListValue(resourceStandardObjectType, list)
 	diags.Append(di...)
 	return modelStandards, diags
+}
+
+var resourceStandardsToURLMapping = map[string]string{
+	"technical_service": "technical_services",
 }

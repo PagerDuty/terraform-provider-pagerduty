@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -93,17 +93,17 @@ func fetchPagerDutyExtension(d *schema.ResourceData, meta interface{}, errCallba
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		extension, _, err := client.Extensions.Get(d.Id())
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -196,7 +196,6 @@ func resourcePagerDutyExtensionImport(d *schema.ResourceData, meta interface{}) 
 	}
 
 	extension, _, err := client.Extensions.Get(d.Id())
-
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_extension. Expecting an importation ID for extension")
 	}
@@ -233,6 +232,7 @@ func flattenExtensionObjects(serviceList []*pagerduty.ServiceReference) interfac
 	}
 	return services
 }
+
 func expandExtensionConfig(v interface{}) interface{} {
 	var config interface{}
 	if err := json.Unmarshal([]byte(v.(string)), &config); err != nil {

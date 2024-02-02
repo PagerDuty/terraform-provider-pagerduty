@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -59,13 +59,13 @@ func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error 
 
 	log.Printf("[INFO] Creating PagerDuty tag %s", tag.Label)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if tag, _, err := client.Tags.Create(tag); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if tag != nil {
 			d.SetId(tag.ID)
 		}
@@ -77,7 +77,6 @@ func resourcePagerDutyTagCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	return resourcePagerDutyTagRead(d, meta)
-
 }
 
 func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
@@ -88,17 +87,17 @@ func resourcePagerDutyTagRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Reading PagerDuty tag %s", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		tag, _, err := client.Tags.Get(d.Id())
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -121,13 +120,13 @@ func resourcePagerDutyTagDelete(d *schema.ResourceData, meta interface{}) error 
 
 	log.Printf("[INFO] Deleting PagerDuty tag %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Tags.Delete(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})

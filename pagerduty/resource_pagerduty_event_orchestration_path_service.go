@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -185,7 +185,7 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 	id := d.Id()
 	var path *pagerduty.EventOrchestrationPath
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		t := "service"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for service: %s", t, id)
 
@@ -193,11 +193,11 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		return nil
@@ -209,7 +209,7 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 	serviceID := d.Get("service").(string)
 	if path != nil {
-		retryErr = resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		retryErr = retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 			log.Printf("[INFO] Reading PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
 			pathServiceActiveStatus, _, err := client.EventOrchestrationPaths.GetServiceActiveStatusContext(ctx, serviceID)
 			// It should not retry request to the status endpoint after it starts to
@@ -220,11 +220,11 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 			}
 			if err != nil {
 				if isErrCode(err, http.StatusBadRequest) {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			d.Set("enable_event_orchestration_for_service", pathServiceActiveStatus.Active)
 			return nil
@@ -261,13 +261,13 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 
 	log.Printf("[INFO] Saving PagerDuty Event Orchestration Service Path: %s", serviceID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		if response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", payload); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if response != nil {
 			d.SetId(response.OrchestrationPath.Parent.ID)
 			servicePath = response.OrchestrationPath
@@ -286,22 +286,22 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 		enableEOForService := d.Get("enable_event_orchestration_for_service").(bool)
 		log.Printf("[INFO] Updating PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
 
-		retryErr = resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+		retryErr = retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 			resp, _, err := client.EventOrchestrationPaths.UpdateServiceActiveStatusContext(ctx, serviceID, enableEOForService)
 			if err != nil && isErrCode(err, http.StatusGone) {
 				return nil
 			}
 			if err != nil {
 				if isErrCode(err, http.StatusBadRequest) {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			if resp.Active != enableEOForService {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(fmt.Errorf("incosistent result received when trying to update event orchestration active status for service %q", serviceID))
+				return retry.RetryableError(fmt.Errorf("incosistent result received when trying to update event orchestration active status for service %q", serviceID))
 			}
 			return nil
 		})
@@ -352,13 +352,13 @@ func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d
 
 	log.Printf("[INFO] Deleting PagerDuty Event Orchestration Service Path: %s", serviceID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -438,7 +438,7 @@ func expandServicePathRules(v interface{}) []*pagerduty.EventOrchestrationPathRu
 }
 
 func expandServicePathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
-	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
+	catchAll := new(pagerduty.EventOrchestrationPathCatchAll)
 
 	for _, ca := range v.([]interface{}) {
 		if ca != nil {
@@ -451,7 +451,7 @@ func expandServicePathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathC
 }
 
 func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = &pagerduty.EventOrchestrationPathRuleActions{
+	actions := &pagerduty.EventOrchestrationPathRuleActions{
 		AutomationActions:          []*pagerduty.EventOrchestrationPathAutomationAction{},
 		PagerdutyAutomationActions: []*pagerduty.EventOrchestrationPathPagerdutyAutomationAction{},
 		Variables:                  []*pagerduty.EventOrchestrationPathActionVariables{},

@@ -2,7 +2,6 @@ package pagerduty
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -17,9 +16,7 @@ func TestAccDataSourcePagerDutyStandardsResourcesScores_Basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyStandardsResourcesScoresConfig(
-					name, "technical_services", []string{"P703E9Q", "PR6MHNF", "PQVUB8D"},
-				),
+				Config: testAccDataSourcePagerDutyStandardsResourcesScoresConfig(name),
 				Check: testAccCheckAttributes(
 					fmt.Sprintf("data.pagerduty_standards_resources_scores.%s", name),
 					testStandardsResourcesScores,
@@ -57,11 +54,41 @@ func testStandardsResourcesScores(a map[string]string) error {
 	return nil
 }
 
-func testAccDataSourcePagerDutyStandardsResourcesScoresConfig(name, rt string, ids []string) string {
-	format := `data "pagerduty_standards_resources_scores" "%s" {
-  resource_type = "%s"
-  ids = ["%s"]
-}`
-	idsList := strings.Join(ids, `","`)
-	return fmt.Sprintf(format, name, rt, idsList)
+func testAccDataSourcePagerDutyStandardsResourcesScoresConfig(name string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "Earline Greenholt"
+  email = "125.greenholt.earline@graham.name"
+}
+
+resource "pagerduty_escalation_policy" "bar" {
+  name      = "Testing Escalation Policy"
+  num_loops = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "example" {
+  name                    = "My Web App test"
+  auto_resolve_timeout    = 14400
+  acknowledgement_timeout = 600
+  escalation_policy       = pagerduty_escalation_policy.bar.id
+  alert_creation          = "create_alerts_and_incidents"
+  auto_pause_notifications_parameters {
+    enabled = true
+    timeout = 300
+  }
+}
+
+data "pagerduty_standards" "all" {}
+
+data "pagerduty_standards_resources_scores" "%s" {
+  resource_type = data.pagerduty_standards.all.standards.0.resource_type
+  ids           = [pagerduty_service.example.id]
+}`, name)
 }

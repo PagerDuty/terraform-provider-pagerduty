@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -469,29 +469,28 @@ func fetchService(d *schema.ResourceData, meta interface{}, errCallback func(err
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		service, _, err := client.Services.Get(d.Id(), &pagerduty.GetServiceOptions{
 			Includes: []string{"auto_pause_notifications_parameters"},
 		})
 		if err != nil {
 			log.Printf("[WARN] Service read error")
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
 		}
 
 		if err := flattenService(d, service); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
-
 	})
 }
 
@@ -686,6 +685,7 @@ func expandAlertGroupingConfig(v interface{}) *pagerduty.AlertGroupingConfig {
 	}
 	return alertGroupingConfig
 }
+
 func flattenAlertGroupingParameters(v *pagerduty.AlertGroupingParameters) interface{} {
 	alertGroupingParameters := map[string]interface{}{}
 
@@ -705,8 +705,8 @@ func flattenAlertGroupingParameters(v *pagerduty.AlertGroupingParameters) interf
 
 	return []interface{}{alertGroupingParameters}
 }
-func flattenAlertGroupingConfig(v *pagerduty.AlertGroupingConfig) interface{} {
 
+func flattenAlertGroupingConfig(v *pagerduty.AlertGroupingConfig) interface{} {
 	alertGroupingConfig := map[string]interface{}{
 		"aggregate":   v.Aggregate,
 		"fields":      v.Fields,

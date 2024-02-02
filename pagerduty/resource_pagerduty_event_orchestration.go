@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -107,13 +107,13 @@ func resourcePagerDutyEventOrchestrationCreate(d *schema.ResourceData, meta inte
 
 	log.Printf("[INFO] Creating PagerDuty Event Orchestration: %s", payload.Name)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if orch, _, err := client.EventOrchestrations.Create(payload); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if orch != nil {
 			d.SetId(orch.ID)
 			orchestration = orch
@@ -136,17 +136,17 @@ func resourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta interf
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		orch, _, err := client.EventOrchestrations.Get(d.Id())
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -168,12 +168,12 @@ func resourcePagerDutyEventOrchestrationUpdate(d *schema.ResourceData, meta inte
 
 	log.Printf("[INFO] Updating PagerDuty Event Orchestration: %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrations.Update(d.Id(), orchestration); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		return nil

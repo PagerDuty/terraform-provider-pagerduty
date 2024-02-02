@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -129,6 +129,7 @@ func expandService(v interface{}) *pagerduty.ServiceObj {
 
 	return so
 }
+
 func resourcePagerDutyServiceDependencyAssociate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -148,7 +149,7 @@ func resourcePagerDutyServiceDependencyAssociate(ctx context.Context, d *schema.
 	log.Printf("[INFO] Associating PagerDuty dependency %s", serviceDependency.ID)
 
 	var dependencies *pagerduty.ListServiceDependencies
-	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		// Lock the mutex to ensure only one API call to
 		// `service_dependencies/associate` is done at a time
 		dependencyAssociationMutex.Lock()
@@ -157,13 +158,13 @@ func resourcePagerDutyServiceDependencyAssociate(ctx context.Context, d *schema.
 
 		if err != nil {
 			if isErrCode(err, 404) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else {
 			for _, r := range dependencies.Relationships {
 				if err := d.Set("dependency", flattenRelationship(r)); err != nil {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 				d.SetId(r.ID)
 			}
@@ -193,17 +194,17 @@ func resourcePagerDutyServiceDependencyDisassociate(ctx context.Context, d *sche
 	var foundDep *pagerduty.ServiceDependency
 
 	// listServiceRelationships by calling get dependencies using the serviceDependency.DependentService.ID
-	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(dependency.DependentService.ID, dependency.DependentService.Type); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if dependencies != nil {
 			for _, rel := range dependencies.Relationships {
 				if rel.ID == d.Id() {
@@ -238,17 +239,17 @@ func resourcePagerDutyServiceDependencyDisassociate(ctx context.Context, d *sche
 	input := pagerduty.ListServiceDependencies{
 		Relationships: r,
 	}
-	retryErr = resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
+	retryErr = retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		if _, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -317,23 +318,23 @@ func findDependencySetState(ctx context.Context, depID, serviceID, serviceType s
 
 	// Pausing to let the PD API sync.
 	time.Sleep(1 * time.Second)
-	retryErr := resource.RetryContext(ctx, 5*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		if dependencies, _, err := client.ServiceDependencies.GetServiceDependenciesForType(serviceID, serviceType); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if dependencies != nil {
 			depFound := false
 			for _, rel := range dependencies.Relationships {
 				if rel.ID == depID {
 					if err := d.Set("dependency", flattenRelationship(rel)); err != nil {
-						return resource.NonRetryableError(err)
+						return retry.NonRetryableError(err)
 					}
 					d.SetId(rel.ID)
 					depFound = true

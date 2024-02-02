@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -44,14 +44,14 @@ func resourcePagerDutyAutomationActionsRunnerTeamAssociationCreate(d *schema.Res
 
 	log.Printf("[INFO] Creating PagerDuty AutomationActionsRunnerTeamAssociation %s:%s", d.Get("runner_id").(string), d.Get("team_id").(string))
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if teamRef, _, err := client.AutomationActionsRunner.AssociateToTeam(runnerID, teamID); err != nil {
 			if isErrCode(err, 429) {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if teamRef != nil {
 			d.SetId(fmt.Sprintf("%s:%s", runnerID, teamID))
 		}
@@ -76,17 +76,17 @@ func fetchPagerDutyAutomationActionsRunnerTeamAssociation(d *schema.ResourceData
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.AutomationActionsRunner.GetAssociationToTeam(runnerID, teamID)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -122,13 +122,13 @@ func resourcePagerDutyAutomationActionsRunnerTeamAssociationDelete(d *schema.Res
 
 	log.Printf("[INFO] Deleting PagerDuty AutomationActionsRunnerTeamAssociation %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.AutomationActionsRunner.DissociateFromTeam(runnerID, teamID); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})

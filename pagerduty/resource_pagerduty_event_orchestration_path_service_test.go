@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func init() {
@@ -27,7 +27,7 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 
 	// Checks that run on every step except the last one. These checks that verify the existance of the resource
 	// and computed/default attributes. We're not checking individual resource attributes because
-	// according to the official docs (https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource#TestCheckResourceAttr)
+	// according to the official docs (https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestCheckResourceAttr)
 	// "State value checking is only recommended for testing Computed attributes and attribute defaults."
 	baseChecks := []resource.TestCheckFunc{
 		testAccCheckPagerDutyEventOrchestrationPathServiceExists(resourceName),

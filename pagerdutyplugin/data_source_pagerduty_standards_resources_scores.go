@@ -38,7 +38,7 @@ func (d *dataSourceStandardsResourcesScores) Schema(ctx context.Context, req dat
 }
 
 func (d *dataSourceStandardsResourcesScores) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	ConfigurePagerdutyClient(&d.client, req, resp)
+	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 
 func (d *dataSourceStandardsResourcesScores) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -46,11 +46,15 @@ func (d *dataSourceStandardsResourcesScores) Read(ctx context.Context, req datas
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	rt := data.ResourceType.ValueString()
+	rtUrl, ok := resourceStandardsToURLMapping[rt]
+	if !ok {
+		rtUrl = rt
+	}
 	ids := make([]string, 0)
 	resp.Diagnostics.Append(data.IDs.ElementsAs(ctx, &ids, true)...)
 
 	opt := pagerduty.ListMultiResourcesStandardScoresOptions{IDs: ids}
-	scores, err := d.client.ListMultiResourcesStandardScores(ctx, rt, opt)
+	scores, err := d.client.ListMultiResourcesStandardScores(ctx, rtUrl, opt)
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
 			"Error calling ListResourceStandardScores",

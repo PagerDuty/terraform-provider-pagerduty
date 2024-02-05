@@ -108,6 +108,41 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyEventOrchestrationPathRouter_EnableRoutingRule(t *testing.T) {
+	team := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	orchestration := fmt.Sprintf("tf-orchestration-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyEventOrchestrationRouterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationRouterEnableRoutingRuleConfig(team, escalationPolicy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "set.0.rule.0.disabled", "true"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationRouterEnableRoutingRuleConfigUpdated(team, escalationPolicy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "set.0.rule.0.disabled", "false"),
+				),
+				// This is unnecessary, because this is the default behaviour of all
+				// tests, it is only here to explicitely state that this is the expected
+				// outcome from test.
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyEventOrchestrationRouterDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -389,6 +424,54 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfigDeleteAllRulesInSet(t, e
 			}
 		}
 		`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationRouterEnableRoutingRuleConfig(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = "unrouted"
+				}
+			}
+			set {
+				id = "start"
+				rule {
+					disabled = true
+					label = "rule1 label"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+				}
+			}
+		}
+	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationRouterEnableRoutingRuleConfigUpdated(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = "unrouted"
+				}
+			}
+			set {
+				id = "start"
+				rule {
+					disabled = false
+					label = "rule1 label"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+				}
+			}
+		}
+	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(t, ep, s, o string) string {

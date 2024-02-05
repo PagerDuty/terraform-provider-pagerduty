@@ -91,8 +91,8 @@ github.com/hashicorp/terraform-svchost v0.1.1 h1:EZZimZ1GxdqFRinZ1tpJwVxxt49xc/S
 github.com/hashicorp/terraform-svchost v0.1.1/go.mod h1:mNsjQfZyf/Jhz35v6/0LWcv26+X7JPS+buii2c9/ctc=
 github.com/hashicorp/yamux v0.1.1 h1:yrQxtgseBDrq9Y652vSRDvsKCJKOUD+GzTS4Y0Y8pvE=
 github.com/hashicorp/yamux v0.1.1/go.mod h1:CtWFDAQgb7dxtzFs4tWbplKIe2jSi3+5vKbgIO0SLnQ=
-github.com/heimweh/go-pagerduty v0.0.0-20231212192829-0de11cddf326 h1:ZyL8A1yPg0C9rUKc/QCUNM848NJ9DhTE/cRZH54y/5s=
-github.com/heimweh/go-pagerduty v0.0.0-20231212192829-0de11cddf326/go.mod h1:r59w5iyN01Qvi734yA5hZldbSeJJmsJzee/1kQ/MK7s=
+github.com/imjaroiswebdev/go-pagerduty v0.0.0-20240205220520-6f8c0393b684 h1:/RQu11u50ZZED2vVYRlKlFRukv3etj6wTASBmoa+LRU=
+github.com/imjaroiswebdev/go-pagerduty v0.0.0-20240205220520-6f8c0393b684/go.mod h1:r59w5iyN01Qvi734yA5hZldbSeJJmsJzee/1kQ/MK7s=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jhump/protoreflect v1.15.1 h1:HUMERORf3I3ZdX05WaQ6MIpd/NJ434hTp5YiKgfCL6c=
 github.com/kevinburke/ssh_config v1.2.0 h1:x584FjTGwHzMwvHx18PXxbBVzfnxogHaAReU4gf13a4=

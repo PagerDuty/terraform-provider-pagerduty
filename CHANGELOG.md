@@ -1,3 +1,9 @@
+## 3.7.1 (Feb 6, 2024)
+
+BUG FIXES:
+
+* `resource/pagerduty_event_orchestration_router`: Address: Fail to enable rules in pagerduty_event_orchestration_router ([#814](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/814))
+
 ## 3.7.0 (Jan 31, 2024)
 
 FEATURES:

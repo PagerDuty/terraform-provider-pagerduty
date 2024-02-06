@@ -488,6 +488,9 @@ func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps
 	newSteps := make([]map[string]interface{}, len(iw.Steps))
 	for i, s := range iw.Steps {
 		m := make(map[string]interface{})
+		if len(specifiedSteps) == 0 {
+			continue
+		}
 		specifiedStep := *specifiedSteps[i]
 		m["id"] = s.ID
 		m["name"] = s.Name

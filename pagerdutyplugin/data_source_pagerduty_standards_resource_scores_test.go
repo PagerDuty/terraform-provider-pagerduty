@@ -79,10 +79,8 @@ resource "pagerduty_service" "example" {
   }
 }
 
-data "pagerduty_standards" "all" {}
-
 data "pagerduty_standards_resource_scores" "%s" {
-  resource_type = data.pagerduty_standards.all.standards.0.resource_type
+  resource_type = "technical_services"
   id            = pagerduty_service.example.id
 }`, name)
 }

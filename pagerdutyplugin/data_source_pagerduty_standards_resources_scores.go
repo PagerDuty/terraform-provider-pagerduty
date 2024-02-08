@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -28,7 +30,12 @@ func (d *dataSourceStandardsResourcesScores) Schema(ctx context.Context, req dat
 				ElementType: types.StringType,
 				Required:    true,
 			},
-			"resource_type": schema.StringAttribute{Required: true},
+			"resource_type": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("technical_services"),
+				},
+			},
 			"resources": schema.ListAttribute{
 				ElementType: resourceStandardScoreObjectType,
 				Computed:    true,
@@ -46,15 +53,11 @@ func (d *dataSourceStandardsResourcesScores) Read(ctx context.Context, req datas
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	rt := data.ResourceType.ValueString()
-	rtUrl, ok := resourceStandardsToURLMapping[rt]
-	if !ok {
-		rtUrl = rt
-	}
 	ids := make([]string, 0)
 	resp.Diagnostics.Append(data.IDs.ElementsAs(ctx, &ids, true)...)
 
 	opt := pagerduty.ListMultiResourcesStandardScoresOptions{IDs: ids}
-	scores, err := d.client.ListMultiResourcesStandardScores(ctx, rtUrl, opt)
+	scores, err := d.client.ListMultiResourcesStandardScores(ctx, rt, opt)
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
 			"Error calling ListResourceStandardScores",

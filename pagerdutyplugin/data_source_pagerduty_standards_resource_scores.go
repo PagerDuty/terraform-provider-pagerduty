@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -24,8 +26,13 @@ func (d *dataSourceStandardsResourceScores) Metadata(ctx context.Context, req da
 func (d *dataSourceStandardsResourceScores) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id":            schema.StringAttribute{Required: true},
-			"resource_type": schema.StringAttribute{Required: true},
+			"id": schema.StringAttribute{Required: true},
+			"resource_type": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("technical_services"),
+				},
+			},
 			"score": schema.ObjectAttribute{
 				AttributeTypes: resourceScoresObjectType.AttrTypes,
 				Computed:       true,
@@ -48,12 +55,8 @@ func (d *dataSourceStandardsResourceScores) Read(ctx context.Context, req dataso
 
 	id := data.ID.ValueString()
 	rt := data.ResourceType.ValueString()
-	rtUrl, ok := resourceStandardsToURLMapping[rt]
-	if !ok {
-		rtUrl = rt
-	}
 
-	scores, err := d.client.ListResourceStandardScores(ctx, id, rtUrl)
+	scores, err := d.client.ListResourceStandardScores(ctx, id, rt)
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic(
 			"Error calling ListResourceStandardScores",
@@ -123,8 +126,4 @@ func resourceStandardsToModel(standards []pagerduty.ResourceStandard) (types.Lis
 	modelStandards, di := types.ListValue(resourceStandardObjectType, list)
 	diags.Append(di...)
 	return modelStandards, diags
-}
-
-var resourceStandardsToURLMapping = map[string]string{
-	"technical_service": "technical_services",
 }

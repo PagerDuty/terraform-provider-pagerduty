@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -171,17 +171,16 @@ func resourcePagerDutyEventOrchestrationPathUnroutedRead(ctx context.Context, d 
 		return diag.FromErr(err)
 	}
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
-
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type: %s for orchestration: %s", "unrouted", d.Id())
 
 		if unroutedPath, _, err := client.EventOrchestrationPaths.GetContext(ctx, d.Id(), "unrouted"); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if unroutedPath != nil {
 			if unroutedPath.Sets != nil {
 				d.Set("set", flattenUnroutedSets(unroutedPath.Sets))
@@ -220,13 +219,13 @@ func resourcePagerDutyEventOrchestrationPathUnroutedDelete(ctx context.Context, 
 
 	log.Printf("[INFO] Deleting PagerDuty Unrouted Event Orchestration Path: %s", orchestrationID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, orchestrationID, "unrouted", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -252,18 +251,18 @@ func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(ctx context.Context, 
 
 	log.Printf("[INFO] Updating PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "unrouted", unroutedPath.Parent.ID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, unroutedPath.Parent.ID, "unrouted", unroutedPath)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		if response == nil {
-			return resource.NonRetryableError(fmt.Errorf("no event orchestration unrouted found"))
+			return retry.NonRetryableError(fmt.Errorf("no event orchestration unrouted found"))
 		}
 
 		d.SetId(unroutedPath.Parent.ID)
@@ -290,7 +289,6 @@ func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(ctx context.Context, 
 }
 
 func buildUnroutedPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-
 	orchPath := &pagerduty.EventOrchestrationPath{
 		Parent: &pagerduty.EventOrchestrationPathReference{
 			ID: d.Get("event_orchestration").(string),
@@ -346,7 +344,7 @@ func expandUnroutedRules(v interface{}) []*pagerduty.EventOrchestrationPathRule 
 }
 
 func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = &pagerduty.EventOrchestrationPathRuleActions{
+	actions := &pagerduty.EventOrchestrationPathRuleActions{
 		Variables:   []*pagerduty.EventOrchestrationPathActionVariables{},
 		Extractions: []*pagerduty.EventOrchestrationPathActionExtractions{},
 	}
@@ -366,7 +364,7 @@ func expandUnroutedActions(v interface{}) *pagerduty.EventOrchestrationPathRuleA
 }
 
 func expandUnroutedCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
-	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
+	catchAll := new(pagerduty.EventOrchestrationPathCatchAll)
 
 	for _, ca := range v.([]interface{}) {
 		if ca != nil {
@@ -379,7 +377,7 @@ func expandUnroutedCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatc
 }
 
 func expandUnroutedCatchAllActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
+	actions := new(pagerduty.EventOrchestrationPathRuleActions)
 	for _, ai := range v.([]interface{}) {
 		if ai != nil {
 			am := ai.(map[string]interface{})

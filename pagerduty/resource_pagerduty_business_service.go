@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -99,15 +99,14 @@ func resourcePagerDutyBusinessServiceCreate(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
-
+	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		businessService, err := buildBusinessServiceStruct(d)
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		log.Printf("[INFO] Creating PagerDuty business service %s", businessService.Name)
 		if businessService, _, err = client.BusinessServices.Create(businessService); err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if businessService != nil {
 			d.SetId(businessService.ID)
 		}
@@ -129,13 +128,13 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 
 	log.Printf("[INFO] Reading PagerDuty business service %s", d.Id())
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if businessService, _, err := client.BusinessServices.Get(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if businessService != nil {
 			d.Set("name", businessService.Name)
 			d.Set("html_url", businessService.HTMLUrl)

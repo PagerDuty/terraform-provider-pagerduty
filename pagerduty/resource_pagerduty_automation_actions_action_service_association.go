@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -44,14 +44,14 @@ func resourcePagerDutyAutomationActionsActionServiceAssociationCreate(d *schema.
 
 	log.Printf("[INFO] Creating PagerDuty AutomationActionsActionServiceAssociation %s:%s", d.Get("action_id").(string), d.Get("service_id").(string))
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if serviceRef, _, err := client.AutomationActionsAction.AssociateToService(actionID, serviceID); err != nil {
 			if isErrCode(err, 429) {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if serviceRef != nil {
 			d.SetId(fmt.Sprintf("%s:%s", actionID, serviceID))
 		}
@@ -76,17 +76,17 @@ func fetchPagerDutyAutomationActionsActionServiceAssociation(d *schema.ResourceD
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.AutomationActionsAction.GetAssociationToService(actionID, serviceID)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -122,13 +122,13 @@ func resourcePagerDutyAutomationActionsActionServiceAssociationDelete(d *schema.
 
 	log.Printf("[INFO] Deleting PagerDuty AutomationActionsActionServiceAssociation %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.AutomationActionsAction.DissociateFromService(actionID, serviceID); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})

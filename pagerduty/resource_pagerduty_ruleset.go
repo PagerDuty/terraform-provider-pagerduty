@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -107,17 +107,17 @@ func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, errCallback
 		return err
 	}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		ruleset, _, err := client.Rulesets.Get(d.Id())
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -145,13 +145,13 @@ func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Creating PagerDuty ruleset: %s", ruleset.Name)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if ruleset, _, err := client.Rulesets.Create(ruleset); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if ruleset != nil {
 			d.SetId(ruleset.ID)
 		}
@@ -167,8 +167,8 @@ func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) er
 func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Reading PagerDuty ruleset: %s", d.Id())
 	return fetchPagerDutyRuleset(d, meta, handleNotFoundError)
-
 }
+
 func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {

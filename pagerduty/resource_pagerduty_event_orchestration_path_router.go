@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -60,7 +60,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 									"actions": {
 										Type:     schema.TypeList,
 										Required: true,
-										MaxItems: 1, //there can only be one action for router
+										MaxItems: 1, // there can only be one action for router
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"route_to": {
@@ -121,16 +121,16 @@ func resourcePagerDutyEventOrchestrationPathRouterRead(ctx context.Context, d *s
 		return diag.FromErr(err)
 	}
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", d.Id())
 
 		if routerPath, _, err := client.EventOrchestrationPaths.GetContext(ctx, d.Id(), "router"); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if routerPath != nil {
 			d.Set("event_orchestration", routerPath.Parent.ID)
 
@@ -170,13 +170,13 @@ func resourcePagerDutyEventOrchestrationPathRouterDelete(ctx context.Context, d 
 
 	log.Printf("[INFO] Deleting PagerDuty Event Orchestration Router Path: %s", routerID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerID, "router", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -202,17 +202,17 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx context.Context, d 
 
 	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", routerPath.Parent.ID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerPath.Parent.ID, "router", routerPath)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		if response == nil {
-			return resource.NonRetryableError(fmt.Errorf("No Event Orchestration Router found."))
+			return retry.NonRetryableError(fmt.Errorf("No Event Orchestration Router found."))
 		}
 		d.SetId(routerPath.Parent.ID)
 		d.Set("event_orchestration", routerPath.Parent.ID)
@@ -236,7 +236,6 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx context.Context, d 
 }
 
 func buildRouterPathStructForUpdate(d *schema.ResourceData) *pagerduty.EventOrchestrationPath {
-
 	orchPath := &pagerduty.EventOrchestrationPath{
 		Parent: &pagerduty.EventOrchestrationPathReference{
 			ID: d.Get("event_orchestration").(string),
@@ -292,7 +291,7 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 }
 
 func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = new(pagerduty.EventOrchestrationPathRuleActions)
+	actions := new(pagerduty.EventOrchestrationPathRuleActions)
 	for _, ai := range v.([]interface{}) {
 		am := ai.(map[string]interface{})
 		actions.RouteTo = am["route_to"].(string)
@@ -302,7 +301,7 @@ func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleAct
 }
 
 func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
-	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
+	catchAll := new(pagerduty.EventOrchestrationPathCatchAll)
 
 	for _, ca := range v.([]interface{}) {
 		am := ca.(map[string]interface{})

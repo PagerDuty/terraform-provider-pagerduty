@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -67,14 +67,14 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 
 	searchName := d.Get("name").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.EventOrchestrations.List()
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		var found *pagerduty.EventOrchestration
@@ -87,7 +87,7 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 		}
 
 		if found == nil {
-			return resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("Unable to locate any Event Orchestration with the name: %s", searchName),
 			)
 		}
@@ -96,7 +96,7 @@ func dataSourcePagerDutyEventOrchestrationRead(d *schema.ResourceData, meta inte
 		// since the list ndpoint does not return it
 		orch, _, err := client.EventOrchestrations.Get(found.ID)
 		if err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		d.SetId(orch.ID)

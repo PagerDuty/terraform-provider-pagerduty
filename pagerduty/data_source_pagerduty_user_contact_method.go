@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -71,17 +71,17 @@ func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta inter
 	searchLabel := d.Get("label").(string)
 	searchType := d.Get("type").(string)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.Users.ListContactMethods(userId)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := handleNotFoundError(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -98,7 +98,7 @@ func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta inter
 		}
 
 		if found == nil {
-			return resource.NonRetryableError(fmt.Errorf("Unable to locate any contact methods with the label: %s", searchLabel))
+			return retry.NonRetryableError(fmt.Errorf("Unable to locate any contact methods with the label: %s", searchLabel))
 		}
 
 		d.SetId(found.ID)

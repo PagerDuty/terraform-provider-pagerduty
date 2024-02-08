@@ -11,7 +11,7 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -457,6 +457,7 @@ func buildServiceIntegrationStruct(d *schema.ResourceData) (*pagerduty.Integrati
 
 	return serviceIntegration, nil
 }
+
 func expandEmailParsers(v interface{}) ([]*pagerduty.EmailParser, error) {
 	var emailParsers []*pagerduty.EmailParser
 
@@ -649,87 +650,87 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 
 	o := &pagerduty.GetIntegrationOptions{}
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
 		if err != nil {
 			log.Printf("[WARN] Service integration read error")
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
 		}
 
 		if err := d.Set("name", serviceIntegration.Name); err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		if err := d.Set("type", serviceIntegration.Type); err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		if serviceIntegration.Service != nil {
 			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.Vendor != nil {
 			if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.IntegrationKey != "" {
 			if err := d.Set("integration_key", serviceIntegration.IntegrationKey); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.IntegrationEmail != "" {
 			if err := d.Set("integration_email", serviceIntegration.IntegrationEmail); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailIncidentCreation != "" {
 			if err := d.Set("email_incident_creation", serviceIntegration.EmailIncidentCreation); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailFilterMode != "" {
 			if err := d.Set("email_filter_mode", serviceIntegration.EmailFilterMode); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailParsingFallback != "" {
 			if err := d.Set("email_parsing_fallback", serviceIntegration.EmailParsingFallback); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.HTMLURL != "" {
 			if err := d.Set("html_url", serviceIntegration.HTMLURL); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailFilters != nil {
 			if err := d.Set("email_filter", flattenEmailFilters(serviceIntegration.EmailFilters)); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
 		if serviceIntegration.EmailParsers != nil {
 			if err := d.Set("email_parser", flattenEmailParsers(serviceIntegration.EmailParsers)); err != nil {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 		}
 
@@ -752,13 +753,13 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 
 	service := d.Get("service").(string)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
 			if isErrCode(err, 400) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if serviceIntegration != nil {
 			d.SetId(serviceIntegration.ID)
 		}

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -82,16 +82,16 @@ func getEventOrchestrationIntegrationById(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading Integration data source by ID '%s' for PagerDuty Event Orchestration '%s'", id, oid)
 
 		if integration, _, err := client.EventOrchestrationIntegrations.GetContext(ctx, oid, id); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(30 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if integration != nil {
 			d.SetId(integration.ID)
 			setEventOrchestrationIntegrationProps(d, integration)
@@ -116,18 +116,17 @@ func getEventOrchestrationIntegrationByLabel(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading Integration data source by label '%s' for PagerDuty Event Orchestration '%s'", lbl, oid)
 
 		resp, _, err := client.EventOrchestrationIntegrations.ListContext(ctx, oid)
-
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(30 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		var matches []*pagerduty.EventOrchestrationIntegration
@@ -141,13 +140,13 @@ func getEventOrchestrationIntegrationByLabel(ctx context.Context, d *schema.Reso
 		count := len(matches)
 
 		if count == 0 {
-			return resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("Unable to find an Integration on Event Orchestration '%s' with label '%s'", oid, lbl),
 			)
 		}
 
 		if count > 1 {
-			return resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("Ambiguous Integration label: '%s'. Found %v Integrations with this label on Event Orchestration '%s'. Please use the Integration ID instead or make Integration labels unique within Event Orchestration.", lbl, count, oid),
 			)
 		}

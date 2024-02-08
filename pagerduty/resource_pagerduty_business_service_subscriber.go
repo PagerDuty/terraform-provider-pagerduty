@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -61,16 +61,15 @@ func resourcePagerDutyBusinessServiceSubscriberCreate(d *schema.ResourceData, me
 
 	businessServiceId := d.Get("business_service_id").(string)
 
-	retryErr := resource.Retry(5*time.Minute, func() *resource.RetryError {
-
+	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		businessServiceSubscriber, err := buildBusinessServiceSubscriberStruct(d)
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		log.Printf("[INFO] Creating PagerDuty business service %s subscriber %s type %s", businessServiceId, businessServiceSubscriber.ID, businessServiceSubscriber.Type)
 		if _, err = client.BusinessServiceSubscribers.Create(businessServiceId, businessServiceSubscriber); err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if businessServiceSubscriber != nil {
 			// create subscriber assignment it as PagerDuty API does not return one
 			assignmentID := createSubscriberID(businessServiceId, businessServiceSubscriber.Type, businessServiceSubscriber.ID)
@@ -97,14 +96,14 @@ func resourcePagerDutyBusinessServiceSubscriberRead(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Reading PagerDuty business service %s subscriber %s type %s", businessServiceId, businessServiceSubscriber.ID, businessServiceSubscriber.Type)
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if subscriberResponse, _, err := client.BusinessServiceSubscribers.List(businessServiceId); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if subscriberResponse != nil {
 			var foundSubscriber *pagerduty.BusinessServiceSubscriber
 

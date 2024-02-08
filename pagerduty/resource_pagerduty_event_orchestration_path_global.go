@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -170,18 +170,18 @@ func resourcePagerDutyEventOrchestrationPathGlobalRead(ctx context.Context, d *s
 		return diag.FromErr(err)
 	}
 
-	retryErr := resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		id := d.Id()
 		t := "global"
 		log.Printf("[INFO] Reading PagerDuty Event Orchestration Path of type %s for orchestration: %s", t, id)
 
 		if path, _, err := client.EventOrchestrationPaths.GetContext(ctx, d.Id(), t); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if path != nil {
 			setEventOrchestrationPathGlobalProps(d, path)
 		}
@@ -193,7 +193,6 @@ func resourcePagerDutyEventOrchestrationPathGlobalRead(ctx context.Context, d *s
 	}
 
 	return diags
-
 }
 
 func resourcePagerDutyEventOrchestrationPathGlobalCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -214,13 +213,13 @@ func resourcePagerDutyEventOrchestrationPathGlobalUpdate(ctx context.Context, d 
 
 	log.Printf("[INFO] Creating PagerDuty Event Orchestration Global Path: %s", payload.Parent.ID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		if response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, payload.Parent.ID, "global", payload); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if response != nil {
 			d.SetId(response.OrchestrationPath.Parent.ID)
 			globalPath = response.OrchestrationPath
@@ -251,13 +250,13 @@ func resourcePagerDutyEventOrchestrationPathGlobalDelete(ctx context.Context, d 
 
 	log.Printf("[INFO] Deleting PagerDuty Global Event Orchestration Path: %s", orchestrationID)
 
-	retryErr := resource.RetryContext(ctx, 30*time.Second, func() *resource.RetryError {
+	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, orchestrationID, "global", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})
@@ -337,7 +336,7 @@ func expandGlobalPathRules(v interface{}) []*pagerduty.EventOrchestrationPathRul
 }
 
 func expandGlobalPathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
-	var catchAll = new(pagerduty.EventOrchestrationPathCatchAll)
+	catchAll := new(pagerduty.EventOrchestrationPathCatchAll)
 
 	for _, ca := range v.([]interface{}) {
 		if ca != nil {
@@ -350,7 +349,7 @@ func expandGlobalPathCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCa
 }
 
 func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
-	var actions = &pagerduty.EventOrchestrationPathRuleActions{
+	actions := &pagerduty.EventOrchestrationPathRuleActions{
 		AutomationActions: []*pagerduty.EventOrchestrationPathAutomationAction{},
 		Variables:         []*pagerduty.EventOrchestrationPathActionVariables{},
 		Extractions:       []*pagerduty.EventOrchestrationPathActionExtractions{},

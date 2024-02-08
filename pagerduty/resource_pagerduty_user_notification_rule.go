@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
@@ -80,17 +80,17 @@ func fetchPagerDutyUserNotificationRule(d *schema.ResourceData, meta interface{}
 
 	userID := d.Get("user_id").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.Users.GetNotificationRule(userID, d.Id())
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -217,7 +217,7 @@ func expandContactMethod(v interface{}) (*pagerduty.ContactMethodReference, erro
 		}
 	}
 
-	var contactMethod = &pagerduty.ContactMethodReference{
+	contactMethod := &pagerduty.ContactMethodReference{
 		ID:   cm["id"].(string),
 		Type: cm["type"].(string),
 	}
@@ -226,8 +226,7 @@ func expandContactMethod(v interface{}) (*pagerduty.ContactMethodReference, erro
 }
 
 func flattenContactMethod(v *pagerduty.ContactMethodReference) map[string]interface{} {
-
-	var contactMethod = map[string]interface{}{
+	contactMethod := map[string]interface{}{
 		"id":   v.ID,
 		"type": v.Type,
 	}

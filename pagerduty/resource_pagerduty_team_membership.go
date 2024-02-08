@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -88,17 +88,17 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 	}
 
 	log.Printf("[DEBUG] Reading user: %s from team: %s", userID, teamID)
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
@@ -120,6 +120,7 @@ func fetchPagerDutyTeamMembership(d *schema.ResourceData, meta interface{}, errC
 		return nil
 	})
 }
+
 func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -132,13 +133,13 @@ func resourcePagerDutyTeamMembershipCreate(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Adding user: %s to team: %s with role: %s", userID, teamID, role)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		return nil
@@ -169,13 +170,13 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] Updating user: %s to team: %s with role: %s", userID, teamID, role)
 
 	// To update existing membership resource, We can use the same API as creating a new membership.
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Teams.AddUserWithRole(teamID, userID, role); err != nil {
 			if isErrCode(err, 500) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		return nil
@@ -214,13 +215,13 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 	}
 
 	// Retrying to give other resources (such as escalation policies) to delete
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
 			if isErrCode(err, 400) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
 	})
@@ -251,15 +252,15 @@ func buildEPsIdsList(l []*pagerduty.OnCall) []string {
 
 func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, error) {
 	var oncalls []*pagerduty.OnCall
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := c.OnCall.List(&pagerduty.ListOnCallOptions{UserIds: []string{userID}})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		oncalls = resp.Oncalls
 		return nil
@@ -274,11 +275,11 @@ func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, e
 func dissociateEPsFromTeam(c *pagerduty.Client, teamID string, eps []string) ([]string, error) {
 	epsDissociatedFromTeam := []string{}
 	for _, ep := range eps {
-		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 			_, err := c.Teams.RemoveEscalationPolicy(teamID, ep)
 			if err != nil && !isErrCode(err, 404) {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			return nil
 		})
@@ -299,11 +300,11 @@ func dissociateEPsFromTeam(c *pagerduty.Client, teamID string, eps []string) ([]
 
 func associateEPsBackToTeam(c *pagerduty.Client, teamID string, eps []string) error {
 	for _, ep := range eps {
-		retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+		retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 			_, err := c.Teams.AddEscalationPolicy(teamID, ep)
 			if err != nil && !isErrCode(err, 404) {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 			return nil
 		})

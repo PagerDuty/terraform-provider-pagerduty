@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -47,9 +48,9 @@ func testSweepExtension(region string) error {
 }
 
 func TestAccPagerDutyExtension_Basic(t *testing.T) {
-	extension_name := resource.PrefixedUniqueId("tf-")
-	extension_name_updated := resource.PrefixedUniqueId("tf-")
-	name := resource.PrefixedUniqueId("tf-")
+	extension_name := id.PrefixedUniqueId("tf-")
+	extension_name_updated := id.PrefixedUniqueId("tf-")
+	name := id.PrefixedUniqueId("tf-")
 	url := "https://example.com/recieve_a_pagerduty_webhook"
 	url_updated := "https://example.com/webhook_foo"
 

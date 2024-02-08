@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -330,6 +330,7 @@ func buildServiceEventRuleStruct(d *schema.ResourceData) *pagerduty.ServiceEvent
 
 	return rule
 }
+
 func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -340,20 +341,20 @@ func resourcePagerDutyServiceEventRuleCreate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Creating PagerDuty service event rule for service: %s", rule.Service.ID)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if rule, _, err := client.Services.CreateEventRule(rule.Service.ID, rule); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if rule != nil {
 			d.SetId(rule.ID)
 			// Verifying the position that was defined in terraform is the same position set in PagerDuty
 			pos := d.Get("position").(int)
 			if *rule.Position != pos {
 				if err := resourcePagerDutyServiceEventRuleUpdate(d, meta); err != nil {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 			}
 		}
@@ -375,14 +376,14 @@ func resourcePagerDutyServiceEventRuleRead(d *schema.ResourceData, meta interfac
 	log.Printf("[INFO] Reading PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if rule, _, err := client.Services.GetEventRule(serviceID, d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if rule != nil {
 			if rule.Conditions != nil {
 				d.Set("conditions", flattenConditions(rule.Conditions))
@@ -415,16 +416,16 @@ func resourcePagerDutyServiceEventRuleUpdate(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Updating PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if updatedRule, _, err := client.Services.UpdateEventRule(serviceID, d.Id(), rule); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if rule.Position != nil && *updatedRule.Position != *rule.Position {
 			log.Printf("[INFO] Service Event Rule %s position %v needs to be %v", updatedRule.ID, *updatedRule.Position, *rule.Position)
-			return resource.RetryableError(fmt.Errorf("Error updating service event rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
+			return retry.RetryableError(fmt.Errorf("Error updating service event rule %s position %d needs to be %d", updatedRule.ID, *updatedRule.Position, *rule.Position))
 		}
 
 		return nil
@@ -445,13 +446,13 @@ func resourcePagerDutyServiceEventRuleDelete(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Deleting PagerDuty service event rule: %s", d.Id())
 	serviceID := d.Get("service").(string)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Services.DeleteEventRule(serviceID, d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})

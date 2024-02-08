@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -163,27 +163,26 @@ func fetchFieldOption(ctx context.Context, fieldID string, d *schema.ResourceDat
 		return err
 	}
 
-	return resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	return retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		fieldOption, _, err := client.IncidentCustomFields.GetFieldOptionContext(ctx, fieldID, d.Id())
 		if err != nil {
 			log.Printf("[WARN] Field option read error")
 			errResp := errorCallback(err, d)
 			if errResp != nil {
 				if isErrCode(err, http.StatusBadRequest) {
-					return resource.NonRetryableError(err)
+					return retry.NonRetryableError(err)
 				}
 
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
 		}
 
 		if err := flattenFieldOption(d, fieldID, fieldOption); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
-
 	})
 }

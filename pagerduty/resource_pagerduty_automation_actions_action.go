@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -104,7 +104,6 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 }
 
 func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.AutomationActionsAction, error) {
-
 	automationActionsAction := pagerduty.AutomationActionsAction{
 		Name:       d.Get("name").(string),
 		ActionType: d.Get("action_type").(string),
@@ -212,14 +211,14 @@ func resourcePagerDutyAutomationActionsActionCreate(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Creating PagerDuty AutomationActionsAction %s", automationActionsAction.Name)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if automationActionsAction, _, err := client.AutomationActionsAction.Create(automationActionsAction); err != nil {
 			if isErrCode(err, 400) || isErrCode(err, 429) {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
 
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if automationActionsAction != nil {
 			d.SetId(automationActionsAction.ID)
 		}
@@ -261,14 +260,14 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 	log.Printf("[INFO] Reading PagerDuty AutomationActionsAction %s", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if automationActionsAction, _, err := client.AutomationActionsAction.Get(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if automationActionsAction != nil {
 			d.Set("name", automationActionsAction.Name)
 			d.Set("type", automationActionsAction.Type)
@@ -281,7 +280,7 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 			f_adr := flattenActionDataReference(automationActionsAction.ActionDataReference)
 			if err := d.Set("action_data_reference", f_adr); err != nil {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			if automationActionsAction.ModifyTime != nil {
@@ -338,13 +337,13 @@ func resourcePagerDutyAutomationActionsActionDelete(d *schema.ResourceData, meta
 
 	log.Printf("[INFO] Deleting PagerDuty AutomationActionsAction %s", d.Id())
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.AutomationActionsAction.Delete(d.Id()); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		return nil
 	})

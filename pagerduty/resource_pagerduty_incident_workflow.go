@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -349,7 +349,6 @@ func customizeIncidentWorkflowDiff() schema.CustomizeDiffFunc {
 			}
 		}
 		return nil
-
 	}
 }
 
@@ -436,28 +435,27 @@ func fetchIncidentWorkflow(ctx context.Context, d *schema.ResourceData, meta int
 		return err
 	}
 
-	return resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	return retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		iw, _, err := client.IncidentWorkflows.GetContext(ctx, d.Id())
 		if err != nil {
 			log.Printf("[WARN] Incident workflow read error")
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errorCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
 		}
 
 		if err := flattenIncidentWorkflow(d, iw, true, specifiedSteps); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
-
 	})
 }
 

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -130,28 +130,27 @@ func fetchField(ctx context.Context, d *schema.ResourceData, meta interface{}, e
 		return err
 	}
 
-	return resource.RetryContext(ctx, 2*time.Minute, func() *resource.RetryError {
+	return retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		field, _, err := client.IncidentCustomFields.GetContext(ctx, d.Id(), nil)
 		if err != nil {
 			log.Printf("[WARN] Incident custom field read error")
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			errResp := errorCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
+				return retry.RetryableError(errResp)
 			}
 
 			return nil
 		}
 
 		if err := flattenIncidentCustomField(d, field); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
-
 	})
 }
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
@@ -67,13 +67,13 @@ func resourcePagerDutyEventRuleCreate(d *schema.ResourceData, meta interface{}) 
 
 	log.Printf("[INFO] Creating PagerDuty event rule: %s", eventRule.Condition)
 
-	retryErr := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if eventRule, _, err := client.EventRules.Create(eventRule); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		} else if eventRule != nil {
 			d.SetId(eventRule.ID)
 		}
@@ -94,15 +94,15 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Reading PagerDuty event rule: %s", d.Id())
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
 		resp, _, err := client.EventRules.List()
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
-				return resource.NonRetryableError(err)
+				return retry.NonRetryableError(err)
 			}
 
 			time.Sleep(2 * time.Second)
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 		var foundRule *pagerduty.EventRule
 
@@ -128,6 +128,7 @@ func resourcePagerDutyEventRuleRead(d *schema.ResourceData, meta interface{}) er
 		return nil
 	})
 }
+
 func resourcePagerDutyEventRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {

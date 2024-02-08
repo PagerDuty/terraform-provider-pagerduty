@@ -10,8 +10,12 @@ import (
 )
 
 func StringToUintPointer(p path.Path, s types.String, diags *diag.Diagnostics) *uint {
-	if s.IsNull() || s.IsUnknown() || s.ValueString() == "" || s.ValueString() == "null" {
+	if s.IsNull() || s.IsUnknown() || s.ValueString() == "" {
 		return nil
+	}
+	if s.ValueString() == "null" {
+		v := uint(0)
+		return &v
 	}
 	if val, err := strconv.Atoi(s.ValueString()); err == nil {
 		uintvalue := uint(val)

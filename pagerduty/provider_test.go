@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -330,4 +331,30 @@ func testAccGetPagerDutyAccountDomain(t *testing.T) string {
 		accountDomain = u.Hostname()
 	}
 	return accountDomain
+}
+
+func testAccCheckPagerDutyServiceExists(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Service ID is set")
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+
+		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		if err != nil {
+			return err
+		}
+
+		if found.ID != rs.Primary.ID {
+			return fmt.Errorf("Service not found: %v - %v", rs.Primary.ID, found)
+		}
+
+		return nil
+	}
 }

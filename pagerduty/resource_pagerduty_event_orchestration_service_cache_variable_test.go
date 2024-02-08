@@ -3,6 +3,8 @@ package pagerduty
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -230,4 +232,32 @@ func testAccCheckPagerDutyEventOrchestrationServiceCacheVariableDeletedConfig(sv
 		  escalation_policy = pagerduty_escalation_policy.ep.id
 		}
 	`, svc, svc)
+}
+
+func testSweepService(region string) error {
+	config, err := sharedConfigForRegion(region)
+	if err != nil {
+		return err
+	}
+
+	client, err := config.Client()
+	if err != nil {
+		return err
+	}
+
+	resp, _, err := client.Services.List(&pagerduty.ListServicesOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, service := range resp.Services {
+		if strings.HasPrefix(service.Name, "test") || strings.HasPrefix(service.Name, "tf-") {
+			log.Printf("Destroying service %s (%s)", service.Name, service.ID)
+			if _, err := client.Services.Delete(service.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

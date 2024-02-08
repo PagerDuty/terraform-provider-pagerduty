@@ -219,3 +219,18 @@ resource "pagerduty_maintenance_window" "foo" {
 }
 `, desc, start, end)
 }
+
+func testAccCheckPagerDutyAddonDestroy(s *terraform.State) error {
+	client, _ := testAccProvider.Meta().(*Config).Client()
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "pagerduty_addon" {
+			continue
+		}
+
+		if _, _, err := client.Addons.Get(r.Primary.ID); err == nil {
+			return fmt.Errorf("Add-on still exists")
+		}
+
+	}
+	return nil
+}

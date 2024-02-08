@@ -44,8 +44,7 @@ func (v *requireIfEqual) ValidateResource(ctx context.Context, req resource.Vali
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		if dst.IsNull() || dst.IsUnknown() {
+		if dst.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				v.dst,
 				fmt.Sprintf("Required %s", v.dst),

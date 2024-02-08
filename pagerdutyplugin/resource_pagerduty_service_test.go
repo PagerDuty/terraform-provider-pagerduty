@@ -1,16 +1,18 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/PagerDuty/go-pagerduty"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -21,17 +23,8 @@ func init() {
 }
 
 func testSweepService(region string) error {
-	config, err := sharedConfigForRegion(region)
-	if err != nil {
-		return err
-	}
-
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-
-	resp, _, err := client.Services.List(&pagerduty.ListServicesOptions{})
+	ctx := context.Background()
+	resp, err := testAccProvider.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{})
 	if err != nil {
 		return err
 	}
@@ -39,7 +32,7 @@ func testSweepService(region string) error {
 	for _, service := range resp.Services {
 		if strings.HasPrefix(service.Name, "test") || strings.HasPrefix(service.Name, "tf-") {
 			log.Printf("Destroying service %s (%s)", service.Name, service.ID)
-			if _, err := client.Services.Delete(service.ID); err != nil {
+			if err := testAccProvider.client.DeleteServiceWithContext(ctx, service.ID); err != nil {
 				return err
 			}
 		}
@@ -56,9 +49,9 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 	serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service),
@@ -76,8 +69,8 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_grouping_timeout", "null"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -138,9 +131,9 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 	errMessageMatcher := "Name can not be blank, nor contain non-printable characters. Trailing white spaces are not allowed either."
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			// Just a valid name
 			{
@@ -331,9 +324,9 @@ func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t); testAccPreCheckPagerDutyAbility(t, "preview_intelligent_alert_grouping") },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAccPreCheckPagerDutyAbility(t, "preview_intelligent_alert_grouping") },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfigWithAlertGrouping(username, email, escalationPolicy, service),
@@ -398,9 +391,9 @@ func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGrouping(username, email, escalationPolicy, service),
@@ -631,9 +624,9 @@ func TestAccPagerDutyService_AlertContentGroupingIntelligentTimeWindow(t *testin
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGroupingIntelligentTimeWindow(username, email, escalationPolicy, service),
@@ -676,9 +669,9 @@ func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParameters(username, email, escalationPolicy, service),
@@ -758,9 +751,9 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 	serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceWithIncidentUrgencyRulesConfig(username, email, escalationPolicy, service),
@@ -960,9 +953,9 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 	serviceUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service),
@@ -1065,9 +1058,9 @@ func TestAccPagerDutyService_SupportHoursChange(t *testing.T) {
 	p_updated_service_id := &updated_service_id
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceWithIncidentUrgencyRulesConfig(username, email, escalationPolicy, service),
@@ -1103,9 +1096,9 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceWithResponsePlayConfig(username, email, escalationPolicy, responsePlay, service),
@@ -1123,8 +1116,8 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_grouping_timeout", "null"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -1143,9 +1136,9 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 	})
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceWithNullResponsePlayConfig(username, email, escalationPolicy, responsePlay, service),
@@ -1163,8 +1156,8 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_grouping_timeout", "null"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -1194,9 +1187,8 @@ func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.Tes
 			return fmt.Errorf("No Service ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		ctx := context.Background()
+		found, err := testAccProvider.client.GetServiceWithContext(ctx, rs.Primary.ID, &pagerduty.GetServiceOptions{})
 		if err != nil {
 			return err
 		}
@@ -1212,13 +1204,14 @@ func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.Tes
 }
 
 func testAccCheckPagerDutyServiceDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
-	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_service" {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "pagerduty_service" {
 			continue
 		}
 
-		if _, _, err := client.Services.Get(r.Primary.ID, &pagerduty.GetServiceOptions{}); err == nil {
+		ctx := context.Background()
+		_, err := testAccProvider.client.GetServiceWithContext(ctx, rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		if err == nil {
 			return fmt.Errorf("Service still exists")
 		}
 
@@ -1237,9 +1230,8 @@ func testAccCheckPagerDutyServiceExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No Service ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		ctx := context.Background()
+		found, err := testAccProvider.client.GetServiceWithContext(ctx, rs.Primary.ID, &pagerduty.GetServiceOptions{})
 		if err != nil {
 			return err
 		}
@@ -1263,9 +1255,8 @@ func testAccCheckPagerDutyServiceResponsePlayNotExist(n string) resource.TestChe
 			return fmt.Errorf("No Service ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Services.Get(rs.Primary.ID, &pagerduty.GetServiceOptions{})
+		ctx := context.Background()
+		found, err := testAccProvider.client.GetServiceWithContext(ctx, rs.Primary.ID, &pagerduty.GetServiceOptions{})
 		if err != nil {
 			return err
 		}
@@ -1312,6 +1303,79 @@ resource "pagerduty_service" "foo" {
 `, username, email, escalationPolicy, service)
 }
 
+func testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service, alertGroupingParams string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+  color       = "green"
+  role        = "user"
+  job_title   = "foo"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "bar"
+  num_loops   = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%s"
+  description             = "foo"
+  auto_resolve_timeout    = 1800
+  acknowledgement_timeout = 1800
+  escalation_policy       = pagerduty_escalation_policy.foo.id
+  alert_creation          = "create_alerts_and_incidents"
+  %s
+}
+`, username, email, escalationPolicy, service, alertGroupingParams)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertGrouping(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping          = "time"
+	alert_grouping_timeout  = 1800
+}
+`, username, email, escalationPolicy, service)
+}
+
 func testAccCheckPagerDutyServiceConfigWithAlertContentGrouping(username, email, escalationPolicy, service string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
@@ -1350,6 +1414,592 @@ resource "pagerduty_service" "foo" {
             fields = ["custom_details.field1"]
         }
     }
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertContentGroupingIntelligentTimeWindow(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+        type = "intelligent"
+    }
+}
+`, username, email, escalationPolicy, service)
+}
+func testAccCheckPagerDutyServiceConfigWithAlertContentGroupingIntelligentTimeWindowUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+        type = "intelligent"
+        config {
+            time_window = 900
+        }
+    }
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertContentGroupingUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+        type = null
+    }
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertTimeGroupingUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+        type = "time"
+        config {
+          timeout = 5
+        }
+    }
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertTimeGroupingTimeoutZeroUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+		type = "time"
+		config {
+			timeout = 0
+		}
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertGroupingUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping          = "intelligent"
+	alert_grouping_timeout  = 1900
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertIntelligentGroupingUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+		type = "intelligent"
+		config {
+			fields = null
+			timeout = 0
+		}
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertIntelligentGroupingDescriptionUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "bar"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+		type = "intelligent"
+		config {}
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertIntelligentGroupingOmittingConfig(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "bar"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+		type = "intelligent"
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertIntelligentGroupingTypeNullEmptyConfigConfig(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "bar"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	alert_grouping_parameters {
+		type = null
+		config {}
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParameters(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	auto_pause_notifications_parameters {
+		enabled = true
+		timeout = 300
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParametersUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+	auto_pause_notifications_parameters {
+		enabled = false
+		timeout = null
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParametersRemoved(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_creation          = "create_alerts_and_incidents"
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "bar"
+	auto_resolve_timeout    = 3600
+	acknowledgement_timeout = 3600
+
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	incident_urgency_rule {
+		type    = "constant"
+		urgency = "high"
+	}
+}
+`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigUpdatedWithDisabledTimeouts(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "bar"
+	auto_resolve_timeout    = "null"
+	acknowledgement_timeout = "null"
+
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	incident_urgency_rule {
+		type    = "constant"
+		urgency = "high"
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1747,4 +2397,22 @@ resource "pagerduty_service" "foo" {
   response_play           = null
 }
 `, username, email, escalationPolicy, responsePlay, service)
+}
+
+func TestFlattenAlertGroupingParameters_Basic(t *testing.T) {
+	var diags diag.Diagnostics
+	var timeout uint = 1000
+	params := &pagerduty.AlertGroupingParameters{
+		Type: "foo",
+		Config: &pagerduty.AlertGroupParamsConfig{
+			Timeout:   &timeout,
+			Aggregate: "aggregate",
+			Fields:    []string{"a", "b", "c"},
+		},
+	}
+	li := flattenAlertGroupingParameters(context.Background(), params, &diags)
+	if diags.HasError() {
+		t.Fatalf("unexpected error %s", diags)
+	}
+	t.Logf("%#v", li)
 }

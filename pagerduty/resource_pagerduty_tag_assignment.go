@@ -75,7 +75,7 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 
 	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
-			if isErrCode(err, 400) || isErrCode(err, 429) {
+			if isErrCode(err, 404) || isErrCode(err, 429) {
 				return retry.RetryableError(err)
 			}
 

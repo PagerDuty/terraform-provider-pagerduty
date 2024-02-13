@@ -51,6 +51,14 @@ func TestAccPagerDutyTagAssignment_User(t *testing.T) {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
+			{
+				Config: testAccCheckPagerDutyTagAssignmentConfig(tagLabel, username, email),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTagAssignmentExists("pagerduty_tag_assignment.foo", "users"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_user.foo", "email", email),
+				),
+			},
 		},
 	})
 }
@@ -90,6 +98,14 @@ func TestAccPagerDutyTagAssignment_Team(t *testing.T) {
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: testAccCheckPagerDutyTagAssignmentTeamConfig(tagLabel, team),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTagAssignmentExists("pagerduty_tag_assignment.foo", "teams"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_team.foo", "name", team),
+				),
 			},
 		},
 	})
@@ -132,6 +148,14 @@ func TestAccPagerDutyTagAssignment_EP(t *testing.T) {
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: testAccCheckPagerDutyTagAssignmentEPConfig(tagLabel, username, email, ep),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTagAssignmentExists("pagerduty_tag_assignment.foo", "escalation_policies"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_escalation_policy.foo", "name", ep),
+				),
 			},
 		},
 	})

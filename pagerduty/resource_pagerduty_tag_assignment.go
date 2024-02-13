@@ -75,11 +75,11 @@ func resourcePagerDutyTagAssignmentCreate(d *schema.ResourceData, meta interface
 
 	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
-			if isErrCode(err, 404) || isErrCode(err, 429) {
-				return retry.RetryableError(err)
+			if isErrCode(err, 400) {
+				return retry.NonRetryableError(err)
 			}
 
-			return retry.NonRetryableError(err)
+			return retry.RetryableError(err)
 		} else {
 			// create tag_assignment id using the entityID.tagID as PagerDuty API does not return one
 			assignmentID := createAssignmentID(assignment.EntityID, assignment.TagID)
@@ -156,20 +156,23 @@ func resourcePagerDutyTagAssignmentDelete(d *schema.ResourceData, meta interface
 
 	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Tags.Assign(assignment.EntityType, assignment.EntityID, assignments); err != nil {
-			if isErrCode(err, 400) || isErrCode(err, 429) {
-				return retry.RetryableError(err)
+			if isErrCode(err, 404) || isMalformedNotFoundError(err) {
+				return nil
+			}
+			if isErrCode(err, 400) {
+				return retry.NonRetryableError(err)
 			}
 
-			return retry.NonRetryableError(err)
-		} else {
-			d.SetId("")
+			return retry.RetryableError(err)
 		}
+
 		return nil
 	})
 
 	if retryErr != nil {
 		return retryErr
 	}
+	d.SetId("")
 
 	return nil
 }

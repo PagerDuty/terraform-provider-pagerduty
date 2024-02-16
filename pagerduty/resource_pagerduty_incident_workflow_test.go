@@ -440,7 +440,6 @@ func testAccCheckPagerDutyIncidentWorkflowExists(n string) resource.TestCheckFun
 }
 
 func TestFlattenIncidentWorkflowStepsOneGenerated(t *testing.T) {
-
 	iw := &pagerduty.IncidentWorkflow{
 		Steps: []*pagerduty.IncidentWorkflowStep{
 			{
@@ -536,7 +535,7 @@ func TestFlattenIncidentWorkflowStepsOneGenerated(t *testing.T) {
 			},
 		},
 	}
-	flattenedSteps := flattenIncidentWorkflowSteps(iw, specifiedSteps)
+	flattenedSteps := flattenIncidentWorkflowSteps(iw, specifiedSteps, false)
 	step1Inputs := flattenedSteps[0]["input"].(*[]interface{})
 	if len(*step1Inputs) != 3 {
 		t.Errorf("flattened step1 had wrong number of inputs. want 3 got %v", len(*step1Inputs))
@@ -588,6 +587,71 @@ func TestFlattenIncidentWorkflowStepsOneGenerated(t *testing.T) {
 			if generated, hadGen := v.(map[string]interface{})["generated"]; !hadGen || !generated.(bool) {
 				t.Errorf("was not expecting step1b input %v to have generated=false", i)
 			}
+		}
+	}
+}
+
+func TestFlattenIncidentWorkflowStepsWithoutSpecifiedSteps(t *testing.T) {
+	iw := &pagerduty.IncidentWorkflow{
+		Steps: []*pagerduty.IncidentWorkflowStep{
+			{
+				ID:   "abc-123",
+				Name: "step1",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "step1-action-id",
+					Inputs: []*pagerduty.IncidentWorkflowActionInput{
+						{
+							Name:  "step1-input1",
+							Value: "test1-value",
+						},
+					},
+					InlineStepsInputs: []*pagerduty.IncidentWorkflowActionInlineStepsInput{
+						{
+							Name: "step1-inlineinput1",
+							Value: &pagerduty.IncidentWorkflowActionInlineStepsInputValue{
+								Steps: []*pagerduty.IncidentWorkflowActionInlineStep{
+									{
+										Name: "step1a",
+										Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+											ActionID: "step1a-action-id",
+											Inputs: []*pagerduty.IncidentWorkflowActionInput{
+												{
+													Name:  "step1a-input1",
+													Value: "inlineval1",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	flattenedSteps := flattenIncidentWorkflowSteps(iw, nil, true)
+	step1Inputs := flattenedSteps[0]["input"].(*[]interface{})
+	if len(*step1Inputs) != 1 {
+		t.Errorf("flattened step1 had wrong number of inputs. want 1 got %v", len(*step1Inputs))
+	}
+	for i, v := range *step1Inputs {
+		if _, hadGen := v.(map[string]interface{})["generated"]; hadGen {
+			t.Errorf("was not expecting step1a input %v to have generated key set", i)
+		}
+	}
+
+	step1aInlineStepInputs := flattenedSteps[0]["inline_steps_input"].(*[]interface{})
+	step1aInlineStepInputs1 := (*step1aInlineStepInputs)[0].(map[string]interface{})
+	step1aInlineStepInputs1Steps := step1aInlineStepInputs1["step"].(*[]interface{})
+	step1aInputs := (*step1aInlineStepInputs1Steps)[0].(map[string]interface{})["input"].(*[]interface{})
+	if len(*step1aInputs) != 1 {
+		t.Errorf("flattened step1a had wrong number of inputs. want 1 got %v", len(*step1aInputs))
+	}
+	for i, v := range *step1aInputs {
+		if _, hadGen := v.(map[string]interface{})["generated"]; hadGen {
+			t.Errorf("was not expecting step1a input %v to have generated key set", i)
 		}
 	}
 }

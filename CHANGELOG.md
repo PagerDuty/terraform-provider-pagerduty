@@ -1,3 +1,18 @@
+## 3.8.0 (Feb 16, 2024)
+
+FEATURES:
+
+* `data/pagerduty_standards_resource_scores`,  `data/pagerduty_standards_resources_scores`: Add datasource standards resource scores and standards resources scores ([#812](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/812))
+
+BUG FIXES:
+
+* `resource/pagerduty_tag_assignment`: Address: pagerduty_tag_assignment teams change_tag 404 not found ([#818](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/818))
+* `resource/pagerduty_incident_workflow`: Fix import for incident workflow ([#820](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/820))
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_response_play`: Response play documentation EOL heads up ([#821](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/821))
+
 ## 3.7.1 (Feb 6, 2024)
 
 BUG FIXES:

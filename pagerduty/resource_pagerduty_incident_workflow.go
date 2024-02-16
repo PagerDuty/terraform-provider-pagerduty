@@ -50,7 +50,7 @@ func resourcePagerDutyIncidentWorkflow() *schema.Resource {
 		DeleteContext: resourcePagerDutyIncidentWorkflowDelete,
 		CreateContext: resourcePagerDutyIncidentWorkflowCreate,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourcePagerDutyIncidentWorkflowImport,
 		},
 		CustomizeDiff: customizeIncidentWorkflowDiff(),
 		Schema: map[string]*schema.Schema{
@@ -287,9 +287,7 @@ func customizeIncidentWorkflowDiff() schema.CustomizeDiffFunc {
 		// 6. Any remaining new inputs that were not already matched to old inputs should now be added to the result.
 		// This lets new inputs that do not have default values (which are already cached as generated=true) maintain
 		// their state in the diff, while not disrupting ordering of unchanged inputs.
-		for _, newInput := range newInputs {
-			result = append(result, newInput)
-		}
+		result = append(result, newInputs...)
 
 		return result
 	}
@@ -370,7 +368,7 @@ func resourcePagerDutyIncidentWorkflowCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	err = flattenIncidentWorkflow(d, createdWorkflow, true, specifiedSteps)
+	err = flattenIncidentWorkflow(d, createdWorkflow, true, specifiedSteps, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -379,7 +377,7 @@ func resourcePagerDutyIncidentWorkflowCreate(ctx context.Context, d *schema.Reso
 
 func resourcePagerDutyIncidentWorkflowRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Reading PagerDuty incident workflow %s", d.Id())
-	err := fetchIncidentWorkflow(ctx, d, meta, handleNotFoundError)
+	err := fetchIncidentWorkflow(ctx, d, meta, handleNotFoundError, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -404,7 +402,7 @@ func resourcePagerDutyIncidentWorkflowUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	err = flattenIncidentWorkflow(d, updatedWorkflow, true, specifiedSteps)
+	err = flattenIncidentWorkflow(d, updatedWorkflow, true, specifiedSteps, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -424,7 +422,12 @@ func resourcePagerDutyIncidentWorkflowDelete(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func fetchIncidentWorkflow(ctx context.Context, d *schema.ResourceData, meta interface{}, errorCallback func(error, *schema.ResourceData) error) error {
+func resourcePagerDutyIncidentWorkflowImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	err := fetchIncidentWorkflow(ctx, d, m, handleNotFoundError, true)
+	return []*schema.ResourceData{d}, err
+}
+
+func fetchIncidentWorkflow(ctx context.Context, d *schema.ResourceData, meta interface{}, errorCallback func(error, *schema.ResourceData) error, isImport bool) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
 		return err
@@ -452,7 +455,7 @@ func fetchIncidentWorkflow(ctx context.Context, d *schema.ResourceData, meta int
 			return nil
 		}
 
-		if err := flattenIncidentWorkflow(d, iw, true, specifiedSteps); err != nil {
+		if err := flattenIncidentWorkflow(d, iw, true, specifiedSteps, isImport); err != nil {
 			return retry.NonRetryableError(err)
 		}
 		return nil
@@ -464,6 +467,7 @@ func flattenIncidentWorkflow(
 	iw *pagerduty.IncidentWorkflow,
 	includeSteps bool,
 	specifiedSteps []*SpecifiedStep,
+	isImport bool,
 ) error {
 	d.SetId(iw.ID)
 	d.Set("name", iw.Name)
@@ -475,33 +479,43 @@ func flattenIncidentWorkflow(
 	}
 
 	if includeSteps {
-		steps := flattenIncidentWorkflowSteps(iw, specifiedSteps)
+		steps := flattenIncidentWorkflowSteps(iw, specifiedSteps, isImport)
 		d.Set("step", steps)
 	}
 
 	return nil
 }
 
-func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps []*SpecifiedStep) []map[string]interface{} {
+func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps []*SpecifiedStep, isImport bool) []map[string]interface{} {
 	newSteps := make([]map[string]interface{}, len(iw.Steps))
 	for i, s := range iw.Steps {
 		m := make(map[string]interface{})
-		specifiedStep := *specifiedSteps[i]
 		m["id"] = s.ID
 		m["name"] = s.Name
 		m["action"] = s.Configuration.ActionID
-		m["input"] = flattenIncidentWorkflowStepInput(s.Configuration.Inputs, specifiedStep.SpecifiedInputNames)
+
+		var inputNames []string
+		inlineInputs := make(map[string][]*SpecifiedStep)
+		if !isImport {
+			specifiedStep := *specifiedSteps[i]
+			inputNames = specifiedStep.SpecifiedInputNames
+			inlineInputs = specifiedStep.SpecifiedInlineInputs
+		}
+
+		m["input"] = flattenIncidentWorkflowStepInput(s.Configuration.Inputs, inputNames, isImport)
 		m["inline_steps_input"] = flattenIncidentWorkflowStepInlineStepsInput(
 			s.Configuration.InlineStepsInputs,
-			specifiedStep.SpecifiedInlineInputs,
+			inlineInputs,
+			isImport,
 		)
 
 		newSteps[i] = m
 	}
+
 	return newSteps
 }
 
-func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowActionInput, specifiedInputNames []string) *[]interface{} {
+func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowActionInput, specifiedInputNames []string, isImport bool) *[]interface{} {
 	newInputs := make([]interface{}, len(inputs))
 
 	for i, v := range inputs {
@@ -509,7 +523,7 @@ func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowAction
 		m["name"] = v.Name
 		m["value"] = v.Value
 
-		if !isInputInNonGeneratedInputNames(v, specifiedInputNames) {
+		if !isImport && !isInputInNonGeneratedInputNames(v, specifiedInputNames) {
 			m["generated"] = true
 		}
 
@@ -521,13 +535,14 @@ func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowAction
 func flattenIncidentWorkflowStepInlineStepsInput(
 	inlineStepsInputs []*pagerduty.IncidentWorkflowActionInlineStepsInput,
 	specifiedInlineInputs map[string][]*SpecifiedStep,
+	isImport bool,
 ) *[]interface{} {
 	newInlineStepsInputs := make([]interface{}, len(inlineStepsInputs))
 
 	for i, v := range inlineStepsInputs {
 		m := make(map[string]interface{})
 		m["name"] = v.Name
-		m["step"] = flattenIncidentWorkflowStepInlineStepsInputSteps(v.Value.Steps, specifiedInlineInputs[v.Name])
+		m["step"] = flattenIncidentWorkflowStepInlineStepsInputSteps(v.Value.Steps, specifiedInlineInputs[v.Name], isImport)
 
 		newInlineStepsInputs[i] = m
 	}
@@ -537,22 +552,32 @@ func flattenIncidentWorkflowStepInlineStepsInput(
 func flattenIncidentWorkflowStepInlineStepsInputSteps(
 	inlineSteps []*pagerduty.IncidentWorkflowActionInlineStep,
 	specifiedSteps []*SpecifiedStep,
+	isImport bool,
 ) *[]interface{} {
 	newInlineSteps := make([]interface{}, len(inlineSteps))
 
 	for i, v := range inlineSteps {
 		m := make(map[string]interface{})
-		specifiedStep := *specifiedSteps[i]
 		m["name"] = v.Name
 		m["action"] = v.Configuration.ActionID
-		m["input"] = flattenIncidentWorkflowStepInput(v.Configuration.Inputs, specifiedStep.SpecifiedInputNames)
+
+		var inputNames []string
+		inlineInputs := make(map[string][]*SpecifiedStep)
+		if !isImport {
+			specifiedStep := *specifiedSteps[i]
+			inputNames = specifiedStep.SpecifiedInputNames
+			inlineInputs = specifiedStep.SpecifiedInlineInputs
+		}
+
+		m["input"] = flattenIncidentWorkflowStepInput(v.Configuration.Inputs, inputNames, isImport)
 		if v.Configuration.InlineStepsInputs != nil && len(v.Configuration.InlineStepsInputs) > 0 {
 			// We should prefer to not set inline_steps_input if the array is empty. This doubles as a schema edge guard
 			// and prevents an invalid set if we try to set inline_steps_input to an empty array where the schema
 			// disallows setting any value whatsoever.
 			m["inline_steps_input"] = flattenIncidentWorkflowStepInlineStepsInput(
 				v.Configuration.InlineStepsInputs,
-				specifiedStep.SpecifiedInlineInputs,
+				inlineInputs,
+				isImport,
 			)
 		}
 

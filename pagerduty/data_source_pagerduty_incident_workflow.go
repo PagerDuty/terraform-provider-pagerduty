@@ -68,7 +68,7 @@ func dataSourcePagerDutyIncidentWorkflowRead(ctx context.Context, d *schema.Reso
 			)
 		}
 
-		err = flattenIncidentWorkflow(d, found, false, nil)
+		err = flattenIncidentWorkflow(d, found, false, nil, false)
 		if err != nil {
 			return retry.NonRetryableError(err)
 		}

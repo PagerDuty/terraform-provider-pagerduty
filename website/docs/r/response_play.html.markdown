@@ -10,6 +10,21 @@ description: |-
 
 A [response play](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODE2Ng-create-a-response-play) allows you to create packages of Incident Actions that can be applied during an Incident's life cycle.
 
+<div role="alert" class="alert alert-warning">
+  <div class="alert-title"><i class="fa fa-warning"></i>End-of-Life</div>
+  <p>
+    Response Play will end-of-life soon. We highly recommend that you
+    <a
+      href="https://support.pagerduty.com/docs/upgrade-response-plays-to-incident-workflows"
+      rel="noopener noreferrer"
+      target="_blank"
+      >migrate to Incident Workflows</a>
+    as soon as possible so you can take advantage of the new functionality.
+    With Incident Workflows, customers are able to define if-this-then-that
+    logic to effortlessly trigger a sequence of common incident actions, advanced conditions, REST APIs
+    and Terraform support.
+  </p>
+</div>
 
 ## Example Usage
 

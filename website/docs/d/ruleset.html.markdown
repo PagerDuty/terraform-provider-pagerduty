@@ -20,7 +20,7 @@ Use this data source to get information about a specific [ruleset][1] that you c
       target="_blank"
       >migrate to Event Orchestration</a>
     as soon as possible so you can take advantage of the new functionality, such
-    as improved UI, rule creation, APIs and Terraform support, advanced
+    as improved UI, rule creation, REST APIs and Terraform support, advanced
     conditions, and rule nesting.
   </p>
 </div>

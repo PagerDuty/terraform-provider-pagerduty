@@ -39,7 +39,9 @@ func testAccCheckAttributes(n string, fn func(map[string]string) error) resource
 }
 
 func testAccExternalProviders() map[string]resource.ExternalProvider {
-	version := "~> 3.4"
+	// Using the latest release before the introduction of
+	// Terraform plugin framework
+	version := "~> 3.6"
 	if v := os.Getenv("PAGERDUTY_ACC_EXTERNAL_PROVIDER_VERSION"); v != "" {
 		version = v
 	}

@@ -22,7 +22,7 @@ func TestAccPagerDutyBusinessService_Basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		CheckDestroy:             testAccCheckPagerDutyBusinessServiceDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -58,7 +58,7 @@ func TestAccPagerDutyBusinessService_WithTeam(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		CheckDestroy:             testAccCheckPagerDutyBusinessServiceDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -98,7 +98,7 @@ func TestAccPagerDutyBusinessService_SDKv2Compatibility(t *testing.T) {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 				Config:                   commonConfig,
 				ConfigPlanChecks:         resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
 			},

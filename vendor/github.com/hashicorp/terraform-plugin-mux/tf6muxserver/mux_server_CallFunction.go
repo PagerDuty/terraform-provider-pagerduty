@@ -1,18 +1,18 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
 // CallFunction calls the CallFunction method of the underlying provider
 // serving the function.
-func (s *muxServer) CallFunction(ctx context.Context, req *tfprotov5.CallFunctionRequest) (*tfprotov5.CallFunctionResponse, error) {
+func (s *muxServer) CallFunction(ctx context.Context, req *tfprotov6.CallFunctionRequest) (*tfprotov6.CallFunctionResponse, error) {
 	rpc := "CallFunction"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
@@ -24,22 +24,22 @@ func (s *muxServer) CallFunction(ctx context.Context, req *tfprotov5.CallFunctio
 	}
 
 	if diagnosticsHasError(diags) {
-		return &tfprotov5.CallFunctionResponse{
+		return &tfprotov6.CallFunctionResponse{
 			Diagnostics: diags,
 		}, nil
 	}
 
-	ctx = logging.Tfprotov5ProviderServerContext(ctx, server)
+	ctx = logging.Tfprotov6ProviderServerContext(ctx, server)
 
 	// Remove and call server.CallFunction below directly.
 	// Reference: https://github.com/hashicorp/terraform-plugin-mux/issues/210
-	functionServer, ok := server.(tfprotov5.FunctionServer)
+	functionServer, ok := server.(tfprotov6.FunctionServer)
 
 	if !ok {
-		resp := &tfprotov5.CallFunctionResponse{
-			Diagnostics: []*tfprotov5.Diagnostic{
+		resp := &tfprotov6.CallFunctionResponse{
+			Diagnostics: []*tfprotov6.Diagnostic{
 				{
-					Severity: tfprotov5.DiagnosticSeverityError,
+					Severity: tfprotov6.DiagnosticSeverityError,
 					Summary:  "Provider Functions Not Implemented",
 					Detail: "A provider-defined function call was received by the provider, however the provider does not implement functions. " +
 						"Either upgrade the provider to a version that implements provider-defined functions or this is a bug in Terraform that should be reported to the Terraform maintainers.",

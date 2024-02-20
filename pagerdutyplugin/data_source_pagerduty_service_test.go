@@ -18,7 +18,7 @@ func TestAccDataSourcePagerDutyService_Basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname),
@@ -39,7 +39,7 @@ func TestAccDataSourcePagerDutyService_HasNoTeam(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname),
@@ -60,7 +60,7 @@ func TestAccDataSourcePagerDutyService_HasOneTeam(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname),
@@ -161,6 +161,5 @@ data "pagerduty_service" "no_team_service" {
 data "pagerduty_service" "one_team_service" {
   name = pagerduty_service.one_team_service.name
 }
-
-`, teamname, username, email, service, escalationPolicy)
+`, teamname, username, email, escalationPolicy, service)
 }

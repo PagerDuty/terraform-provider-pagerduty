@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -41,23 +40,6 @@ var resourceEventOrchestrationCacheVariableConfigurationSchema = map[string]*sch
 	"ttl_seconds": {
 		Type:     schema.TypeInt,
 		Optional: true,
-		ValidateDiagFunc: func(v interface{}, p cty.Path) diag.Diagnostics {
-			var diags diag.Diagnostics
-			min := 1
-			max := 84000
-
-			value := v.(int)
-			valid := value >= min && value <= max
-
-			if !valid {
-				diags = append(diags, diag.Diagnostic{
-					Severity:      diag.Error,
-					Summary:       fmt.Sprintf("%#v is an invalid value. Must be between %#v and %#v (inclusive)", value, min, max),
-					AttributePath: p,
-				})
-			}
-			return diags
-		},
 	},
 }
 
@@ -230,8 +212,14 @@ func resourceEventOrchestrationCacheVariableImport(ctx context.Context, d *schem
 		return []*schema.ResourceData{}, err
 	}
 
+	parent_identifier := "orchestration_id"
+
+	if cacheVariableType == pagerduty.CacheVariableTypeService {
+		parent_identifier = "service_id"
+	}
+
 	if oid == "" || id == "" {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing cache variable. Expected import ID format: <orchestration_id>:<cache_variable_id>")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing cache variable. Expected import ID format: <%s>:<cache_variable_id>", parent_identifier)
 	}
 
 	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {

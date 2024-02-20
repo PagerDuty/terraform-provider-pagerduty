@@ -6,8 +6,8 @@ package pagerduty
 import (
 	"time"
 
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/terraform-providers/terraform-provider-pagerduty/util"
 )
 
 func timeToUTC(v string) (time.Time, error) {

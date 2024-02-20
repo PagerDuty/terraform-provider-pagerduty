@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
-	pd "github.com/terraform-providers/terraform-provider-pagerduty/pagerduty"
+	pd "github.com/PagerDuty/terraform-provider-pagerduty/pagerduty"
 )
 
 func testAccPreCheck(t *testing.T) {

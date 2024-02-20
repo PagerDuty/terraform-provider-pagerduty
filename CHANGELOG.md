@@ -1,3 +1,9 @@
+## 3.8.1 (Feb 20, 2024)
+
+IMPROVEMENTS:
+
+* `pagerduty/pagerduty`: Fix go module name ([#616](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/616))
+
 ## 3.8.0 (Feb 16, 2024)
 
 FEATURES:

@@ -15,7 +15,7 @@ import (
 )
 
 // Provider represents a resource provider in Terraform
-func Provider() *schema.Provider {
+func Provider(isMux bool) *schema.Provider {
 	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"skip_credentials_validation": {
@@ -125,6 +125,7 @@ func Provider() *schema.Provider {
 			"pagerduty_service_event_rule":                            resourcePagerDutyServiceEventRule(),
 			"pagerduty_slack_connection":                              resourcePagerDutySlackConnection(),
 			"pagerduty_business_service_subscriber":                   resourcePagerDutyBusinessServiceSubscriber(),
+			"pagerduty_business_service":                              resourcePagerDutyBusinessService(),
 			"pagerduty_webhook_subscription":                          resourcePagerDutyWebhookSubscription(),
 			"pagerduty_event_orchestration":                           resourcePagerDutyEventOrchestration(),
 			"pagerduty_event_orchestration_integration":               resourcePagerDutyEventOrchestrationIntegration(),
@@ -142,6 +143,10 @@ func Provider() *schema.Provider {
 			"pagerduty_incident_custom_field":                         resourcePagerDutyIncidentCustomField(),
 			"pagerduty_incident_custom_field_option":                  resourcePagerDutyIncidentCustomFieldOption(),
 		},
+	}
+
+	if isMux {
+		delete(p.ResourcesMap, "pagerduty_business_service")
 	}
 
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {

@@ -21,12 +21,12 @@ func TestAccPagerDutyBusinessService_Basic(t *testing.T) {
 	pointOfContactUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckPagerDutyBusinessServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyBusinessServiceDestroy,
 		Steps: []resource.TestStep{
 			{
-				ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
-				Config:                   testAccCheckPagerDutyBusinessServiceConfig(name, description, pointOfContact),
+				Config: testAccCheckPagerDutyBusinessServiceConfig(name, description, pointOfContact),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyBusinessServiceExists("pagerduty_business_service.foo"),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", name),
@@ -37,14 +37,38 @@ func TestAccPagerDutyBusinessService_Basic(t *testing.T) {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
-				Config:                   testAccCheckPagerDutyBusinessServiceConfig(nameUpdated, descriptionUpdated, pointOfContactUpdated),
+				Config: testAccCheckPagerDutyBusinessServiceConfig(nameUpdated, descriptionUpdated, pointOfContactUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyBusinessServiceExists("pagerduty_business_service.foo"),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "name", nameUpdated),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "description", descriptionUpdated),
 					resource.TestCheckResourceAttr("pagerduty_business_service.foo", "point_of_contact", pointOfContactUpdated),
 					resource.TestCheckResourceAttrSet("pagerduty_business_service.foo", "self"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyBusinessService_WithTeam(t *testing.T) {
+	businessService := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	description := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	pointOfContact := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyBusinessServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyBusinessServiceWithTeamConfig(businessService, teamName, description, pointOfContact),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyBusinessServiceExists("pagerduty_business_service.bar"),
+					resource.TestCheckResourceAttr("pagerduty_business_service.bar", "name", businessService),
+					resource.TestCheckResourceAttr("pagerduty_business_service.bar", "description", description),
+					resource.TestCheckResourceAttr("pagerduty_business_service.bar", "point_of_contact", pointOfContact),
+					resource.TestCheckResourceAttrSet("pagerduty_business_service.bar", "self"),
 				),
 			},
 		},
@@ -129,4 +153,19 @@ resource "pagerduty_business_service" "foo" {
 	point_of_contact = "%s"
 }
 `, name, description, poc)
+}
+
+func testAccCheckPagerDutyBusinessServiceWithTeamConfig(businessServiceName, teamName, description, poc string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_team" "bar" {
+	name = "%s"
+}
+
+resource "pagerduty_business_service" "bar" {
+	name = "%s"
+	description = "%s"
+	point_of_contact = "%s"
+	team = pagerduty_team.bar.id
+}
+`, teamName, businessServiceName, description, poc)
 }

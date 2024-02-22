@@ -56,7 +56,7 @@ func testAccProtoV5ProviderFactories() map[string]func() (tfprotov5.ProviderServ
 		"pagerduty": func() (tfprotov5.ProviderServer, error) {
 			ctx := context.Background()
 			providers := []func() tfprotov5.ProviderServer{
-				pd.Provider().GRPCProvider,
+				pd.Provider(true).GRPCProvider,
 				providerserver.NewProtocol5(testAccProvider),
 			}
 

@@ -14,6 +14,11 @@ import (
 	"github.com/heimweh/go-pagerduty/persistentconfig"
 )
 
+const (
+	IsMuxed    = true
+	IsNotMuxed = false
+)
+
 // Provider represents a resource provider in Terraform
 func Provider(isMux bool) *schema.Provider {
 	p := &schema.Provider{
@@ -118,6 +123,7 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_event_rule":                                    resourcePagerDutyEventRule(),
 			"pagerduty_ruleset":                                       resourcePagerDutyRuleset(),
 			"pagerduty_ruleset_rule":                                  resourcePagerDutyRulesetRule(),
+			"pagerduty_business_service":                              resourcePagerDutyBusinessService(),
 			"pagerduty_service_dependency":                            resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":                                 resourcePagerDutyResponsePlay(),
 			"pagerduty_tag":                                           resourcePagerDutyTag(),
@@ -125,7 +131,6 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_service_event_rule":                            resourcePagerDutyServiceEventRule(),
 			"pagerduty_slack_connection":                              resourcePagerDutySlackConnection(),
 			"pagerduty_business_service_subscriber":                   resourcePagerDutyBusinessServiceSubscriber(),
-			"pagerduty_business_service":                              resourcePagerDutyBusinessService(),
 			"pagerduty_webhook_subscription":                          resourcePagerDutyWebhookSubscription(),
 			"pagerduty_event_orchestration":                           resourcePagerDutyEventOrchestration(),
 			"pagerduty_event_orchestration_integration":               resourcePagerDutyEventOrchestrationIntegration(),

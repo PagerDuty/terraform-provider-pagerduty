@@ -10,6 +10,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.resourceBusinessService. Kept for testing purposes.
 func resourcePagerDutyBusinessService() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutyBusinessServiceCreate,

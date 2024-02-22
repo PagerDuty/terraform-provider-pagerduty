@@ -24,7 +24,7 @@ func Serve() {
 		// terraform-plugin-framework
 		providerserver.NewProtocol5(pagerdutyplugin.New()),
 		// terraform-plugin-sdk
-		pagerduty.Provider(true).GRPCProvider,
+		pagerduty.Provider(pagerduty.IsMuxed).GRPCProvider,
 	)
 	if err != nil {
 		log.Fatal(err)

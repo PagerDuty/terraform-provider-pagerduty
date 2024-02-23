@@ -13,8 +13,8 @@ func TestAccDataSourcePagerDutyBusinessService_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyBusinessServiceConfig(name),
@@ -28,7 +28,6 @@ func TestAccDataSourcePagerDutyBusinessService_Basic(t *testing.T) {
 
 func testAccDataSourcePagerDutyBusinessService(src, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-
 		srcR := s.RootModule().Resources[src]
 		srcA := srcR.Primary.Attributes
 

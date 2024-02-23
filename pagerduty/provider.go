@@ -14,8 +14,13 @@ import (
 	"github.com/heimweh/go-pagerduty/persistentconfig"
 )
 
+const (
+	IsMuxed    = true
+	IsNotMuxed = false
+)
+
 // Provider represents a resource provider in Terraform
-func Provider() *schema.Provider {
+func Provider(isMux bool) *schema.Provider {
 	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"skip_credentials_validation": {
@@ -143,6 +148,10 @@ func Provider() *schema.Provider {
 			"pagerduty_incident_custom_field":                         resourcePagerDutyIncidentCustomField(),
 			"pagerduty_incident_custom_field_option":                  resourcePagerDutyIncidentCustomFieldOption(),
 		},
+	}
+
+	if isMux {
+		delete(p.ResourcesMap, "pagerduty_business_service")
 	}
 
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {

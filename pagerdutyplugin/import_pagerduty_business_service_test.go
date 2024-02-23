@@ -14,14 +14,13 @@ func TestAccPagerDutyBusinessService_import(t *testing.T) {
 	poc := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyBusinessServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyBusinessServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyBusinessServiceConfig(name, desc, poc),
 			},
-
 			{
 				ResourceName:      "pagerduty_business_service.foo",
 				ImportState:       true,

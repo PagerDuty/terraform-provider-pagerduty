@@ -19,7 +19,7 @@ var testAccProvider *schema.Provider
 var testAccProviderFactories map[string]func() (*schema.Provider, error)
 
 func init() {
-	testAccProvider = Provider()
+	testAccProvider = Provider(IsNotMuxed)
 	testAccProviders = map[string]*schema.Provider{
 		"pagerduty": testAccProvider,
 	}
@@ -31,13 +31,13 @@ func init() {
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := Provider(IsNotMuxed).InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProviderImpl(t *testing.T) {
-	var _ *schema.Provider = Provider()
+	var _ *schema.Provider = Provider(IsNotMuxed)
 }
 
 func TestAccPagerDutyProviderAuthMethods_Basic(t *testing.T) {

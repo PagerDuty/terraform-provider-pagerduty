@@ -69,7 +69,7 @@ resource "pagerduty_event_orchestration_service" "event_orchestration" {
     rule {
       label = "Set severity to critical if we see at least 5 triggers on the DB within the last 1 minute"
       condition {
-        expression = "{{cache_var.num_db_triggers}} >= 5"
+        expression = "cache_var.num_db_triggers >= 5"
       }
       actions {
         severity = "critical"

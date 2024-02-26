@@ -46,7 +46,7 @@ resource "pagerduty_event_orchestration_global" "global" {
     rule {
       label = "Always annotate the incident with the event source for all events"
       actions {
-        annotate = "Last time, we saw this incident occur on host: [{{cache_var.recent_host}}]"
+        annotate = "Last time, we saw this incident occur on host: {{cache_var.recent_host}}"
       }
     }
   }

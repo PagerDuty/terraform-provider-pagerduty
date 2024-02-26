@@ -4,6 +4,13 @@ IMPROVEMENTS:
 
 * `pagerduty/pagerduty`: Fix go module name ([#616](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/616))
 
+## 3.9.0 (Feb 26, 2024)
+
+FEATURES:
+
+* `resource/pagerduty_business_sevice`: Migrate Resource pagerduty_business_service to TF Plugin Framework ([#808](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/808))
+* `resource/pagerduty_event_orchestration_global`, `resource/pagerduty_event_orchestration_service`: Support for incident custom fields for Event Orchestration ([#749](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/749))
+
 ## 3.8.0 (Feb 16, 2024)
 
 FEATURES:

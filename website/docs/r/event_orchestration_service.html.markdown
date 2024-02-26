@@ -31,17 +31,22 @@ resource "pagerduty_team" "engineering" {
 resource "pagerduty_user" "example" {
   name  = "Earline Greenholt"
   email = "125.greenholt.earline@graham.name"
-  teams = [pagerduty_team.engineering.id]
 }
 
-resource "pagerduty_escalation_policy" "foo" {
+resource "pagerduty_team_membership" "foo" {
+  user_id = pagerduty_user.example.id
+  team_id = pagerduty_team.engineering.id
+  role    = "manager"
+}
+
+resource "pagerduty_escalation_policy" "example" {
   name      = "Engineering Escalation Policy"
   num_loops = 2
 
   rule {
     escalation_delay_in_minutes = 10
     target {
-      type = "user"
+      type = "user_reference"
       id   = pagerduty_user.example.id
     }
   }
@@ -53,6 +58,12 @@ resource "pagerduty_service" "example" {
   acknowledgement_timeout = 600
   escalation_policy       = pagerduty_escalation_policy.example.id
   alert_creation          = "create_alerts_and_incidents"
+}
+
+resource "pagerduty_incident_custom_field" "cs_impact" {
+  name       = "impact"
+  data_type  = "string"
+  field_type = "single_value"
 }
 
 data "pagerduty_priority" "p1" {
@@ -99,6 +110,10 @@ resource "pagerduty_event_orchestration_service" "www" {
       actions {
         annotate = "Please use our P1 runbook: https://docs.test/p1-runbook"
         priority = data.pagerduty_priority.p1.id
+        incident_custom_field_update {
+          id = pagerduty_incident_custom_field.cs_impact.id
+          value = "High Impact"
+        }
       }
     }
     rule {
@@ -170,6 +185,9 @@ The following arguments are supported:
 * `suspend` - (Optional) The number of seconds to suspend the resulting alert before triggering. This effectively pauses incident notifications. If a `resolve` event arrives before the alert triggers then PagerDuty won't create an incident for this alert.
 * `priority` - (Optional) The ID of the priority you want to set on resulting incident. Consider using the [`pagerduty_priority`](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) data source.
 * `annotate` - (Optional) Add this text as a note on the resulting incident.
+* `incident_custom_field_update` - (Optional) Assign a custom field to the resulting incident.
+  * `id` - (Required) The custom field id
+  * `value` - (Required) The value to assign to this custom field
 * `pagerduty_automation_action` - (Optional) Configure a [Process Automation](https://support.pagerduty.com/docs/event-orchestration#process-automation) associated with the resulting incident.
   * `action_id` - (Required) Id of the Process Automation action to be triggered.
 * `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) associated with the resulting incident.

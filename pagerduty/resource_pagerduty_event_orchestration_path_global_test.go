@@ -295,17 +295,17 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsConfig(t,
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-		
+
 			set {
 				id = "start"
 				rule {
 					label = "rule 1"
-					actions {							
+					actions {
 							automation_action {
 								name = "test"
 								url = "https://test.com"
 								auto_send = true
-		
+
 								header {
 									key = "foo"
 									value = "bar"
@@ -314,7 +314,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsConfig(t,
 									key = "baz"
 									value = "buz"
 								}
-		
+
 								parameter {
 									key = "source"
 									value = "orch"
@@ -363,16 +363,16 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsParamsUpd
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-		
+
 			set {
 				id = "start"
 				rule {
 					label = "rule 1"
-					actions {							
+					actions {
 							automation_action {
 								name = "test1"
 								url = "https://test1.com"
-		
+
 								header {
 									key = "foo1"
 									value = "bar1"
@@ -412,12 +412,12 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsParamsDel
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-		
+
 			set {
 				id = "start"
 				rule {
 					label = "rule 1"
-					actions {							
+					actions {
 							automation_action {
 								name = "test"
 								url = "https://test.com"
@@ -444,7 +444,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalInvalidExtractionsConfig(t
 		createBaseGlobalOrchConfig(t, ep, s, o),
 		fmt.Sprintf(`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-						
+
 				set {
 					id = "start"
 					rule {
@@ -467,7 +467,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsConfig(t, ep, s,
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-		
+
 			set {
 				id = "start"
 				rule {
@@ -504,6 +504,10 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsConfig(t, ep, s,
 							regex = ".*"
 							source = "event.group"
 							target = "event.custom_details.message"
+						}
+						incident_custom_field_update {
+							id = "PIJ90N7"
+							value = "foo"
 						}
 					}
 				}
@@ -574,7 +578,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-		
+
 			set {
 				id = "start"
 				rule {
@@ -602,6 +606,10 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 						extraction {
 							target = "event.custom_details.message_upd"
 							template = "[UPD] High CPU usage on {{variables.hostname}}: {{variables.cpu_val}}"
+						}
+						incident_custom_field_update {
+							id = "PIJ90N7"
+							value = "bar"
 						}
 					}
 				}
@@ -666,7 +674,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 						path = "event.custom_details.updated_at"
 						type = "regex"
 						value = "UPD (.*)"
-					}					
+					}
 					extraction {
 						regex = ".*"
 						source = "event.custom_details.region_upd"
@@ -682,7 +690,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsDeleteConfig(t, 
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-		
+
 			set {
 				id = "start"
 				rule {
@@ -719,7 +727,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalOneSetNoActionsConfig(t, e
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
-		
+
 			set {
 				id = "start"
 				rule {

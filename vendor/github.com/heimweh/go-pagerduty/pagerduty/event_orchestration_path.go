@@ -59,10 +59,16 @@ type EventOrchestrationPathRuleActions struct {
 	Annotate                   string                                             `json:"annotate"`
 	PagerdutyAutomationActions []*EventOrchestrationPathPagerdutyAutomationAction `json:"pagerduty_automation_actions"`
 	AutomationActions          []*EventOrchestrationPathAutomationAction          `json:"automation_actions"`
+	IncidentCustomFieldUpdates []*EventOrchestrationPathIncidentCustomFieldUpdate `json:"incident_custom_field_updates"`
 	Severity                   string                                             `json:"severity"`
 	EventAction                string                                             `json:"event_action"`
 	Variables                  []*EventOrchestrationPathActionVariables           `json:"variables"`
 	Extractions                []*EventOrchestrationPathActionExtractions         `json:"extractions"`
+}
+
+type EventOrchestrationPathIncidentCustomFieldUpdate struct {
+	ID string `json:"id,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 type EventOrchestrationPathPagerdutyAutomationAction struct {

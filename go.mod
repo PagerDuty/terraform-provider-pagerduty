@@ -76,4 +76,4 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
 
-replace github.com/heimweh/go-pagerduty => github.com/swbradshaw/go-pagerduty v0.0.1
+replace github.com/heimweh/go-pagerduty => github.com/swbradshaw/go-pagerduty v0.0.0-20240226191303-737736f24390

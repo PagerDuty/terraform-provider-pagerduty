@@ -37,7 +37,7 @@ type EventOrchestrationPathRule struct {
 	Label      string                                 `json:"label,omitempty"`
 	Conditions []*EventOrchestrationPathRuleCondition `json:"conditions"`
 	Actions    *EventOrchestrationPathRuleActions     `json:"actions,omitempty"`
-	Disabled   bool                                   `json:"disabled,omitempty"`
+	Disabled   bool                                   `json:"disabled"`
 }
 
 type EventOrchestrationPathRuleCondition struct {

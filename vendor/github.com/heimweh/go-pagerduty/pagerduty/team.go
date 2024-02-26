@@ -19,6 +19,7 @@ type Team struct {
 	Summary     string         `json:"summary,omitempty"`
 	Type        string         `json:"type,omitempty"`
 	Parent      *TeamReference `json:"parent,omitempty"`
+	DefaultRole string         `json:"default_role,omitempty"`
 }
 
 // Member represents a team member.

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -238,15 +239,9 @@ func resourcePagerDutyService() *schema.Resource {
 							Optional: true,
 						},
 						"time_zone": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-								_, err := time.LoadLocation(val.(string))
-								if err != nil {
-									errs = append(errs, err)
-								}
-								return
-							},
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: util.ValidateTZValueDiagFunc,
 						},
 						"start_time": {
 							Type:     schema.TypeString,

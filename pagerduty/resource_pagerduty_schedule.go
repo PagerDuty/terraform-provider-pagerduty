@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -53,15 +54,9 @@ func resourcePagerDutySchedule() *schema.Resource {
 			},
 
 			"time_zone": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-					_, err := time.LoadLocation(val.(string))
-					if err != nil {
-						errs = append(errs, err)
-					}
-					return
-				},
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: util.ValidateTZValueDiagFunc,
 			},
 
 			"overflow": {

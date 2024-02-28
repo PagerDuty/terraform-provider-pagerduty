@@ -11,6 +11,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.dataSourceBusinessService. Kept for testing purposes.
 func dataSourcePagerDutyBusinessService() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyBusinessServiceRead,

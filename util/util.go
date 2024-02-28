@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -282,11 +283,9 @@ func ValidateTZValueDiagFunc(v interface{}, p cty.Path) diag.Diagnostics {
 
 	value := v.(string)
 	valid := false
-	for _, tz := range validTZ {
-		if value == tz {
-			valid = true
-			break
-		}
+
+	if sort.SearchStrings(validTZ, value) < len(validTZ) {
+		valid = true
 	}
 
 	if !valid {

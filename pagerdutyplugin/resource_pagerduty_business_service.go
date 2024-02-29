@@ -202,7 +202,7 @@ func requestGetBusinessService(ctx context.Context, client *pagerduty.Client, id
 	return model
 }
 
-func buildPagerdutyBusinessService(ctx context.Context, model *resourceBusinessServiceModel) *pagerduty.BusinessService {
+func buildPagerdutyBusinessService(_ context.Context, model *resourceBusinessServiceModel) *pagerduty.BusinessService {
 	businessService := pagerduty.BusinessService{
 		ID:             model.ID.ValueString(),
 		Description:    model.Description.ValueString(),

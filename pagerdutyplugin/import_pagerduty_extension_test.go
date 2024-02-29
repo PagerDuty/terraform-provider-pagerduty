@@ -14,9 +14,9 @@ func TestAccPagerDutyExtension_import(t *testing.T) {
 	url := "https://example.com/receive_a_pagerduty_webhook"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyExtensionDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyExtensionDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url, "false", "any"),

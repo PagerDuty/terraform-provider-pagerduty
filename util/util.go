@@ -284,7 +284,8 @@ func ValidateTZValueDiagFunc(v interface{}, p cty.Path) diag.Diagnostics {
 	value := v.(string)
 	valid := false
 
-	if sort.SearchStrings(validTZ, value) < len(validTZ) {
+	foundAt := sort.SearchStrings(validTZ, value)
+	if foundAt < len(validTZ) && validTZ[foundAt] == value {
 		valid = true
 	}
 

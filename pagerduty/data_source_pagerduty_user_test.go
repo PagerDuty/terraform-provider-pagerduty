@@ -13,7 +13,7 @@ func TestAccDataSourcePagerDutyUser_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	jobTitle := fmt.Sprintf("%s-title", username)
-	timeZone := "UTC"
+	timeZone := "America/New_York"
 	role := "user"
 	description := fmt.Sprintf("%s-description", username)
 

@@ -10,7 +10,7 @@ import (
 )
 
 func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
-	timeZone := "UTC"
+	timeZone := "America/New_York"
 	teamname1 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 	teamname2 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 
@@ -73,7 +73,7 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_1_team", "users.0.role", "user"),
 					resource.TestCheckResourceAttr(
-						"data.pagerduty_users.test_by_1_team", "users.0.title", title2),
+						"data.pagerduty_users.test_by_1_team", "users.0.job_title", title2),
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_1_team", "users.0.time_zone", timeZone2),
 					resource.TestCheckResourceAttr(
@@ -89,7 +89,7 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.0.role", "user"),
 					resource.TestCheckResourceAttr(
-						"data.pagerduty_users.test_by_2_team", "users.0.title", title2),
+						"data.pagerduty_users.test_by_2_team", "users.0.job_title", title2),
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.0.time_zone", timeZone2),
 					resource.TestCheckResourceAttr(
@@ -101,7 +101,7 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.1.role", "user"),
 					resource.TestCheckResourceAttr(
-						"data.pagerduty_users.test_by_2_team", "users.1.title", title3),
+						"data.pagerduty_users.test_by_2_team", "users.1.job_title", title3),
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_users.test_by_2_team", "users.1.time_zone", timeZone3),
 					resource.TestCheckResourceAttr(

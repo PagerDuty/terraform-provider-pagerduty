@@ -39,7 +39,12 @@ The following arguments are supported:
 * `email` - (Required) The email to use to find a user in the PagerDuty API.
 
 ## Attributes Reference
+
 * `id` - The ID of the found user.
 * `name` - The short name of the found user.
+* `role` - The role of the found user.
+* `job_title` - The job title of the found user.
+* `time_zone` - The timezone of the found user.
+* `description` - The human-friendly description of the found user.
 
 [1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODIzMw-list-users

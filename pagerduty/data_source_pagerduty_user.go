@@ -24,6 +24,22 @@ func dataSourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"role": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"job_title": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"time_zone": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -73,6 +89,10 @@ func dataSourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
 		d.Set("email", found.Email)
+		d.Set("role", found.Role)
+		d.Set("job_title", found.JobTitle)
+		d.Set("time_zone", found.TimeZone)
+		d.Set("description", found.Description)
 
 		return nil
 	})

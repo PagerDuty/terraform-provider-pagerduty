@@ -13,8 +13,8 @@ func TestAccDataSourcePagerDutyTag_Basic(t *testing.T) {
 	tag := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyTagConfig(tag),
@@ -28,7 +28,6 @@ func TestAccDataSourcePagerDutyTag_Basic(t *testing.T) {
 
 func testAccDataSourcePagerDutyTag(src, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-
 		srcR := s.RootModule().Resources[src]
 		srcA := srcR.Primary.Attributes
 

@@ -67,6 +67,17 @@ func TestAccPagerDutyWebhookSubscription_Basic(t *testing.T) {
 						"pagerduty_webhook_subscription.foo", "events.#", "13"),
 				),
 			},
+			{
+				Config: testAccCheckPagerDutyWebhookSubscriptionConfig_updateCustomHeaderValue(username, email, escalationPolicy, service, description),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyWebhookSubscriptionExists("pagerduty_webhook_subscription.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_webhook_subscription.foo", "description", description),
+					resource.TestCheckResourceAttr(
+						"pagerduty_webhook_subscription.foo", "events.#", "13"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -148,6 +159,76 @@ func testAccCheckPagerDutyWebhookSubscriptionConfig(username, useremail, escalat
 			custom_header {
 				name = "X-Foo"
 				value = "foo"
+			}
+		}
+		description = "%s"
+		events = [
+            "incident.acknowledged",
+            "incident.annotated",
+            "incident.delegated",
+            "incident.escalated",
+            "incident.priority_updated",
+            "incident.reassigned",
+            "incident.reopened",
+            "incident.resolved",
+            "incident.responder.added",
+            "incident.responder.replied",
+            "incident.status_update_published",
+            "incident.triggered",
+            "incident.unacknowledged"
+		]
+		active = true
+		filter {
+			id = pagerduty_service.foo.id
+			type = "service_reference"
+		}
+		type = "webhook_subscription"
+	}
+	`, username, useremail, escalationPolicy, service, description)
+}
+
+func testAccCheckPagerDutyWebhookSubscriptionConfig_updateCustomHeaderValue(username, useremail, escalationPolicy, service, description string) string {
+	return fmt.Sprintf(`
+	resource "pagerduty_user" "foo" {
+		name        = "%s"
+		email       = "%s"
+	}
+
+	resource "pagerduty_escalation_policy" "foo" {
+		name        = "%s"
+		description = "foo"
+		num_loops   = 1
+
+		rule {
+			escalation_delay_in_minutes = 10
+
+			target {
+				type = "user_reference"
+				id   = pagerduty_user.foo.id
+			}
+		}
+	}
+
+	resource "pagerduty_service" "foo" {
+		name                    = "%s"
+		description             = "foo"
+		auto_resolve_timeout    = 1800
+		acknowledgement_timeout = 1800
+		escalation_policy       = pagerduty_escalation_policy.foo.id
+
+		incident_urgency_rule {
+			type = "constant"
+			urgency = "high"
+		}
+	}
+
+	resource "pagerduty_webhook_subscription" "foo" {
+		delivery_method {
+			type = "http_delivery_method"
+			url = "https://example.com/receive_a_pagerduty_webhook"
+			custom_header {
+				name = "X-Foo"
+				value = "bar"
 			}
 		}
 		description = "%s"

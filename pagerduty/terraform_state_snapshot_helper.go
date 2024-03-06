@@ -2,12 +2,16 @@ package pagerduty
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/hashicorp/go-version"
+	install "github.com/hashicorp/hc-install"
+	"github.com/hashicorp/hc-install/fs"
 	"github.com/hashicorp/hc-install/product"
-	"github.com/hashicorp/hc-install/releases"
+	"github.com/hashicorp/hc-install/src"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 )
@@ -41,14 +45,24 @@ func (state *tfStateSnapshot) GetResourceStateById(id string) *tfjson.StateResou
 // getTFStateSnapshot returns an snapshot of the terraform state caring to be
 // concurrent safe while reading the state.
 func getTFStateSnapshot() (*tfStateSnapshot, error) {
-	installer := &releases.ExactVersion{
-		Product: product.Terraform,
-		Version: version.Must(version.NewVersion("1.0.6")),
-	}
+	ctx := context.Background()
 
-	execPath, err := installer.Install(context.Background())
+	installer := install.NewInstaller()
+	defer installer.Remove(ctx)
+
+	tfVersionConstrain := ">= 1.0.6"
+	execPath, err := installer.Ensure(ctx, []src.Source{
+		&fs.Version{
+			Product:     product.Terraform,
+			Constraints: version.MustConstraints(version.NewConstraint(tfVersionConstrain)),
+		},
+	})
 	if err != nil {
-		return nil, err
+		isTFVersionUnavailableError := strings.Contains(err.Error(), "terraform: executable file not found in $PATH")
+		if !isTFVersionUnavailableError {
+			return nil, err
+		}
+		return nil, fmt.Errorf("terraform binary version %q not found in $PATH", tfVersionConstrain)
 	}
 
 	workingDir, err := os.Getwd()

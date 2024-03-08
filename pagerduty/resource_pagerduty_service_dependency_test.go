@@ -49,7 +49,7 @@ func TestAccPagerDutyBusinessServiceDependency_Basic(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyBusinessServiceDependencyConfig(service, businessService, username, email, escalationPolicy),
 				Check: resource.ComposeTestCheckFunc(
-					testAccExternallyDestroyedDependentService("pagerduty_service_dependency.bar", "pagerduty_service.dependBar", "pagerduty_service.supportBar"),
+					testAccExternallyDestroyedDependentService("pagerduty_service_dependency.foo", "pagerduty_business_service.foo", "pagerduty_service.foo"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -384,7 +384,7 @@ func TestAccPagerDutyTechnicalServiceDependency_Basic(t *testing.T) {
 	dependentService := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	supportingService := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	email := fmt.Sprintf("%s@lego.com", username)
+	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{

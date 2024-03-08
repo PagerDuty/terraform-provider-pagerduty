@@ -249,6 +249,10 @@ func resourcePagerDutyServiceDependencyDisassociate(ctx context.Context, d *sche
 				return retry.NonRetryableError(err)
 			}
 
+			if err = handleNotFoundError(err, d); err == nil {
+				return nil
+			}
+
 			// Delaying retry by 30s as recommended by PagerDuty
 			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 			time.Sleep(30 * time.Second)

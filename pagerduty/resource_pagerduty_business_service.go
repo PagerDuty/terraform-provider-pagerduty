@@ -135,6 +135,10 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 				return retry.NonRetryableError(err)
 			}
 
+			if err := handleNotFoundError(err, d); err != nil {
+				return retry.RetryableError(err)
+			}
+
 			return retry.RetryableError(err)
 		} else if businessService != nil {
 			d.Set("name", businessService.Name)
@@ -190,7 +194,7 @@ func resourcePagerDutyBusinessServiceDelete(d *schema.ResourceData, meta interfa
 	log.Printf("[INFO] Deleting PagerDuty business service %s", d.Id())
 
 	if _, err := client.BusinessServices.Delete(d.Id()); err != nil {
-		return err
+		return handleNotFoundError(err, d)
 	}
 
 	d.SetId("")

@@ -61,6 +61,7 @@ func (p *Provider) Resources(ctx context.Context) [](func() resource.Resource) {
 	return [](func() resource.Resource){
 		func() resource.Resource { return &resourceBusinessService{} },
 		func() resource.Resource { return &resourceTag{} },
+		func() resource.Resource { return &resourceTagAssignment{} },
 	}
 }
 

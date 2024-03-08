@@ -1,14 +1,15 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyTagAssignment_User(t *testing.T) {
@@ -17,9 +18,9 @@ func TestAccPagerDutyTagAssignment_User(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTagAssignmentDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTagAssignmentDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTagAssignmentConfig(tagLabel, username, email),
@@ -62,14 +63,15 @@ func TestAccPagerDutyTagAssignment_User(t *testing.T) {
 		},
 	})
 }
+
 func TestAccPagerDutyTagAssignment_Team(t *testing.T) {
 	tagLabel := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTagAssignmentDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTagAssignmentDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTagAssignmentTeamConfig(tagLabel, team),
@@ -110,6 +112,7 @@ func TestAccPagerDutyTagAssignment_Team(t *testing.T) {
 		},
 	})
 }
+
 func TestAccPagerDutyTagAssignment_EP(t *testing.T) {
 	tagLabel := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	ep := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -117,9 +120,9 @@ func TestAccPagerDutyTagAssignment_EP(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTagAssignmentDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTagAssignmentDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTagAssignmentEPConfig(tagLabel, username, email, ep),
@@ -162,7 +165,6 @@ func TestAccPagerDutyTagAssignment_EP(t *testing.T) {
 }
 
 func testAccCheckPagerDutyTagAssignmentDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_tag_assignment" {
 			continue
@@ -172,7 +174,8 @@ func testAccCheckPagerDutyTagAssignmentDestroy(s *terraform.State) error {
 		entityID, tagID := ids[0], ids[1]
 		entityType := "users"
 
-		response, _, err := client.Tags.ListTagsForEntity(entityType, entityID)
+		opts := pagerduty.ListTagOptions{}
+		response, err := testAccProvider.client.GetTagsForEntity(entityType, entityID, opts)
 		if err != nil {
 			// if there are no tags for the entity that's okay
 			return nil
@@ -200,8 +203,8 @@ func testAccCheckPagerDutyTagAssignmentExists(n, entityType string) resource.Tes
 
 		entityID, tagID := ids[0], ids[1]
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		response, _, err := client.Tags.ListTagsForEntity(entityType, entityID)
+		opts := pagerduty.ListTagOptions{}
+		response, err := testAccProvider.client.GetTagsForEntity(entityType, entityID, opts)
 		if err != nil {
 			return err
 		}
@@ -287,15 +290,6 @@ resource "pagerduty_tag_assignment" "foo" {
 }
 
 func testAccExternallyDestroyTagAssignment(n, entityType string) resource.TestCheckFunc {
-	deleteUser := func(id string, client *pagerduty.Client) (*pagerduty.Response, error) {
-		return client.Users.Delete(id)
-	}
-	deleteTeam := func(id string, client *pagerduty.Client) (*pagerduty.Response, error) {
-		return client.Teams.Delete(id)
-	}
-	deleteEscalationPolicy := func(id string, client *pagerduty.Client) (*pagerduty.Response, error) {
-		return client.EscalationPolicies.Delete(id)
-	}
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -305,16 +299,17 @@ func testAccExternallyDestroyTagAssignment(n, entityType string) resource.TestCh
 			return fmt.Errorf("No Tag Assignment ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
+		ctx := context.Background()
+
 		var err error
 		if entityType == "users" {
-			_, err = deleteUser(rs.Primary.ID, client)
+			err = testAccProvider.client.DeleteUserWithContext(ctx, rs.Primary.ID)
 		}
 		if entityType == "teams" {
-			_, err = deleteTeam(rs.Primary.ID, client)
+			err = testAccProvider.client.DeleteTeamWithContext(ctx, rs.Primary.ID)
 		}
 		if entityType == "escalation_policies" {
-			_, err = deleteEscalationPolicy(rs.Primary.ID, client)
+			err = testAccProvider.client.DeleteEscalationPolicyWithContext(ctx, rs.Primary.ID)
 		}
 		if err != nil {
 			return err

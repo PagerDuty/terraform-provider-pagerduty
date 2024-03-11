@@ -93,9 +93,9 @@ The following arguments are supported:
 * `condition` - Conditions to be evaluated in order to determine whether or not to update the Cache Variable's stored value.
   * `expression`- A [PCL condition][2] string.
 * `configuration` - A configuration object to define what and how values will be stored in the Cache Variable.
-  * `type` - The [type of value][3] to store into the Cache Variable. Can be one of: `recent_value` or `trigger_event_count`.
-  * `source` - The path to the event field where the `regex` will be applied to extract a value. You can use any valid [PCL path][4]. This field is only used when `type` is `recent_value`
-  * `regex` - A [RE2 regular expression][5] that will be matched against the field specified via the `source` argument. This field is only used when `type` is `recent_value`
+  * `type` - The [type of value][1] to store into the Cache Variable. Can be one of: `recent_value` or `trigger_event_count`.
+  * `source` - The path to the event field where the `regex` will be applied to extract a value. You can use any valid [PCL path][3]. This field is only used when `type` is `recent_value`
+  * `regex` - A [RE2 regular expression][4] that will be matched against the field specified via the `source` argument. This field is only used when `type` is `recent_value`
   * `ttl_seconds` - The number of seconds indicating how long to count incoming trigger events for. This field is only used when `type` is `trigger_event_count`
 
 ## Attributes Reference
@@ -112,8 +112,7 @@ Cache Variables can be imported using colon-separated IDs, which is the combinat
 $ terraform import pagerduty_event_orchestration_service_cache_variable.cache_variable PLBP09X:138ed254-3444-44ad-8cc7-701d69def439
 ```
 
-[1]: https://developer.pagerduty.com/api-reference/...
+[1]: https://support.pagerduty.com/docs/event-orchestration-variables
 [2]: https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview
-[3]: https://developer.pagerduty.com/docs/...
-[4]: https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview#paths
-[5]: https://github.com/google/re2/wiki/Syntax
+[3]: https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview#paths
+[4]: https://github.com/google/re2/wiki/Syntax

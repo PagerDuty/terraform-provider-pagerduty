@@ -46,6 +46,11 @@ func resourcePagerDutyService() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "create_incidents",
+				// Suppressing diff since this attribute value is being enforced during
+				// creation to "create_alerts_and_incidents".
+				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					return true
+				},
 				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"create_alerts_and_incidents",
 					"create_incidents",
@@ -398,9 +403,10 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 		}
 	}
 
-	if attr, ok := d.GetOk("alert_creation"); ok {
-		service.AlertCreation = attr.(string)
-	}
+	// From this point on the only allowed value for `alert_creation` will be
+	// "create_alerts_and_incidents", based on
+	// https://support.pagerduty.com/docs/alerts#enable-and-disable-alerts-on-a-service
+	service.AlertCreation = "create_alerts_and_incidents"
 
 	if attr, ok := d.GetOk("alert_grouping"); ok {
 		ag := attr.(string)

@@ -73,7 +73,7 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
 					resource.TestCheckResourceAttr(
@@ -103,7 +103,7 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -775,7 +775,7 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -843,7 +843,7 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -897,7 +897,7 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -977,7 +977,7 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -999,7 +999,7 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -1120,7 +1120,7 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
 					resource.TestCheckResourceAttr(
@@ -1160,7 +1160,7 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
 					resource.TestCheckResourceAttr(

@@ -277,7 +277,7 @@ func dissociateEPsFromTeam(c *pagerduty.Client, teamID string, eps []string) ([]
 	for _, ep := range eps {
 		retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 			_, err := c.Teams.RemoveEscalationPolicy(teamID, ep)
-			if err != nil && !isErrCode(err, 404) {
+			if err != nil {
 				time.Sleep(2 * time.Second)
 				return retry.RetryableError(err)
 			}

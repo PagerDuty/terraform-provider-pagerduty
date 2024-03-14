@@ -1,15 +1,16 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 	"testing"
 
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -19,18 +20,10 @@ func init() {
 	})
 }
 
-func testSweepExtensionServiceNow(region string) error {
-	config, err := sharedConfigForRegion(region)
-	if err != nil {
-		return err
-	}
+func testSweepExtensionServiceNow(_ string) error {
+	ctx := context.Background()
 
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-
-	resp, _, err := client.Extensions.List(&pagerduty.ListExtensionsOptions{})
+	resp, err := testAccProvider.client.ListExtensionsWithContext(ctx, pagerduty.ListExtensionOptions{})
 	if err != nil {
 		return err
 	}
@@ -38,7 +31,7 @@ func testSweepExtensionServiceNow(region string) error {
 	for _, extension := range resp.Extensions {
 		if strings.HasPrefix(extension.Name, "test") || strings.HasPrefix(extension.Name, "tf-") {
 			log.Printf("Destroying extension %s (%s)", extension.Name, extension.ID)
-			if _, err := client.Extensions.Delete(extension.ID); err != nil {
+			if err := testAccProvider.client.DeleteExtensionWithContext(ctx, extension.ID); err != nil {
 				return err
 			}
 		}
@@ -55,9 +48,9 @@ func TestAccPagerDutyExtensionServiceNow_Basic(t *testing.T) {
 	url_updated := "https://example.com/webhook_foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyExtensionServiceNowDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyExtensionServiceNowDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyExtensionServiceNowConfig(name, extension_name, url, "false", "any"),
@@ -116,13 +109,14 @@ func TestAccPagerDutyExtensionServiceNow_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyExtensionServiceNowDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
+	ctx := context.Background()
+
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_extension_servicenow" {
 			continue
 		}
 
-		if _, _, err := client.Extensions.Get(r.Primary.ID); err == nil {
+		if _, err := testAccProvider.client.GetExtensionWithContext(ctx, r.Primary.ID); err == nil {
 			return fmt.Errorf("Extension still exists")
 		}
 
@@ -131,6 +125,8 @@ func testAccCheckPagerDutyExtensionServiceNowDestroy(s *terraform.State) error {
 }
 
 func testAccCheckPagerDutyExtensionServiceNowExists(n string) resource.TestCheckFunc {
+	ctx := context.Background()
+
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -141,9 +137,7 @@ func testAccCheckPagerDutyExtensionServiceNowExists(n string) resource.TestCheck
 			return fmt.Errorf("No extension ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Extensions.Get(rs.Primary.ID)
+		found, err := testAccProvider.client.GetExtensionWithContext(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

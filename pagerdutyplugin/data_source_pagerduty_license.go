@@ -26,21 +26,21 @@ func (*dataSourceLicense) Metadata(ctx context.Context, req datasource.MetadataR
 }
 
 func (*dataSourceLicense) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"id":                    schema.StringAttribute{Optional: true, Computed: true},
-			"name":                  schema.StringAttribute{Optional: true, Computed: true},
-			"description":           schema.StringAttribute{Optional: true, Computed: true},
-			"type":                  schema.StringAttribute{Computed: true},
-			"summary":               schema.StringAttribute{Computed: true},
-			"role_group":            schema.StringAttribute{Computed: true},
-			"current_value":         schema.Int64Attribute{Computed: true},
-			"allocations_available": schema.Int64Attribute{Computed: true},
-			"valid_roles":           schema.ListAttribute{Computed: true, ElementType: types.StringType},
-			"self":                  schema.StringAttribute{Computed: true},
-			"html_url":              schema.StringAttribute{Computed: true},
-		},
-	}
+	resp.Schema = schema.Schema{Attributes: dataSourceLicenseAttributes}
+}
+
+var dataSourceLicenseAttributes = map[string]schema.Attribute{
+	"id":                    schema.StringAttribute{Optional: true, Computed: true},
+	"name":                  schema.StringAttribute{Optional: true, Computed: true},
+	"description":           schema.StringAttribute{Optional: true, Computed: true},
+	"type":                  schema.StringAttribute{Computed: true},
+	"summary":               schema.StringAttribute{Computed: true},
+	"role_group":            schema.StringAttribute{Computed: true},
+	"current_value":         schema.Int64Attribute{Computed: true},
+	"allocations_available": schema.Int64Attribute{Computed: true},
+	"valid_roles":           schema.ListAttribute{Computed: true, ElementType: types.StringType},
+	"self":                  schema.StringAttribute{Computed: true},
+	"html_url":              schema.StringAttribute{Computed: true},
 }
 
 func (d *dataSourceLicense) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {

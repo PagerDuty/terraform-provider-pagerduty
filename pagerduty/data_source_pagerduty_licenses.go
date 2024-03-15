@@ -11,6 +11,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.dataSourceLicenses. Kept for testing purposes.
 func dataSourcePagerDutyLicenses() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyLicensesRead,

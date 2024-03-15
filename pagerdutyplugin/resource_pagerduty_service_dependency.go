@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -80,7 +81,7 @@ func (r *resourceServiceDependency) Schema(_ context.Context, _ resource.SchemaR
 						"business_service",
 						"business_service_reference",
 						"service",
-						"service_dependency", // TODO
+						"service_dependency",
 						"technical_service_reference",
 					),
 				},
@@ -149,19 +150,25 @@ func (r *resourceServiceDependency) Create(ctx context.Context, req resource.Cre
 		Relationships: []*pagerduty.ServiceDependency{serviceDependency},
 	}
 
-	// TODO: retry
-	resourceServiceDependencyMu.Lock()
-	list, err := r.client.AssociateServiceDependenciesWithContext(ctx, dependencies)
-	resourceServiceDependencyMu.Unlock()
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+		resourceServiceDependencyMu.Lock()
+		list, err := r.client.AssociateServiceDependenciesWithContext(ctx, dependencies)
+		resourceServiceDependencyMu.Unlock()
+		if err != nil {
+			if util.IsBadRequestError(err) {
+				return retry.NonRetryableError(err)
+			}
+			return retry.NonRetryableError(err)
+		}
+		model = flattenServiceDependency(list.Relationships, &resp.Diagnostics)
+		return nil
+	})
 	if err != nil {
-		// TODO: if 400 NonRetryable
-		resp.Diagnostics.AddError("Error calling AssociateServiceDependenciesWithContext", err.Error())
+		resp.Diagnostics.AddError("Error associating service dependency", err.Error())
 		return
 	}
 
-	model, diags = flattenServiceDependency(list.Relationships)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
@@ -194,9 +201,8 @@ func (r *resourceServiceDependency) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	model, diags = flattenServiceDependency([]*pagerduty.ServiceDependency{serviceDependency})
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	model = flattenServiceDependency([]*pagerduty.ServiceDependency{serviceDependency}, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -238,12 +244,9 @@ func (r *resourceServiceDependency) Delete(ctx context.Context, req resource.Del
 	id := model.ID.ValueString()
 	depID := dependent.ID.ValueString()
 	rt := dependent.Type.ValueString()
-	log.Println("[CG]", id, depID, rt)
 
-	// TODO: retry
 	serviceDependency, diags := r.requestGetServiceDependency(ctx, id, depID, rt)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.Append(diags...); diags.HasError() {
 		return
 	}
 
@@ -253,19 +256,29 @@ func (r *resourceServiceDependency) Delete(ctx context.Context, req resource.Del
 	}
 	if serviceDependency.SupportingService != nil {
 		serviceDependency.SupportingService.Type = convertServiceDependencyType(serviceDependency.SupportingService.Type)
-		log.Println("[CG]", serviceDependency.SupportingService.Type)
 	}
 	if serviceDependency.DependentService != nil {
 		serviceDependency.DependentService.Type = convertServiceDependencyType(serviceDependency.DependentService.Type)
-		log.Println("[CG]", serviceDependency.DependentService.Type)
 	}
 
-	list := &pagerduty.ListServiceDependencies{
-		Relationships: []*pagerduty.ServiceDependency{serviceDependency},
-	}
-	_, err := r.client.DisassociateServiceDependenciesWithContext(ctx, list)
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+		_, err := r.client.DisassociateServiceDependenciesWithContext(ctx, &pagerduty.ListServiceDependencies{
+			Relationships: []*pagerduty.ServiceDependency{serviceDependency},
+		})
+		if err != nil {
+			if util.IsBadRequestError(err) {
+				return retry.NonRetryableError(err)
+			}
+			return retry.RetryableError(err)
+		}
+		return nil
+	})
+
 	if err != nil {
-		diags.AddError("Error calling DisassociateServiceDependenciesWithContext", err.Error())
+		diags.AddError(
+			fmt.Sprintf("Error deleting PagerDuty service dependency %s (%s) dependent of %s", id, rt, depID),
+			err.Error(),
+		)
 		return
 	}
 
@@ -336,8 +349,8 @@ func (r *resourceServiceDependency) ImportState(ctx context.Context, req resourc
 		return
 	}
 
-	model, diags := flattenServiceDependency([]*pagerduty.ServiceDependency{serviceDependency})
-	if diags.HasError() {
+	model := flattenServiceDependency([]*pagerduty.ServiceDependency{serviceDependency}, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
@@ -464,7 +477,7 @@ func flattenServiceReference(objType types.ObjectType, src *pagerduty.ServiceObj
 	return
 }
 
-func flattenServiceDependency(list []*pagerduty.ServiceDependency) (model resourceServiceDependencyModel, diags diag.Diagnostics) {
+func flattenServiceDependency(list []*pagerduty.ServiceDependency, diags *diag.Diagnostics) (model resourceServiceDependencyModel) {
 	if len(list) < 1 {
 		diags.AddError("Pagerduty did not responded with any dependency", "")
 		return
@@ -472,12 +485,12 @@ func flattenServiceDependency(list []*pagerduty.ServiceDependency) (model resour
 	item := list[0]
 
 	supportingService, d := flattenServiceReference(supportingServiceObjectType, item.SupportingService)
-	if diags.Append(d...); diags.HasError() {
+	if diags.Append(d...); d.HasError() {
 		return
 	}
 
 	dependentService, d := flattenServiceReference(dependentServiceObjectType, item.DependentService)
-	if diags.Append(d...); diags.HasError() {
+	if diags.Append(d...); d.HasError() {
 		return
 	}
 
@@ -489,18 +502,18 @@ func flattenServiceDependency(list []*pagerduty.ServiceDependency) (model resour
 			"dependent_service":  dependentService,
 		},
 	)
-	if diags.Append(d...); diags.HasError() {
-		return model, diags
+	if diags.Append(d...); d.HasError() {
+		return model
+	}
+
+	dependencyList, d := types.ListValue(serviceDependencyObjectType, []attr.Value{dependency})
+	if diags.Append(d...); d.HasError() {
+		return model
 	}
 
 	model.ID = types.StringValue(item.ID)
-	dependencyList, d := types.ListValue(serviceDependencyObjectType, []attr.Value{dependency})
-	if diags.Append(d...); diags.HasError() {
-		return model, diags
-	}
 	model.Dependency = dependencyList
-
-	return model, diags
+	return model
 }
 
 // convertServiceDependencyType is needed because the PagerDuty API returns

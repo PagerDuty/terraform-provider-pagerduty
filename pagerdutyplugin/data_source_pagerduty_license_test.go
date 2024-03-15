@@ -20,7 +20,7 @@ func TestAccDataSourcePagerDutyLicense_Basic(t *testing.T) {
 			testAccPreCheck(t)
 			testAccPreCheckLicenseNameTests(t, name)
 		},
-		Providers: testAccProviders,
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyLicenseConfig(reference, name, description),
@@ -40,8 +40,8 @@ func TestAccDataSourcePagerDutyLicense_Empty(t *testing.T) {
 	reference := "full_user"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceEmptyPagerDutyLicenseConfig(reference),
@@ -58,8 +58,8 @@ func TestAccDataSourcePagerDutyLicense_Error(t *testing.T) {
 	expectedErrorString := "Unable to locate any license"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDataSourcePagerDutyLicenseConfigError(reference),
@@ -77,8 +77,8 @@ func TestAccDataSourcePagerDutyLicense_ErrorWithID(t *testing.T) {
 	name := "Full User"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDataSourcePagerDutyLicenseConfigErrorWithID(reference, name),

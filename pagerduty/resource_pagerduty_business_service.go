@@ -135,8 +135,8 @@ func resourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interface
 				return retry.NonRetryableError(err)
 			}
 
-			if err := handleNotFoundError(err, d); err != nil {
-				return retry.RetryableError(err)
+			if err := handleNotFoundError(err, d); err == nil {
+				return nil
 			}
 
 			return retry.RetryableError(err)

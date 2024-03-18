@@ -45,7 +45,10 @@ func resourcePagerDutyService() *schema.Resource {
 			"alert_creation": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "create_incidents",
+				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					// Once migrated, alert_creation arguments previously defined as create_incidents would have been reported diffs for all matching services. As this is no longer configurable, opt to suppress this diff.
+					return true
+				},
 				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"create_alerts_and_incidents",
 					"create_incidents",

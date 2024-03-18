@@ -3,7 +3,6 @@
 IMPROVEMENTS:
 
 * `resource/resource_pagerduty_service`: Remove default value and enable diff suppression to account for planned end-of-life of create_incidents option.
-* `website/docs/r/service.html.markdown`: Add deprecated information and knowledge base reference for further details.
 
 ## 3.9.0 (Feb 26, 2024)
 

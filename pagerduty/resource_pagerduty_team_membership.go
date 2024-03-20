@@ -281,7 +281,7 @@ func dissociateEPsFromTeam(c *pagerduty.Client, teamID string, eps []string) ([]
 				time.Sleep(2 * time.Second)
 				return retry.RetryableError(err)
 			}
-			if isErrCode(err, 404) {
+			if err != nil && isErrCode(err, 404) {
 				return retry.NonRetryableError(err)
 			}
 			return nil

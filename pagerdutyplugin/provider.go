@@ -55,14 +55,15 @@ func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSourc
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceIntegration{} },
-		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourceLicenses{} },
+		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourcePriority{} },
 		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourcesScores{} },
 		func() datasource.DataSource { return &dataSourceStandards{} },
 		func() datasource.DataSource { return &dataSourceTag{} },
+		func() datasource.DataSource { return &dataSourceVendor{} },
 	}
 }
 

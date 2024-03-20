@@ -158,6 +158,7 @@ func Provider(isMux bool) *schema.Provider {
 		delete(p.DataSourcesMap, "pagerduty_priority")
 		delete(p.DataSourcesMap, "pagerduty_service")
 		delete(p.DataSourcesMap, "pagerduty_service_integration")
+		delete(p.DataSourcesMap, "pagerduty_vendor")
 
 		delete(p.ResourcesMap, "pagerduty_addon")
 		delete(p.ResourcesMap, "pagerduty_business_service")

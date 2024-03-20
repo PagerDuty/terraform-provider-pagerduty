@@ -15,6 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
+func TestMain(m *testing.M) {
+	resource.TestMain(m)
+}
+
 var testAccProvider = New()
 
 func testAccPreCheck(t *testing.T) {

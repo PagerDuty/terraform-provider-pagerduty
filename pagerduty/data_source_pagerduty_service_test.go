@@ -101,8 +101,8 @@ func testAccDataSourcePagerDutyService(src, n string) resource.TestCheckFunc {
 func testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_team" "team_one" {
-	name        = "%s"
-	description = "team_one"
+  name        = "%s"
+  description = "team_one"
 }
 
 resource "pagerduty_user" "test" {
@@ -111,24 +111,23 @@ resource "pagerduty_user" "test" {
 }
 
 resource "pagerduty_team_membership" "team_membership_one" {
-	team_id = pagerduty_team.team_one.id
-	user_id = pagerduty_user.test.id
+  team_id = pagerduty_team.team_one.id
+  user_id = pagerduty_user.test.id
 }
 
 resource "pagerduty_escalation_policy" "no_team_ep" {
-	name        = "no_team_ep"
-	num_loops   = 2
-	rule {
-	  escalation_delay_in_minutes = 10
-	  target {
-		type = "user_reference"
-		id   = pagerduty_user.test.id
-	  }
-	}
+  name        = "no_team_ep"
+  num_loops   = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.test.id
+    }
   }
+}
 
 resource "pagerduty_escalation_policy" "one_team_ep" {
-
   depends_on = [pagerduty_team_membership.team_membership_one]
   name        = "%s"
   num_loops   = 2
@@ -143,24 +142,21 @@ resource "pagerduty_escalation_policy" "one_team_ep" {
 }
 
 resource "pagerduty_service" "no_team_service" {
-	name                    = "no_team_service"
-	auto_resolve_timeout    = 14400
-	acknowledgement_timeout = 600
-	escalation_policy       = pagerduty_escalation_policy.no_team_ep.id
-	alert_creation          = "create_incidents"
+  name                    = "no_team_service"
+  auto_resolve_timeout    = 14400
+  acknowledgement_timeout = 600
+  escalation_policy       = pagerduty_escalation_policy.no_team_ep.id
 }
-
 
 resource "pagerduty_service" "one_team_service" {
   name                    = "%s"
   auto_resolve_timeout    = 14400
   acknowledgement_timeout = 600
   escalation_policy       = pagerduty_escalation_policy.one_team_ep.id
-  alert_creation          = "create_incidents"
 }
 
 data "pagerduty_service" "no_team_service" {
-	name = pagerduty_service.no_team_service.name
+  name = pagerduty_service.no_team_service.name
 }
 
 data "pagerduty_service" "one_team_service" {

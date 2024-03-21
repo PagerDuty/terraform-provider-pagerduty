@@ -73,7 +73,7 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
 					resource.TestCheckResourceAttr(
@@ -103,7 +103,7 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -775,7 +775,7 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -843,7 +843,7 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -897,7 +897,7 @@ func TestAccPagerDutyService_BasicWithIncidentUrgencyRules(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -977,7 +977,7 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -999,7 +999,7 @@ func TestAccPagerDutyService_FromBasicToCustomIncidentUrgencyRules(t *testing.T)
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -1120,7 +1120,7 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
 					resource.TestCheckResourceAttr(
@@ -1160,7 +1160,7 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
 					resource.TestCheckResourceAttr(
@@ -1308,7 +1308,6 @@ resource "pagerduty_service" "foo" {
 	auto_resolve_timeout    = 1800
 	acknowledgement_timeout = 1800
 	escalation_policy       = pagerduty_escalation_policy.foo.id
-	alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1617,11 +1616,11 @@ resource "pagerduty_service" "foo" {
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	alert_grouping_parameters {
-        type = "time"
-        config {
-          timeout = 0
-        }
-    }
+		type = "time"
+		config {
+			timeout = 0
+		}
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1695,12 +1694,12 @@ resource "pagerduty_service" "foo" {
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	alert_grouping_parameters {
-        type = "intelligent"
-        config {
-          fields = null
-          timeout = 0
-        }
-    }
+		type = "intelligent"
+		config {
+			fields = null
+			timeout = 0
+		}
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1737,9 +1736,9 @@ resource "pagerduty_service" "foo" {
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	alert_grouping_parameters {
-        type = "intelligent"
-        config {}
-    }
+		type = "intelligent"
+		config {}
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1776,8 +1775,8 @@ resource "pagerduty_service" "foo" {
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	alert_grouping_parameters {
-        type = "intelligent"
-    }
+		type = "intelligent"
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1814,9 +1813,9 @@ resource "pagerduty_service" "foo" {
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	alert_grouping_parameters {
-        type = null
-        config {}
-    }
+		type = null
+		config {}
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1853,9 +1852,9 @@ resource "pagerduty_service" "foo" {
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	auto_pause_notifications_parameters {
-        enabled = true
+		enabled = true
 		timeout = 300
-    }
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -1892,9 +1891,9 @@ resource "pagerduty_service" "foo" {
 	escalation_policy       = pagerduty_escalation_policy.foo.id
 	alert_creation          = "create_alerts_and_incidents"
 	auto_pause_notifications_parameters {
-        enabled = false
-        timeout = null
-    }
+		enabled = false
+		timeout = null
+	}
 }
 `, username, email, escalationPolicy, service)
 }
@@ -2353,7 +2352,6 @@ resource "pagerduty_service" "foo" {
   acknowledgement_timeout = 1800
   escalation_policy       = pagerduty_escalation_policy.foo.id
   response_play           = pagerduty_response_play.foo.id
-  alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, responsePlay, service)
 }
@@ -2406,7 +2404,6 @@ resource "pagerduty_service" "foo" {
   acknowledgement_timeout = 1800
   escalation_policy       = pagerduty_escalation_policy.foo.id
   response_play           = null
-  alert_creation          = "create_incidents"
 }
 `, username, email, escalationPolicy, responsePlay, service)
 }

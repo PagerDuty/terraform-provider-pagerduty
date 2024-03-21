@@ -1,3 +1,9 @@
+## 3.10.0 (Mar 15, 2024)
+
+IMPROVEMENTS:
+
+* `resource/resource_pagerduty_service`: Remove default value and enable diff suppression to account for planned end-of-life of create_incidents option.
+
 ## 3.9.0 (Feb 26, 2024)
 
 FEATURES:

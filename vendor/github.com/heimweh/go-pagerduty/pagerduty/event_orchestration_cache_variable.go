@@ -22,13 +22,6 @@ type EventOrchestrationCacheVariableConfiguration struct {
 	TTLSeconds int    `json:"ttl_seconds,omitempty"`
 }
 
-// A reference to a related object (e.g. an User, etc)
-type EventOrchestrationCacheVariableReference struct {
-	ID   string `json:"id,omitempty"`
-	Type string `json:"type,omitempty"`
-	Self string `json:"self,omitempty"`
-}
-
 type EventOrchestrationCacheVariable struct {
 	ID            string                                   			`json:"id,omitempty"`
 	Name          string                                    		`json:"name,omitempty"`
@@ -36,9 +29,9 @@ type EventOrchestrationCacheVariable struct {
 	Conditions    []*EventOrchestrationCacheVariableCondition   `json:"conditions"`
 	Configuration *EventOrchestrationCacheVariableConfiguration `json:"configuration,omitempty"`
 	CreatedAt     string                           							`json:"created_at,omitempty"`
-	CreatedBy     *EventOrchestrationCacheVariableReference 		`json:"created_by,omitempty"`
+	CreatedBy     *UserReference 																`json:"created_by,omitempty"`
 	UpdatedAt     string                           							`json:"updated_at,omitempty"`
-	UpdatedBy     *EventOrchestrationCacheVariableReference 		`json:"updated_by,omitempty"`
+	UpdatedBy     *UserReference 																`json:"updated_by,omitempty"`
 }
 
 type EventOrchestrationCacheVariablePayload struct {
@@ -61,7 +54,7 @@ func buildEventOrchestrationCacheVariableUrl(cacheVariableType string, orchestra
 	return fmt.Sprintf("%s/%s/cache_variables/%s", eventOrchestrationBaseUrl, orchestrationId, cacheVariableId)
 }
 
-func (s *EventOrchestrationCacheVariableService) ListContext(ctx context.Context, cacheVariableType string, orchestrationId string) (*ListEventOrchestrationCacheVariablesResponse, *Response, error) {
+func (s *EventOrchestrationCacheVariableService) List(ctx context.Context, cacheVariableType string, orchestrationId string) (*ListEventOrchestrationCacheVariablesResponse, *Response, error) {
 	u := buildEventOrchestrationCacheVariableUrl(cacheVariableType, orchestrationId, "")
 	v := new(ListEventOrchestrationCacheVariablesResponse)
 
@@ -74,7 +67,7 @@ func (s *EventOrchestrationCacheVariableService) ListContext(ctx context.Context
 	return v, resp, nil
 }
 
-func (s *EventOrchestrationCacheVariableService) CreateContext(ctx context.Context, cacheVariableType string,  orchestrationId string, cacheVariable *EventOrchestrationCacheVariable) (*EventOrchestrationCacheVariable, *Response, error) {
+func (s *EventOrchestrationCacheVariableService) Create(ctx context.Context, cacheVariableType string,  orchestrationId string, cacheVariable *EventOrchestrationCacheVariable) (*EventOrchestrationCacheVariable, *Response, error) {
 	u := buildEventOrchestrationCacheVariableUrl(cacheVariableType, orchestrationId, "")
 	v := new(EventOrchestrationCacheVariablePayload)
 	p := &EventOrchestrationCacheVariablePayload{CacheVariable: cacheVariable}
@@ -88,7 +81,7 @@ func (s *EventOrchestrationCacheVariableService) CreateContext(ctx context.Conte
 	return v.CacheVariable, resp, nil
 }
 
-func (s *EventOrchestrationCacheVariableService) GetContext(ctx context.Context, cacheVariableType string, orchestrationId string, cacheVariableId string) (*EventOrchestrationCacheVariable, *Response, error) {
+func (s *EventOrchestrationCacheVariableService) Get(ctx context.Context, cacheVariableType string, orchestrationId string, cacheVariableId string) (*EventOrchestrationCacheVariable, *Response, error) {
 	u := buildEventOrchestrationCacheVariableUrl(cacheVariableType, orchestrationId, cacheVariableId)
 	v := new(EventOrchestrationCacheVariablePayload)
 
@@ -100,7 +93,7 @@ func (s *EventOrchestrationCacheVariableService) GetContext(ctx context.Context,
 	return v.CacheVariable, resp, nil
 }
 
-func (s *EventOrchestrationCacheVariableService) UpdateContext(ctx context.Context, cacheVariableType string, orchestrationId string, cacheVariableId string, cacheVariable *EventOrchestrationCacheVariable) (*EventOrchestrationCacheVariable, *Response, error) {
+func (s *EventOrchestrationCacheVariableService) Update(ctx context.Context, cacheVariableType string, orchestrationId string, cacheVariableId string, cacheVariable *EventOrchestrationCacheVariable) (*EventOrchestrationCacheVariable, *Response, error) {
 	u := buildEventOrchestrationCacheVariableUrl(cacheVariableType, orchestrationId, cacheVariableId)
 	v := new(EventOrchestrationCacheVariablePayload)
 	p := &EventOrchestrationCacheVariablePayload{CacheVariable: cacheVariable}
@@ -113,7 +106,7 @@ func (s *EventOrchestrationCacheVariableService) UpdateContext(ctx context.Conte
 	return v.CacheVariable, resp, nil
 }
 
-func (s *EventOrchestrationCacheVariableService) DeleteContext(ctx context.Context, cacheVariableType string, orchestrationId string, cacheVariableId string) (*Response, error) {
+func (s *EventOrchestrationCacheVariableService) Delete(ctx context.Context, cacheVariableType string, orchestrationId string, cacheVariableId string) (*Response, error) {
 	u := buildEventOrchestrationCacheVariableUrl(cacheVariableType, orchestrationId, cacheVariableId)
 	return s.client.newRequestDoContext(ctx, "DELETE", u, nil, nil, nil)
 }

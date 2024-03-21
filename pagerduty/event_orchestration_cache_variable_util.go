@@ -125,7 +125,7 @@ func fetchPagerDutyEventOrchestrationCacheVariable(ctx context.Context, d *schem
 		return nil, err
 	}
 
-	if cacheVariable, _, err := client.EventOrchestrationCacheVariables.GetContext(ctx, cacheVariableType, oid, id); err != nil {
+	if cacheVariable, _, err := client.EventOrchestrationCacheVariables.Get(ctx, cacheVariableType, oid, id); err != nil {
 		return nil, err
 	} else if cacheVariable != nil {
 		d.SetId(id)
@@ -253,7 +253,7 @@ func resourceEventOrchestrationCacheVariableCreate(ctx context.Context, d *schem
 	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Creating Cache Variable '%s' for PagerDuty Event Orchestration '%s'", payload.Name, oid)
 
-		if cacheVariable, _, err := client.EventOrchestrationCacheVariables.CreateContext(ctx, cacheVariableType, oid, payload); err != nil {
+		if cacheVariable, _, err := client.EventOrchestrationCacheVariables.Create(ctx, cacheVariableType, oid, payload); err != nil {
 			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusNotFound) || isErrCode(err, http.StatusForbidden) {
 				return retry.NonRetryableError(err)
 			}
@@ -316,7 +316,7 @@ func resourceEventOrchestrationCacheVariableUpdate(ctx context.Context, d *schem
 
 	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Updating Cache Variable '%s' for PagerDuty Event Orchestration: %s", id, oid)
-		if cacheVariable, _, err := client.EventOrchestrationCacheVariables.UpdateContext(ctx, cacheVariableType, oid, id, payload); err != nil {
+		if cacheVariable, _, err := client.EventOrchestrationCacheVariables.Update(ctx, cacheVariableType, oid, id, payload); err != nil {
 			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusNotFound) || isErrCode(err, http.StatusForbidden) {
 				return retry.NonRetryableError(err)
 			}
@@ -347,7 +347,7 @@ func resourceEventOrchestrationCacheVariableDelete(ctx context.Context, d *schem
 
 	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Deleting Cache Variable '%s' for PagerDuty Event Orchestration: %s", id, oid)
-		if _, err := client.EventOrchestrationCacheVariables.DeleteContext(ctx, cacheVariableType, oid, id); err != nil {
+		if _, err := client.EventOrchestrationCacheVariables.Delete(ctx, cacheVariableType, oid, id); err != nil {
 			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusNotFound) || isErrCode(err, http.StatusForbidden) {
 				return retry.NonRetryableError(err)
 			}
@@ -355,7 +355,7 @@ func resourceEventOrchestrationCacheVariableDelete(ctx context.Context, d *schem
 			return retry.RetryableError(err)
 		} else {
 			// Try reading an cache variable after deletion, retry if still found:
-			if cacheVariable, _, readErr := client.EventOrchestrationCacheVariables.GetContext(ctx, cacheVariableType, oid, id); readErr == nil && cacheVariable != nil {
+			if cacheVariable, _, readErr := client.EventOrchestrationCacheVariables.Get(ctx, cacheVariableType, oid, id); readErr == nil && cacheVariable != nil {
 				log.Printf("[WARN] Cache Variable '%s' still exists on PagerDuty Event Orchestration '%s'. Retrying deletion...", id, oid)
 				return retry.RetryableError(fmt.Errorf("Cache Variable '%s' still exists on PagerDuty Event Orchestration '%s'.", id, oid))
 			}
@@ -417,7 +417,7 @@ func getEventOrchestrationCacheVariableById(ctx context.Context, d *schema.Resou
 	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading Cache Variable data source by ID '%s' for PagerDuty Event Orchestration '%s'", id, oid)
 
-		if cacheVariable, _, err := client.EventOrchestrationCacheVariables.GetContext(ctx, cacheVariableType, oid, id); err != nil {
+		if cacheVariable, _, err := client.EventOrchestrationCacheVariables.Get(ctx, cacheVariableType, oid, id); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)
 			}
@@ -451,7 +451,7 @@ func getEventOrchestrationCacheVariableByName(ctx context.Context, d *schema.Res
 	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		log.Printf("[INFO] Reading Cache Variable data source by name '%s' for PagerDuty Event Orchestration '%s'", name, oid)
 
-		resp, _, err := client.EventOrchestrationCacheVariables.ListContext(ctx, cacheVariableType, oid)
+		resp, _, err := client.EventOrchestrationCacheVariables.List(ctx, cacheVariableType, oid)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)

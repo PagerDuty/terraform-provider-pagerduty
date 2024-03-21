@@ -112,7 +112,7 @@ func testAccCheckPagerDutyEventOrchestrationServiceCacheVariableDestroy(s *terra
 		if r.Type != "pagerduty_event_orchestration_service_cache_variable" {
 			continue
 		}
-		if _, _, err := client.EventOrchestrationCacheVariables.GetContext(context.Background(), pagerduty.CacheVariableTypeService, r.Primary.Attributes["event_orchestration"], r.Primary.ID); err == nil {
+		if _, _, err := client.EventOrchestrationCacheVariables.Get(context.Background(), pagerduty.CacheVariableTypeService, r.Primary.Attributes["event_orchestration"], r.Primary.ID); err == nil {
 			return fmt.Errorf("Event Orchestration Cache Variables still exist")
 		}
 	}
@@ -143,7 +143,7 @@ func testAccCheckPagerDutyEventOrchestrationServiceCacheVariableID(cv, svcn stri
 		id := ir.Primary.ID
 
 		client, _ := testAccProvider.Meta().(*Config).Client()
-		i, _, err := client.EventOrchestrationCacheVariables.GetContext(context.Background(), pagerduty.CacheVariableTypeService, sid, id)
+		i, _, err := client.EventOrchestrationCacheVariables.Get(context.Background(), pagerduty.CacheVariableTypeService, sid, id)
 		svc, _, _ := client.Services.Get(svcr.Primary.ID, &pagerduty.GetServiceOptions{})
 
 		if err != nil {

@@ -89,6 +89,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceTag{} },
 		func() resource.Resource { return &resourceTeam{} },
 		func() resource.Resource { return &resourceUserHandoffNotificationRule{} },
+		func() resource.Resource { return &resourceUserNotificationRule{} },
 	}
 }
 

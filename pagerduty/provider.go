@@ -121,7 +121,6 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_team_membership":                               resourcePagerDutyTeamMembership(),
 			"pagerduty_user":                                          resourcePagerDutyUser(),
 			"pagerduty_user_contact_method":                           resourcePagerDutyUserContactMethod(),
-			"pagerduty_user_notification_rule":                        resourcePagerDutyUserNotificationRule(),
 			"pagerduty_event_rule":                                    resourcePagerDutyEventRule(),
 			"pagerduty_ruleset":                                       resourcePagerDutyRuleset(),
 			"pagerduty_ruleset_rule":                                  resourcePagerDutyRulesetRule(),

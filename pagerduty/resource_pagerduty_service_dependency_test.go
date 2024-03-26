@@ -44,6 +44,15 @@ func TestAccPagerDutyBusinessServiceDependency_Basic(t *testing.T) {
 				),
 				ExpectNonEmptyPlan: true,
 			},
+			// Validating that externally removed dependent service are
+			// detected and gracefully handled
+			{
+				Config: testAccCheckPagerDutyBusinessServiceDependencyConfig(service, businessService, username, email, escalationPolicy),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyedDependentService("pagerduty_service_dependency.foo", "pagerduty_business_service.foo", "pagerduty_service.foo"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -326,6 +335,49 @@ func testAccExternallyDestroyServiceDependency(resName, depName, suppName string
 		return nil
 	}
 }
+func testAccExternallyDestroyedDependentService(resName, depName, suppName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resName)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Service Dependency ID is set for %q", resName)
+		}
+
+		dep, ok := s.RootModule().Resources[depName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", depName)
+		}
+		if dep.Primary.ID == "" {
+			return fmt.Errorf("No Dependent Business Service ID is set for %q", depName)
+		}
+		depServiceType := dep.Primary.Attributes["type"]
+
+		supp, ok := s.RootModule().Resources[suppName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", suppName)
+		}
+		if supp.Primary.ID == "" {
+			return fmt.Errorf("No Supporting Service ID is set for %q", suppName)
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		if depServiceType == "business_service" {
+			_, err := client.BusinessServices.Delete(dep.Primary.ID)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err := client.Services.Delete(dep.Primary.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+}
 
 // Testing Technical Service Dependencies
 func TestAccPagerDutyTechnicalServiceDependency_Basic(t *testing.T) {
@@ -358,6 +410,15 @@ func TestAccPagerDutyTechnicalServiceDependency_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyTechnicalServiceDependencyConfig(dependentService, supportingService, username, email, escalationPolicy),
 				Check: resource.ComposeTestCheckFunc(
 					testAccExternallyDestroyServiceDependency("pagerduty_service_dependency.bar", "pagerduty_service.dependBar", "pagerduty_service.supportBar"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+			// Validating that externally removed dependent service are
+			// detected and gracefully handled
+			{
+				Config: testAccCheckPagerDutyTechnicalServiceDependencyConfig(dependentService, supportingService, username, email, escalationPolicy),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyedDependentService("pagerduty_service_dependency.bar", "pagerduty_service.dependBar", "pagerduty_service.supportBar"),
 				),
 				ExpectNonEmptyPlan: true,
 			},

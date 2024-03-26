@@ -1,3 +1,10 @@
+## 3.10.1 (Mar 26, 2024)
+
+BUG FIXES:
+
+* `resource/pagerduty_team_membership`: fix(team membership): Allow 404 to propagate to avoid registering it in disassociated eps list ([#838](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/838))
+* `resource/pagerduty_service_dependency`: Fix #832 service_dependency breaks if dependent services are deleted externally ([#834](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/834))
+
 ## 3.10.0 (Mar 15, 2024)
 
 IMPROVEMENTS:

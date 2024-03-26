@@ -37,9 +37,9 @@ The following arguments are supported:
 * `name_filter` - The list of the Event Orchestrations which name match `name_filter` argument.
   * `id` - The ID of the found Event Orchestration.
   * `name` - The name of the found Event Orchestration.
-  * `integration` - An integration for the Event Orchestration.
+  * `integration` - A list of integrations for the Event Orchestration.
     * `id` - ID of the integration
-    * `parameters`
+    * `parameters` - A list of parameters.
       * `routing_key` - Routing key that routes to this Orchestration.
       * `type` - Type of the routing key. `global` is the default type.
 

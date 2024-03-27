@@ -1,20 +1,20 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
-// ApplyResourceChange calls the ApplyResourceChange method, passing `req`, on
+// ImportResourceState calls the ImportResourceState method, passing `req`, on
 // the provider that returned the resource specified by req.TypeName in its
 // schema.
-func (s *muxServer) ApplyResourceChange(ctx context.Context, req *tfprotov5.ApplyResourceChangeRequest) (*tfprotov5.ApplyResourceChangeResponse, error) {
-	rpc := "ApplyResourceChange"
+func (s *muxServer) ImportResourceState(ctx context.Context, req *tfprotov6.ImportResourceStateRequest) (*tfprotov6.ImportResourceStateResponse, error) {
+	rpc := "ImportResourceState"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
 
@@ -25,13 +25,13 @@ func (s *muxServer) ApplyResourceChange(ctx context.Context, req *tfprotov5.Appl
 	}
 
 	if diagnosticsHasError(diags) {
-		return &tfprotov5.ApplyResourceChangeResponse{
+		return &tfprotov6.ImportResourceStateResponse{
 			Diagnostics: diags,
 		}, nil
 	}
 
-	ctx = logging.Tfprotov5ProviderServerContext(ctx, server)
+	ctx = logging.Tfprotov6ProviderServerContext(ctx, server)
 	logging.MuxTrace(ctx, "calling downstream server")
 
-	return server.ApplyResourceChange(ctx, req)
+	return server.ImportResourceState(ctx, req)
 }

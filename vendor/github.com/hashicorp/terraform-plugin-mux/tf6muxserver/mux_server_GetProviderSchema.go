@@ -1,22 +1,22 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
 // GetProviderSchema merges the schemas returned by the
-// tfprotov5.ProviderServers associated with muxServer into a single schema.
+// tfprotov6.ProviderServers associated with muxServer into a single schema.
 // Resources and data sources must be returned from only one server. Provider
 // and ProviderMeta schemas must be identical between all servers.
-func (s *muxServer) GetProviderSchema(ctx context.Context, req *tfprotov5.GetProviderSchemaRequest) (*tfprotov5.GetProviderSchemaResponse, error) {
+func (s *muxServer) GetProviderSchema(ctx context.Context, req *tfprotov6.GetProviderSchemaRequest) (*tfprotov6.GetProviderSchemaResponse, error) {
 	rpc := "GetProviderSchema"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
@@ -24,18 +24,18 @@ func (s *muxServer) GetProviderSchema(ctx context.Context, req *tfprotov5.GetPro
 	s.serverDiscoveryMutex.Lock()
 	defer s.serverDiscoveryMutex.Unlock()
 
-	resp := &tfprotov5.GetProviderSchemaResponse{
-		DataSourceSchemas:  make(map[string]*tfprotov5.Schema),
-		Functions:          make(map[string]*tfprotov5.Function),
-		ResourceSchemas:    make(map[string]*tfprotov5.Schema),
+	resp := &tfprotov6.GetProviderSchemaResponse{
+		DataSourceSchemas:  make(map[string]*tfprotov6.Schema),
+		Functions:          make(map[string]*tfprotov6.Function),
+		ResourceSchemas:    make(map[string]*tfprotov6.Schema),
 		ServerCapabilities: serverCapabilities,
 	}
 
 	for _, server := range s.servers {
-		ctx := logging.Tfprotov5ProviderServerContext(ctx, server)
+		ctx := logging.Tfprotov6ProviderServerContext(ctx, server)
 		logging.MuxTrace(ctx, "calling downstream server")
 
-		serverResp, err := server.GetProviderSchema(ctx, &tfprotov5.GetProviderSchemaRequest{})
+		serverResp, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{})
 
 		if err != nil {
 			return resp, fmt.Errorf("error calling GetProviderSchema for %T: %w", server, err)
@@ -45,8 +45,8 @@ func (s *muxServer) GetProviderSchema(ctx context.Context, req *tfprotov5.GetPro
 
 		if serverResp.Provider != nil {
 			if resp.Provider != nil && !schemaEquals(serverResp.Provider, resp.Provider) {
-				resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
-					Severity: tfprotov5.DiagnosticSeverityError,
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
 					Summary:  "Invalid Provider Server Combination",
 					Detail: "The combined provider has differing provider schema implementations across providers. " +
 						"Provider schemas must be identical across providers. " +
@@ -60,8 +60,8 @@ func (s *muxServer) GetProviderSchema(ctx context.Context, req *tfprotov5.GetPro
 
 		if serverResp.ProviderMeta != nil {
 			if resp.ProviderMeta != nil && !schemaEquals(serverResp.ProviderMeta, resp.ProviderMeta) {
-				resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
-					Severity: tfprotov5.DiagnosticSeverityError,
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
 					Summary:  "Invalid Provider Server Combination",
 					Detail: "The combined provider has differing provider meta schema implementations across providers. " +
 						"Provider meta schemas must be identical across providers. " +

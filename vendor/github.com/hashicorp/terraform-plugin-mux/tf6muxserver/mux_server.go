@@ -1,35 +1,35 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 	"sync"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-var _ tfprotov5.ProviderServer = &muxServer{}
+var _ tfprotov6.ProviderServer = &muxServer{}
 
 // muxServer is a gRPC server implementation that stands in front of other
 // gRPC servers, routing requests to them as if they were a single server. It
 // should always be instantiated by calling NewMuxServer().
 type muxServer struct {
 	// Routing for data source types
-	dataSources map[string]tfprotov5.ProviderServer
+	dataSources map[string]tfprotov6.ProviderServer
 
 	// Routing for functions
-	functions map[string]tfprotov5.ProviderServer
+	functions map[string]tfprotov6.ProviderServer
 
 	// Routing for resource types
-	resources map[string]tfprotov5.ProviderServer
+	resources map[string]tfprotov6.ProviderServer
 
 	// Resource capabilities are cached during GetMetadata/GetProviderSchema
-	resourceCapabilities map[string]*tfprotov5.ServerCapabilities
+	resourceCapabilities map[string]*tfprotov6.ServerCapabilities
 
 	// serverDiscoveryComplete is whether the mux server's underlying server
 	// discovery of resource types has been completed against all servers.
@@ -40,22 +40,22 @@ type muxServer struct {
 
 	// serverDiscoveryDiagnostics caches diagnostics found during server
 	// discovery so they can be returned for later requests if necessary.
-	serverDiscoveryDiagnostics []*tfprotov5.Diagnostic
+	serverDiscoveryDiagnostics []*tfprotov6.Diagnostic
 
 	// serverDiscoveryMutex is a mutex to protect concurrent server discovery
 	// access from race conditions.
 	serverDiscoveryMutex sync.RWMutex
 
 	// Underlying servers for requests that should be handled by all servers
-	servers []tfprotov5.ProviderServer
+	servers []tfprotov6.ProviderServer
 }
 
 // ProviderServer is a function compatible with tf6server.Serve.
-func (s *muxServer) ProviderServer() tfprotov5.ProviderServer {
+func (s *muxServer) ProviderServer() tfprotov6.ProviderServer {
 	return s
 }
 
-func (s *muxServer) getDataSourceServer(ctx context.Context, typeName string) (tfprotov5.ProviderServer, []*tfprotov5.Diagnostic, error) {
+func (s *muxServer) getDataSourceServer(ctx context.Context, typeName string) (tfprotov6.ProviderServer, []*tfprotov6.Diagnostic, error) {
 	s.serverDiscoveryMutex.RLock()
 	server, ok := s.dataSources[typeName]
 	discoveryComplete := s.serverDiscoveryComplete
@@ -66,7 +66,7 @@ func (s *muxServer) getDataSourceServer(ctx context.Context, typeName string) (t
 			return server, s.serverDiscoveryDiagnostics, nil
 		}
 
-		return nil, []*tfprotov5.Diagnostic{
+		return nil, []*tfprotov6.Diagnostic{
 			dataSourceMissingError(typeName),
 		}, nil
 	}
@@ -82,7 +82,7 @@ func (s *muxServer) getDataSourceServer(ctx context.Context, typeName string) (t
 	s.serverDiscoveryMutex.RUnlock()
 
 	if !ok {
-		return nil, []*tfprotov5.Diagnostic{
+		return nil, []*tfprotov6.Diagnostic{
 			dataSourceMissingError(typeName),
 		}, nil
 	}
@@ -90,7 +90,7 @@ func (s *muxServer) getDataSourceServer(ctx context.Context, typeName string) (t
 	return server, s.serverDiscoveryDiagnostics, nil
 }
 
-func (s *muxServer) getFunctionServer(ctx context.Context, name string) (tfprotov5.ProviderServer, []*tfprotov5.Diagnostic, error) {
+func (s *muxServer) getFunctionServer(ctx context.Context, name string) (tfprotov6.ProviderServer, []*tfprotov6.Diagnostic, error) {
 	s.serverDiscoveryMutex.RLock()
 	server, ok := s.functions[name]
 	discoveryComplete := s.serverDiscoveryComplete
@@ -101,7 +101,7 @@ func (s *muxServer) getFunctionServer(ctx context.Context, name string) (tfproto
 			return server, s.serverDiscoveryDiagnostics, nil
 		}
 
-		return nil, []*tfprotov5.Diagnostic{
+		return nil, []*tfprotov6.Diagnostic{
 			functionMissingError(name),
 		}, nil
 	}
@@ -117,7 +117,7 @@ func (s *muxServer) getFunctionServer(ctx context.Context, name string) (tfproto
 	s.serverDiscoveryMutex.RUnlock()
 
 	if !ok {
-		return nil, []*tfprotov5.Diagnostic{
+		return nil, []*tfprotov6.Diagnostic{
 			functionMissingError(name),
 		}, nil
 	}
@@ -125,7 +125,7 @@ func (s *muxServer) getFunctionServer(ctx context.Context, name string) (tfproto
 	return server, s.serverDiscoveryDiagnostics, nil
 }
 
-func (s *muxServer) getResourceServer(ctx context.Context, typeName string) (tfprotov5.ProviderServer, []*tfprotov5.Diagnostic, error) {
+func (s *muxServer) getResourceServer(ctx context.Context, typeName string) (tfprotov6.ProviderServer, []*tfprotov6.Diagnostic, error) {
 	s.serverDiscoveryMutex.RLock()
 	server, ok := s.resources[typeName]
 	discoveryComplete := s.serverDiscoveryComplete
@@ -136,7 +136,7 @@ func (s *muxServer) getResourceServer(ctx context.Context, typeName string) (tfp
 			return server, s.serverDiscoveryDiagnostics, nil
 		}
 
-		return nil, []*tfprotov5.Diagnostic{
+		return nil, []*tfprotov6.Diagnostic{
 			resourceMissingError(typeName),
 		}, nil
 	}
@@ -152,7 +152,7 @@ func (s *muxServer) getResourceServer(ctx context.Context, typeName string) (tfp
 	s.serverDiscoveryMutex.RUnlock()
 
 	if !ok {
-		return nil, []*tfprotov5.Diagnostic{
+		return nil, []*tfprotov6.Diagnostic{
 			resourceMissingError(typeName),
 		}, nil
 	}
@@ -179,11 +179,11 @@ func (s *muxServer) serverDiscovery(ctx context.Context) error {
 	logging.MuxTrace(ctx, "starting underlying server discovery via GetMetadata or GetProviderSchema")
 
 	for _, server := range s.servers {
-		ctx := logging.Tfprotov5ProviderServerContext(ctx, server)
+		ctx := logging.Tfprotov6ProviderServerContext(ctx, server)
 		ctx = logging.RpcContext(ctx, "GetMetadata")
 
 		logging.MuxTrace(ctx, "calling GetMetadata for discovery")
-		metadataResp, err := server.GetMetadata(ctx, &tfprotov5.GetMetadataRequest{})
+		metadataResp, err := server.GetMetadata(ctx, &tfprotov6.GetMetadataRequest{})
 
 		// GetMetadata call was successful, populate caches and move on to next
 		// underlying server.
@@ -234,7 +234,7 @@ func (s *muxServer) serverDiscovery(ctx context.Context) error {
 		}
 
 		logging.MuxTrace(ctx, "calling GetProviderSchema for discovery")
-		providerSchemaResp, err := server.GetProviderSchema(ctx, &tfprotov5.GetProviderSchemaRequest{})
+		providerSchemaResp, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{})
 
 		if err != nil {
 			return err
@@ -281,20 +281,22 @@ func (s *muxServer) serverDiscovery(ctx context.Context) error {
 }
 
 // NewMuxServer returns a muxed server that will route gRPC requests between
-// tfprotov5.ProviderServers specified. The GetProviderSchema method of each
-// is called to verify that the overall muxed server is compatible by ensuring:
+// tfprotov6.ProviderServers specified. When the GetProviderSchema RPC of each
+// is called, there is verification that the overall muxed server is compatible
+// by ensuring:
 //
 //   - All provider schemas exactly match
 //   - All provider meta schemas exactly match
 //   - Only one provider implements each managed resource
 //   - Only one provider implements each data source
 //   - Only one provider implements each function
-func NewMuxServer(_ context.Context, servers ...func() tfprotov5.ProviderServer) (*muxServer, error) {
+func NewMuxServer(_ context.Context, servers ...func() tfprotov6.ProviderServer) (*muxServer, error) {
 	result := muxServer{
-		dataSources:          make(map[string]tfprotov5.ProviderServer),
-		functions:            make(map[string]tfprotov5.ProviderServer),
-		resources:            make(map[string]tfprotov5.ProviderServer),
-		resourceCapabilities: make(map[string]*tfprotov5.ServerCapabilities),
+		dataSources:          make(map[string]tfprotov6.ProviderServer),
+		functions:            make(map[string]tfprotov6.ProviderServer),
+		resources:            make(map[string]tfprotov6.ProviderServer),
+		resourceCapabilities: make(map[string]*tfprotov6.ServerCapabilities),
+		servers:              make([]tfprotov6.ProviderServer, 0, len(servers)),
 	}
 
 	for _, server := range servers {

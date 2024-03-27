@@ -1,13 +1,15 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
-import "github.com/hashicorp/terraform-plugin-go/tfprotov5"
+import (
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+)
 
-func dataSourceDuplicateError(typeName string) *tfprotov5.Diagnostic {
-	return &tfprotov5.Diagnostic{
-		Severity: tfprotov5.DiagnosticSeverityError,
+func dataSourceDuplicateError(typeName string) *tfprotov6.Diagnostic {
+	return &tfprotov6.Diagnostic{
+		Severity: tfprotov6.DiagnosticSeverityError,
 		Summary:  "Invalid Provider Server Combination",
 		Detail: "The combined provider has multiple implementations of the same data source type across underlying providers. " +
 			"Data source types must be implemented by only one underlying provider. " +
@@ -16,9 +18,9 @@ func dataSourceDuplicateError(typeName string) *tfprotov5.Diagnostic {
 	}
 }
 
-func dataSourceMissingError(typeName string) *tfprotov5.Diagnostic {
-	return &tfprotov5.Diagnostic{
-		Severity: tfprotov5.DiagnosticSeverityError,
+func dataSourceMissingError(typeName string) *tfprotov6.Diagnostic {
+	return &tfprotov6.Diagnostic{
+		Severity: tfprotov6.DiagnosticSeverityError,
 		Summary:  "Data Source Not Implemented",
 		Detail: "The combined provider does not implement the requested data source type. " +
 			"This is always an issue in the provider implementation and should be reported to the provider developers.\n\n" +
@@ -26,13 +28,13 @@ func dataSourceMissingError(typeName string) *tfprotov5.Diagnostic {
 	}
 }
 
-func diagnosticsHasError(diagnostics []*tfprotov5.Diagnostic) bool {
+func diagnosticsHasError(diagnostics []*tfprotov6.Diagnostic) bool {
 	for _, diagnostic := range diagnostics {
 		if diagnostic == nil {
 			continue
 		}
 
-		if diagnostic.Severity == tfprotov5.DiagnosticSeverityError {
+		if diagnostic.Severity == tfprotov6.DiagnosticSeverityError {
 			return true
 		}
 	}
@@ -40,9 +42,9 @@ func diagnosticsHasError(diagnostics []*tfprotov5.Diagnostic) bool {
 	return false
 }
 
-func functionDuplicateError(name string) *tfprotov5.Diagnostic {
-	return &tfprotov5.Diagnostic{
-		Severity: tfprotov5.DiagnosticSeverityError,
+func functionDuplicateError(name string) *tfprotov6.Diagnostic {
+	return &tfprotov6.Diagnostic{
+		Severity: tfprotov6.DiagnosticSeverityError,
 		Summary:  "Invalid Provider Server Combination",
 		Detail: "The combined provider has multiple implementations of the same function name across underlying providers. " +
 			"Functions must be implemented by only one underlying provider. " +
@@ -51,9 +53,9 @@ func functionDuplicateError(name string) *tfprotov5.Diagnostic {
 	}
 }
 
-func functionMissingError(name string) *tfprotov5.Diagnostic {
-	return &tfprotov5.Diagnostic{
-		Severity: tfprotov5.DiagnosticSeverityError,
+func functionMissingError(name string) *tfprotov6.Diagnostic {
+	return &tfprotov6.Diagnostic{
+		Severity: tfprotov6.DiagnosticSeverityError,
 		Summary:  "Function Not Implemented",
 		Detail: "The combined provider does not implement the requested function. " +
 			"This is always an issue in the provider implementation and should be reported to the provider developers.\n\n" +
@@ -61,9 +63,9 @@ func functionMissingError(name string) *tfprotov5.Diagnostic {
 	}
 }
 
-func resourceDuplicateError(typeName string) *tfprotov5.Diagnostic {
-	return &tfprotov5.Diagnostic{
-		Severity: tfprotov5.DiagnosticSeverityError,
+func resourceDuplicateError(typeName string) *tfprotov6.Diagnostic {
+	return &tfprotov6.Diagnostic{
+		Severity: tfprotov6.DiagnosticSeverityError,
 		Summary:  "Invalid Provider Server Combination",
 		Detail: "The combined provider has multiple implementations of the same resource type across underlying providers. " +
 			"Resource types must be implemented by only one underlying provider. " +
@@ -72,9 +74,9 @@ func resourceDuplicateError(typeName string) *tfprotov5.Diagnostic {
 	}
 }
 
-func resourceMissingError(typeName string) *tfprotov5.Diagnostic {
-	return &tfprotov5.Diagnostic{
-		Severity: tfprotov5.DiagnosticSeverityError,
+func resourceMissingError(typeName string) *tfprotov6.Diagnostic {
+	return &tfprotov6.Diagnostic{
+		Severity: tfprotov6.DiagnosticSeverityError,
 		Summary:  "Resource Not Implemented",
 		Detail: "The combined provider does not implement the requested resource type. " +
 			"This is always an issue in the provider implementation and should be reported to the provider developers.\n\n" +

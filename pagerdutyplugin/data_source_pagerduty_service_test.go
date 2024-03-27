@@ -17,8 +17,8 @@ func TestAccDataSourcePagerDutyService_Basic(t *testing.T) {
 	teamname := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname),
@@ -38,8 +38,8 @@ func TestAccDataSourcePagerDutyService_HasNoTeam(t *testing.T) {
 	teamname := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname),
@@ -59,8 +59,8 @@ func TestAccDataSourcePagerDutyService_HasOneTeam(t *testing.T) {
 	teamname := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyServiceConfig(username, email, service, escalationPolicy, teamname),
@@ -75,7 +75,6 @@ func TestAccDataSourcePagerDutyService_HasOneTeam(t *testing.T) {
 
 func testAccDataSourcePagerDutyService(src, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-
 		srcR := s.RootModule().Resources[src]
 		srcA := srcR.Primary.Attributes
 
@@ -162,6 +161,5 @@ data "pagerduty_service" "no_team_service" {
 data "pagerduty_service" "one_team_service" {
   name = pagerduty_service.one_team_service.name
 }
-
-`, teamname, username, email, service, escalationPolicy)
+`, teamname, username, email, escalationPolicy, service)
 }

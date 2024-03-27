@@ -1,13 +1,13 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
@@ -15,14 +15,14 @@ import (
 // time, passing `req`. Any Diagnostic with severity error will abort the
 // process and return immediately; non-Error severity Diagnostics will be
 // combined and returned.
-func (s *muxServer) ConfigureProvider(ctx context.Context, req *tfprotov5.ConfigureProviderRequest) (*tfprotov5.ConfigureProviderResponse, error) {
+func (s *muxServer) ConfigureProvider(ctx context.Context, req *tfprotov6.ConfigureProviderRequest) (*tfprotov6.ConfigureProviderResponse, error) {
 	rpc := "ConfigureProvider"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
-	var diags []*tfprotov5.Diagnostic
+	var diags []*tfprotov6.Diagnostic
 
 	for _, server := range s.servers {
-		ctx = logging.Tfprotov5ProviderServerContext(ctx, server)
+		ctx = logging.Tfprotov6ProviderServerContext(ctx, server)
 		logging.MuxTrace(ctx, "calling downstream server")
 
 		resp, err := server.ConfigureProvider(ctx, req)
@@ -38,7 +38,7 @@ func (s *muxServer) ConfigureProvider(ctx context.Context, req *tfprotov5.Config
 
 			diags = append(diags, diag)
 
-			if diag.Severity != tfprotov5.DiagnosticSeverityError {
+			if diag.Severity != tfprotov6.DiagnosticSeverityError {
 				continue
 			}
 
@@ -48,5 +48,5 @@ func (s *muxServer) ConfigureProvider(ctx context.Context, req *tfprotov5.Config
 		}
 	}
 
-	return &tfprotov5.ConfigureProviderResponse{Diagnostics: diags}, nil
+	return &tfprotov6.ConfigureProviderResponse{Diagnostics: diags}, nil
 }

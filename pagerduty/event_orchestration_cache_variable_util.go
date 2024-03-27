@@ -269,7 +269,6 @@ func resourceEventOrchestrationCacheVariableCreate(ctx context.Context, d *schem
 	})
 
 	if retryErr != nil {
-		time.Sleep(2 * time.Second)
 		return diag.FromErr(retryErr)
 	}
 
@@ -364,7 +363,6 @@ func resourceEventOrchestrationCacheVariableDelete(ctx context.Context, d *schem
 	})
 
 	if retryErr != nil {
-		time.Sleep(2 * time.Second)
 		return diag.FromErr(retryErr)
 	}
 
@@ -422,7 +420,6 @@ func getEventOrchestrationCacheVariableById(ctx context.Context, d *schema.Resou
 				return retry.NonRetryableError(err)
 			}
 
-			time.Sleep(30 * time.Second)
 			return retry.RetryableError(err)
 		} else if cacheVariable != nil {
 			d.SetId(cacheVariable.ID)
@@ -457,7 +454,6 @@ func getEventOrchestrationCacheVariableByName(ctx context.Context, d *schema.Res
 				return retry.NonRetryableError(err)
 			}
 
-			time.Sleep(30 * time.Second)
 			return retry.RetryableError(err)
 		}
 

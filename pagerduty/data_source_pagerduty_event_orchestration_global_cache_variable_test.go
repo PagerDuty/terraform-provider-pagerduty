@@ -11,7 +11,7 @@ import (
 )
 
 func TestAccDataSourcePagerDutyEventOrchestrationGlobalCacheVariable_Basic(t *testing.T) {
-	on := fmt.Sprintf("tf_orchestration_%s", acctest.RandString(5))
+	on := fmt.Sprintf("tf-orchestration-%s", acctest.RandString(5))
 	name := fmt.Sprintf("tf_global_cache_variable_%s", acctest.RandString(5))
 	irn := "pagerduty_event_orchestration_global_cache_variable.orch_cv"
 	n := "data.pagerduty_event_orchestration_global_cache_variable.by_id"

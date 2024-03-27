@@ -14,12 +14,12 @@ import (
 func init() {
 	resource.AddTestSweepers("pagerduty_event_orchestration_service_cache_variable", &resource.Sweeper{
 		Name: "pagerduty_event_orchestration_service_cache_variable",
-		F:    testSweepEventOrchestration,
+		F:    testSweepService,
 	})
 }
 
 func TestAccPagerDutyEventOrchestrationServiceCacheVariable_Basic(t *testing.T) {
-	svc := fmt.Sprintf("tf_service_%s", acctest.RandString(5))
+	svc := fmt.Sprintf("tf-service-%s", acctest.RandString(5))
 	cv := "pagerduty_event_orchestration_service_cache_variable.cv_1"
 
 	name1 := fmt.Sprintf("tf_service_cache_variable_%s", acctest.RandString(5))

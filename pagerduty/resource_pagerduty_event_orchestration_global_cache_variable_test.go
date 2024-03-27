@@ -19,7 +19,7 @@ func init() {
 }
 
 func TestAccPagerDutyEventOrchestrationGlobalCacheVariable_Basic(t *testing.T) {
-	orch := fmt.Sprintf("tf_orchestration_%s", acctest.RandString(5))
+	orch := fmt.Sprintf("tf-orchestration-%s", acctest.RandString(5))
 	cv := "pagerduty_event_orchestration_global_cache_variable.cv_1"
 
 	name1 := fmt.Sprintf("tf_global_cache_variable_%s", acctest.RandString(5))

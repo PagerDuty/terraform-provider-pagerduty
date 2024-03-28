@@ -26,6 +26,19 @@ func TimeToUTC(v string) (time.Time, error) {
 	return t.UTC(), nil
 }
 
+// TimeNowInLoc returns the current time in the given location.
+// If an error occurs when trying to load the location, we just return the
+// current local time.
+func TimeNowInLoc(name string) time.Time {
+	loc, err := time.LoadLocation(name)
+	now := time.Now()
+	if err != nil {
+		log.Printf("[WARN] Failed to load location: %s", err)
+		return now
+	}
+	return now.In(loc)
+}
+
 // ValidateRFC3339 validates that a date string has the correct RFC3339 layout
 func ValidateRFC3339(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)

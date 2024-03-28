@@ -87,7 +87,6 @@ func Provider(isMux bool) *schema.Provider {
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"pagerduty_escalation_policy":                          dataSourcePagerDutyEscalationPolicy(),
-			"pagerduty_schedule":                                   dataSourcePagerDutySchedule(),
 			"pagerduty_licenses":                                   dataSourcePagerDutyLicenses(),
 			"pagerduty_user_contact_method":                        dataSourcePagerDutyUserContactMethod(),
 			"pagerduty_team":                                       dataSourcePagerDutyTeam(),

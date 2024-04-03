@@ -80,10 +80,14 @@ func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 		apiUrl = c.ApiUrlOverride
 	}
 
+	maxRetries := 1
+	retryInterval := 60 // seconds
+
 	clientOpts := []pagerduty.ClientOptions{
 		WithHTTPClient(httpClient),
 		pagerduty.WithAPIEndpoint(apiUrl),
 		pagerduty.WithTerraformProvider(c.TerraformVersion),
+		pagerduty.WithRetryPolicy(maxRetries, retryInterval),
 	}
 
 	if c.AppOauthScopedToken != nil {

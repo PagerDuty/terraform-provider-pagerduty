@@ -1,3 +1,17 @@
+## 3.11.0 (Apr 3, 2024)
+
+FEATURES:
+
+* Add support for Event Orchestration Cache Variables ([#822](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/822))
+  - `data/pagerduty_event_orchestration_global_cache_variable`
+  - `data/pagerduty_event_orchestration_service_cache_variable`
+  - `resource/pagerduty_event_orchestration_global_cache_variable`
+  - `resource/pagerduty_event_orchestration_service_cache_variable`
+
+IMPROVEMENTS:
+
+* `resource/*`, `data/*`: Add retry config for `PagerDuty/go-pagerduty` ([#841](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/841))
+
 ## 3.10.1 (Mar 26, 2024)
 
 BUG FIXES:

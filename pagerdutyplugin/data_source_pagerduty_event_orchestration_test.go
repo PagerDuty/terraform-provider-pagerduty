@@ -13,8 +13,8 @@ func TestAccDataSourcePagerDutyEventOrchestration_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyEventOrchestrationConfig(name),

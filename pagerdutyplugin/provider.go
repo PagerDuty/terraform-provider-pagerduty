@@ -54,6 +54,7 @@ func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSourc
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
 		func() datasource.DataSource { return &dataSourceEscalationPolicy{} },
+		func() datasource.DataSource { return &dataSourceEventOrchestration{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceIntegration{} },
 		func() datasource.DataSource { return &dataSourceLicenses{} },

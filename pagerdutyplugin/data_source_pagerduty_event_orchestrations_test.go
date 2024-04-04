@@ -16,8 +16,8 @@ func TestAccDataSourcePagerDutyEventOrchestrations_Basic(t *testing.T) {
 	notMatchingName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyEventOrchestrationsConfig(name),
@@ -57,12 +57,7 @@ func testAccDataSourcePagerDutyEventOrchestrations(src, n string) resource.TestC
 		r := s.RootModule().Resources[n]
 		a := r.Primary.Attributes
 
-		if a["id"] == "" {
-			return fmt.Errorf("Expected to get an Event Orchestration ID from PagerDuty")
-		}
-
 		testAtts := []string{"id", "name", "integration"}
-
 		for _, att := range testAtts {
 			sub_att := fmt.Sprintf("event_orchestrations.0.%s", att)
 			if a[sub_att] != srcA[att] {

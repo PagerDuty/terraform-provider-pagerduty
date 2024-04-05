@@ -172,10 +172,23 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 
 	o := &pagerduty.GetEscalationPolicyOptions{Includes: []string{"escalation_rule_assignment_strategies"}}
 
+	var escalationPolicyFirstAttempt *pagerduty.EscalationPolicy
+
+	escalationPolicyFirstAttempt, _, err = client.EscalationPolicies.Get(d.Id(), o)
+	if err != nil && isErrCode(err, http.StatusForbidden) {
+		// Removing the inclusion of escalation_rule_assignment_strategies for
+		// accounts wihtout the required entitlements.
+		o = nil
+	}
+
+	if err == nil && escalationPolicyFirstAttempt == nil {
+		return setResourceEPProps(d, escalationPolicyFirstAttempt)
+	}
+
 	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 		if err != nil {
-			if isErrCode(err, http.StatusBadRequest) {
+			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusForbidden) {
 				return retry.NonRetryableError(err)
 			}
 
@@ -189,20 +202,28 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 			return nil
 		}
 
-		d.Set("name", escalationPolicy.Name)
-		d.Set("description", escalationPolicy.Description)
-		d.Set("num_loops", escalationPolicy.NumLoops)
-
-		if err := d.Set("teams", flattenTeams(escalationPolicy.Teams)); err != nil {
-			return retry.NonRetryableError(fmt.Errorf("error setting teams: %s", err))
-		}
-
-		if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules)); err != nil {
+		err = setResourceEPProps(d, escalationPolicy)
+		if err != nil {
 			return retry.NonRetryableError(err)
 		}
 
 		return nil
 	})
+}
+
+func setResourceEPProps(d *schema.ResourceData, escalationPolicy *pagerduty.EscalationPolicy) error {
+	d.Set("name", escalationPolicy.Name)
+	d.Set("description", escalationPolicy.Description)
+	d.Set("num_loops", escalationPolicy.NumLoops)
+
+	if err := d.Set("teams", flattenTeams(escalationPolicy.Teams)); err != nil {
+		return fmt.Errorf("error setting teams: %s", err)
+	}
+
+	if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {

@@ -26,8 +26,8 @@ func resourcePagerDutyEventOrchestrationIntegration() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
-				Type:             schema.TypeString,
-				Required:         true,
+				Type:     schema.TypeString,
+				Required: true,
 			},
 			"id": {
 				Type:     schema.TypeString,

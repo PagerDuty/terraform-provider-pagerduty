@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,9 +25,8 @@ func resourcePagerDutyEventOrchestrationIntegration() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: addIntegrationMigrationWarning(),
+				Type:     schema.TypeString,
+				Required: true,
 			},
 			"id": {
 				Type:     schema.TypeString,
@@ -55,20 +53,6 @@ func resourcePagerDutyEventOrchestrationIntegration() *schema.Resource {
 				},
 			},
 		},
-	}
-}
-
-func addIntegrationMigrationWarning() schema.SchemaValidateDiagFunc {
-	return func(v interface{}, p cty.Path) diag.Diagnostics {
-		var diags diag.Diagnostics
-
-		diags = append(diags, diag.Diagnostic{
-			Severity:      diag.Warning,
-			Summary:       "Modifying the event_orchestration property of the 'pagerduty_event_orchestration_integration' resource will cause all future events sent with this integration's routing key to be evaluated against the new Event Orchestration.",
-			AttributePath: p,
-		})
-
-		return diags
 	}
 }
 

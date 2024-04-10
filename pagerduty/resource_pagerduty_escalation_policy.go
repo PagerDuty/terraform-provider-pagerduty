@@ -181,7 +181,7 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 		o = nil
 	}
 
-	if err == nil && escalationPolicyFirstAttempt == nil {
+	if err == nil && escalationPolicyFirstAttempt != nil {
 		return setResourceEPProps(d, escalationPolicyFirstAttempt)
 	}
 

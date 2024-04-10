@@ -1,3 +1,10 @@
+## 3.11.2 (Apr 10, 2024)
+
+BUG FIXES:
+
+* `resource/pagerduty_escalation_policy`: Re-address: 403 Forbidden error when updating existing pagerduty_escalation_policy's target ([#851](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/851))
+* `resource/pagerduty_service`: Address: Pagerduty Provider Plugin Crashed ([#852](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/852))
+
 ## 3.11.1 (Apr 5, 2024)
 
 BUG FIXES:

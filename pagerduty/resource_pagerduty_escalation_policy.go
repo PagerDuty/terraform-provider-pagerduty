@@ -181,7 +181,7 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 		o = nil
 	}
 
-	if err == nil && escalationPolicyFirstAttempt == nil {
+	if err == nil && escalationPolicyFirstAttempt != nil {
 		return setResourceEPProps(d, escalationPolicyFirstAttempt)
 	}
 
@@ -236,8 +236,30 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 
 	log.Printf("[INFO] Updating PagerDuty escalation policy: %s", d.Id())
 
+	_, _, err = client.EscalationPolicies.Update(d.Id(), escalationPolicy)
+	if err != nil && isErrCode(err, http.StatusForbidden) {
+		// Removing the inclusion of escalation_rule_assignment_strategies for
+		// accounts wihtout the required entitlements.
+		for idx, er := range escalationPolicy.EscalationRules {
+			if er.EscalationRuleAssignmentStrategy.Type == "round_robin" {
+				return fmt.Errorf("Round Robin Scheduling is available for accounts on the following pricing plans: Business, Digital Operations (legacy) and Enterprise for Incident Management. Therefore, set the escalation_rule_assignment_strategy to 'assign_to_everyone' for the escalation rule at index %d", idx)
+			}
+
+			er.EscalationRuleAssignmentStrategy = nil
+			escalationPolicy.EscalationRules[idx] = er
+		}
+	}
+
+	if err == nil {
+		return nil
+	}
+
 	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
+			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusForbidden) {
+				return retry.NonRetryableError(err)
+			}
+
 			return retry.RetryableError(err)
 		}
 		return nil

@@ -769,8 +769,15 @@ func flattenIncidentUrgencyRule(v *pagerduty.IncidentUrgencyRule) []interface{} 
 }
 
 func expandIncidentUrgencyType(v interface{}) *pagerduty.IncidentUrgencyType {
-	riut := v.([]interface{})[0].(map[string]interface{})
 	incidentUrgencyType := &pagerduty.IncidentUrgencyType{}
+	riut := make(map[string]interface{})
+
+	data, ok := v.([]interface{})
+	if ok && len(data) > 0 && !isNilFunc(data[0]) {
+		riut = data[0].(map[string]interface{})
+	} else {
+		return incidentUrgencyType
+	}
 
 	if v, ok := riut["type"]; ok {
 		incidentUrgencyType.Type = v.(string)

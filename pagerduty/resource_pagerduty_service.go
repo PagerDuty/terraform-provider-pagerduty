@@ -644,10 +644,17 @@ func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParame
 }
 
 func expandAutoPauseNotificationsParameters(v interface{}) *pagerduty.AutoPauseNotificationsParameters {
-	riur := v.([]interface{})[0].(map[string]interface{})
-	autoPauseNotificationsParameters := &pagerduty.AutoPauseNotificationsParameters{
-		Enabled: riur["enabled"].(bool),
+	autoPauseNotificationsParameters := &pagerduty.AutoPauseNotificationsParameters{}
+	riur := make(map[string]interface{})
+
+	data, ok := v.([]interface{})
+	if ok && len(data) > 0 && !isNilFunc(data[0]) {
+		riur = data[0].(map[string]interface{})
+	} else {
+		return autoPauseNotificationsParameters
 	}
+
+	autoPauseNotificationsParameters.Enabled = riur["enabled"].(bool)
 	if autoPauseNotificationsParameters.Enabled {
 		timeout := riur["timeout"].(int)
 		autoPauseNotificationsParameters.Timeout = &timeout
@@ -727,10 +734,17 @@ func flattenAutoPauseNotificationsParameters(v *pagerduty.AutoPauseNotifications
 }
 
 func expandIncidentUrgencyRule(v interface{}) *pagerduty.IncidentUrgencyRule {
-	riur := v.([]interface{})[0].(map[string]interface{})
-	incidentUrgencyRule := &pagerduty.IncidentUrgencyRule{
-		Type: riur["type"].(string),
+	incidentUrgencyRule := &pagerduty.IncidentUrgencyRule{}
+	riur := make(map[string]interface{})
+
+	data, ok := v.([]interface{})
+	if ok && len(data) > 0 && !isNilFunc(data[0]) {
+		riur = data[0].(map[string]interface{})
+	} else {
+		return incidentUrgencyRule
 	}
+
+	incidentUrgencyRule.Type = riur["type"].(string)
 
 	if val, ok := riur["urgency"]; ok {
 		incidentUrgencyRule.Urgency = val.(string)
@@ -801,7 +815,14 @@ func flattenIncidentUrgencyType(v *pagerduty.IncidentUrgencyType) []interface{} 
 func expandSupportHours(v interface{}) *pagerduty.SupportHours {
 	supportHours := &pagerduty.SupportHours{}
 
-	rsh := v.([]interface{})[0].(map[string]interface{})
+	rsh := make(map[string]interface{})
+
+	data, ok := v.([]interface{})
+	if ok && len(data) > 0 && !isNilFunc(data[0]) {
+		rsh = data[0].(map[string]interface{})
+	} else {
+		return supportHours
+	}
 
 	if v, ok := rsh["type"]; ok {
 		supportHours.Type = v.(string)
@@ -892,7 +913,15 @@ func flattenScheduledActions(v []*pagerduty.ScheduledAction) []interface{} {
 }
 
 func expandScheduledActionAt(v interface{}) *pagerduty.At {
-	rat := v.([]interface{})[0].(map[string]interface{})
+	rat := make(map[string]interface{})
+
+	data, ok := v.([]interface{})
+	if ok && len(data) > 0 && !isNilFunc(data[0]) {
+		rat = data[0].(map[string]interface{})
+	} else {
+		return nil
+	}
+
 	return &pagerduty.At{
 		Type: rat["type"].(string),
 		Name: rat["name"].(string),

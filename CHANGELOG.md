@@ -1,3 +1,9 @@
+## 3.11.3 (Apr 12, 2024)
+
+BUG FIXES:
+
+* `resource/pagerduty_service`: Handle nil pointer conversions across `pagerduty_service` implementation ([#854](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/854))
+
 ## 3.11.2 (Apr 10, 2024)
 
 BUG FIXES:

@@ -1,3 +1,9 @@
+## 3.11.4 (Apr 16, 2024)
+
+BUG FIXES:
+
+* `resource/pagerduty_escalation_policy`: Handle malformed 403 Forbidden errors on EP updates ([#858](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/858))
+
 ## 3.11.3 (Apr 12, 2024)
 
 BUG FIXES:

@@ -175,7 +175,7 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 	var escalationPolicyFirstAttempt *pagerduty.EscalationPolicy
 
 	escalationPolicyFirstAttempt, _, err = client.EscalationPolicies.Get(d.Id(), o)
-	if err != nil && isErrCode(err, http.StatusForbidden) {
+	if err != nil && isErrCode(err, http.StatusForbidden) || isMalformedForbiddenError(err) {
 		// Removing the inclusion of escalation_rule_assignment_strategies for
 		// accounts wihtout the required entitlements.
 		o = nil
@@ -188,7 +188,7 @@ func fetchEscalationPolicy(d *schema.ResourceData, meta interface{}, errCallback
 	return retry.Retry(5*time.Minute, func() *retry.RetryError {
 		escalationPolicy, _, err := client.EscalationPolicies.Get(d.Id(), o)
 		if err != nil {
-			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusForbidden) {
+			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusForbidden) || isMalformedForbiddenError(err) {
 				return retry.NonRetryableError(err)
 			}
 
@@ -237,7 +237,11 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 	log.Printf("[INFO] Updating PagerDuty escalation policy: %s", d.Id())
 
 	_, _, err = client.EscalationPolicies.Update(d.Id(), escalationPolicy)
-	if err != nil && isErrCode(err, http.StatusForbidden) {
+	if err == nil {
+		return nil
+	}
+
+	if isErrCode(err, http.StatusForbidden) || isMalformedForbiddenError(err) {
 		// Removing the inclusion of escalation_rule_assignment_strategies for
 		// accounts wihtout the required entitlements.
 		for idx, er := range escalationPolicy.EscalationRules {
@@ -250,13 +254,9 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 		}
 	}
 
-	if err == nil {
-		return nil
-	}
-
 	retryErr := retry.Retry(5*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EscalationPolicies.Update(d.Id(), escalationPolicy); err != nil {
-			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusForbidden) {
+			if isErrCode(err, http.StatusBadRequest) || isErrCode(err, http.StatusForbidden) || isMalformedForbiddenError(err) {
 				return retry.NonRetryableError(err)
 			}
 

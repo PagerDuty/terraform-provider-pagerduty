@@ -183,7 +183,20 @@ func isErrCode(err error, code int) bool {
 func isMalformedNotFoundError(err error) bool {
 	// There are some errors that doesn't stick to expected error interface and
 	// fallback to a simple text error message that can be capture by this regexp.
+	if err == nil {
+		return false
+	}
+
 	re := regexp.MustCompile(".*: 404 Not Found$")
+	return re.Match([]byte(err.Error()))
+}
+
+func isMalformedForbiddenError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	re := regexp.MustCompile(".*: 403 Forbidden$")
 	return re.Match([]byte(err.Error()))
 }
 

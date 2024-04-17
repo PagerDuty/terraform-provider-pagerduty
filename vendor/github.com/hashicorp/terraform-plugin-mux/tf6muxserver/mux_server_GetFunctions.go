@@ -1,21 +1,21 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
-// GetFunctions merges the functions returned by the tfprotov5.ProviderServers
+// GetFunctions merges the functions returned by the tfprotov6.ProviderServers
 // associated with muxServer into a single response. Functions must be returned
 // from only one server or an error diagnostic is returned.
-func (s *muxServer) GetFunctions(ctx context.Context, req *tfprotov5.GetFunctionsRequest) (*tfprotov5.GetFunctionsResponse, error) {
+func (s *muxServer) GetFunctions(ctx context.Context, req *tfprotov6.GetFunctionsRequest) (*tfprotov6.GetFunctionsResponse, error) {
 	rpc := "GetFunctions"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
@@ -23,16 +23,16 @@ func (s *muxServer) GetFunctions(ctx context.Context, req *tfprotov5.GetFunction
 	s.serverDiscoveryMutex.Lock()
 	defer s.serverDiscoveryMutex.Unlock()
 
-	resp := &tfprotov5.GetFunctionsResponse{
-		Functions: make(map[string]*tfprotov5.Function),
+	resp := &tfprotov6.GetFunctionsResponse{
+		Functions: make(map[string]*tfprotov6.Function),
 	}
 
 	for _, server := range s.servers {
-		ctx := logging.Tfprotov5ProviderServerContext(ctx, server)
+		ctx := logging.Tfprotov6ProviderServerContext(ctx, server)
 
 		// Remove and call server.GetFunctions below directly.
 		// Reference: https://github.com/hashicorp/terraform-plugin-mux/issues/210
-		functionServer, ok := server.(tfprotov5.FunctionServer)
+		functionServer, ok := server.(tfprotov6.FunctionServer)
 
 		if !ok {
 			continue
@@ -40,8 +40,8 @@ func (s *muxServer) GetFunctions(ctx context.Context, req *tfprotov5.GetFunction
 
 		logging.MuxTrace(ctx, "calling downstream server")
 
-		// serverResp, err := server.GetFunctions(ctx, &tfprotov5.GetFunctionsRequest{})
-		serverResp, err := functionServer.GetFunctions(ctx, &tfprotov5.GetFunctionsRequest{})
+		// serverResp, err := server.GetFunctions(ctx, &tfprotov6.GetFunctionsRequest{})
+		serverResp, err := functionServer.GetFunctions(ctx, &tfprotov6.GetFunctionsRequest{})
 
 		if err != nil {
 			return resp, fmt.Errorf("error calling GetFunctions for %T: %w", server, err)

@@ -1,20 +1,20 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
 // PlanResourceChange calls the PlanResourceChange method, passing `req`, on
 // the provider that returned the resource specified by req.TypeName in its
 // schema.
-func (s *muxServer) PlanResourceChange(ctx context.Context, req *tfprotov5.PlanResourceChangeRequest) (*tfprotov5.PlanResourceChangeResponse, error) {
+func (s *muxServer) PlanResourceChange(ctx context.Context, req *tfprotov6.PlanResourceChangeRequest) (*tfprotov6.PlanResourceChangeResponse, error) {
 	rpc := "PlanResourceChange"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
@@ -26,12 +26,12 @@ func (s *muxServer) PlanResourceChange(ctx context.Context, req *tfprotov5.PlanR
 	}
 
 	if diagnosticsHasError(diags) {
-		return &tfprotov5.PlanResourceChangeResponse{
+		return &tfprotov6.PlanResourceChangeResponse{
 			Diagnostics: diags,
 		}, nil
 	}
 
-	ctx = logging.Tfprotov5ProviderServerContext(ctx, server)
+	ctx = logging.Tfprotov6ProviderServerContext(ctx, server)
 
 	// Prevent ServerCapabilities.PlanDestroy from sending destroy plans to
 	// servers which do not enable the capability.
@@ -39,7 +39,7 @@ func (s *muxServer) PlanResourceChange(ctx context.Context, req *tfprotov5.PlanR
 		if req.ProposedNewState == nil {
 			logging.MuxTrace(ctx, "server does not enable destroy plans, returning without calling downstream server")
 
-			resp := &tfprotov5.PlanResourceChangeResponse{
+			resp := &tfprotov6.PlanResourceChangeResponse{
 				// Presumably, we must preserve any prior private state so it
 				// is still available during ApplyResourceChange.
 				PlannedPrivate: req.PriorPrivate,
@@ -57,7 +57,7 @@ func (s *muxServer) PlanResourceChange(ctx context.Context, req *tfprotov5.PlanR
 		if isDestroyPlan {
 			logging.MuxTrace(ctx, "server does not enable destroy plans, returning without calling downstream server")
 
-			resp := &tfprotov5.PlanResourceChangeResponse{
+			resp := &tfprotov6.PlanResourceChangeResponse{
 				// Presumably, we must preserve any prior private state so it
 				// is still available during ApplyResourceChange.
 				PlannedPrivate: req.PriorPrivate,

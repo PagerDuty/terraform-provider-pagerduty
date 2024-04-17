@@ -5,13 +5,13 @@ import (
 	"os"
 	"testing"
 
+	pd "github.com/PagerDuty/terraform-provider-pagerduty/pagerduty"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-
-	pd "github.com/PagerDuty/terraform-provider-pagerduty/pagerduty"
 )
 
 var testAccProvider = New()
@@ -51,16 +51,21 @@ func testAccExternalProviders() map[string]resource.ExternalProvider {
 	return m
 }
 
-func testAccProtoV5ProviderFactories() map[string]func() (tfprotov5.ProviderServer, error) {
-	return map[string]func() (tfprotov5.ProviderServer, error){
-		"pagerduty": func() (tfprotov5.ProviderServer, error) {
+func testAccProtoV6ProviderFactories() map[string]func() (tfprotov6.ProviderServer, error) {
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"pagerduty": func() (tfprotov6.ProviderServer, error) {
 			ctx := context.Background()
-			providers := []func() tfprotov5.ProviderServer{
-				pd.Provider(pd.IsMuxed).GRPCProvider,
-				providerserver.NewProtocol5(testAccProvider),
+
+			upgradedSdkServer, err := tf5to6server.UpgradeServer(ctx, pd.Provider(pd.IsMuxed).GRPCProvider)
+			if err != nil {
+				return nil, err
 			}
 
-			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+			muxServer, err := tf6muxserver.NewMuxServer(
+				ctx,
+				providerserver.NewProtocol6(testAccProvider),
+				func() tfprotov6.ProviderServer { return upgradedSdkServer },
+			)
 			if err != nil {
 				return nil, err
 			}

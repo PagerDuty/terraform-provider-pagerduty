@@ -1,14 +1,14 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
@@ -16,14 +16,14 @@ import (
 // with the muxServer, one at a time. All Error fields will be joined
 // together and returned, but will not prevent the rest of the providers'
 // StopProvider methods from being called.
-func (s *muxServer) StopProvider(ctx context.Context, req *tfprotov5.StopProviderRequest) (*tfprotov5.StopProviderResponse, error) {
+func (s *muxServer) StopProvider(ctx context.Context, req *tfprotov6.StopProviderRequest) (*tfprotov6.StopProviderResponse, error) {
 	rpc := "StopProvider"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
 	var errs []string
 
 	for _, server := range s.servers {
-		ctx = logging.Tfprotov5ProviderServerContext(ctx, server)
+		ctx = logging.Tfprotov6ProviderServerContext(ctx, server)
 		logging.MuxTrace(ctx, "calling downstream server")
 
 		resp, err := server.StopProvider(ctx, req)
@@ -37,7 +37,7 @@ func (s *muxServer) StopProvider(ctx context.Context, req *tfprotov5.StopProvide
 		}
 	}
 
-	return &tfprotov5.StopProviderResponse{
+	return &tfprotov6.StopProviderResponse{
 		Error: strings.Join(errs, "\n"),
 	}, nil
 }

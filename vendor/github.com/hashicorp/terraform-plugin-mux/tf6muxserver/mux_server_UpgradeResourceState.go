@@ -1,19 +1,19 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package tf5muxserver
+package tf6muxserver
 
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
 )
 
 // UpgradeResourceState calls the UpgradeResourceState method, passing `req`,
 // on the provider that returned the resource specified by req.TypeName in its
 // schema.
-func (s *muxServer) UpgradeResourceState(ctx context.Context, req *tfprotov5.UpgradeResourceStateRequest) (*tfprotov5.UpgradeResourceStateResponse, error) {
+func (s *muxServer) UpgradeResourceState(ctx context.Context, req *tfprotov6.UpgradeResourceStateRequest) (*tfprotov6.UpgradeResourceStateResponse, error) {
 	rpc := "UpgradeResourceState"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)
@@ -25,12 +25,12 @@ func (s *muxServer) UpgradeResourceState(ctx context.Context, req *tfprotov5.Upg
 	}
 
 	if diagnosticsHasError(diags) {
-		return &tfprotov5.UpgradeResourceStateResponse{
+		return &tfprotov6.UpgradeResourceStateResponse{
 			Diagnostics: diags,
 		}, nil
 	}
 
-	ctx = logging.Tfprotov5ProviderServerContext(ctx, server)
+	ctx = logging.Tfprotov6ProviderServerContext(ctx, server)
 	logging.MuxTrace(ctx, "calling downstream server")
 
 	return server.UpgradeResourceState(ctx, req)

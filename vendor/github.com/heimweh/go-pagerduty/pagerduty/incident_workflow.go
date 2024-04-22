@@ -45,7 +45,7 @@ type IncidentWorkflowActionInput struct {
 
 // IncidentWorkflowActionInlineStepsInput represents the configuration for an incident workflow action input with a series of inlined steps as the value
 type IncidentWorkflowActionInlineStepsInput struct {
-	Name  string `json:"name,omitempty"`
+	Name  string                                       `json:"name,omitempty"`
 	Value *IncidentWorkflowActionInlineStepsInputValue `json:"value,omitempty"`
 }
 

@@ -67,7 +67,7 @@ type EventOrchestrationPathRuleActions struct {
 }
 
 type EventOrchestrationPathIncidentCustomFieldUpdate struct {
-	ID string `json:"id,omitempty"`
+	ID    string `json:"id,omitempty"`
 	Value string `json:"value,omitempty"`
 }
 

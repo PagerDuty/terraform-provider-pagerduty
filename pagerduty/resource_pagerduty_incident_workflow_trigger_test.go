@@ -234,7 +234,10 @@ func TestAccPagerDutyIncidentWorkflowTrigger_ManualWithTeamPermissions(t *testin
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	workflow := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamIDTFRef := "pagerduty_team.foo.id"
+	emptyCondition := ""
+	dummyCondition := "event.summary matches 'foo'"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -245,7 +248,7 @@ func TestAccPagerDutyIncidentWorkflowTrigger_ManualWithTeamPermissions(t *testin
 		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissions(username, email, escalationPolicy, service, team, workflow),
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissions(username, email, escalationPolicy, service, teamName, workflow),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
 					resource.TestCheckResourceAttr(
@@ -255,7 +258,7 @@ func TestAccPagerDutyIncidentWorkflowTrigger_ManualWithTeamPermissions(t *testin
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissionsUpdated(username, email, escalationPolicy, service, team, workflow),
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissionsUpdated(username, email, escalationPolicy, service, teamName, workflow, "manual", emptyCondition, "true", teamIDTFRef),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
 					resource.TestCheckResourceAttr(
@@ -264,6 +267,30 @@ func TestAccPagerDutyIncidentWorkflowTrigger_ManualWithTeamPermissions(t *testin
 						"pagerduty_incident_workflow_trigger.test", "permissions.0.restricted", "true"),
 					testAccCheckPagerDutyIncidentWorkflowTriggerCheckPermissionsTeamId("pagerduty_incident_workflow_trigger.test", "pagerduty_team.foo"),
 				),
+			},
+			// Check input validation conditions for permissions configuration
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissionsUpdated(username, email, escalationPolicy, service, teamName, workflow, "conditional", dummyCondition, "true", teamIDTFRef),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("restricted can only be true when trigger type is manual"),
+			},
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissionsUpdated(username, email, escalationPolicy, service, teamName, workflow, "manual", emptyCondition, "false", teamIDTFRef),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("team_id not allowed when restricted is false"),
+			},
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissionsUpdated(username, email, escalationPolicy, service, teamName, workflow, "manual", emptyCondition, "true", `""`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+				),
+				ExpectError: regexp.MustCompile("team_id must be specified when restricted is true"),
 			},
 		},
 	})
@@ -288,27 +315,28 @@ resource "pagerduty_incident_workflow_trigger" "test" {
 `, testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service), testAccCheckPagerDutyIncidentWorkflowConfig(workflow), team)
 }
 
-func testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissionsUpdated(username, email, escalationPolicy, service, workflow, team string) string {
+func testAccCheckPagerDutyIncidentWorkflowTriggerConfigManualWithPermissionsUpdated(username, email, escalationPolicy, service, workflow, team, triggerType, condition, isRestricted, teamId string) string {
 	return fmt.Sprintf(`
 %s
 
 %s
 
 resource "pagerduty_team" "foo" {
-  name = %q
+  name = "%s"
 }
 
 resource "pagerduty_incident_workflow_trigger" "test" {
-  type                       = "manual"
+  type                       = "%s"
+  condition                  = "%s"
   workflow                   = pagerduty_incident_workflow.test.id
   services                   = [pagerduty_service.foo.id]
   subscribed_to_all_services = false
   permissions {
-    restricted = true
-    team_id    = pagerduty_team.foo.id
+    restricted = %s
+    team_id    = %s
   }
 }
-`, testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service), testAccCheckPagerDutyIncidentWorkflowConfig(workflow), team)
+`, testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service), testAccCheckPagerDutyIncidentWorkflowConfig(workflow), team, triggerType, condition, isRestricted, teamId)
 }
 
 func testAccCheckPagerDutyIncidentWorkflowTriggerCheckPermissionsTeamId(iwtName, teamName string) resource.TestCheckFunc {

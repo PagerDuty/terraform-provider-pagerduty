@@ -44,7 +44,7 @@ func TestAccPagerDutyExtensionServiceNow_Basic(t *testing.T) {
 	extension_name := id.PrefixedUniqueId("tf-")
 	extension_name_updated := id.PrefixedUniqueId("tf-")
 	name := id.PrefixedUniqueId("tf-")
-	url := "https://example.com/recieve_a_pagerduty_webhook"
+	url := "https://example.com/receive_a_pagerduty_webhook"
 	url_updated := "https://example.com/webhook_foo"
 
 	resource.Test(t, resource.TestCase{

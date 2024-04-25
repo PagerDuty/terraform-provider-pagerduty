@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -44,7 +45,7 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 	extension_name := id.PrefixedUniqueId("tf-")
 	extension_name_updated := id.PrefixedUniqueId("tf-")
 	name := id.PrefixedUniqueId("tf-")
-	url := "https://example.com/recieve_a_pagerduty_webhook"
+	url := "https://example.com/receive_a_pagerduty_webhook"
 	url_updated := "https://example.com/webhook_foo"
 
 	resource.Test(t, resource.TestCase{
@@ -62,8 +63,8 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 						"pagerduty_extension.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "endpoint_url", url),
-					resource.TestCheckResourceAttr(
-						"pagerduty_extension.foo", "config", "{\"notify_types\":{\"acknowledge\":false,\"assignments\":false,\"resolve\":false},\"restrict\":\"any\"}"),
+					resource.TestCheckResourceAttrWith(
+						"pagerduty_extension.foo", "config", util.CheckJSONEqual("{\"notify_types\":{\"acknowledge\":false,\"assignments\":false,\"resolve\":false},\"restrict\":\"any\"}")),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "html_url", ""),
 				),
@@ -78,8 +79,8 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 						"pagerduty_extension.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "endpoint_url", url_updated),
-					resource.TestCheckResourceAttr(
-						"pagerduty_extension.foo", "config", "{\"notify_types\":{\"acknowledge\":true,\"assignments\":true,\"resolve\":true},\"restrict\":\"pd-users\"}"),
+					resource.TestCheckResourceAttrWith(
+						"pagerduty_extension.foo", "config", util.CheckJSONEqual("{\"notify_types\":{\"acknowledge\":true,\"assignments\":true,\"resolve\":true},\"restrict\":\"pd-users\"}")),
 				),
 			},
 		},
@@ -178,9 +179,9 @@ resource "pagerduty_extension" "foo"{
 {
 	"restrict": "%[4]v",
 	"notify_types": {
-			"resolve": %[5]v,
-			"acknowledge": %[5]v,
-			"assignments": %[5]v
+		"resolve": %[5]v,
+		"acknowledge": %[5]v,
+		"assignments": %[5]v
 	}
 }
 EOF

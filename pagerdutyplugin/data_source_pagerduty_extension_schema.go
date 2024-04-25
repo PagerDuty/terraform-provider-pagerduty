@@ -48,9 +48,8 @@ func (d *dataSourceExtensionSchema) Read(ctx context.Context, req datasource.Rea
 	}
 
 	var found *pagerduty.ExtensionSchema
-	// TODO delete and comment in PR: changed to 2min because 5min/30s is 10 attempts
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		list, err := d.client.ListExtensionSchemasWithContext(ctx, pagerduty.ListExtensionSchemaOptions{})
+		list, err := d.client.ListExtensionSchemasWithContext(ctx, pagerduty.ListExtensionSchemaOptions{Limit: 100})
 		if err != nil {
 			if util.IsBadRequestError(err) {
 				return retry.NonRetryableError(err)

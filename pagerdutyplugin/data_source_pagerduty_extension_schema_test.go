@@ -35,16 +35,16 @@ func testAccDataSourcePagerDutyExtensionSchema(n string) resource.TestCheckFunc 
 			return fmt.Errorf("Expected to get an Extension Schema  ID from PagerDuty")
 		}
 
-		if a["id"] != "PD8SURB" {
-			return fmt.Errorf("Expected the Slack Extension Schema ID to be: PD8SURB, but got: %s", a["id"])
+		if a["id"] != "PAKM60Z" {
+			return fmt.Errorf("Expected Schema ID to be: PAKM60Z, but got: %s", a["id"])
 		}
 
-		if a["name"] != "Slack" {
-			return fmt.Errorf("Expected the Slack Extension Schema Name to be: Slack, but got: %s", a["name"])
+		if a["name"] != "ServiceNow (v7)" {
+			return fmt.Errorf("Expected Schema Name to be: ServiceNow (v7), but got: %s", a["name"])
 		}
 
 		if a["type"] != "extension_schema" {
-			return fmt.Errorf("Expected the Slack Extension Schema Type to be: extension_schema, but got: %s", a["type"])
+			return fmt.Errorf("Expected the Schema Type to be: extension_schema, but got: %s", a["type"])
 		}
 
 		return nil
@@ -53,7 +53,7 @@ func testAccDataSourcePagerDutyExtensionSchema(n string) resource.TestCheckFunc 
 
 const testAccDataSourcePagerDutyExtensionSchemaConfig = `
 data "pagerduty_extension_schema" "foo" {
-  name = "slack"
+  name = "ServiceNow (v7)"
 }
 `
 

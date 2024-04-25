@@ -160,8 +160,8 @@ func (r *resourceExtensionServiceNow) Update(ctx context.Context, req resource.U
 	model, err = r.requestGetExtensionServiceNow(ctx, requestGetExtensionServiceNowOptions{
 		ID:            plan.ID,
 		RetryNotFound: true,
-		SnowPassword:  extractString(ctx, req.State, "snow_password", &resp.Diagnostics),
-		EndpointURL:   extractString(ctx, req.State, "endpoint_url", &resp.Diagnostics),
+		SnowPassword:  extractString(ctx, req.Plan, "snow_password", &resp.Diagnostics),
+		EndpointURL:   extractString(ctx, req.Plan, "endpoint_url", &resp.Diagnostics),
 		Diagnostics:   &resp.Diagnostics,
 	})
 	if err != nil {
@@ -199,8 +199,6 @@ func (r *resourceExtensionServiceNow) Configure(ctx context.Context, req resourc
 }
 
 func (r *resourceExtensionServiceNow) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-
 	model, err := r.requestGetExtensionServiceNow(ctx, requestGetExtensionServiceNowOptions{
 		ID:            req.ID,
 		RetryNotFound: false,
@@ -212,10 +210,6 @@ func (r *resourceExtensionServiceNow) ImportState(ctx context.Context, req resou
 		}
 		return
 	}
-
-	// model.EndpointURL
-	// model.ExtensionObjects = []string{extension.ExtensionObjects[0].ID}
-	// model.ExtensionSchema
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
@@ -313,7 +307,6 @@ func flattenExtensionServiceNow(src *pagerduty.Extension, snowPassword *string, 
 	model := resourceExtensionServiceNowModel{
 		ID:               types.StringValue(src.ID),
 		Name:             types.StringValue(src.Name),
-		EndpointURL:      types.StringValue(src.EndpointURL),
 		HTMLURL:          types.StringValue(src.HTMLURL),
 		ExtensionSchema:  types.StringValue(src.ExtensionSchema.ID),
 		ExtensionObjects: flattenExtensionServiceNowObjects(src.ExtensionObjects),
@@ -321,14 +314,18 @@ func flattenExtensionServiceNow(src *pagerduty.Extension, snowPassword *string, 
 
 	b, _ := json.Marshal(src.Config)
 	var config PagerDutyExtensionServiceNowConfig
-	json.Unmarshal(b, &config)
+	_ = json.Unmarshal(b, &config)
 
 	model.SnowUser = types.StringValue(config.User)
 	if snowPassword != nil {
 		model.SnowPassword = types.StringValue(*snowPassword)
+	} else if config.Password != "" {
+		model.SnowPassword = types.StringValue(config.Password)
 	}
 	if endpointURL != nil {
-		model.SnowPassword = types.StringValue(*endpointURL)
+		model.EndpointURL = types.StringValue(*endpointURL)
+	} else if src.EndpointURL != "" {
+		model.EndpointURL = types.StringValue(src.EndpointURL)
 	}
 	model.SyncOptions = types.StringValue(config.SyncOptions)
 	model.Target = types.StringValue(config.Target)

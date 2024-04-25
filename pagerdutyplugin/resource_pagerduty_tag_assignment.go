@@ -245,7 +245,6 @@ func (r *resourceTagAssignment) Configure(ctx context.Context, req resource.Conf
 }
 
 func (r *resourceTagAssignment) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 	ids := strings.Split(req.ID, ".")
 	if len(ids) != 3 {
 		resp.Diagnostics.AddError(

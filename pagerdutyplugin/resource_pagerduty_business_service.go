@@ -69,7 +69,7 @@ func (r *resourceBusinessService) Create(ctx context.Context, req resource.Creat
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	businessServicePlan := buildPagerdutyBusinessService(ctx, &plan)
+	businessServicePlan := buildPagerdutyBusinessService(&plan)
 	log.Printf("[INFO] Creating PagerDuty business service %s", plan.Name)
 
 	err := helperResource.RetryContext(ctx, 5*time.Minute, func() *helperResource.RetryError {
@@ -120,7 +120,7 @@ func (r *resourceBusinessService) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	businessServicePlan := buildPagerdutyBusinessService(ctx, &plan)
+	businessServicePlan := buildPagerdutyBusinessService(&plan)
 	if businessServicePlan.ID == "" {
 		var id string
 		req.State.GetAttribute(ctx, path.Root("id"), &id)
@@ -202,7 +202,7 @@ func requestGetBusinessService(ctx context.Context, client *pagerduty.Client, id
 	return model
 }
 
-func buildPagerdutyBusinessService(_ context.Context, model *resourceBusinessServiceModel) *pagerduty.BusinessService {
+func buildPagerdutyBusinessService(model *resourceBusinessServiceModel) *pagerduty.BusinessService {
 	businessService := pagerduty.BusinessService{
 		ID:             model.ID.ValueString(),
 		Description:    model.Description.ValueString(),

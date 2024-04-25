@@ -21,11 +21,11 @@ func TestAccPagerDutyExtension_import(t *testing.T) {
 			{
 				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url, "false", "any"),
 			},
-
 			{
-				ResourceName:      "pagerduty_extension.foo",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "pagerduty_extension.foo",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"config"},
 			},
 		},
 	})

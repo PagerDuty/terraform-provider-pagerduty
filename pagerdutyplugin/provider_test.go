@@ -71,10 +71,12 @@ func testAccProtoV5ProviderFactories() map[string]func() (tfprotov5.ProviderServ
 	}
 }
 
-// testAccTimeNow returns the current time in the given location.
-// The location defaults to Europe/Dublin but can be controlled by the
-// PAGERDUTY_TIME_ZONE environment variable. The location must match the
-// PagerDuty account time zone or diff issues might bubble up in tests.
+// testAccTimeNow returns the current time in the given location. The location
+// defaults to Europe/Dublin but can be controlled by the PAGERDUTY_TIME_ZONE
+// environment variable. The location must match the PagerDuty account time
+// zone or diff issues might bubble up in tests. Here is the list of allowed
+// Time Zone Identifier for PagerDuty accounts
+// https://developer.pagerduty.com/docs/1afe25e9c94cb-types#time-zone
 func testAccTimeNow() time.Time {
 	name := "Europe/Dublin"
 	if v := os.Getenv("PAGERDUTY_TIME_ZONE"); v != "" {

@@ -48,28 +48,37 @@ func (d *dataSourceExtensionSchema) Read(ctx context.Context, req datasource.Rea
 	}
 
 	var found *pagerduty.ExtensionSchema
-	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		list, err := d.client.ListExtensionSchemasWithContext(ctx, pagerduty.ListExtensionSchemaOptions{Limit: 100})
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
+	offset := 0
+	more := true
+	for more {
+		err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+			o := pagerduty.ListExtensionSchemaOptions{Limit: 20, Offset: uint(offset), Total: true}
+			list, err := d.client.ListExtensionSchemasWithContext(ctx, o)
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
-			return retry.RetryableError(err)
-		}
 
-		for _, extensionSchema := range list.ExtensionSchemas {
-			if strings.EqualFold(extensionSchema.Label, searchName.ValueString()) {
-				found = &extensionSchema
-				break
+			for _, extensionSchema := range list.ExtensionSchemas {
+				if strings.EqualFold(extensionSchema.Label, searchName.ValueString()) {
+					found = &extensionSchema
+					more = false
+					return nil
+				}
 			}
+
+			more = list.More
+			offset += len(list.ExtensionSchemas)
+			return nil
+		})
+		if err != nil {
+			resp.Diagnostics.AddError(
+				fmt.Sprintf("Error reading PagerDuty extension schema %s", searchName),
+				err.Error(),
+			)
 		}
-		return nil
-	})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Error reading PagerDuty extension schema %s", searchName),
-			err.Error(),
-		)
 	}
 
 	if found == nil {

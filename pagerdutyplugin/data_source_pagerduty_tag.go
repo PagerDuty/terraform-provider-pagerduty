@@ -52,14 +52,14 @@ func (d *dataSourceTag) Read(ctx context.Context, req datasource.ReadRequest, re
 
 	var tags []*pagerduty.Tag
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		list, err := d.client.ListTags(pagerduty.ListTagOptions{Query: searchTag})
+		list, err := d.client.ListTagsPaginated(ctx, pagerduty.ListTagOptions{Query: searchTag, Limit: 100})
 		if err != nil {
 			if util.IsBadRequestError(err) {
 				return retry.NonRetryableError(err)
 			}
 			return retry.RetryableError(err)
 		}
-		tags = list.Tags
+		tags = list
 		return nil
 	})
 	if err != nil {

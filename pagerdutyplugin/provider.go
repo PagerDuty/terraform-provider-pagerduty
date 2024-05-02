@@ -9,6 +9,8 @@ import (
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -50,15 +52,21 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 func (p *Provider) DataSources(ctx context.Context) [](func() datasource.DataSource) {
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
+		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourcesScores{} },
 		func() datasource.DataSource { return &dataSourceStandards{} },
+		func() datasource.DataSource { return &dataSourceTag{} },
 	}
 }
 
 func (p *Provider) Resources(ctx context.Context) [](func() resource.Resource) {
 	return [](func() resource.Resource){
 		func() resource.Resource { return &resourceBusinessService{} },
+		func() resource.Resource { return &resourceExtensionServiceNow{} },
+		func() resource.Resource { return &resourceExtension{} },
+		func() resource.Resource { return &resourceTagAssignment{} },
+		func() resource.Resource { return &resourceTag{} },
 	}
 }
 
@@ -183,4 +191,15 @@ type providerArguments struct {
 	ServiceRegion             types.String `tfsdk:"service_region"`
 	ApiUrlOverride            types.String `tfsdk:"api_url_override"`
 	UseAppOauthScopedToken    types.List   `tfsdk:"use_app_oauth_scoped_token"`
+}
+
+type SchemaGetter interface {
+	GetAttribute(context.Context, path.Path, interface{}) diag.Diagnostics
+}
+
+func extractString(ctx context.Context, schema SchemaGetter, name string, diags *diag.Diagnostics) *string {
+	var s types.String
+	d := schema.GetAttribute(ctx, path.Root(name), &s)
+	diags.Append(d...)
+	return s.ValueStringPointer()
 }

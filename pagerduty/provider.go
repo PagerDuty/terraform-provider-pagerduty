@@ -89,13 +89,11 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_user_contact_method":                        dataSourcePagerDutyUserContactMethod(),
 			"pagerduty_team":                                       dataSourcePagerDutyTeam(),
 			"pagerduty_vendor":                                     dataSourcePagerDutyVendor(),
-			"pagerduty_extension_schema":                           dataSourcePagerDutyExtensionSchema(),
 			"pagerduty_service":                                    dataSourcePagerDutyService(),
 			"pagerduty_service_integration":                        dataSourcePagerDutyServiceIntegration(),
 			"pagerduty_business_service":                           dataSourcePagerDutyBusinessService(),
 			"pagerduty_priority":                                   dataSourcePagerDutyPriority(),
 			"pagerduty_ruleset":                                    dataSourcePagerDutyRuleset(),
-			"pagerduty_tag":                                        dataSourcePagerDutyTag(),
 			"pagerduty_event_orchestration":                        dataSourcePagerDutyEventOrchestration(),
 			"pagerduty_event_orchestrations":                       dataSourcePagerDutyEventOrchestrations(),
 			"pagerduty_event_orchestration_integration":            dataSourcePagerDutyEventOrchestrationIntegration(),
@@ -120,16 +118,12 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_user":                                          resourcePagerDutyUser(),
 			"pagerduty_user_contact_method":                           resourcePagerDutyUserContactMethod(),
 			"pagerduty_user_notification_rule":                        resourcePagerDutyUserNotificationRule(),
-			"pagerduty_extension":                                     resourcePagerDutyExtension(),
-			"pagerduty_extension_servicenow":                          resourcePagerDutyExtensionServiceNow(),
 			"pagerduty_event_rule":                                    resourcePagerDutyEventRule(),
 			"pagerduty_ruleset":                                       resourcePagerDutyRuleset(),
 			"pagerduty_ruleset_rule":                                  resourcePagerDutyRulesetRule(),
 			"pagerduty_business_service":                              resourcePagerDutyBusinessService(),
 			"pagerduty_service_dependency":                            resourcePagerDutyServiceDependency(),
 			"pagerduty_response_play":                                 resourcePagerDutyResponsePlay(),
-			"pagerduty_tag":                                           resourcePagerDutyTag(),
-			"pagerduty_tag_assignment":                                resourcePagerDutyTagAssignment(),
 			"pagerduty_service_event_rule":                            resourcePagerDutyServiceEventRule(),
 			"pagerduty_slack_connection":                              resourcePagerDutySlackConnection(),
 			"pagerduty_business_service_subscriber":                   resourcePagerDutyBusinessServiceSubscriber(),
@@ -156,6 +150,7 @@ func Provider(isMux bool) *schema.Provider {
 
 	if isMux {
 		delete(p.DataSourcesMap, "pagerduty_business_service")
+
 		delete(p.ResourcesMap, "pagerduty_business_service")
 	}
 
@@ -213,7 +208,7 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 	return genError(err, d)
 }
 
-func providerConfigureContextFunc(ctx context.Context, data *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
+func providerConfigureContextFunc(_ context.Context, data *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceRegion := strings.ToLower(data.Get("service_region").(string))
 
@@ -243,7 +238,7 @@ func providerConfigureContextFunc(ctx context.Context, data *schema.ResourceData
 		if err := validateAuthMethodConfig(data); err != nil {
 			diag := diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary:  fmt.Sprint("`token` and `use_app_oauth_scoped_token` are both configured at the same time"),
+				Summary:  "`token` and `use_app_oauth_scoped_token` are both configured at the same time",
 				Detail:   err.Error(),
 			}
 			diags = append(diags, diag)

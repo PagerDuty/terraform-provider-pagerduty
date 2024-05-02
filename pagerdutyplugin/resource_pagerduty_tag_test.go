@@ -1,15 +1,16 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 	"testing"
 
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -20,17 +21,10 @@ func init() {
 }
 
 func testSweepTag(region string) error {
-	config, err := sharedConfigForRegion(region)
-	if err != nil {
-		return err
-	}
+	client := testAccProvider.client
+	ctx := context.Background()
 
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-
-	resp, _, err := client.Tags.List(&pagerduty.ListTagsOptions{})
+	resp, err := client.ListTags(pagerduty.ListTagOptions{})
 	if err != nil {
 		return err
 	}
@@ -38,7 +32,7 @@ func testSweepTag(region string) error {
 	for _, tag := range resp.Tags {
 		if strings.HasPrefix(tag.Label, "test") || strings.HasPrefix(tag.Label, "tf-") {
 			log.Printf("Destroying tag %s (%s)", tag.Label, tag.ID)
-			if _, err := client.Tags.Delete(tag.ID); err != nil {
+			if err := client.DeleteTagWithContext(ctx, tag.ID); err != nil {
 				return err
 			}
 		}
@@ -51,9 +45,9 @@ func TestAccPagerDutyTag_Basic(t *testing.T) {
 	tagLabel := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTagDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTagDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTagConfig(tagLabel),
@@ -77,12 +71,13 @@ func TestAccPagerDutyTag_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyTagDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
+	client := testAccProvider.client
+	ctx := context.Background()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_tag" {
 			continue
 		}
-		if _, _, err := client.Tags.Get(r.Primary.ID); err == nil {
+		if _, err := client.GetTagWithContext(ctx, r.Primary.ID); err == nil {
 			return fmt.Errorf("Tag still exists")
 		}
 	}
@@ -91,6 +86,9 @@ func testAccCheckPagerDutyTagDestroy(s *terraform.State) error {
 
 func testAccCheckPagerDutyTagExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		client := testAccProvider.client
+		ctx := context.Background()
+
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -99,8 +97,7 @@ func testAccCheckPagerDutyTagExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No Tag ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.Tags.Get(rs.Primary.ID)
+		found, err := client.GetTagWithContext(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -114,6 +111,9 @@ func testAccCheckPagerDutyTagExists(n string) resource.TestCheckFunc {
 
 func testAccExternallyDestroyTag(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		client := testAccProvider.client
+		ctx := context.Background()
+
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -122,9 +122,7 @@ func testAccExternallyDestroyTag(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No Tag ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		_, err := client.Tags.Delete(rs.Primary.ID)
-		if err != nil {
+		if err := client.DeleteTagWithContext(ctx, rs.Primary.ID); err != nil {
 			return err
 		}
 

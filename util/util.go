@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TimeToUTC(v string) (time.Time, error) {
@@ -24,6 +25,19 @@ func TimeToUTC(v string) (time.Time, error) {
 	}
 
 	return t.UTC(), nil
+}
+
+// TimeNowInLoc returns the current time in the given location.
+// If an error occurs when trying to load the location, we just return the
+// current local time.
+func TimeNowInLoc(name string) time.Time {
+	loc, err := time.LoadLocation(name)
+	now := time.Now()
+	if err != nil {
+		log.Printf("[WARN] Failed to load location: %s", err)
+		return now
+	}
+	return now.In(loc)
 }
 
 // ValidateRFC3339 validates that a date string has the correct RFC3339 layout
@@ -63,7 +77,7 @@ func SuppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) boo
 func SuppressScheduleLayerStartDiff(k, oldTime, newTime string, d *schema.ResourceData) bool {
 	oldT, newT, err := ParseRFC3339Time(k, oldTime, newTime)
 	if err != nil {
-		log.Printf(err.Error())
+		log.Print(err.Error())
 		return false
 	}
 
@@ -454,4 +468,27 @@ var validTZ []string = []string{
 	"Pacific/Pago_Pago",
 	"Pacific/Port_Moresby",
 	"Pacific/Tongatapu",
+}
+
+// CheckJSONEqual returns a function that can be used as in input for
+// `resource.TestCheckResourceAttrWith`, it compares two json strings are
+// equivalent in data.
+func CheckJSONEqual(expected string) resource.CheckResourceAttrWithFunc {
+	return resource.CheckResourceAttrWithFunc(func(value string) error {
+		var exp interface{}
+		if err := json.Unmarshal([]byte(expected), &exp); err != nil {
+			return err
+		}
+
+		var got interface{}
+		if err := json.Unmarshal([]byte(value), &got); err != nil {
+			return err
+		}
+
+		if !reflect.DeepEqual(exp, got) {
+			return fmt.Errorf(`Received value "%v", but expected "%v"`, got, exp)
+		}
+
+		return nil
+	})
 }

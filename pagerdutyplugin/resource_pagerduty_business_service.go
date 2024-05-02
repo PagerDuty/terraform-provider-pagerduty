@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	helperResource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -34,11 +36,16 @@ func (r *resourceBusinessService) Metadata(ctx context.Context, req resource.Met
 func (r *resourceBusinessService) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"name":     schema.StringAttribute{Required: true},
-			"id":       schema.StringAttribute{Computed: true},
-			"html_url": schema.StringAttribute{Computed: true},
-			"self":     schema.StringAttribute{Computed: true},
-			"summary":  schema.StringAttribute{Computed: true},
+			"html_url":         schema.StringAttribute{Computed: true},
+			"name":             schema.StringAttribute{Required: true},
+			"point_of_contact": schema.StringAttribute{Optional: true},
+			"self":             schema.StringAttribute{Computed: true},
+			"summary":          schema.StringAttribute{Computed: true},
+			"team":             schema.StringAttribute{Optional: true},
+			"id": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 			"description": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
@@ -51,8 +58,6 @@ func (r *resourceBusinessService) Schema(_ context.Context, _ resource.SchemaReq
 				DeprecationMessage: "This will become a computed attribute in the next major release.",
 				Validators:         []validator.String{stringvalidator.OneOf("business_service")},
 			},
-			"point_of_contact": schema.StringAttribute{Optional: true},
-			"team":             schema.StringAttribute{Optional: true},
 		},
 	}
 }
@@ -64,7 +69,7 @@ func (r *resourceBusinessService) Create(ctx context.Context, req resource.Creat
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	businessServicePlan := buildPagerdutyBusinessService(ctx, &plan)
+	businessServicePlan := buildPagerdutyBusinessService(&plan)
 	log.Printf("[INFO] Creating PagerDuty business service %s", plan.Name)
 
 	err := helperResource.RetryContext(ctx, 5*time.Minute, func() *helperResource.RetryError {
@@ -115,7 +120,7 @@ func (r *resourceBusinessService) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	businessServicePlan := buildPagerdutyBusinessService(ctx, &plan)
+	businessServicePlan := buildPagerdutyBusinessService(&plan)
 	if businessServicePlan.ID == "" {
 		var id string
 		req.State.GetAttribute(ctx, path.Root("id"), &id)
@@ -197,7 +202,7 @@ func requestGetBusinessService(ctx context.Context, client *pagerduty.Client, id
 	return model
 }
 
-func buildPagerdutyBusinessService(ctx context.Context, model *resourceBusinessServiceModel) *pagerduty.BusinessService {
+func buildPagerdutyBusinessService(model *resourceBusinessServiceModel) *pagerduty.BusinessService {
 	businessService := pagerduty.BusinessService{
 		ID:             model.ID.ValueString(),
 		Description:    model.Description.ValueString(),

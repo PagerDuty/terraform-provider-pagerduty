@@ -14,9 +14,9 @@ func TestAccPagerDutyTagAssignment_import(t *testing.T) {
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTagAssignmentDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTagAssignmentDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTagAssignmentTeamConfig(tag, team),

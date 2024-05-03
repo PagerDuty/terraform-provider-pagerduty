@@ -194,7 +194,7 @@ func (r *resourceExtensionServiceNow) Delete(ctx context.Context, req resource.D
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *resourceExtensionServiceNow) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *resourceExtensionServiceNow) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&r.client, req.ProviderData)...)
 }
 
@@ -266,7 +266,7 @@ func (r *resourceExtensionServiceNow) requestGetExtensionServiceNow(ctx context.
 }
 
 func buildPagerdutyExtensionServiceNow(ctx context.Context, model *resourceExtensionServiceNowModel, diags *diag.Diagnostics) *pagerduty.Extension {
-	config := &PagerDutyExtensionServiceNowConfig{
+	config := &pagerDutyExtensionServiceNowConfig{
 		User:        model.SnowUser.ValueString(),
 		Password:    model.SnowPassword.ValueString(),
 		SyncOptions: model.SyncOptions.ValueString(),
@@ -313,7 +313,7 @@ func flattenExtensionServiceNow(src *pagerduty.Extension, snowPassword *string, 
 	}
 
 	b, _ := json.Marshal(src.Config)
-	var config PagerDutyExtensionServiceNowConfig
+	var config pagerDutyExtensionServiceNowConfig
 	_ = json.Unmarshal(b, &config)
 
 	model.SnowUser = types.StringValue(config.User)
@@ -344,7 +344,7 @@ func flattenExtensionServiceNowObjects(list []pagerduty.APIObject) types.Set {
 	return types.SetValueMust(types.StringType, elements)
 }
 
-type PagerDutyExtensionServiceNowConfig struct {
+type pagerDutyExtensionServiceNowConfig struct {
 	User        string `json:"snow_user"`
 	Password    string `json:"snow_password,omitempty"`
 	SyncOptions string `json:"sync_options"`

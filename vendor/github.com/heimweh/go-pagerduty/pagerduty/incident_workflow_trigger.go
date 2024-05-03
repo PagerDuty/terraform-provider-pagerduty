@@ -11,13 +11,19 @@ type IncidentWorkflowTriggerService service
 
 // IncidentWorkflowTrigger represents an incident workflow.
 type IncidentWorkflowTrigger struct {
-	ID                      string                      `json:"id,omitempty"`
-	Type                    string                      `json:"type,omitempty"`
-	TriggerType             IncidentWorkflowTriggerType `json:"trigger_type,omitempty"`
-	Workflow                *IncidentWorkflow           `json:"workflow,omitempty"`
-	Services                []*ServiceReference         `json:"services,omitempty"`
-	Condition               *string                     `json:"condition,omitempty"`
-	SubscribedToAllServices bool                        `json:"is_subscribed_to_all_services,omitempty"`
+	ID                      string                              `json:"id,omitempty"`
+	Type                    string                              `json:"type,omitempty"`
+	TriggerType             IncidentWorkflowTriggerType         `json:"trigger_type,omitempty"`
+	Workflow                *IncidentWorkflow                   `json:"workflow,omitempty"`
+	Services                []*ServiceReference                 `json:"services,omitempty"`
+	Condition               *string                             `json:"condition,omitempty"`
+	SubscribedToAllServices bool                                `json:"is_subscribed_to_all_services,omitempty"`
+	Permissions             *IncidentWorkflowTriggerPermissions `json:"permissions,omitempty"`
+}
+
+type IncidentWorkflowTriggerPermissions struct {
+	Restricted bool   `json:"restricted"`
+	TeamID     string `json:"team_id,omitempty"`
 }
 
 // ListIncidentWorkflowTriggerResponse represents a list response of incident workflow triggers.

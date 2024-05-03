@@ -23,15 +23,15 @@ type EventOrchestrationCacheVariableConfiguration struct {
 }
 
 type EventOrchestrationCacheVariable struct {
-	ID            string                                   			`json:"id,omitempty"`
-	Name          string                                    		`json:"name,omitempty"`
-	Disabled      bool 																          `json:"disabled"`
+	ID            string                                        `json:"id,omitempty"`
+	Name          string                                        `json:"name,omitempty"`
+	Disabled      bool                                          `json:"disabled"`
 	Conditions    []*EventOrchestrationCacheVariableCondition   `json:"conditions"`
 	Configuration *EventOrchestrationCacheVariableConfiguration `json:"configuration,omitempty"`
-	CreatedAt     string                           							`json:"created_at,omitempty"`
-	CreatedBy     *UserReference 																`json:"created_by,omitempty"`
-	UpdatedAt     string                           							`json:"updated_at,omitempty"`
-	UpdatedBy     *UserReference 																`json:"updated_by,omitempty"`
+	CreatedAt     string                                        `json:"created_at,omitempty"`
+	CreatedBy     *UserReference                                `json:"created_by,omitempty"`
+	UpdatedAt     string                                        `json:"updated_at,omitempty"`
+	UpdatedBy     *UserReference                                `json:"updated_by,omitempty"`
 }
 
 type EventOrchestrationCacheVariablePayload struct {
@@ -67,7 +67,7 @@ func (s *EventOrchestrationCacheVariableService) List(ctx context.Context, cache
 	return v, resp, nil
 }
 
-func (s *EventOrchestrationCacheVariableService) Create(ctx context.Context, cacheVariableType string,  orchestrationId string, cacheVariable *EventOrchestrationCacheVariable) (*EventOrchestrationCacheVariable, *Response, error) {
+func (s *EventOrchestrationCacheVariableService) Create(ctx context.Context, cacheVariableType string, orchestrationId string, cacheVariable *EventOrchestrationCacheVariable) (*EventOrchestrationCacheVariable, *Response, error) {
 	u := buildEventOrchestrationCacheVariableUrl(cacheVariableType, orchestrationId, "")
 	v := new(EventOrchestrationCacheVariablePayload)
 	p := &EventOrchestrationCacheVariablePayload{CacheVariable: cacheVariable}

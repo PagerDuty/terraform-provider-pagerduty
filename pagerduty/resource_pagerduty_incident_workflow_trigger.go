@@ -52,6 +52,25 @@ func resourcePagerDutyIncidentWorkflowTrigger() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"permissions": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"restricted": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+						"team_id": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -138,6 +157,16 @@ func validateIncidentWorkflowTrigger(_ context.Context, d *schema.ResourceDiff, 
 		return fmt.Errorf("when trigger type conditional is used, condition must be specified")
 	}
 
+	// pagerduty_incident_workflow_trigger.permissions input validation
+	permissionRestricted := d.Get("permissions.0.restricted").(bool)
+	permissionTeamID := d.Get("permissions.0.team_id").(string)
+	if triggerType != "manual" && permissionRestricted {
+		return fmt.Errorf("restricted can only be true when trigger type is manual")
+	}
+	if !permissionRestricted && permissionTeamID != "" {
+		return fmt.Errorf("team_id not allowed when restricted is false")
+	}
+
 	s, hadServices := d.GetOk("services")
 	all := d.Get("subscribed_to_all_services").(bool)
 	if all && hadServices && len(s.([]interface{})) > 0 {
@@ -186,6 +215,14 @@ func flattenIncidentWorkflowTrigger(d *schema.ResourceData, t *pagerduty.Inciden
 	if t.Condition != nil {
 		d.Set("condition", t.Condition)
 	}
+	if t.Permissions != nil {
+		d.Set("permissions", []map[string]interface{}{
+			{
+				"restricted": t.Permissions.Restricted,
+				"team_id":    t.Permissions.TeamID,
+			},
+		})
+	}
 
 	return nil
 }
@@ -219,6 +256,14 @@ func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) 
 		iwt.Condition = &condStr
 	}
 
+	if permissions, ok := d.GetOk("permissions"); ok {
+		p, err := expandIncidentWorkflowTriggerPermissions(permissions)
+		if err != nil {
+			return nil, err
+		}
+		iwt.Permissions = p
+	}
+
 	return &iwt, nil
 }
 
@@ -231,4 +276,29 @@ func buildIncidentWorkflowTriggerServices(s interface{}) []*pagerduty.ServiceRef
 		}
 	}
 	return newServices
+}
+
+func expandIncidentWorkflowTriggerPermissions(v interface{}) (*pagerduty.IncidentWorkflowTriggerPermissions, error) {
+	var permissions *pagerduty.IncidentWorkflowTriggerPermissions
+
+	permissionsData, ok := v.([]interface{})
+	if ok && len(permissionsData) > 0 {
+		p := permissionsData[0].(map[string]interface{})
+
+		// Unfortunately this validatation can't be made during diff checking, since
+		// Diff Customization doesn't support computed/"known after apply" values
+		// like team_id in this case. Based on
+		// https://developer.hashicorp.com/terraform/plugin/sdkv2/resources/customizing-differences
+		// because of this, it will only be returned during the apply phase.
+		if p["restricted"].(bool) && p["team_id"].(string) == "" {
+			return nil, fmt.Errorf("team_id must be specified when restricted is true")
+		}
+
+		permissions = &pagerduty.IncidentWorkflowTriggerPermissions{
+			Restricted: p["restricted"].(bool),
+			TeamID:     p["team_id"].(string),
+		}
+	}
+
+	return permissions, nil
 }

@@ -1,11 +1,9 @@
 package pagerduty
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
-	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -56,19 +54,3 @@ data "pagerduty_extension_schema" "foo" {
   name = "ServiceNow (v7)"
 }
 `
-
-func testAccCheckPagerDutyScheduleDestroy(s *terraform.State) error {
-	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_schedule" {
-			continue
-		}
-
-		ctx := context.Background()
-		opts := pagerduty.GetScheduleOptions{}
-		if _, err := testAccProvider.client.GetScheduleWithContext(ctx, r.Primary.ID, opts); err == nil {
-			return fmt.Errorf("Schedule still exists")
-		}
-
-	}
-	return nil
-}

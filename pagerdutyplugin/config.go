@@ -61,6 +61,11 @@ Please see https://www.terraform.io/docs/providers/pagerduty/index.html
 for more information on providing credentials for this provider.
 `
 
+// RetryNotFound is defined to have a named boolean when passing it to
+// requestThing functions. If true, they should be further attempts to get a
+// resource from the API even if we receive a 404 during a time window.
+const RetryNotFound = true
+
 // Client returns a PagerDuty client, initializing when necessary.
 func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 	c.mu.Lock()

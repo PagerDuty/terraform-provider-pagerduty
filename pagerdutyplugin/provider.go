@@ -68,6 +68,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceBusinessService{} },
 		func() resource.Resource { return &resourceExtensionServiceNow{} },
 		func() resource.Resource { return &resourceExtension{} },
+		func() resource.Resource { return &resourceSchedule{} },
 		func() resource.Resource { return &resourceServiceDependency{} },
 		func() resource.Resource { return &resourceTagAssignment{} },
 		func() resource.Resource { return &resourceTag{} },
@@ -204,4 +205,26 @@ func extractString(ctx context.Context, schema SchemaGetter, name string, diags 
 	d := schema.GetAttribute(ctx, path.Root(name), &s)
 	diags.Append(d...)
 	return s.ValueStringPointer()
+}
+
+func buildPagerdutyAPIObjectFromIDs(ctx context.Context, list types.List, apiType string, diags *diag.Diagnostics) []pagerduty.APIObject {
+	if list.IsNull() || list.IsUnknown() {
+		return nil
+	}
+
+	var target []types.String
+	diags.Append(list.ElementsAs(ctx, &target, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	response := make([]pagerduty.APIObject, 0, len(target))
+	for _, id := range target {
+		response = append(response, pagerduty.APIObject{
+			ID:   id.ValueString(),
+			Type: apiType,
+		})
+	}
+
+	return response
 }

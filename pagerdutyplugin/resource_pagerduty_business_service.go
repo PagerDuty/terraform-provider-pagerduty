@@ -29,7 +29,7 @@ var (
 	_ resource.ResourceWithImportState = (*resourceBusinessService)(nil)
 )
 
-func (r *resourceBusinessService) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *resourceBusinessService) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "pagerduty_business_service"
 }
 
@@ -161,7 +161,7 @@ func (r *resourceBusinessService) Delete(ctx context.Context, req resource.Delet
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *resourceBusinessService) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *resourceBusinessService) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&r.client, req.ProviderData)...)
 }
 

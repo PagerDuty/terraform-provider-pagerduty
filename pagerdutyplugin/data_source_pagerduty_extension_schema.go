@@ -20,11 +20,11 @@ type dataSourceExtensionSchema struct{ client *pagerduty.Client }
 
 var _ datasource.DataSourceWithConfigure = (*dataSourceExtensionSchema)(nil)
 
-func (*dataSourceExtensionSchema) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (*dataSourceExtensionSchema) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "pagerduty_extension_schema"
 }
 
-func (*dataSourceExtensionSchema) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (*dataSourceExtensionSchema) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id":   schema.StringAttribute{Computed: true},
@@ -34,7 +34,7 @@ func (*dataSourceExtensionSchema) Schema(ctx context.Context, req datasource.Sch
 	}
 }
 
-func (d *dataSourceExtensionSchema) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *dataSourceExtensionSchema) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 

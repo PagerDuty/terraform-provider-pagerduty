@@ -15,9 +15,9 @@ func TestAccPagerDutyService_import(t *testing.T) {
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service),
@@ -32,16 +32,16 @@ func TestAccPagerDutyService_import(t *testing.T) {
 	})
 }
 
-func TestAccPagerDutyServiceWithIncidentUrgency_import(t *testing.T) {
+func TestAccPagerDutyService_import_WithIncidentUrgency(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceWithIncidentUrgencyRulesConfig(username, email, escalationPolicy, service),
@@ -56,16 +56,16 @@ func TestAccPagerDutyServiceWithIncidentUrgency_import(t *testing.T) {
 	})
 }
 
-func TestAccPagerDutyServiceWithAlertGroupingParameters_import(t *testing.T) {
+func TestAccPagerDutyService_import_WithAlertGroupingParameters(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGrouping(username, email, escalationPolicy, service),
@@ -88,16 +88,16 @@ func TestAccPagerDutyServiceWithAlertGroupingParameters_import(t *testing.T) {
 	})
 }
 
-func TestAccPagerDutyServiceWithAutoPauseNotifications_import(t *testing.T) {
+func TestAccPagerDutyService_import_WithAutoPauseNotifications(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParameters(username, email, escalationPolicy, service),

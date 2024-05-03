@@ -84,3 +84,17 @@ func testAccTimeNow() time.Time {
 	}
 	return util.TimeNowInLoc(name)
 }
+
+func testAccPreCheckPagerDutyAbility(t *testing.T, ability string) {
+	if v := os.Getenv("PAGERDUTY_TOKEN"); v == "" {
+		t.Fatal("PAGERDUTY_TOKEN must be set for acceptance tests")
+	}
+	if v := os.Getenv("PAGERDUTY_USER_TOKEN"); v == "" {
+		t.Fatal("PAGERDUTY_USER_TOKEN must be set for acceptance tests")
+	}
+
+	ctx := context.Background()
+	if err := testAccProvider.client.TestAbilityWithContext(ctx, ability); err != nil {
+		t.Skipf("Missing ability: %s. Skipping test", ability)
+	}
+}

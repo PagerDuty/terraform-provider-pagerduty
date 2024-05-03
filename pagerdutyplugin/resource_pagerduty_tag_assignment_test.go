@@ -209,7 +209,7 @@ func testAccCheckPagerDutyTagAssignmentExists(n, entityType string) resource.Tes
 			return err
 		}
 		// find tag the test created
-		var isFound bool = false
+		isFound := false
 		for _, tag := range response.Tags {
 			if tag.ID == tagID {
 				isFound = true

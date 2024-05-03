@@ -41,11 +41,11 @@ func testSweepExtensionServiceNow(_ string) error {
 }
 
 func TestAccPagerDutyExtensionServiceNow_Basic(t *testing.T) {
-	extension_name := id.PrefixedUniqueId("tf-")
-	extension_name_updated := id.PrefixedUniqueId("tf-")
+	extensionName := id.PrefixedUniqueId("tf-")
+	extensionNameUpdated := id.PrefixedUniqueId("tf-")
 	name := id.PrefixedUniqueId("tf-")
 	url := "https://example.com/receive_a_pagerduty_webhook"
-	url_updated := "https://example.com/webhook_foo"
+	urlUpdated := "https://example.com/webhook_foo"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -53,11 +53,11 @@ func TestAccPagerDutyExtensionServiceNow_Basic(t *testing.T) {
 		CheckDestroy:             testAccCheckPagerDutyExtensionServiceNowDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyExtensionServiceNowConfig(name, extension_name, url, "false", "any"),
+				Config: testAccCheckPagerDutyExtensionServiceNowConfig(name, extensionName, url, "false", "any"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyExtensionServiceNowExists("pagerduty_extension_servicenow.foo"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension_servicenow.foo", "name", extension_name),
+						"pagerduty_extension_servicenow.foo", "name", extensionName),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
@@ -79,15 +79,15 @@ func TestAccPagerDutyExtensionServiceNow_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyExtensionServiceNowConfig(name, extension_name_updated, url_updated, "true", "pd-users"),
+				Config: testAccCheckPagerDutyExtensionServiceNowConfig(name, extensionNameUpdated, urlUpdated, "true", "pd-users"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyExtensionServiceNowExists("pagerduty_extension_servicenow.foo"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension_servicenow.foo", "name", extension_name_updated),
+						"pagerduty_extension_servicenow.foo", "name", extensionNameUpdated),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension_servicenow.foo", "endpoint_url", url_updated),
+						"pagerduty_extension_servicenow.foo", "endpoint_url", urlUpdated),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension_servicenow.foo", "html_url", ""),
 					resource.TestCheckResourceAttr(
@@ -150,7 +150,7 @@ func testAccCheckPagerDutyExtensionServiceNowExists(n string) resource.TestCheck
 	}
 }
 
-func testAccCheckPagerDutyExtensionServiceNowConfig(name string, extension_name string, url string, notify_types string, restrict string) string {
+func testAccCheckPagerDutyExtensionServiceNowConfig(name string, extensionName string, url string, _ string, _ string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
@@ -206,5 +206,5 @@ resource "pagerduty_extension_servicenow" "foo"{
   referer = "None"
 }
 
-`, name, extension_name, url, restrict, notify_types)
+`, name, extensionName, url)
 }

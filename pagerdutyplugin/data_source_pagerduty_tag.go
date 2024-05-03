@@ -21,15 +21,11 @@ type dataSourceTag struct {
 
 var _ datasource.DataSourceWithConfigure = (*dataSourceStandards)(nil)
 
-func (d *dataSourceTag) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
-}
-
-func (d *dataSourceTag) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *dataSourceTag) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "pagerduty_tag"
 }
 
-func (d *dataSourceTag) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *dataSourceTag) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"label": schema.StringAttribute{
@@ -39,6 +35,10 @@ func (d *dataSourceTag) Schema(ctx context.Context, req datasource.SchemaRequest
 			"id": schema.StringAttribute{Computed: true},
 		},
 	}
+}
+
+func (d *dataSourceTag) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 
 func (d *dataSourceTag) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

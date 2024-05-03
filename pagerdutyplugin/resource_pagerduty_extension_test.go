@@ -21,7 +21,7 @@ func init() {
 	})
 }
 
-func testSweepExtension(region string) error {
+func testSweepExtension(_ string) error {
 	ctx := context.Background()
 
 	resp, err := testAccProvider.client.ListExtensionsWithContext(ctx, pagerduty.ListExtensionOptions{})
@@ -42,11 +42,11 @@ func testSweepExtension(region string) error {
 }
 
 func TestAccPagerDutyExtension_Basic(t *testing.T) {
-	extension_name := id.PrefixedUniqueId("tf-")
-	extension_name_updated := id.PrefixedUniqueId("tf-")
+	extensionName := id.PrefixedUniqueId("tf-")
+	extensionNameUpdated := id.PrefixedUniqueId("tf-")
 	name := id.PrefixedUniqueId("tf-")
 	url := "https://example.com/receive_a_pagerduty_webhook"
-	url_updated := "https://example.com/webhook_foo"
+	urlUpdated := "https://example.com/webhook_foo"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -54,11 +54,11 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 		CheckDestroy:             testAccCheckPagerDutyExtensionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url, "false", "any"),
+				Config: testAccCheckPagerDutyExtensionConfig(name, extensionName, url, "false", "any"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyExtensionExists("pagerduty_extension.foo"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension.foo", "name", extension_name),
+						"pagerduty_extension.foo", "name", extensionName),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
@@ -70,15 +70,15 @@ func TestAccPagerDutyExtension_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name_updated, url_updated, "true", "pd-users"),
+				Config: testAccCheckPagerDutyExtensionConfig(name, extensionNameUpdated, urlUpdated, "true", "pd-users"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyExtensionExists("pagerduty_extension.foo"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension.foo", "name", extension_name_updated),
+						"pagerduty_extension.foo", "name", extensionNameUpdated),
 					resource.TestCheckResourceAttr(
 						"pagerduty_extension.foo", "extension_schema", "PJFWPEP"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_extension.foo", "endpoint_url", url_updated),
+						"pagerduty_extension.foo", "endpoint_url", urlUpdated),
 					resource.TestCheckResourceAttrWith(
 						"pagerduty_extension.foo", "config", util.CheckJSONEqual("{\"notify_types\":{\"acknowledge\":true,\"assignments\":true,\"resolve\":true},\"restrict\":\"pd-users\"}")),
 				),
@@ -127,7 +127,7 @@ func testAccCheckPagerDutyExtensionExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckPagerDutyExtensionConfig(name string, extension_name string, url string, notify_types string, restrict string) string {
+func testAccCheckPagerDutyExtensionConfig(name string, extensionName string, url string, notifyTypes string, restrict string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%[1]v"
@@ -187,5 +187,5 @@ resource "pagerduty_extension" "foo"{
 EOF
 }
 
-`, name, extension_name, url, restrict, notify_types)
+`, name, extensionName, url, restrict, notifyTypes)
 }

@@ -20,7 +20,7 @@ func init() {
 	})
 }
 
-func testSweepTag(region string) error {
+func testSweepTag(_ string) error {
 	client := testAccProvider.client
 	ctx := context.Background()
 

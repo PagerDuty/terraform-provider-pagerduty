@@ -21,13 +21,13 @@ type Config struct {
 	mu sync.Mutex
 
 	// The PagerDuty API URL
-	ApiUrl string
+	APIURL string
 
 	// Override default PagerDuty API URL
-	ApiUrlOverride string
+	APIURLOverride string
 
 	// The PagerDuty APP URL
-	AppUrl string
+	AppURL string
 
 	// The PagerDuty API V2 token
 	Token string
@@ -52,7 +52,7 @@ type Config struct {
 }
 
 type AppOauthScopedToken struct {
-	ClientId, ClientSecret, Subdomain string
+	ClientID, ClientSecret, Subdomain string
 }
 
 const invalidCreds = `
@@ -75,9 +75,9 @@ func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 	httpClient.Timeout = 1 * time.Minute
 	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
-	apiUrl := c.ApiUrl
-	if c.ApiUrlOverride != "" {
-		apiUrl = c.ApiUrlOverride
+	apiURL := c.APIURL
+	if c.APIURLOverride != "" {
+		apiURL = c.APIURLOverride
 	}
 
 	maxRetries := 1
@@ -85,7 +85,7 @@ func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 
 	clientOpts := []pagerduty.ClientOptions{
 		WithHTTPClient(httpClient),
-		pagerduty.WithAPIEndpoint(apiUrl),
+		pagerduty.WithAPIEndpoint(apiURL),
 		pagerduty.WithTerraformProvider(c.TerraformVersion),
 		pagerduty.WithRetryPolicy(maxRetries, retryInterval),
 	}
@@ -97,7 +97,7 @@ func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 		accountAndScopes = append(accountAndScopes, availableOauthScopes()...)
 		opt := pagerduty.WithScopedOAuthAppTokenSource(pagerduty.NewFileTokenSource(
 			ctx,
-			c.AppOauthScopedToken.ClientId,
+			c.AppOauthScopedToken.ClientID,
 			c.AppOauthScopedToken.ClientSecret,
 			accountAndScopes,
 			tokenFile,

@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.6.0
-	github.com/heimweh/go-pagerduty v0.0.0-20240403153232-5876af2ce24a
+	github.com/heimweh/go-pagerduty v0.0.0-20240503143637-3459408ac715
 )
 
 require (
@@ -75,5 +75,3 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
-
-replace github.com/heimweh/go-pagerduty => github.com/imjaroiswebdev/go-pagerduty v0.0.0-20240419180041-eace2b31e15b

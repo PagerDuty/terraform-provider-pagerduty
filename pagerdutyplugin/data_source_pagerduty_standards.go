@@ -17,11 +17,11 @@ type dataSourceStandards struct {
 
 var _ datasource.DataSourceWithConfigure = (*dataSourceStandards)(nil)
 
-func (d *dataSourceStandards) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *dataSourceStandards) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "pagerduty_standards"
 }
 
-func (d *dataSourceStandards) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *dataSourceStandards) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"resource_type": schema.StringAttribute{Optional: true},
@@ -31,6 +31,10 @@ func (d *dataSourceStandards) Schema(ctx context.Context, req datasource.SchemaR
 			},
 		},
 	}
+}
+
+func (d *dataSourceStandards) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 
 func (d *dataSourceStandards) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -52,10 +56,6 @@ func (d *dataSourceStandards) Read(ctx context.Context, req datasource.ReadReque
 	resp.Diagnostics.Append(diags...)
 	data.Standards = standards
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (d *dataSourceStandards) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 
 func flattenStandards(ctx context.Context, list []pagerduty.Standard) (types.List, diag.Diagnostics) {

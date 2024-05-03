@@ -19,11 +19,11 @@ type dataSourceStandardsResourcesScores struct {
 
 var _ datasource.DataSource = (*dataSourceStandardsResourcesScores)(nil)
 
-func (d *dataSourceStandardsResourcesScores) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *dataSourceStandardsResourcesScores) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "pagerduty_standards_resources_scores"
 }
 
-func (d *dataSourceStandardsResourcesScores) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *dataSourceStandardsResourcesScores) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"ids": schema.ListAttribute{
@@ -44,7 +44,7 @@ func (d *dataSourceStandardsResourcesScores) Schema(ctx context.Context, req dat
 	}
 }
 
-func (d *dataSourceStandardsResourcesScores) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *dataSourceStandardsResourcesScores) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 

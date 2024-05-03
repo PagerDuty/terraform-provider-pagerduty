@@ -32,7 +32,7 @@ func TestConfigSkipCredsValidation(t *testing.T) {
 func TestConfigCustomApiUrl(t *testing.T) {
 	config := Config{
 		Token:               "foo",
-		ApiUrl:              "https://api.domain.tld",
+		APIURL:              "https://api.domain.tld",
 		SkipCredsValidation: true,
 	}
 
@@ -45,7 +45,7 @@ func TestConfigCustomApiUrl(t *testing.T) {
 func TestConfigCustomApiUrlOverride(t *testing.T) {
 	config := Config{
 		Token:               "foo",
-		ApiUrlOverride:      "https://api.domain-override.tld",
+		APIURLOverride:      "https://api.domain-override.tld",
 		SkipCredsValidation: true,
 	}
 
@@ -58,7 +58,7 @@ func TestConfigCustomApiUrlOverride(t *testing.T) {
 func TestConfigCustomAppUrl(t *testing.T) {
 	config := Config{
 		Token:               "foo",
-		AppUrl:              "https://app.domain.tld",
+		AppURL:              "https://app.domain.tld",
 		SkipCredsValidation: true,
 	}
 

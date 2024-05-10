@@ -701,8 +701,8 @@ func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 						"pagerduty_service.foo", "auto_pause_notifications_parameters.#", "1"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "false"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "0"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout"),
 				),
 			},
 			{
@@ -723,8 +723,8 @@ func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 						"pagerduty_service.foo", "auto_pause_notifications_parameters.#", "1"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "false"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "0"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout"),
 				),
 			},
 		},
@@ -2027,7 +2027,6 @@ resource "pagerduty_service" "foo" {
 
   incident_urgency_rule {
     type = "use_support_hours"
-
     during_support_hours {
       type    = "constant"
       urgency = "high"

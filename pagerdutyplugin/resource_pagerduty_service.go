@@ -236,7 +236,6 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
 					listplanmodifier.UseStateForUnknown(),
 					planmodify.UseNullForRemovedWithState(),
 				},
@@ -252,7 +251,6 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 					listvalidator.SizeBetween(1, 1),
 				},
 				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
 					listplanmodifier.UseStateForUnknown(),
 				},
 				ElementType: types.ObjectType{
@@ -345,22 +343,6 @@ func (r *resourceService) ValidateConfig(ctx context.Context, req resource.Valid
 	if !pType.IsNull() && (pType.ValueString() != "intelligent" && pType.ValueString() != "content_based") && timeWindow.ValueInt64() > 300 {
 		resp.Diagnostics.AddError(`Alert grouping parameters configuration attribute "time_window" is only supported by "intelligent" and "content-based" type Alert Grouping`, "")
 		return
-	}
-}
-
-func (r *resourceService) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	// Set alert_grouping_parameters as Computed then "intelligent" type
-	var pType types.String
-	var config types.List
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, alertGroupingParametersPath.AtName("type"), &pType)...)
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, alertGroupingParametersPath.AtName("config"), &config)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	if pType.ValueString() == "intelligent" && config.IsNull() {
-		resp.Diagnostics.Append(
-			resp.Plan.SetAttribute(ctx, alertGroupingParametersPath.AtName("config"), types.ListUnknown(alertGroupingParametersConfigObjectType))...,
-		)
 	}
 }
 
@@ -1102,8 +1084,6 @@ var (
 			"config": types.ListType{ElemType: alertGroupingParametersConfigObjectType},
 		},
 	}
-
-	alertGroupingParametersPath = path.Root("alert_grouping_parameters").AtListIndex(0)
 
 	incidentUrgencyTypeObjectType = types.ObjectType{
 		AttrTypes: map[string]attr.Type{

@@ -1,3 +1,23 @@
+## 3.12.0 (May 9, 2024)
+
+FEATURES:
+
+* `resource/pagerduty_incident_workflow_trigger`: Add support for Incident Workflow triggers team restrictions ([#861](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/861))
+
+IMPROVEMENTS:
+
+* Migrate pack of datasources and resources to terraform plugin framework ([#816](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/816))
+  - `data/pagerduty_extension_schema`
+  - `data/pagerduty_tag`
+  - `resource/pagerduty_extension_servicenow`
+  - `resource/pagerduty_extension`
+  - `resource/pagerduty_tag`
+  - `resource/pagerduty_tag_assignment`
+
+BUG FIXES:
+
+* `resource/pagerduty_service`: Address: Support hours should be required in the plan if the incident_urgency_rule type is "use_support_hours" ([#868](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/868))
+
 ## 3.11.4 (Apr 16, 2024)
 
 BUG FIXES:

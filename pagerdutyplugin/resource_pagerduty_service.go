@@ -762,15 +762,6 @@ func buildSupportHours(ctx context.Context, list types.List, diags *diag.Diagnos
 	return supportHours
 }
 
-var (
-	alertGroupingParametersTypeType = enumtypes.StringType{
-		OneOf: []string{"time", "intelligent", "content_based"}}
-	alertGroupingParametersConfigAggregateType = enumtypes.StringType{
-		OneOf: []string{"all", "any"}}
-	autoPauseNotificationsParametersTimeoutType = enumtypes.Int64Type{
-		OneOf: []int64{120, 180, 300, 600, 900}}
-)
-
 func flattenService(ctx context.Context, service *pagerduty.Service, state resourceServiceModel, diags *diag.Diagnostics) resourceServiceModel {
 	model := resourceServiceModel{
 		ID:                    types.StringValue(service.ID),
@@ -823,27 +814,12 @@ func flattenService(ctx context.Context, service *pagerduty.Service, state resou
 }
 
 func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.AlertGroupingParameters, diags *diag.Diagnostics) types.List {
-	alertGroupParamsConfigObjectType := types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"aggregate":   alertGroupingParametersConfigAggregateType,
-			"fields":      types.ListType{ElemType: types.StringType},
-			"timeout":     types.Int64Type,
-			"time_window": types.Int64Type,
-		},
-	}
-	alertGroupingParametersObjectType := types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"type":   alertGroupingParametersTypeType,
-			"config": types.ListType{ElemType: alertGroupParamsConfigObjectType},
-		},
-	}
-
 	nullList := types.ListNull(alertGroupingParametersObjectType)
 	if params == nil {
 		return nullList
 	}
 
-	configList := types.ListNull(alertGroupParamsConfigObjectType)
+	configList := types.ListNull(alertGroupingParametersConfigObjectType)
 	log.Printf("[CG] config %#v", params.Config)
 	if params.Config != nil {
 		fieldsList, d := types.ListValueFrom(ctx, types.StringType, params.Config.Fields)
@@ -867,7 +843,7 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 			aggregate = enumtypes.NewStringValue(params.Config.Aggregate, alertGroupingParametersConfigAggregateType)
 		}
 
-		configObj, d := types.ObjectValue(alertGroupParamsConfigObjectType.AttrTypes, map[string]attr.Value{
+		configObj, d := types.ObjectValue(alertGroupingParametersConfigObjectType.AttrTypes, map[string]attr.Value{
 			"aggregate":   aggregate,
 			"fields":      fieldsList,
 			"timeout":     timeout,
@@ -877,7 +853,7 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 			diags.Append(d...)
 			return nullList
 		}
-		configList, d = types.ListValue(alertGroupParamsConfigObjectType, []attr.Value{configObj})
+		configList, d = types.ListValue(alertGroupingParametersConfigObjectType, []attr.Value{configObj})
 		if d.HasError() {
 			diags.Append(d...)
 			return nullList
@@ -941,13 +917,6 @@ func flattenAutoPauseNotificationsParameters(params *pagerduty.AutoPauseNotifica
 	return list
 }
 
-var incidentUrgencyTypeObjectType = types.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"type":    types.StringType,
-		"urgency": types.StringType,
-	},
-}
-
 func flattenIncidentUrgencyRule(rule *pagerduty.IncidentUrgencyRule, diags *diag.Diagnostics) types.List {
 	incidentUrgencyRuleObjectType := types.ObjectType{
 		AttrTypes: map[string]attr.Type{
@@ -1004,13 +973,6 @@ func flattenIncidentUrgencyType(urgency *pagerduty.IncidentUrgencyType, diags *d
 	list, d := types.ListValue(incidentUrgencyTypeObjectType, []attr.Value{obj})
 	diags.Append(d...)
 	return list
-}
-
-var scheduledActionAtObjectType = types.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"type": types.StringType,
-		"name": types.StringType,
-	},
 }
 
 func flattenScheduledActions(actions []pagerduty.ScheduledAction, diags *diag.Diagnostics) types.List {
@@ -1099,3 +1061,43 @@ func flattenSupportHours(hours *pagerduty.SupportHours, diags *diag.Diagnostics)
 	diags.Append(d...)
 	return list
 }
+
+var (
+	alertGroupingParametersTypeType = enumtypes.StringType{
+		OneOf: []string{"time", "intelligent", "content_based"}}
+	alertGroupingParametersConfigAggregateType = enumtypes.StringType{
+		OneOf: []string{"all", "any"}}
+	autoPauseNotificationsParametersTimeoutType = enumtypes.Int64Type{
+		OneOf: []int64{120, 180, 300, 600, 900}}
+
+	alertGroupingParametersConfigObjectType = types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"aggregate":   alertGroupingParametersConfigAggregateType,
+			"fields":      types.ListType{ElemType: types.StringType},
+			"timeout":     types.Int64Type,
+			"time_window": types.Int64Type,
+		},
+	}
+	alertGroupingParametersObjectType = types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"type":   alertGroupingParametersTypeType,
+			"config": types.ListType{ElemType: alertGroupingParametersConfigObjectType},
+		},
+	}
+
+	alertGroupingParametersPath = path.Root("alert_grouping_parameters").AtListIndex(0)
+
+	incidentUrgencyTypeObjectType = types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"type":    types.StringType,
+			"urgency": types.StringType,
+		},
+	}
+
+	scheduledActionAtObjectType = types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"type": types.StringType,
+			"name": types.StringType,
+		},
+	}
+)

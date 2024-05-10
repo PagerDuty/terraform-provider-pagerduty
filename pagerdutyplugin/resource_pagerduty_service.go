@@ -10,7 +10,6 @@ import (
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/enumtypes"
-	"github.com/PagerDuty/terraform-provider-pagerduty/util/rangetypes"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/tztypes"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/validate"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -37,34 +36,8 @@ var (
 	_ resource.ResourceWithConfigure        = (*resourceService)(nil)
 	_ resource.ResourceWithConfigValidators = (*resourceService)(nil)
 	_ resource.ResourceWithImportState      = (*resourceService)(nil)
+	_ resource.ResourceWithValidateConfig   = (*resourceService)(nil)
 )
-
-func (r *resourceService) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	resp.Diagnostics.Append(ConfigurePagerdutyClient(&r.client, req.ProviderData)...)
-}
-
-func (r *resourceService) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
-	return []resource.ConfigValidator{
-		validate.Require(
-			path.Root("incident_urgency_rule").AtListIndex(0).AtName("type"),
-		),
-		validate.RequireAIfBEqual(
-			path.Root("support_hours"),
-			path.Root("incident_urgency_rule").AtListIndex(0).AtName("type"),
-			types.StringValue("use_support_hours"),
-		),
-		validate.ForbidAIfBEqualWithMessage(
-			path.Root("incident_urgency_rule").AtListIndex(0).AtName("urgency"),
-			path.Root("incident_urgency_rule").AtListIndex(0).AtName("type"),
-			types.StringValue("use_support_hours"),
-			"general urgency cannot be set for a use_support_hours incident urgency rule type",
-		),
-		validate.RequireList(path.Root("alert_grouping_parameters").AtListIndex(0).AtName("config")),
-		validate.RequireList(path.Root("incident_urgency_rule").AtListIndex(0).AtName("during_support_hours")),
-		validate.RequireList(path.Root("incident_urgency_rule").AtListIndex(0).AtName("outside_support_hours")),
-		validate.RequireList(path.Root("support_hours").AtListIndex(0).AtName("days_of_week")), // TODO at most 7
-	}
-}
 
 func (r *resourceService) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "pagerduty_service"
@@ -74,10 +47,8 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 
 			"name": schema.StringAttribute{
@@ -91,9 +62,10 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			"acknowledgement_timeout": schema.StringAttribute{
-				Computed: true,
-				Optional: true,
-				Default:  stringdefault.StaticString("1800"),
+				Computed:      true,
+				Optional:      true,
+				Default:       stringdefault.StaticString("1800"),
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 
 			"alert_creation": schema.StringAttribute{
@@ -103,6 +75,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 				Validators: []validator.String{
 					stringvalidator.OneOf("create_alerts_and_incidents", "create_incidents"),
 				},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 
 			"alert_grouping": schema.StringAttribute{
@@ -113,6 +86,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 					stringvalidator.ConflictsWith(path.MatchRoot("alert_grouping_parameters")),
 				},
 				DeprecationMessage: "Use `alert_grouping_parameters.type`",
+				PlanModifiers:      []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 
 			"alert_grouping_timeout": schema.StringAttribute{
@@ -122,27 +96,52 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 				Validators: []validator.String{
 					stringvalidator.ConflictsWith(path.MatchRoot("alert_grouping_parameters")),
 				},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 
 			"auto_resolve_timeout": schema.StringAttribute{
-				Computed: true,
-				Optional: true,
-				Default:  stringdefault.StaticString("14400"),
+				Computed:      true,
+				Optional:      true,
+				Default:       stringdefault.StaticString("14400"),
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 
 			"description": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				Default:  stringdefault.StaticString("Managed by Terraform"),
+				Optional:      true,
+				Computed:      true,
+				Default:       stringdefault.StaticString("Managed by Terraform"),
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 
-			"created_at":              schema.StringAttribute{Computed: true},
-			"escalation_policy":       schema.StringAttribute{Required: true},
-			"html_url":                schema.StringAttribute{Computed: true},
-			"last_incident_timestamp": schema.StringAttribute{Computed: true},
-			"response_play":           schema.StringAttribute{Computed: true, Optional: true},
-			"status":                  schema.StringAttribute{Computed: true},
-			"type":                    schema.StringAttribute{Computed: true},
+			"created_at": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"escalation_policy": schema.StringAttribute{
+				Required:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"html_url": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"last_incident_timestamp": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"response_play": schema.StringAttribute{
+				Computed:      true,
+				Optional:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"status": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"type": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 
 			"alert_grouping_parameters": schema.ListAttribute{
 				Optional: true,
@@ -161,12 +160,13 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 									"timeout":     types.Int64Type,
 									"fields":      types.ListType{ElemType: types.StringType},
 									"aggregate":   alertGroupingParametersConfigAggregateType,
-									"time_window": alertGroupingParametersConfigTimeWindowType,
+									"time_window": types.Int64Type,
 								},
 							},
 						},
 					},
 				},
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 			},
 
 			"auto_pause_notifications_parameters": schema.ListAttribute{
@@ -182,6 +182,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 						"timeout": autoPauseNotificationsParametersTimeoutType,
 					},
 				},
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 			},
 
 			"incident_urgency_rule": schema.ListAttribute{
@@ -213,6 +214,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 						},
 					},
 				},
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 			},
 
 			"scheduled_actions": schema.ListAttribute{
@@ -234,6 +236,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
+					listplanmodifier.UseStateForUnknown(),
 				},
 				Validators: []validator.List{
 					listvalidator.SizeBetween(1, 1),
@@ -248,6 +251,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
+					listplanmodifier.UseStateForUnknown(),
 				},
 				ElementType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{
@@ -265,8 +269,81 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 }
 
-func (r *resourceService) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+func (r *resourceService) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		validate.Require(
+			path.Root("incident_urgency_rule").AtListIndex(0).AtName("type"),
+		),
+		validate.RequireAIfBEqual(
+			path.Root("support_hours"),
+			path.Root("incident_urgency_rule").AtListIndex(0).AtName("type"),
+			types.StringValue("use_support_hours"),
+		),
+		validate.ForbidAIfBEqualWithMessage(
+			path.Root("incident_urgency_rule").AtListIndex(0).AtName("urgency"),
+			path.Root("incident_urgency_rule").AtListIndex(0).AtName("type"),
+			types.StringValue("use_support_hours"),
+			"general urgency cannot be set for a use_support_hours incident urgency rule type",
+		),
+		validate.RequireList(path.Root("alert_grouping_parameters").AtListIndex(0).AtName("config")),
+		validate.RequireList(path.Root("incident_urgency_rule").AtListIndex(0).AtName("during_support_hours")),
+		validate.RequireList(path.Root("incident_urgency_rule").AtListIndex(0).AtName("outside_support_hours")),
+		validate.RequireList(path.Root("support_hours").AtListIndex(0).AtName("days_of_week")), // TODO at most 7
+	}
+}
+
+func (r *resourceService) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	configPath := path.Root("alert_grouping_parameters").AtListIndex(0).AtName("config").AtListIndex(0)
+
+	// Validate time window
+	var timeWindow types.Int64
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, configPath.AtName("time_window"), &timeWindow)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !timeWindow.IsNull() && !timeWindow.IsUnknown() {
+		if tw := timeWindow.ValueInt64(); tw < 300 || tw > 3600 {
+			resp.Diagnostics.AddAttributeError(
+				configPath.AtName("time_window"),
+				"Alert grouping time window value must be between 300 and 3600",
+				fmt.Sprintf("Current setting is %d", tw),
+			)
+		}
+	}
+
+	// Validate Alert Grouping Parameters
+	var aggregate types.String
+	var fields types.List
+	var timeout types.Int64
+	var pType types.String
+
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("alert_grouping_parameters").AtListIndex(0).AtName("type"), &pType)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, configPath.AtName("aggregate"), &aggregate)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, configPath.AtName("fields"), &fields)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, configPath.AtName("timeout"), &timeout)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if pType.ValueString() == "content_based" && (aggregate.ValueString() == "" || len(fields.Elements()) == 0) {
+		resp.Diagnostics.AddError(`When using Alert grouping parameters configuration of type "content_based" is in use, attributes "aggregate" and "fields" are required`, "")
+		return
+	}
+
+	if !pType.IsNull() && pType.ValueString() != "content_based" && (aggregate.ValueString() != "" || len(fields.Elements()) > 0) {
+		resp.Diagnostics.AddError(`Alert grouping parameters configuration attributes "aggregate" and "fields" are only supported by "content_based" type Alert Grouping`, "")
+		return
+	}
+
+	if !pType.IsNull() && pType.ValueString() != "time" && timeout.ValueInt64() > 0 {
+		resp.Diagnostics.AddError(`Alert grouping parameters configuration attribute "timeout" is only supported by "time" type Alert Grouping`, "")
+		return
+	}
+
+	if !pType.IsNull() && (pType.ValueString() != "intelligent" && pType.ValueString() != "content_based") && timeWindow.ValueInt64() > 300 {
+		resp.Diagnostics.AddError(`Alert grouping parameters configuration attribute "time_window" is only supported by "intelligent" and "content-based" type Alert Grouping`, "")
+		return
+	}
 }
 
 func (r *resourceService) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -417,6 +494,14 @@ func (r *resourceService) Delete(ctx context.Context, req resource.DeleteRequest
 	resp.State.RemoveResource(ctx)
 }
 
+func (r *resourceService) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	resp.Diagnostics.Append(ConfigurePagerdutyClient(&r.client, req.ProviderData)...)
+}
+
+func (r *resourceService) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 type resourceServiceModel struct {
 	ID                               types.String `tfsdk:"id"`
 	AcknowledgementTimeout           types.String `tfsdk:"acknowledgement_timeout"`
@@ -496,6 +581,10 @@ func buildAlertGroupingParameters(ctx context.Context, list types.List, diags *d
 }
 
 func buildAlertGroupingConfig(ctx context.Context, list types.List, diags *diag.Diagnostics) *pagerduty.AlertGroupParamsConfig {
+	if list.IsNull() || list.IsUnknown() {
+		return nil
+	}
+
 	var target []struct {
 		Timeout    types.Int64  `tfsdk:"timeout"`
 		Aggregate  types.String `tfsdk:"aggregate"`
@@ -508,7 +597,8 @@ func buildAlertGroupingConfig(ctx context.Context, list types.List, diags *diag.
 	}
 	obj := target[0]
 
-	ut := uint(obj.Timeout.ValueInt64())
+	timeout := uint(obj.Timeout.ValueInt64())
+	timeWindow := uint(obj.TimeWindow.ValueInt64())
 
 	var fields []string
 	if d := obj.Fields.ElementsAs(ctx, &fields, false); d.HasError() {
@@ -517,9 +607,10 @@ func buildAlertGroupingConfig(ctx context.Context, list types.List, diags *diag.
 	}
 
 	return &pagerduty.AlertGroupParamsConfig{
-		Timeout:   &ut,
-		Aggregate: obj.Aggregate.ValueString(),
-		Fields:    fields,
+		Timeout:    &timeout,
+		Aggregate:  obj.Aggregate.ValueString(),
+		Fields:     fields,
+		TimeWindow: &timeWindow,
 	}
 }
 
@@ -544,9 +635,12 @@ func buildAutoPauseNotificationsParameters(ctx context.Context, list types.List,
 }
 
 func buildIncidentUrgencyRule(ctx context.Context, list types.List, diags *diag.Diagnostics) *pagerduty.IncidentUrgencyRule {
+	defaultValue := &pagerduty.IncidentUrgencyRule{Type: "constant", Urgency: "high"}
+
 	if list.IsNull() || list.IsUnknown() {
-		return nil
+		return defaultValue
 	}
+
 	var target []struct {
 		Type                types.String `tfsdk:"type"`
 		Urgency             types.String `tfsdk:"urgency"`
@@ -555,16 +649,16 @@ func buildIncidentUrgencyRule(ctx context.Context, list types.List, diags *diag.
 	}
 	if d := list.ElementsAs(ctx, &target, false); d.HasError() {
 		diags.Append(d...)
-		return nil
+		return defaultValue
 	}
 	obj := target[0]
-	incidentUrgencyRule := &pagerduty.IncidentUrgencyRule{
-		Type:    obj.Type.ValueString(),
-		Urgency: obj.Urgency.ValueString(),
+
+	return &pagerduty.IncidentUrgencyRule{
+		Type:                obj.Type.ValueString(),
+		Urgency:             obj.Urgency.ValueString(),
+		DuringSupportHours:  buildIncidentUrgencyType(ctx, obj.DuringSupportHours, diags),
+		OutsideSupportHours: buildIncidentUrgencyType(ctx, obj.OutsideSupportHours, diags),
 	}
-	incidentUrgencyRule.DuringSupportHours = buildIncidentUrgencyType(ctx, obj.DuringSupportHours, diags)
-	incidentUrgencyRule.OutsideSupportHours = buildIncidentUrgencyType(ctx, obj.OutsideSupportHours, diags)
-	return incidentUrgencyRule
 }
 
 func buildIncidentUrgencyType(ctx context.Context, list types.List, diags *diag.Diagnostics) *pagerduty.IncidentUrgencyType {
@@ -673,8 +767,6 @@ var (
 		OneOf: []string{"time", "intelligent", "content_based"}}
 	alertGroupingParametersConfigAggregateType = enumtypes.StringType{
 		OneOf: []string{"all", "any"}}
-	alertGroupingParametersConfigTimeWindowType = rangetypes.Int64Type{
-		Start: 300, End: 3600}
 	autoPauseNotificationsParametersTimeoutType = enumtypes.Int64Type{
 		OneOf: []int64{120, 180, 300, 600, 900}}
 )
@@ -736,7 +828,7 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 			"aggregate":   alertGroupingParametersConfigAggregateType,
 			"fields":      types.ListType{ElemType: types.StringType},
 			"timeout":     types.Int64Type,
-			"time_window": alertGroupingParametersConfigTimeWindowType,
+			"time_window": types.Int64Type,
 		},
 	}
 	alertGroupingParametersObjectType := types.ObjectType{
@@ -752,6 +844,7 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 	}
 
 	configList := types.ListNull(alertGroupParamsConfigObjectType)
+	log.Printf("[CG] config %#v", params.Config)
 	if params.Config != nil {
 		fieldsList, d := types.ListValueFrom(ctx, types.StringType, params.Config.Fields)
 		if d.HasError() {
@@ -759,9 +852,14 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 			return nullList
 		}
 
-		var timeout types.Int64
+		timeout := types.Int64Null()
 		if params.Config.Timeout != nil {
 			timeout = types.Int64Value(int64(*params.Config.Timeout))
+		}
+
+		timeWindow := types.Int64Null()
+		if params.Config.TimeWindow != nil {
+			timeWindow = types.Int64Value(int64(*params.Config.TimeWindow))
 		}
 
 		aggregate := enumtypes.NewStringNull(alertGroupingParametersConfigAggregateType)
@@ -773,7 +871,7 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 			"aggregate":   aggregate,
 			"fields":      fieldsList,
 			"timeout":     timeout,
-			"time_window": types.Int64Null(), // TODO
+			"time_window": timeWindow,
 		})
 		if d.HasError() {
 			diags.Append(d...)

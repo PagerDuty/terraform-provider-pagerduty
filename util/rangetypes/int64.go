@@ -81,8 +81,7 @@ func (t Int64Type) Validate(ctx context.Context, in tftypes.Value, path path.Pat
 		diags.AddAttributeError(
 			path,
 			"Invalid Int64 Value",
-			fmt.Sprintf("A value was provided that is not inside valid range (%v, %v).\n"+
-				"Given Value: %v", t.Start, t.End, valueInt64),
+			fmt.Sprintf("Provided a value of '%v' that is not inside valid range [%v, %v].", valueInt64, t.Start, t.End),
 		)
 		return
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/enumtypes"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util/planmodify"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/tztypes"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/validate"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -237,6 +238,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
 					listplanmodifier.UseStateForUnknown(),
+					planmodify.UseNullForRemovedWithState(),
 				},
 				Validators: []validator.List{
 					listvalidator.SizeBetween(1, 1),

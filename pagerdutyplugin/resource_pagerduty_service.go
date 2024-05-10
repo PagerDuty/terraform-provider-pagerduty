@@ -346,6 +346,22 @@ func (r *resourceService) ValidateConfig(ctx context.Context, req resource.Valid
 	}
 }
 
+func (r *resourceService) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Set alert_grouping_parameters as Computed then "intelligent" type
+	var pType types.String
+	var config types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, alertGroupingParametersPath.AtName("type"), &pType)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, alertGroupingParametersPath.AtName("config"), &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if pType.ValueString() == "intelligent" && config.IsNull() {
+		resp.Diagnostics.Append(
+			resp.Plan.SetAttribute(ctx, alertGroupingParametersPath.AtName("config"), types.ListUnknown(alertGroupingParametersConfigObjectType))...,
+		)
+	}
+}
+
 func (r *resourceService) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var config resourceServiceModel
 	var model resourceServiceModel

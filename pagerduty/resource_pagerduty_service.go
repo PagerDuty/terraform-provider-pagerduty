@@ -318,6 +318,13 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		}
 	}
 
+	incidentUrgencyRuleType := diff.Get("incident_urgency_rule.0.type").(string)
+	if incidentUrgencyRuleType == "use_support_hours" {
+		if diff.Get("support_hours.#").(int) != 1 {
+			return fmt.Errorf("when using type = use_support_hours in incident_urgency_rule you must specify exactly one (otherwise optional) support_hours block")
+		}
+	}
+
 	// Due to alert_grouping_parameters.type = null is a valid configuration
 	// for disabling Service's Alert Grouping configuration and having an
 	// empty alert_grouping_parameters.config block is also valid, API ignore

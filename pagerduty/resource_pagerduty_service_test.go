@@ -174,7 +174,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 			},
 			// Alert grouping parameters "Content Based" type input validation
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "content_based"
@@ -186,7 +186,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				ExpectError: regexp.MustCompile("When using Alert grouping parameters configuration of type \"content_based\" is in use, attributes \"aggregate\" and \"fields\" are required"),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "content_based"
@@ -199,7 +199,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "time"
@@ -215,7 +215,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 			},
 			// Alert grouping parameters "time" type input validation
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "time"
@@ -227,7 +227,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "intelligent"
@@ -242,7 +242,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 			},
 			// Alert grouping parameters "intelligent" type input validation
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "time"
@@ -256,7 +256,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				ExpectError: regexp.MustCompile("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" and \"content-based\" type Alert Grouping"),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "intelligent"
@@ -266,7 +266,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "intelligent"
@@ -280,7 +280,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				ExpectError: regexp.MustCompile("Alert grouping time window value must be between 300 and 3600"),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "intelligent"
@@ -293,7 +293,7 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
             type = "content_based"
@@ -307,15 +307,63 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				ExpectError: regexp.MustCompile("Alert grouping time window value must be between 300 and 3600"),
 			},
 			{
-				Config: testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service,
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
-            type = "content_based"
-            config {
-              aggregate = "all"
-              fields    = ["custom_details.source_id"]
-              time_window = 300
+            type = "intelligent"
+          }
+          `,
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "intelligent"
+          }
+          incident_urgency_rule {
+            type = "use_support_hours"
+
+            during_support_hours {
+              type    = "constant"
+              urgency = "high"
             }
+
+            outside_support_hours {
+              type    = "constant"
+              urgency = "low"
+            }
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("when using type = use_support_hours in incident_urgency_rule you must specify exactly one .* support_hours block"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "intelligent"
+          }
+          incident_urgency_rule {
+            type = "use_support_hours"
+
+            during_support_hours {
+              type    = "constant"
+              urgency = "high"
+            }
+
+            outside_support_hours {
+              type    = "constant"
+              urgency = "low"
+            }
+          }
+          support_hours {
+            type         = "fixed_time_per_day"
+            time_zone    = "America/Lima"
+            start_time   = "09:00:00"
+            end_time     = "17:00:00"
+            days_of_week = [ 1, 2, 3, 4, 5 ]
           }
           `,
 				),
@@ -1312,7 +1360,7 @@ resource "pagerduty_service" "foo" {
 `, username, email, escalationPolicy, service)
 }
 
-func testAccCheckPagerDutyServiceAlertGroupingInputValidationConfig(username, email, escalationPolicy, service, alertGroupingParams string) string {
+func testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service, customAdditionalServiceConfig string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
   name        = "%s"
@@ -1345,7 +1393,7 @@ resource "pagerduty_service" "foo" {
   alert_creation          = "create_alerts_and_incidents"
   %s
 }
-`, username, email, escalationPolicy, service, alertGroupingParams)
+`, username, email, escalationPolicy, service, customAdditionalServiceConfig)
 }
 
 func testAccCheckPagerDutyServiceConfigWithAlertGrouping(username, email, escalationPolicy, service string) string {

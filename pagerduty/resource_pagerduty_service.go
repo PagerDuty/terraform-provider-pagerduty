@@ -647,6 +647,9 @@ func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParame
 	}
 
 	alertGroupingParameters.Config = expandAlertGroupingConfig(ragpVal["config"])
+	if groupingType == "content_based" && alertGroupingParameters.Config != nil {
+		alertGroupingParameters.Config.Timeout = nil
+	}
 	return alertGroupingParameters
 }
 

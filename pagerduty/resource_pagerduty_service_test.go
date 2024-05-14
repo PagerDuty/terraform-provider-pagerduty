@@ -1231,6 +1231,45 @@ func TestAccPagerDutyService_ResponsePlay(t *testing.T) {
 
 }
 
+func TestAccPagerDutyService_AlertGroupingParametersAddConfigField(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	fields := []string{"custom_details.alert_name"}
+	fieldsUpdated := []string{"custom_details.alert_name", "custom_details.stage"}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithConfigFields(
+					username, email, escalationPolicy, service, fields),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttrSet("pagerduty_service.foo", "alert_grouping_parameters.#"),
+					resource.TestCheckResourceAttrSet("pagerduty_service.foo", "alert_grouping_parameters.0.config.#"),
+					resource.TestCheckResourceAttr("pagerduty_service.foo", "alert_grouping_parameters.0.config.0.fields.0", fields[0]),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithConfigFields(
+					username, email, escalationPolicy, service, fieldsUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttrSet("pagerduty_service.foo", "alert_grouping_parameters.#"),
+					resource.TestCheckResourceAttrSet("pagerduty_service.foo", "alert_grouping_parameters.0.config.#"),
+					resource.TestCheckResourceAttr("pagerduty_service.foo", "alert_grouping_parameters.0.config.0.fields.0", fieldsUpdated[0]),
+					resource.TestCheckResourceAttr("pagerduty_service.foo", "alert_grouping_parameters.0.config.0.fields.1", fieldsUpdated[1]),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyServiceSaveServiceId(p *string, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -2454,4 +2493,43 @@ resource "pagerduty_service" "foo" {
   response_play           = null
 }
 `, username, email, escalationPolicy, responsePlay, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithConfigFields(username, email, escalationPolicy, service string, fields []string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name              = "%s"
+	escalation_policy = pagerduty_escalation_policy.foo.id
+	alert_grouping_parameters {
+		type = "content_based"
+		config {
+			aggregate = "all"
+			fields = ["%v"]
+			time_window = 300
+		}
+	}
+}
+`, username, email, escalationPolicy, service, strings.Join(fields, `","`))
 }

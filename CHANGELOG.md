@@ -1,3 +1,9 @@
+## 3.12.1 (May 14, 2024)
+
+BUG FIXES:
+
+* `resource/pagerduty_service`: Prevent timeout for alert_grouping_parameters to be explicitly set to zero when they are of type "content_based" ([#871](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/871))
+
 ## 3.12.0 (May 9, 2024)
 
 FEATURES:

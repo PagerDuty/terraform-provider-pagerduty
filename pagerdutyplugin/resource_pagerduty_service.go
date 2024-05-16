@@ -10,6 +10,7 @@ import (
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/enumtypes"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util/optiontypes"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/planmodify"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/tztypes"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/validate"
@@ -152,21 +153,7 @@ func (r *resourceService) Schema(ctx context.Context, req resource.SchemaRequest
 					listvalidator.ConflictsWith(path.MatchRoot("alert_grouping")),
 					listvalidator.ConflictsWith(path.MatchRoot("alert_grouping_timeout")),
 				},
-				ElementType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"type": alertGroupingParametersTypeType,
-						"config": types.ListType{
-							ElemType: types.ObjectType{
-								AttrTypes: map[string]attr.Type{
-									"timeout":     types.Int64Type,
-									"fields":      types.ListType{ElemType: types.StringType},
-									"aggregate":   alertGroupingParametersConfigAggregateType,
-									"time_window": types.Int64Type,
-								},
-							},
-						},
-					},
-				},
+				ElementType:   alertGroupingParametersObjectType,
 				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 			},
 
@@ -382,9 +369,6 @@ func (r *resourceService) Create(ctx context.Context, req resource.CreateRequest
 			return retry.RetryableError(err)
 		}
 		model = flattenService(ctx, serviceResponse, config, &resp.Diagnostics)
-		if resp.Diagnostics.HasError() {
-			return retry.NonRetryableError(fmt.Errorf("%#v", resp.Diagnostics))
-		}
 		return nil
 	})
 	if err != nil {
@@ -819,8 +803,7 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 		return nullList
 	}
 
-	configList := types.ListNull(alertGroupingParametersConfigObjectType)
-	log.Printf("[CG] config %#v", params.Config)
+	configList := optiontypes.NewListNull(alertGroupingParametersConfigObjectType)
 	if params.Config != nil {
 		fieldsList, d := types.ListValueFrom(ctx, types.StringType, params.Config.Fields)
 		if d.HasError() {
@@ -833,9 +816,9 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 			timeout = types.Int64Value(int64(*params.Config.Timeout))
 		}
 
-		timeWindow := types.Int64Null()
+		timeWindow := optiontypes.NewInt64Null()
 		if params.Config.TimeWindow != nil {
-			timeWindow = types.Int64Value(int64(*params.Config.TimeWindow))
+			timeWindow = optiontypes.NewInt64Value(int64(*params.Config.TimeWindow))
 		}
 
 		aggregate := enumtypes.NewStringNull(alertGroupingParametersConfigAggregateType)
@@ -853,7 +836,8 @@ func flattenAlertGroupingParameters(ctx context.Context, params *pagerduty.Alert
 			diags.Append(d...)
 			return nullList
 		}
-		configList, d = types.ListValue(alertGroupingParametersConfigObjectType, []attr.Value{configObj})
+
+		configList, d = optiontypes.NewListValue(alertGroupingParametersConfigObjectType, []attr.Value{configObj})
 		if d.HasError() {
 			diags.Append(d...)
 			return nullList
@@ -1075,13 +1059,15 @@ var (
 			"aggregate":   alertGroupingParametersConfigAggregateType,
 			"fields":      types.ListType{ElemType: types.StringType},
 			"timeout":     types.Int64Type,
-			"time_window": types.Int64Type,
+			"time_window": optiontypes.Int64Type{},
 		},
 	}
 	alertGroupingParametersObjectType = types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"type":   alertGroupingParametersTypeType,
-			"config": types.ListType{ElemType: alertGroupingParametersConfigObjectType},
+			"type": alertGroupingParametersTypeType,
+			"config": optiontypes.ListType{
+				ListType: types.ListType{ElemType: alertGroupingParametersConfigObjectType},
+			},
 		},
 	}
 

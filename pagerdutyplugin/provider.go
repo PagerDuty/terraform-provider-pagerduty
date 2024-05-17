@@ -38,6 +38,7 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"api_url_override":            schema.StringAttribute{Optional: true},
+			"api_limit":                   schema.Int64Attribute{Optional: true},
 			"service_region":              schema.StringAttribute{Optional: true},
 			"skip_credentials_validation": schema.BoolAttribute{Optional: true},
 			"token":                       schema.StringAttribute{Optional: true},
@@ -190,6 +191,7 @@ type providerArguments struct {
 	SkipCredentialsValidation types.Bool   `tfsdk:"skip_credentials_validation"`
 	ServiceRegion             types.String `tfsdk:"service_region"`
 	ApiUrlOverride            types.String `tfsdk:"api_url_override"`
+	ApiLimit                  types.Int64  `tfsdk:"api_limit"`
 	UseAppOauthScopedToken    types.List   `tfsdk:"use_app_oauth_scoped_token"`
 }
 

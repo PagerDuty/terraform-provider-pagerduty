@@ -77,7 +77,7 @@ func dataSourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) er
 
 	o := &pagerduty.ListServicesOptions{
 		Query: searchName,
-		Limit: d.Get("api_limit").(int),
+		Limit: meta.(*Config).ApiLimit,
 	}
 
 	return retry.Retry(5*time.Minute, func() *retry.RetryError {

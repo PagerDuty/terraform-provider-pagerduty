@@ -58,6 +58,7 @@ The following arguments are supported:
 * `skip_credentials_validation` - (Optional) Skip validation of the token against the PagerDuty API.
 * `service_region` - (Optional) The PagerDuty service region to use. Default to empty (uses US region). Supported value: `eu`. This setting also affects configuration of `use_app_oauth_scoped_token` for setting Region of *App Oauth token credentials*. It can also be sourced from the `PAGERDUTY_SERVICE_REGION` environment variable.
 * `api_url_override` - (Optional) It can be used to set a custom proxy endpoint as PagerDuty client api url overriding `service_region` setup.
+* `api_limit` - (Optional) It can be used to set the limit pagination property when calling the provider calls the API.
 
 The `use_app_oauth_scoped_token` block contains the following arguments:
 

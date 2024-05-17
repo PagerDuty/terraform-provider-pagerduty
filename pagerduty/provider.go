@@ -233,6 +233,7 @@ func providerConfigureContextFunc(_ context.Context, data *schema.ResourceData, 
 		UserToken:           data.Get("user_token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
 		ApiUrlOverride:      data.Get("api_url_override").(string),
+		ApiLimit:            data.Get("api_limit").(int),
 		ServiceRegion:       serviceRegion,
 	}
 

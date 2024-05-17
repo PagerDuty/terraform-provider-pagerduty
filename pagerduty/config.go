@@ -31,6 +31,9 @@ type Config struct {
 	// The PagerDuty User level token for Slack
 	UserToken string
 
+	// API Pagination Limit
+	ApiLimit int
+
 	// Skip validation of the token against the PagerDuty API
 	SkipCredsValidation bool
 

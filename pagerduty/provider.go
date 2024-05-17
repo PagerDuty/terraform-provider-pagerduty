@@ -29,6 +29,12 @@ func Provider(isMux bool) *schema.Provider {
 				Default:  false,
 			},
 
+			"api_limit": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  25,
+			},
+
 			"token": {
 				Type:        schema.TypeString,
 				Optional:    true,

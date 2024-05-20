@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
-	"github.com/PagerDuty/terraform-provider-pagerduty/util"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util/apiutil"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 type dataSourceService struct{ client *pagerduty.Client }
@@ -64,43 +62,31 @@ func (d *dataSourceService) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	var found *pagerduty.Service
-	var offset uint = 0
-	more := true
-
-	for more {
-		err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-			resp, err := d.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{
-				Query:  searchName.ValueString(),
-				Limit:  10,
-				Offset: offset,
-			})
-			if err != nil {
-				if util.IsBadRequestError(err) {
-					return retry.NonRetryableError(err)
-				}
-				return retry.RetryableError(err)
-			}
-
-			more = resp.More
-			offset += uint(len(resp.Services))
-
-			for _, service := range resp.Services {
-				if service.Name == searchName.ValueString() {
-					found = &service
-					more = false
-					break
-				}
-			}
-
-			return nil
+	err := apiutil.All(ctx, func(offset int) (bool, error) {
+		resp, err := d.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{
+			Query:  searchName.ValueString(),
+			Limit:  apiutil.Limit,
+			Offset: uint(offset),
 		})
 		if err != nil {
-			resp.Diagnostics.AddError(
-				fmt.Sprintf("Error searching Service %s", searchName),
-				err.Error(),
-			)
-			return
+			return false, err
 		}
+
+		for _, service := range resp.Services {
+			if service.Name == searchName.ValueString() {
+				found = &service
+				return false, nil
+			}
+		}
+
+		return resp.More, nil
+	})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("Error searching Service %s", searchName),
+			err.Error(),
+		)
+		return
 	}
 
 	if found == nil {

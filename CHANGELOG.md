@@ -1,3 +1,9 @@
+## 3.12.2 (May 20, 2024)
+
+IMPROVEMENTS:
+
+* `data/pagerduty_service`: Address: Service DS not locating queried name when is not in first page of results ([#874](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/874))
+
 ## 3.12.1 (May 14, 2024)
 
 BUG FIXES:

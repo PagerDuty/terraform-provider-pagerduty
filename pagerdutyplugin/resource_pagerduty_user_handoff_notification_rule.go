@@ -166,8 +166,16 @@ func (r *resourceUserHandoffNotificationRule) Read(ctx context.Context, req reso
 	}
 	log.Printf("[INFO] Reading PagerDuty User Handoff Notification Rule %s", state.ID)
 
-	state = requestGetUserHandoffNotificationRule(ctx, r.client, state.UserID.ValueString(), state.ID.ValueString(), &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	var diags diag.Diagnostics
+	state = requestGetUserHandoffNotificationRule(ctx, r.client, state.UserID.ValueString(), state.ID.ValueString(), &diags)
+	if diags.HasError() {
+		for _, d := range diags.Errors() {
+			if d.Summary() == "resource not found." {
+				resp.State.RemoveResource(ctx)
+				return
+			}
+		}
+		resp.Diagnostics.Append(diags...)
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -307,16 +315,27 @@ func requestGetUserHandoffNotificationRule(ctx context.Context, client *pagerdut
 	retryErr := helperResource.RetryContext(ctx, 2*time.Minute, func() *helperResource.RetryError {
 		var err error
 		userHandoffNotificationRule, err = client.GetUserOncallHandoffNotificationRuleWithContext(ctx, userID, ruleID)
+		if util.IsBadRequestError(err) || util.IsNotFoundError(err) {
+			return helperResource.NonRetryableError(err)
+		}
 		if err != nil {
 			return helperResource.RetryableError(err)
 		}
 		return nil
 	})
+
+	var model resourceUserHandoffNotificationRuleModel
+	if util.IsNotFoundError(retryErr) {
+		log.Printf("User Handoff Notification Rule %s not found. Removing from state", ruleID)
+		diags.AddError("resource not found.", "")
+		return model
+	}
 	if retryErr != nil {
 		diags.AddError(
 			fmt.Sprintf("Error reading User Handoff Notification Rule %s", userID),
 			retryErr.Error(),
 		)
+		return model
 	}
 	model, d := flattenUserHandoffNotificationRule(userID, userHandoffNotificationRule)
 	if d.HasError() {

@@ -57,21 +57,6 @@ func (r *resourceUserHandoffNotificationRule) Schema(_ context.Context, _ resour
 					),
 				},
 			},
-			"summary": schema.StringAttribute{
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
-			"self": schema.StringAttribute{
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
-			"html_url": schema.StringAttribute{
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
 		},
 	}
 
@@ -284,11 +269,8 @@ func (r *resourceUserHandoffNotificationRule) ImportState(ctx context.Context, r
 }
 
 type resourceUserHandoffNotificationRuleContactMethodModel struct {
-	ID      types.String `tfsdk:"id"`
-	Summary types.String `tfsdk:"summary"`
-	Self    types.String `tfsdk:"self"`
-	HTMLUrl types.String `tfsdk:"html_url"`
-	Type    types.String `tfsdk:"type"`
+	ID   types.String `tfsdk:"id"`
+	Type types.String `tfsdk:"type"`
 }
 
 type resourceUserHandoffNotificationRuleModel struct {
@@ -301,11 +283,8 @@ type resourceUserHandoffNotificationRuleModel struct {
 
 var resourceContactMethodObjectType = types.ObjectType{
 	AttrTypes: map[string]attr.Type{
-		"type":     types.StringType,
-		"id":       types.StringType,
-		"summary":  types.StringType,
-		"self":     types.StringType,
-		"html_url": types.StringType,
+		"type": types.StringType,
+		"id":   types.StringType,
 	},
 }
 
@@ -366,11 +345,8 @@ func buildPagerdutyUserHandoffNotificationRule(ctx context.Context, plan *resour
 		NotifyAdvanceInMinutes: int(plan.NotifyAdvanceInMinutes.ValueInt64()),
 		HandoffType:            plan.HandoffType.ValueString(),
 		ContactMethod: &pagerduty.ContactMethod{
-			ID:      convertContactMethodDependencyType(contactMethodPlan[0].ID.ValueString()),
-			Type:    contactMethodPlan[0].Type.ValueString(),
-			Summary: contactMethodPlan[0].Summary.ValueString(),
-			Self:    contactMethodPlan[0].Self.ValueString(),
-			HTMLURL: contactMethodPlan[0].HTMLUrl.ValueString(),
+			ID:   convertContactMethodDependencyType(contactMethodPlan[0].ID.ValueString()),
+			Type: contactMethodPlan[0].Type.ValueString(),
 		},
 	}
 
@@ -386,11 +362,8 @@ func flattenUserHandoffNotificationRule(userID string, src *pagerduty.OncallHand
 	}
 	if src.ContactMethod != nil {
 		contactMethodRef, d := types.ObjectValue(resourceContactMethodObjectType.AttrTypes, map[string]attr.Value{
-			"id":       types.StringValue(src.ContactMethod.ID),
-			"type":     types.StringValue(src.ContactMethod.Type),
-			"summary":  types.StringValue(src.ContactMethod.Summary),
-			"self":     types.StringValue(src.ContactMethod.Self),
-			"html_url": types.StringValue(src.ContactMethod.HTMLURL),
+			"id":   types.StringValue(src.ContactMethod.ID),
+			"type": types.StringValue(src.ContactMethod.Type),
 		})
 
 		contactMethodList, d := types.ListValue(resourceContactMethodObjectType, []attr.Value{contactMethodRef})

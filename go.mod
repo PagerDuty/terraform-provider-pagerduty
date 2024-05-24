@@ -3,7 +3,7 @@ module github.com/PagerDuty/terraform-provider-pagerduty
 go 1.20
 
 require (
-	github.com/PagerDuty/go-pagerduty v1.8.1-0.20240402164006-de82e6b1f7cf
+	github.com/PagerDuty/go-pagerduty v1.8.1-0.20240524180345-9b652f07c450
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/hc-install v0.6.2
@@ -76,5 +76,3 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
-
-replace github.com/PagerDuty/go-pagerduty => github.com/imjaroiswebdev/go-pagerduty-cli v0.0.0-20240517175334-7b299156d4a2

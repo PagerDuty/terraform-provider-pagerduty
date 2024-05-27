@@ -1,4 +1,4 @@
-# github.com/PagerDuty/go-pagerduty v1.8.1-0.20240402164006-de82e6b1f7cf
+# github.com/PagerDuty/go-pagerduty v1.8.1-0.20240524180345-9b652f07c450
 ## explicit; go 1.19
 github.com/PagerDuty/go-pagerduty
 # github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
@@ -179,7 +179,9 @@ github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes
 # github.com/hashicorp/terraform-plugin-framework-validators v0.12.0
 ## explicit; go 1.19
 github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag
+github.com/hashicorp/terraform-plugin-framework-validators/int64validator
 github.com/hashicorp/terraform-plugin-framework-validators/internal/schemavalidator
+github.com/hashicorp/terraform-plugin-framework-validators/listvalidator
 github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator
 # github.com/hashicorp/terraform-plugin-go v0.20.0
 ## explicit; go 1.20

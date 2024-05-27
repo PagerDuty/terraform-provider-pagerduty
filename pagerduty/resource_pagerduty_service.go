@@ -360,6 +360,9 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		if (timeWindowVal > 300) && (agpType != "" && hasChangeAgpType && (agpType != "intelligent" && agpType != "content_based")) {
 			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" is only supported by \"intelligent\" and \"content-based\" type Alert Grouping")
 		}
+		if timeWindowVal == 86400 && agpType != "content_based" {
+			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" with a value of 86400 is only supported by \"content-based\" type Alert Grouping")
+		}
 	}
 
 	return nil
@@ -369,10 +372,10 @@ func validateTimeWindow(v interface{}, p cty.Path) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	tw := v.(int)
-	if tw < 300 || tw > 3600 {
+	if (tw < 300 || tw > 3600) && tw != 86400 {
 		diags = append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       fmt.Sprintf("Alert grouping time window value must be between 300 and 3600, current setting is %d", tw),
+			Summary:       fmt.Sprintf("Alert grouping time window value must be between 300 and 3600 or exactly 86400(86400 is supported only for content-based alert grouping), current setting is %d", tw),
 			AttributePath: p,
 		})
 	}

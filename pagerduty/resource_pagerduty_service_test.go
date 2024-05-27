@@ -310,6 +310,33 @@ func TestAccPagerDutyService_FormatValidation(t *testing.T) {
 				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
 					`
           alert_grouping_parameters {
+            type = "content_based"
+            config {
+              time_window = 86400
+            }
+          }
+          `,
+				),
+				PlanOnly: true,
+			},
+			{
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
+            type = "intelligent"
+            config {
+              time_window = 86400
+            }
+          }
+          `,
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Alert grouping parameters configuration attribute \"time_window\" with a value of 86400 is only supported by \"content-based\" type Alert Grouping"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceCustomInputValidationConfig(username, email, escalationPolicy, service,
+					`
+          alert_grouping_parameters {
             type = "intelligent"
           }
           `,

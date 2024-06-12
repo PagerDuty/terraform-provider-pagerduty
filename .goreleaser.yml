@@ -48,4 +48,4 @@ release:
     name: "terraform-provider-pagerduty"
   draft: true
 changelog:
-  skip: true
+  disable: true

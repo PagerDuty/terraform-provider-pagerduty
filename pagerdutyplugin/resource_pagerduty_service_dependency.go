@@ -190,14 +190,13 @@ func (r *resourceServiceDependency) Read(ctx context.Context, req resource.ReadR
 
 	log.Printf("Reading PagerDuty dependency %s", serviceDependency.ID)
 
-	serviceDependency, diags = r.requestGetServiceDependency(ctx, serviceDependency.ID, serviceDependency.DependentService.ID, serviceDependency.DependentService.Type)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	serviceDependency, err := r.requestGetServiceDependency(ctx, serviceDependency.ID, serviceDependency.DependentService.ID, serviceDependency.DependentService.Type)
+	if serviceDependency == nil || util.IsNotFoundError(err) {
+		resp.State.RemoveResource(ctx)
 		return
 	}
-
-	if serviceDependency == nil {
-		resp.State.RemoveResource(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error listing service dependencies", err.Error())
 		return
 	}
 
@@ -245,15 +244,16 @@ func (r *resourceServiceDependency) Delete(ctx context.Context, req resource.Del
 	depID := dependent.ID.ValueString()
 	rt := dependent.Type.ValueString()
 
-	serviceDependency, diags := r.requestGetServiceDependency(ctx, id, depID, rt)
-	if resp.Diagnostics.Append(diags...); diags.HasError() {
-		return
-	}
-
-	if serviceDependency == nil {
+	serviceDependency, err := r.requestGetServiceDependency(ctx, id, depID, rt)
+	if serviceDependency == nil || util.IsNotFoundError(err) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
+	if err != nil {
+		resp.Diagnostics.AddError("Error listing service dependencies", err.Error())
+		return
+	}
+
 	if serviceDependency.SupportingService != nil {
 		serviceDependency.SupportingService.Type = convertServiceDependencyType(serviceDependency.SupportingService.Type)
 	}
@@ -261,21 +261,20 @@ func (r *resourceServiceDependency) Delete(ctx context.Context, req resource.Del
 		serviceDependency.DependentService.Type = convertServiceDependencyType(serviceDependency.DependentService.Type)
 	}
 
-	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+	err = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		_, err := r.client.DisassociateServiceDependenciesWithContext(ctx, &pagerduty.ListServiceDependencies{
 			Relationships: []*pagerduty.ServiceDependency{serviceDependency},
 		})
 		if err != nil {
-			if util.IsBadRequestError(err) {
+			if util.IsBadRequestError(err) || util.IsNotFoundError(err) {
 				return retry.NonRetryableError(err)
 			}
 			return retry.RetryableError(err)
 		}
 		return nil
 	})
-
-	if err != nil {
-		diags.AddError(
+	if err != nil && !util.IsNotFoundError(err) {
+		resp.Diagnostics.AddError(
 			fmt.Sprintf("Error deleting PagerDuty service dependency %s (%s) dependent of %s", id, rt, depID),
 			err.Error(),
 		)
@@ -289,11 +288,10 @@ func (r *resourceServiceDependency) Delete(ctx context.Context, req resource.Del
 // according to its resource type, then searches and returns the
 // ServiceDependency with an id equal to `id`, returns a nil ServiceDependency
 // if it is not found.
-func (r *resourceServiceDependency) requestGetServiceDependency(ctx context.Context, id, depID, rt string) (*pagerduty.ServiceDependency, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (r *resourceServiceDependency) requestGetServiceDependency(ctx context.Context, id, depID, rt string) (*pagerduty.ServiceDependency, error) {
 	var found *pagerduty.ServiceDependency
 
-	retryErr := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		var list *pagerduty.ListServiceDependencies
 		var err error
 
@@ -307,12 +305,9 @@ func (r *resourceServiceDependency) requestGetServiceDependency(ctx context.Cont
 			return retry.RetryableError(err)
 		}
 		if err != nil {
-			// TODO if 400 {
-			// TODO return retry.NonRetryableError(err)
-			// TODO }
-			// Delaying retry by 30s as recommended by PagerDuty
-			// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
-			time.Sleep(30 * time.Second)
+			if util.IsBadRequestError(err) || util.IsNotFoundError(err) {
+				return retry.NonRetryableError(err)
+			}
 			return retry.RetryableError(err)
 		}
 
@@ -324,10 +319,8 @@ func (r *resourceServiceDependency) requestGetServiceDependency(ctx context.Cont
 		}
 		return nil
 	})
-	if retryErr != nil {
-		diags.AddError("Error listing service dependencies", retryErr.Error())
-	}
-	return found, diags
+
+	return found, err
 }
 
 func (r *resourceServiceDependency) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -343,18 +336,20 @@ func (r *resourceServiceDependency) ImportState(ctx context.Context, req resourc
 		)
 	}
 	supID, supRt, id := ids[0], ids[1], ids[2]
-	serviceDependency, diags := r.requestGetServiceDependency(ctx, id, supID, supRt)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	serviceDependency, err := r.requestGetServiceDependency(ctx, id, supID, supRt)
+	if serviceDependency == nil || util.IsNotFoundError(err) {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+	if err != nil {
+		resp.Diagnostics.AddError("Error listing service dependencies", err.Error())
 		return
 	}
 
 	model := flattenServiceDependency([]*pagerduty.ServiceDependency{serviceDependency}, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(diags...)
 		return
 	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 

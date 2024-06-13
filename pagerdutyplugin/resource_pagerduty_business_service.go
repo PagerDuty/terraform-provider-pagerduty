@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	helperResource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 type resourceBusinessService struct {
@@ -72,10 +73,10 @@ func (r *resourceBusinessService) Create(ctx context.Context, req resource.Creat
 	businessServicePlan := buildPagerdutyBusinessService(&plan)
 	log.Printf("[INFO] Creating PagerDuty business service %s", plan.Name)
 
-	err := helperResource.RetryContext(ctx, 5*time.Minute, func() *helperResource.RetryError {
+	err := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		bs, err := r.client.CreateBusinessServiceWithContext(ctx, businessServicePlan)
 		if err != nil {
-			return helperResource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		} else if bs != nil {
 			businessServicePlan.ID = bs.ID
 		}
@@ -89,7 +90,7 @@ func (r *resourceBusinessService) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	plan = requestGetBusinessService(ctx, r.client, businessServicePlan.ID, &resp.Diagnostics)
+	plan, _ = requestGetBusinessService(ctx, r.client, businessServicePlan.ID, true, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -105,8 +106,11 @@ func (r *resourceBusinessService) Read(ctx context.Context, req resource.ReadReq
 	}
 	log.Printf("[INFO] Reading PagerDuty business service %s", state.ID)
 
-	state = requestGetBusinessService(ctx, r.client, state.ID.ValueString(), &resp.Diagnostics)
+	state, found := requestGetBusinessService(ctx, r.client, state.ID.ValueString(), false, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		if !found {
+			resp.State.RemoveResource(ctx)
+		}
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -151,7 +155,7 @@ func (r *resourceBusinessService) Delete(ctx context.Context, req resource.Delet
 	log.Printf("[INFO] Deleting PagerDuty business service %s", id.String())
 
 	err := r.client.DeleteBusinessServiceWithContext(ctx, id.ValueString())
-	if err != nil {
+	if err != nil && !util.IsNotFoundError(err) {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Error deleting Business Service %s", id),
 			err.Error(),
@@ -181,25 +185,33 @@ type resourceBusinessServiceModel struct {
 	Type           types.String `tfsdk:"type"`
 }
 
-func requestGetBusinessService(ctx context.Context, client *pagerduty.Client, id string, diags *diag.Diagnostics) resourceBusinessServiceModel {
+func requestGetBusinessService(ctx context.Context, client *pagerduty.Client, id string, retryNotFound bool, diags *diag.Diagnostics) (resourceBusinessServiceModel, bool) {
 	var model resourceBusinessServiceModel
 
-	err := helperResource.RetryContext(ctx, 5*time.Minute, func() *helperResource.RetryError {
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		businessService, err := client.GetBusinessServiceWithContext(ctx, id)
 		if err != nil {
-			return helperResource.RetryableError(err)
+			if !retryNotFound && util.IsNotFoundError(err) {
+				return retry.NonRetryableError(err)
+			}
+			return retry.RetryableError(err)
 		}
 		model = flattenBusinessService(businessService)
 		return nil
 	})
 	if err != nil {
+		if util.IsNotFoundError(err) {
+			found := false
+			return model, found
+		}
 		diags.AddError(
 			fmt.Sprintf("Error reading Business Service %s", id),
 			err.Error(),
 		)
 	}
 
-	return model
+	found := true
+	return model, found
 }
 
 func buildPagerdutyBusinessService(model *resourceBusinessServiceModel) *pagerduty.BusinessService {

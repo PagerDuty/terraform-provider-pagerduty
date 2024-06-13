@@ -67,6 +67,7 @@ func (d *dataSourceService) Read(ctx context.Context, req datasource.ReadRequest
 			Query:  searchName.ValueString(),
 			Limit:  apiutil.Limit,
 			Offset: uint(offset),
+			Includes: []string{"teams"},
 		})
 		if err != nil {
 			return false, err
@@ -96,7 +97,11 @@ func (d *dataSourceService) Read(ctx context.Context, req datasource.ReadRequest
 		)
 		return
 	}
-	model := flattenServiceData(ctx, found, &resp.Diagnostics)
+
+	model := flattenServiceData(found, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
@@ -112,7 +117,7 @@ type dataSourceServiceModel struct {
 	Teams                  types.List   `tfsdk:"teams"`
 }
 
-func flattenServiceData(ctx context.Context, service *pagerduty.Service, diags *diag.Diagnostics) dataSourceServiceModel {
+func flattenServiceData(service *pagerduty.Service, diags *diag.Diagnostics) dataSourceServiceModel {
 	teamObjectType := types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"id":   types.StringType,
@@ -120,9 +125,17 @@ func flattenServiceData(ctx context.Context, service *pagerduty.Service, diags *
 		},
 	}
 
-	teams, d := types.ListValueFrom(ctx, teamObjectType, service.Teams)
-	diags.Append(d...)
-	if d.HasError() {
+	teamsElems := make([]attr.Value, 0, len(service.Teams))
+	for _, t := range service.Teams {
+		teamObj := types.ObjectValueMust(teamObjectType.AttrTypes, map[string]attr.Value{
+			"id":   types.StringValue(t.ID),
+			"name": types.StringValue(t.Name),
+		})
+		teamsElems = append(teamsElems, teamObj)
+	}
+
+	teams, d := types.ListValue(teamObjectType, teamsElems)
+	if diags.Append(d...); d.HasError() {
 		return dataSourceServiceModel{}
 	}
 

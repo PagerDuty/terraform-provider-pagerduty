@@ -9,7 +9,7 @@ import (
 )
 
 func TestAccPagerDutyExtension_import(t *testing.T) {
-	extension_name := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	extensionName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	url := "https://example.com/receive_a_pagerduty_webhook"
 
@@ -19,7 +19,7 @@ func TestAccPagerDutyExtension_import(t *testing.T) {
 		CheckDestroy:             testAccCheckPagerDutyExtensionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyExtensionConfig(name, extension_name, url, "false", "any"),
+				Config: testAccCheckPagerDutyExtensionConfig(name, extensionName, url, "false", "any"),
 			},
 			{
 				ResourceName:            "pagerduty_extension.foo",

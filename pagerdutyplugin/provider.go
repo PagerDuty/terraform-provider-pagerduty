@@ -21,11 +21,11 @@ type Provider struct {
 	client *pagerduty.Client
 }
 
-func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+func (p *Provider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "pagerduty"
 }
 
-func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	useAppOauthScopedTokenBlock := schema.ListNestedBlock{
 		NestedObject: schema.NestedBlockObject{
 			Attributes: map[string]schema.Attribute{
@@ -49,22 +49,27 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 	}
 }
 
-func (p *Provider) DataSources(ctx context.Context) [](func() datasource.DataSource) {
+func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSource) {
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
+		func() datasource.DataSource { return &dataSourceIntegration{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourcesScores{} },
 		func() datasource.DataSource { return &dataSourceStandards{} },
+		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceTag{} },
 	}
 }
 
-func (p *Provider) Resources(ctx context.Context) [](func() resource.Resource) {
+func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 	return [](func() resource.Resource){
+		func() resource.Resource { return &resourceAddon{} },
 		func() resource.Resource { return &resourceBusinessService{} },
 		func() resource.Resource { return &resourceExtensionServiceNow{} },
 		func() resource.Resource { return &resourceExtension{} },
+		func() resource.Resource { return &resourceSchedule{} },
+		func() resource.Resource { return &resourceServiceDependency{} },
 		func() resource.Resource { return &resourceTagAssignment{} },
 		func() resource.Resource { return &resourceTag{} },
 		func() resource.Resource { return &resourceUserHandoffNotificationRule{} },
@@ -91,23 +96,21 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		}
 	}
 
-	var regionApiUrl string
-	if serviceRegion == "us" {
-		regionApiUrl = ""
-	} else {
-		regionApiUrl = serviceRegion + "."
+	regionAPIURL := ""
+	if serviceRegion != "us" {
+		regionAPIURL = serviceRegion + "."
 	}
 
 	skipCredentialsValidation := args.SkipCredentialsValidation.Equal(types.BoolValue(true))
 
 	config := Config{
-		ApiUrl:              "https://api." + regionApiUrl + "pagerduty.com",
-		AppUrl:              "https://app." + regionApiUrl + "pagerduty.com",
+		APIURL:              "https://api." + regionAPIURL + "pagerduty.com",
+		AppURL:              "https://app." + regionAPIURL + "pagerduty.com",
 		SkipCredsValidation: skipCredentialsValidation,
 		Token:               args.Token.ValueString(),
 		UserToken:           args.UserToken.ValueString(),
 		TerraformVersion:    req.TerraformVersion,
-		ApiUrlOverride:      args.ApiUrlOverride.ValueString(),
+		APIURLOverride:      args.APIURLOverride.ValueString(),
 		ServiceRegion:       serviceRegion,
 	}
 
@@ -118,7 +121,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 			return
 		}
 		config.AppOauthScopedToken = &AppOauthScopedToken{
-			ClientId:     blockList[0].PdClientId.ValueString(),
+			ClientID:     blockList[0].PdClientID.ValueString(),
 			ClientSecret: blockList[0].PdClientSecret.ValueString(),
 			Subdomain:    blockList[0].PdSubdomain.ValueString(),
 		}
@@ -132,8 +135,8 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 			config.UserToken = os.Getenv("PAGERDUTY_USER_TOKEN")
 		}
 	} else {
-		if config.AppOauthScopedToken.ClientId == "" {
-			config.AppOauthScopedToken.ClientId = os.Getenv("PAGERDUTY_CLIENT_ID")
+		if config.AppOauthScopedToken.ClientID == "" {
+			config.AppOauthScopedToken.ClientID = os.Getenv("PAGERDUTY_CLIENT_ID")
 		}
 		if config.AppOauthScopedToken.ClientSecret == "" {
 			config.AppOauthScopedToken.ClientSecret = os.Getenv("PAGERDUTY_CLIENT_SECRET")
@@ -150,7 +153,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		// We had to define pd_client_id, pd_client_secret, and pd_subdomain
 		// as Optional and manually check its presence here.
 		li := []string{}
-		if config.AppOauthScopedToken.ClientId == "" {
+		if config.AppOauthScopedToken.ClientID == "" {
 			li = append(li, "pd_client_id")
 		}
 		if config.AppOauthScopedToken.ClientSecret == "" {
@@ -180,7 +183,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 }
 
 type UseAppOauthScopedToken struct {
-	PdClientId     types.String `tfsdk:"pd_client_id"`
+	PdClientID     types.String `tfsdk:"pd_client_id"`
 	PdClientSecret types.String `tfsdk:"pd_client_secret"`
 	PdSubdomain    types.String `tfsdk:"pd_subdomain"`
 }
@@ -190,7 +193,7 @@ type providerArguments struct {
 	UserToken                 types.String `tfsdk:"user_token"`
 	SkipCredentialsValidation types.Bool   `tfsdk:"skip_credentials_validation"`
 	ServiceRegion             types.String `tfsdk:"service_region"`
-	ApiUrlOverride            types.String `tfsdk:"api_url_override"`
+	APIURLOverride            types.String `tfsdk:"api_url_override"`
 	UseAppOauthScopedToken    types.List   `tfsdk:"use_app_oauth_scoped_token"`
 }
 
@@ -203,4 +206,26 @@ func extractString(ctx context.Context, schema SchemaGetter, name string, diags 
 	d := schema.GetAttribute(ctx, path.Root(name), &s)
 	diags.Append(d...)
 	return s.ValueStringPointer()
+}
+
+func buildPagerdutyAPIObjectFromIDs(ctx context.Context, list types.List, apiType string, diags *diag.Diagnostics) []pagerduty.APIObject {
+	if list.IsNull() || list.IsUnknown() {
+		return nil
+	}
+
+	var target []types.String
+	diags.Append(list.ElementsAs(ctx, &target, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	response := make([]pagerduty.APIObject, 0, len(target))
+	for _, id := range target {
+		response = append(response, pagerduty.APIObject{
+			ID:   id.ValueString(),
+			Type: apiType,
+		})
+	}
+
+	return response
 }

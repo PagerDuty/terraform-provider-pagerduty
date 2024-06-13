@@ -17,19 +17,20 @@ func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
 	serviceIntegration := "Datadog"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy),
 				Check: func(state *terraform.State) error {
 					resource.Test(t, resource.TestCase{
-						Providers: testAccProviders,
+						ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 						Steps: []resource.TestStep{
 							{
 								Config: testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration),
 								Check:  verifyOutput("output_id"),
-							}},
+							},
+						},
 					})
 					return nil
 				},

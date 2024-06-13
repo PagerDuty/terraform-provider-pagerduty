@@ -114,6 +114,11 @@ func (c *Client) ListSchedulesWithContext(ctx context.Context, o ListSchedulesOp
 	return &result, nil
 }
 
+// CreateScheduleOptions is the data structure used when calling the CreateScheduleWithOptions API endpoint.
+type CreateScheduleOptions struct {
+	Overflow bool `url:"overflow,omitempty"`
+}
+
 // CreateSchedule creates a new on-call schedule.
 //
 // Deprecated: Use CreateScheduleWithContext instead.
@@ -128,6 +133,21 @@ func (c *Client) CreateScheduleWithContext(ctx context.Context, s Schedule) (*Sc
 	}
 
 	resp, err := c.post(ctx, "/schedules", d, nil)
+	return getScheduleFromResponse(c, resp, err)
+}
+
+// CreateScheduleWithOptions creates a new on-call schedule, accepting creation options.
+func (c *Client) CreateScheduleWithOptions(ctx context.Context, s Schedule, o CreateScheduleOptions) (*Schedule, error) {
+	v, err := query.Values(o)
+	if err != nil {
+		return nil, err
+	}
+
+	d := map[string]Schedule{
+		"schedule": s,
+	}
+
+	resp, err := c.post(ctx, "/schedules?"+v.Encode(), d, nil)
 	return getScheduleFromResponse(c, resp, err)
 }
 
@@ -182,6 +202,7 @@ type GetScheduleOptions struct {
 	TimeZone string `url:"time_zone,omitempty"`
 	Since    string `url:"since,omitempty"`
 	Until    string `url:"until,omitempty"`
+	Overflow bool   `url:"overflow,omitempty"`
 }
 
 // GetSchedule shows detailed information about a schedule, including entries
@@ -204,7 +225,7 @@ func (c *Client) GetScheduleWithContext(ctx context.Context, id string, o GetSch
 	return getScheduleFromResponse(c, resp, err)
 }
 
-// UpdateScheduleOptions is the data structure used when calling the UpdateSchedule API endpoint.
+// UpdateScheduleOptions is the data structure used when calling the UpdateScheduleWithOptions API endpoint.
 type UpdateScheduleOptions struct {
 	Overflow bool `url:"overflow,omitempty"`
 }
@@ -223,6 +244,21 @@ func (c *Client) UpdateScheduleWithContext(ctx context.Context, id string, s Sch
 	}
 
 	resp, err := c.put(ctx, "/schedules/"+id, d, nil)
+	return getScheduleFromResponse(c, resp, err)
+}
+
+// UpdateScheduleWithOptions updates an existing on-call schedule, accepting
+func (c *Client) UpdateScheduleWithOptions(ctx context.Context, id string, s Schedule, o UpdateScheduleOptions) (*Schedule, error) {
+	v, err := query.Values(o)
+	if err != nil {
+		return nil, err
+	}
+
+	d := map[string]Schedule{
+		"schedule": s,
+	}
+
+	resp, err := c.put(ctx, "/schedules/"+id+"?"+v.Encode(), d, nil)
 	return getScheduleFromResponse(c, resp, err)
 }
 

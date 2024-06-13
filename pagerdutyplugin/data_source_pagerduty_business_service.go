@@ -19,11 +19,11 @@ type dataSourceBusinessService struct{ client *pagerduty.Client }
 
 var _ datasource.DataSourceWithConfigure = (*dataSourceBusinessService)(nil)
 
-func (*dataSourceBusinessService) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (*dataSourceBusinessService) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "pagerduty_business_service"
 }
 
-func (*dataSourceBusinessService) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (*dataSourceBusinessService) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id":   schema.StringAttribute{Computed: true},
@@ -33,7 +33,7 @@ func (*dataSourceBusinessService) Schema(ctx context.Context, req datasource.Sch
 	}
 }
 
-func (d *dataSourceBusinessService) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *dataSourceBusinessService) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&d.client, req.ProviderData)...)
 }
 

@@ -34,8 +34,8 @@ func (r *resourceAddon) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{ stringplanmodifier.UseStateForUnknown(), },
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"name": schema.StringAttribute{Required: true},
 			"src":  schema.StringAttribute{Required: true},

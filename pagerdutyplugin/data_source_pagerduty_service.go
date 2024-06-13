@@ -64,9 +64,9 @@ func (d *dataSourceService) Read(ctx context.Context, req datasource.ReadRequest
 	var found *pagerduty.Service
 	err := apiutil.All(ctx, func(offset int) (bool, error) {
 		resp, err := d.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{
-			Query:  searchName.ValueString(),
-			Limit:  apiutil.Limit,
-			Offset: uint(offset),
+			Query:    searchName.ValueString(),
+			Limit:    apiutil.Limit,
+			Offset:   uint(offset),
 			Includes: []string{"teams"},
 		})
 		if err != nil {

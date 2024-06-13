@@ -12,6 +12,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.dataSourceIntegration. Kept for testing purposes.
 func dataSourcePagerDutyServiceIntegration() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyServiceIntegrationRead,

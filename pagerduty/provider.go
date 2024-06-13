@@ -77,6 +77,12 @@ func Provider(isMux bool) *schema.Provider {
 				Optional: true,
 				Default:  "",
 			},
+
+			"insecure_tls": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -228,6 +234,7 @@ func providerConfigureContextFunc(_ context.Context, data *schema.ResourceData, 
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
 		ApiUrlOverride:      data.Get("api_url_override").(string),
 		ServiceRegion:       serviceRegion,
+		InsecureTls:         data.Get("insecure_tls").(bool),
 	}
 
 	useAuthTokenType := pagerduty.AuthTokenTypeAPIToken

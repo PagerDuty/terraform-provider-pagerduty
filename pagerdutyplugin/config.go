@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -44,6 +45,9 @@ type Config struct {
 	// Region where the server of the service is deployed
 	ServiceRegion string
 
+	// Do not verify TLS certs for HTTPS requests - useful if you're behind a corporate proxy
+	InsecureTls bool
+
 	// Parameters for fine-grained access control
 	AppOauthScopedToken *AppOauthScopedToken
 
@@ -73,7 +77,12 @@ func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 
 	httpClient := http.DefaultClient
 	httpClient.Timeout = 1 * time.Minute
-	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	if c.InsecureTls {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	httpClient.Transport = logging.NewTransport("PagerDuty", transport)
 
 	apiUrl := c.ApiUrl
 	if c.ApiUrlOverride != "" {

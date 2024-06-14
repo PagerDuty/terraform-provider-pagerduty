@@ -1,3 +1,27 @@
+## 3.13.1 (June 12, 2024)
+
+FEATURES:
+
+* `resource/pagerduty_user_handoff_notification_rule`: Add support for user handoff notification rules ([#875](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/875))
+
+BUG FIXES:
+
+* `resource/pagerduty_extension`: Allow resource extension's endpoint_url to be imported as null ([#880](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/880))
+
+IMPROVEMENTS:
+
+* `PagerDuty/pagerduty`: migrate goreleaser deprecated config attributes ([#882](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/882))
+
+## 3.13.0 (June 12, 2024) - Not released because of failed release process
+
+FEATURES:
+
+* `resource/pagerduty_user_handoff_notification_rule`: Add support for user handoff notification rules ([#875](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/875))
+
+BUG FIXES:
+
+* `resource/pagerduty_extension`: Allow resource extension's endpoint_url to be imported as null ([#880](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/880))
+
 ## 3.12.2 (May 20, 2024)
 
 IMPROVEMENTS:

@@ -26,15 +26,15 @@ var (
 	_ resource.ResourceWithImportState = (*resourceTag)(nil)
 )
 
-func (r *resourceTag) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *resourceTag) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&r.client, req.ProviderData)...)
 }
 
-func (r *resourceTag) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *resourceTag) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "pagerduty_tag"
 }
 
-func (r *resourceTag) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *resourceTag) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"label": schema.StringAttribute{
@@ -106,7 +106,7 @@ func (r *resourceTag) Read(ctx context.Context, req resource.ReadRequest, resp *
 	resp.State.Set(ctx, &model)
 }
 
-func (r *resourceTag) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *resourceTag) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
 }
 
 func (r *resourceTag) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -143,7 +143,7 @@ func (r *resourceTag) ImportState(ctx context.Context, req resource.ImportStateR
 
 type resourceTagModel struct {
 	ID      types.String `tfsdk:"id"`
-	HtmlUrl types.String `tfsdk:"html_url"`
+	HTMLURL types.String `tfsdk:"html_url"`
 	Label   types.String `tfsdk:"label"`
 	Summary types.String `tfsdk:"summary"`
 }
@@ -159,7 +159,7 @@ func buildTag(model *resourceTagModel) *pagerduty.Tag {
 func flattenTag(tag *pagerduty.Tag) resourceTagModel {
 	model := resourceTagModel{
 		ID:      types.StringValue(tag.ID),
-		HtmlUrl: types.StringValue(tag.HTMLURL),
+		HTMLURL: types.StringValue(tag.HTMLURL),
 		Label:   types.StringValue(tag.Label),
 		Summary: types.StringValue(tag.Summary),
 	}

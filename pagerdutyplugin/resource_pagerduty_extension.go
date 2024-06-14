@@ -37,12 +37,36 @@ func (r *resourceExtension) Metadata(_ context.Context, _ resource.MetadataReque
 func (r *resourceExtension) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"name":         schema.StringAttribute{Optional: true, Computed: true},
-			"id":           schema.StringAttribute{Computed: true},
-			"html_url":     schema.StringAttribute{Computed: true},
-			"type":         schema.StringAttribute{Optional: true, Computed: true},
-			"endpoint_url": schema.StringAttribute{Optional: true, Sensitive: true},
-			"summary":      schema.StringAttribute{Computed: true},
+			"name": schema.StringAttribute{Optional: true, Computed: true},
+			"id": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"html_url": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"type": schema.StringAttribute{
+				Optional: true, Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"endpoint_url": schema.StringAttribute{
+				Optional:  true,
+				Computed:  true,
+				Sensitive: true,
+			},
+			"summary": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"extension_objects": schema.SetAttribute{
 				Required:    true,
 				ElementType: types.StringType,
@@ -187,7 +211,7 @@ func (r *resourceExtension) Delete(ctx context.Context, req resource.DeleteReque
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *resourceExtension) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *resourceExtension) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&r.client, req.ProviderData)...)
 }
 
@@ -317,6 +341,7 @@ func flattenExtension(response *pagerduty.Extension, accessToken *string, diags 
 		ID:               types.StringValue(response.ID),
 		Name:             types.StringValue(response.Name),
 		HTMLURL:          types.StringValue(response.HTMLURL),
+		Type:             types.StringValue(response.Type),
 		Summary:          types.StringValue(response.Summary),
 		EndpointURL:      types.StringValue(response.EndpointURL),
 		Config:           flattenExtensionConfig(response.Config, accessToken, diags),

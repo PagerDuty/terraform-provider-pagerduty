@@ -1,15 +1,16 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 	"testing"
 
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -19,18 +20,10 @@ func init() {
 	})
 }
 
-func testSweepAddon(region string) error {
-	config, err := sharedConfigForRegion(region)
-	if err != nil {
-		return err
-	}
+func testSweepAddon(_ string) error {
+	ctx := context.Background()
 
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-
-	resp, _, err := client.Addons.List(&pagerduty.ListAddonsOptions{})
+	resp, err := testAccProvider.client.ListAddonsWithContext(ctx, pagerduty.ListAddonOptions{})
 	if err != nil {
 		return err
 	}
@@ -38,7 +31,7 @@ func testSweepAddon(region string) error {
 	for _, addon := range resp.Addons {
 		if strings.HasPrefix(addon.Name, "test") || strings.HasPrefix(addon.Name, "tf-") {
 			log.Printf("Destroying add-on %s (%s)", addon.Name, addon.ID)
-			if _, err := client.Addons.Delete(addon.ID); err != nil {
+			if err := testAccProvider.client.DeleteAddonWithContext(ctx, addon.ID); err != nil {
 				return err
 			}
 		}
@@ -52,9 +45,9 @@ func TestAccPagerDutyAddon_Basic(t *testing.T) {
 	addonUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyAddonConfig(addon),
@@ -81,13 +74,14 @@ func TestAccPagerDutyAddon_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyAddonDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_addon" {
 			continue
 		}
 
-		if _, _, err := client.Addons.Get(r.Primary.ID); err == nil {
+		ctx := context.Background()
+
+		if _, err := testAccProvider.client.GetAddonWithContext(ctx, r.Primary.ID); err == nil {
 			return fmt.Errorf("Add-on still exists")
 		}
 
@@ -97,6 +91,8 @@ func testAccCheckPagerDutyAddonDestroy(s *terraform.State) error {
 
 func testAccCheckPagerDutyAddonExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		ctx := context.Background()
+
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -106,9 +102,7 @@ func testAccCheckPagerDutyAddonExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No add-on ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Addons.Get(rs.Primary.ID)
+		found, err := testAccProvider.client.GetAddonWithContext(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

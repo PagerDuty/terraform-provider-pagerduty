@@ -63,9 +63,9 @@ func testStandards(a map[string]string) error {
 	}
 
 	for _, att := range testAttrs {
-		required_sub_attr := fmt.Sprintf("standards.0.%s", att)
-		if _, ok := a[required_sub_attr]; !ok {
-			return fmt.Errorf("Expected the required attribute %s to exist", required_sub_attr)
+		requiredSubAttr := fmt.Sprintf("standards.0.%s", att)
+		if _, ok := a[requiredSubAttr]; !ok {
+			return fmt.Errorf("Expected the required attribute %s to exist", requiredSubAttr)
 		}
 	}
 

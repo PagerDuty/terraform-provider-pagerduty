@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
+func TestAccDataSourcePagerDutyServiceIntegration_Basic(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -17,19 +17,20 @@ func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
 	serviceIntegration := "Datadog"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy),
+				Config: testAccDataSourcePagerDutyServiceIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy),
 				Check: func(state *terraform.State) error {
 					resource.Test(t, resource.TestCase{
-						Providers: testAccProviders,
+						ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 						Steps: []resource.TestStep{
 							{
-								Config: testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration),
+								Config: testAccDataSourcePagerDutyServiceIntegrationConfigStep2(service, serviceIntegration),
 								Check:  verifyOutput("output_id"),
-							}},
+							},
+						},
 					})
 					return nil
 				},
@@ -54,7 +55,7 @@ func verifyOutput(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy string) string {
+func testAccDataSourcePagerDutyServiceIntegrationConfigStep1(service, serviceIntegration, email, escalationPolicy string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "pagerduty_user" {
   email = "%s"
@@ -92,7 +93,7 @@ data "pagerduty_vendor" "datadog" {
 `, email, escalationPolicy, service, serviceIntegration)
 }
 
-func testAccDataSourcePagerDutyIntegrationConfigStep2(service, serviceIntegration string) string {
+func testAccDataSourcePagerDutyServiceIntegrationConfigStep2(service, serviceIntegration string) string {
 	return fmt.Sprintf(`
 
 data "pagerduty_service_integration" "service_integration" {

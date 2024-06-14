@@ -1,3 +1,20 @@
+## 3.14.0 (June 14, 2024)
+
+FEATURES:
+
+* `PagerDuty/pagerduty`: Add the option to ignore TLS certificate errors when calling the PD API. ([#881](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/881))
+
+IMPROVEMENTS:
+
+* Migrate pack #2 of datasources and resources to terraform plugin framework ([#866](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/866))
+  - `resource/pagerduty_service_dependency`
+  - `data/pagerduty_service_integration`
+  - `data/pagerduty_service`
+  - `resource/pagerduty_addon`
+* `resource/pagerduty_user`: fix invalid target type in docs ([#856](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/856))
+* `resource/pagerduty_service`: feat: improve PD service time window validation to accept 86400 as a valid value ([#876](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/876))
+* `resource/pagerduty_event_orchestration_router`,  `resource/pagerduty_event_orchestration_service`: Ignore import state verification for EO routing rules ids ([#883](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/883))
+
 ## 3.13.1 (June 12, 2024)
 
 FEATURES:

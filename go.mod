@@ -76,3 +76,5 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
+
+replace github.com/heimweh/go-pagerduty => github.com/alexzakabluk/go-pagerduty v0.0.0-20240607142119-ac9a64bba6da

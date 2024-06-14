@@ -42,6 +42,7 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 			"skip_credentials_validation": schema.BoolAttribute{Optional: true},
 			"token":                       schema.StringAttribute{Optional: true},
 			"user_token":                  schema.StringAttribute{Optional: true},
+			"insecure_tls":                schema.BoolAttribute{Optional: true},
 		},
 		Blocks: map[string]schema.Block{
 			"use_app_oauth_scoped_token": useAppOauthScopedTokenBlock,
@@ -101,6 +102,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	}
 
 	skipCredentialsValidation := args.SkipCredentialsValidation.Equal(types.BoolValue(true))
+	insecureTls := args.InsecureTls.Equal(types.BoolValue(true))
 
 	config := Config{
 		APIURL:              "https://api." + regionAPIURL + "pagerduty.com",
@@ -111,6 +113,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		TerraformVersion:    req.TerraformVersion,
 		APIURLOverride:      args.APIURLOverride.ValueString(),
 		ServiceRegion:       serviceRegion,
+		InsecureTls:         insecureTls,
 	}
 
 	if !args.UseAppOauthScopedToken.IsNull() {
@@ -194,6 +197,7 @@ type providerArguments struct {
 	ServiceRegion             types.String `tfsdk:"service_region"`
 	APIURLOverride            types.String `tfsdk:"api_url_override"`
 	UseAppOauthScopedToken    types.List   `tfsdk:"use_app_oauth_scoped_token"`
+	InsecureTls               types.Bool   `tfsdk:"insecure_tls"`
 }
 
 type SchemaGetter interface {

@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -37,6 +38,9 @@ type Config struct {
 	// UserAgent for API Client
 	UserAgent string
 
+	// Do not verify TLS certs for HTTPS requests - useful if you're behind a corporate proxy
+	InsecureTls bool
+
 	APITokenType *pagerduty.AuthTokenType
 
 	AppOauthScopedTokenParams *persistentconfig.AppOauthScopedTokenParams
@@ -72,7 +76,12 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	var httpClient *http.Client
 	httpClient = http.DefaultClient
 	httpClient.Timeout = 1 * time.Minute
-	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	if c.InsecureTls {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	httpClient.Transport = logging.NewTransport("PagerDuty", transport)
 
 	apiUrl := c.ApiUrl
 	if c.ApiUrlOverride != "" {
@@ -125,7 +134,12 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 
 	var httpClient *http.Client
 	httpClient = http.DefaultClient
-	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	if c.InsecureTls {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	httpClient.Transport = logging.NewTransport("PagerDuty", transport)
 
 	config := &pagerduty.Config{
 		BaseURL:    c.AppUrl,

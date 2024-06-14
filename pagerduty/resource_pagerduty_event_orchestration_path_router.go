@@ -63,9 +63,29 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 										MaxItems: 1, // there can only be one action for router
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
+												"dynamic_route_to": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"lookup_by": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"regex": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"source": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+														},
+													},
+												},
 												"route_to": {
 													Type:     schema.TypeString,
-													Required: true,
+													Optional: true,
 													ValidateFunc: func(v interface{}, key string) (warns []string, errs []error) {
 														value := v.(string)
 														if value == "unrouted" {
@@ -294,7 +314,12 @@ func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleAct
 	actions := new(pagerduty.EventOrchestrationPathRuleActions)
 	for _, ai := range v.([]interface{}) {
 		am := ai.(map[string]interface{})
-		actions.RouteTo = am["route_to"].(string)
+		dra := am["dynamic_route_to"]
+		if !isNilFunc(dra) && len(dra.([]interface{})) > 0 {
+			actions.DynamicRouteTo = expandRouterDynamicRouteToAction(dra)
+		} else {
+			actions.RouteTo = am["route_to"].(string)
+		}
 	}
 
 	return actions
@@ -309,6 +334,17 @@ func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 	}
 
 	return catchAll
+}
+
+func expandRouterDynamicRouteToAction(v interface{}) *pagerduty.EventOrchestrationPathDynamicRouteTo {
+	dr := new(pagerduty.EventOrchestrationPathDynamicRouteTo)
+	for _, i := range v.([]interface{}) {
+		dra := i.(map[string]interface{})
+		dr.LookupBy = dra["lookup_by"].(string)
+		dr.Regex = dra["regex"].(string)
+		dr.Source = dra["source"].(string)
+	}
+	return dr
 }
 
 func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
@@ -344,7 +380,11 @@ func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) 
 	var actionsMap []map[string]interface{}
 
 	am := make(map[string]interface{})
-	am["route_to"] = actions.RouteTo
+	if actions.DynamicRouteTo != nil {
+		am["dynamic_route_to"] = flattenRouterDynamicRouteToAction(actions.DynamicRouteTo)
+	} else {
+		am["route_to"] = actions.RouteTo
+	}
 	actionsMap = append(actionsMap, am)
 	return actionsMap
 }
@@ -358,6 +398,18 @@ func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[s
 	caMap = append(caMap, c)
 
 	return caMap
+}
+
+func flattenRouterDynamicRouteToAction(dra *pagerduty.EventOrchestrationPathDynamicRouteTo) []map[string]interface{} {
+	var dr []map[string]interface{}
+
+	dr = append(dr, map[string]interface{}{
+		"lookup_by": dra.LookupBy,
+		"regex":     dra.Regex,
+		"source":    dra.Source,
+	})
+
+	return dr
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

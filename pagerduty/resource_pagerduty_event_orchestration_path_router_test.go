@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -22,6 +23,17 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	orchestration := fmt.Sprintf("tf-orchestration-%s", acctest.RandString(5))
+
+	dynamicRouteToByNameInput := &pagerduty.EventOrchestrationPathDynamicRouteTo{
+		LookupBy: "service_name",
+		Regex:    ".*",
+		Source:   "event.custom_details.pd_service_name",
+	}
+	dynamicRouteToByIDInput := &pagerduty.EventOrchestrationPathDynamicRouteTo{
+		LookupBy: "service_id",
+		Regex:    "ID:(.*)",
+		Source:   "event.custom_details.pd_service_id",
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -48,6 +60,27 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 						"pagerduty_event_orchestration_router.router", "unrouted", true), //test for catch_all route_to prop, by default it should be unrouted
 				),
 			},
+			// Configure a Dynamic Routing rule:
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationRouterDynamicRouteToConfig(team, escalationPolicy, service, orchestration, dynamicRouteToByNameInput),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterPathDynamicRouteToMatch("pagerduty_event_orchestration_router.router", dynamicRouteToByNameInput),
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
+						"pagerduty_event_orchestration_router.router", "unrouted", true),
+				),
+			},
+			// Update the Dynamic Routing rule added in the previous test case:
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationRouterDynamicRouteToConfig(team, escalationPolicy, service, orchestration, dynamicRouteToByIDInput),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
+					testAccCheckPagerDutyEventOrchestrationRouterPathDynamicRouteToMatch("pagerduty_event_orchestration_router.router", dynamicRouteToByIDInput),
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
+						"pagerduty_event_orchestration_router.router", "unrouted", true),
+				),
+			},
+			// Delete the Dynamic Routing rule added in the previous test cases:
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(team, escalationPolicy, service, orchestration),
 				Check: resource.ComposeTestCheckFunc(
@@ -279,6 +312,42 @@ func testAccCheckPagerDutyEventOrchestrationRouterConfig(t, ep, s, o string) str
 	`)
 }
 
+func testAccCheckPagerDutyEventOrchestrationRouterDynamicRouteToConfig(t, ep, s, o string, dynamicRouteToByNameInput *pagerduty.EventOrchestrationPathDynamicRouteTo) string {
+	routerConfig := fmt.Sprintf(
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = "unrouted"
+				}
+			}
+			set {
+				id = "start"
+				rule {
+					disabled = false
+					label = "dynamic routing rule"
+					actions {
+						dynamic_route_to {
+							lookup_by = "%s"
+							regex = "%s"
+							source = "%s"
+						}
+					}
+				}
+				rule {
+					label = "static routing rule"
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+				}
+			}
+		}
+	`, dynamicRouteToByNameInput.LookupBy, dynamicRouteToByNameInput.Regex, dynamicRouteToByNameInput.Source)
+
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o), routerConfig)
+}
+
 func testAccCheckPagerDutyEventOrchestrationRouterConfigWithConditions(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_router" "router" {
@@ -505,6 +574,31 @@ func testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(router, servi
 
 		if rRouteToId != sId {
 			return fmt.Errorf("Event Orchestration Router Route to Service ID (%v) not matching provided service ID: %v", rRouteToId, sId)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyEventOrchestrationRouterPathDynamicRouteToMatch(router string, expectedDynamicRouteTo *pagerduty.EventOrchestrationPathDynamicRouteTo) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		r, rOk := s.RootModule().Resources[router]
+		if !rOk {
+			return fmt.Errorf("Not found: %s", router)
+		}
+
+		rLookupBy := r.Primary.Attributes["set.0.rule.0.actions.0.dynamic_route_to.0.lookup_by"]
+		rRegex := r.Primary.Attributes["set.0.rule.0.actions.0.dynamic_route_to.0.regex"]
+		rSource := r.Primary.Attributes["set.0.rule.0.actions.0.dynamic_route_to.0.source"]
+
+		if rLookupBy != expectedDynamicRouteTo.LookupBy {
+			return fmt.Errorf("Event Orchestration Router `dynamic_route_to.lookup_by` (%v) does not match expected value: %v", rLookupBy, expectedDynamicRouteTo.LookupBy)
+		}
+		if rRegex != expectedDynamicRouteTo.Regex {
+			return fmt.Errorf("Event Orchestration Router `dynamic_route_to.regex` (%v) does not match expected value: %v", rRegex, expectedDynamicRouteTo.Regex)
+		}
+		if rSource != expectedDynamicRouteTo.Source {
+			return fmt.Errorf("Event Orchestration Router `dynamic_route_to.source` (%v) does not match expected value: %v", rSource, expectedDynamicRouteTo.Source)
 		}
 
 		return nil

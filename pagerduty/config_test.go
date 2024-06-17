@@ -65,3 +65,16 @@ func TestConfigCustomAppUrl(t *testing.T) {
 		t.Fatalf("error: expected the client to not fail: %v", err)
 	}
 }
+
+// Test config with InsecureTls setting
+func TestConfigInsecureTls(t *testing.T) {
+	config := Config{
+		Token:               "foo",
+		InsecureTls:         true,
+		SkipCredsValidation: true,
+	}
+
+	if _, err := config.Client(); err != nil {
+		t.Fatalf("error: expected the client to not fail: %v", err)
+	}
+}

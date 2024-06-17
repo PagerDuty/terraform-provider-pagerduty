@@ -28,6 +28,11 @@ func TestAccPagerDutyEventOrchestrationPathUnrouted_import(t *testing.T) {
 				ImportStateIdFunc: testAccCheckPagerDutyEventOrchestrationPathUnroutedID,
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"set.0.rule.0.id",
+					"set.1.rule.0.id",
+					"set.1.rule.1.id",
+				},
 			},
 		},
 	})

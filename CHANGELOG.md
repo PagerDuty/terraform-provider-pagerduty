@@ -1,3 +1,9 @@
+## v3.14.2 (June 19, 2024)
+
+IMPROVEMENTS:
+
+* Remove invalid `alert_grouping_parameters` fields after strict check in API ([#888](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/888))
+
 ## v3.14.1 (June 19, 2024)
 
 IMPROVEMENTS:

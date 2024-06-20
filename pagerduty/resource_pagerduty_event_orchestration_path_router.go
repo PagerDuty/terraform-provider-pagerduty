@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -22,6 +23,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePagerDutyEventOrchestrationPathRouterImport,
 		},
+		CustomizeDiff: checkDynamicRoutingRule,
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
 				Type:     schema.TypeString,
@@ -131,6 +133,54 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 			},
 		},
 	}
+}
+
+func checkDynamicRoutingRule(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+	rNum := diff.Get("set.0.rule.#").(int)
+	draIdxs := []int{}
+	errorMsgs := []string{}
+
+	for ri := 0; ri < rNum; ri++ {
+		dra := diff.Get(fmt.Sprintf("set.0.rule.%d.actions.0.dynamic_route_to", ri))
+		hasDra := isNonEmptyList(dra)
+		if !hasDra {
+			continue
+		}
+		draIdxs = append(draIdxs, ri)
+	}
+	// 1. Only the first rule of the first ("start") set can have the Dynamic Routing action:
+	if len(draIdxs) > 1 {
+		idxs := []string{}
+		for _, idx := range draIdxs {
+			idxs = append(idxs, fmt.Sprintf("%d", idx))
+		}
+		errorMsgs = append(errorMsgs, fmt.Sprintf("A Router can have at most one Dynamic Routing rule; Rules with the dynamic_route_to action found at indexes: %s", strings.Join(idxs, ", ")))
+	}
+	// 2. The Dynamic Routing action can only be used in the first rule of the first set:
+	if len(draIdxs) > 0 && draIdxs[0] != 0 {
+		errorMsgs = append(errorMsgs, fmt.Sprintf("The Dynamic Routing rule must be the first rule in a Router"))
+	}
+	// 3. If the Dynamic Routing rule is the first rule of the first set,
+	// validate its configuration. It cannot have any conditions or the `route_to` action:
+	if len(draIdxs) == 1 && draIdxs[0] == 0 {
+		condNum := diff.Get("set.0.rule.0.condition.#").(int)
+		// diff.NewValueKnown(str) will return false if the value is based on interpolation that was unavailable at diff time,
+		// which may be the case for the `route_to` action when it references a pagerduty_service resource.
+		// Source: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/helper/schema#ResourceDiff.NewValueKnown
+		routeToValueKnown := diff.NewValueKnown("set.0.rule.0.actions.0.route_to")
+		routeTo := diff.Get("set.0.rule.0.actions.0.route_to").(string)
+		if condNum > 0 {
+			errorMsgs = append(errorMsgs, fmt.Sprintf("Dynamic Routing rules cannot have conditions"))
+		}
+		if !routeToValueKnown || routeToValueKnown && routeTo != "" {
+			errorMsgs = append(errorMsgs, fmt.Sprintf("Dynamic Routing rules cannot have the `route_to` action"))
+		}
+	}
+
+	if len(errorMsgs) > 0 {
+		return fmt.Errorf("Invalid Dynamic Routing rule configuration:\n- %s", strings.Join(errorMsgs, "\n- "))
+	}
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -315,7 +365,7 @@ func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleAct
 	for _, ai := range v.([]interface{}) {
 		am := ai.(map[string]interface{})
 		dra := am["dynamic_route_to"]
-		if !isNilFunc(dra) && len(dra.([]interface{})) > 0 {
+		if isNonEmptyList(dra) {
 			actions.DynamicRouteTo = expandRouterDynamicRouteToAction(dra)
 		} else {
 			actions.RouteTo = am["route_to"].(string)

@@ -1,12 +1,18 @@
+## v3.14.3 (June 20, 2024)
+
+BUG FIXES:
+
+* Handle 403 at EO path service refresh as orphan ([#890](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/890))
+
 ## v3.14.2 (June 19, 2024)
 
-IMPROVEMENTS:
+BUG FIXES:
 
 * Remove invalid `alert_grouping_parameters` fields after strict check in API ([#888](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/888))
 
 ## v3.14.1 (June 19, 2024)
 
-IMPROVEMENTS:
+BUG FIXES:
 
 * Fix datasource `pagerduty_service_integration` not finding service when they're many ([#886](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/886))
 

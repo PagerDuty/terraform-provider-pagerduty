@@ -203,6 +203,14 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 				return retry.NonRetryableError(err)
 			}
 
+			// When the service referenced by `id` gets deleted manually, the response
+			// of the API is a 403 instead of the expected 404. We will then handle the
+			// it as the service is gone, deleting this orphan EO path service.
+			if isErrCode(err, http.StatusForbidden) {
+				d.SetId("")
+				return nil
+			}
+
 			time.Sleep(2 * time.Second)
 			return retry.RetryableError(err)
 		}

@@ -245,6 +245,10 @@ func resourcePagerDutyEscalationPolicyUpdate(d *schema.ResourceData, meta interf
 		// Removing the inclusion of escalation_rule_assignment_strategies for
 		// accounts wihtout the required entitlements.
 		for idx, er := range escalationPolicy.EscalationRules {
+			if er.EscalationRuleAssignmentStrategy == nil {
+				continue
+			}
+
 			if er.EscalationRuleAssignmentStrategy.Type == "round_robin" {
 				return fmt.Errorf("Round Robin Scheduling is available for accounts on the following pricing plans: Business, Digital Operations (legacy) and Enterprise for Incident Management. Therefore, set the escalation_rule_assignment_strategy to 'assign_to_everyone' for the escalation rule at index %d", idx)
 			}
@@ -287,7 +291,12 @@ func resourcePagerDutyEscalationPolicyDelete(d *schema.ResourceData, meta interf
 				return retry.RetryableError(err)
 			}
 
-			return retry.NonRetryableError(err)
+			err = handleNotFoundError(err, d)
+			if err != nil {
+				return retry.NonRetryableError(err)
+			}
+
+			return nil
 		}
 		return nil
 	})

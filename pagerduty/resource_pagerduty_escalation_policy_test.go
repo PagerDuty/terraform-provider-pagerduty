@@ -78,7 +78,6 @@ func TestAccPagerDutyEscalationPolicy_Basic(t *testing.T) {
 						"pagerduty_escalation_policy.foo", "rule.0.escalation_delay_in_minutes", "10"),
 				),
 			},
-
 			{
 				Config: testAccCheckPagerDutyEscalationPolicyConfigUpdated(username, email, escalationPolicyUpdated),
 				Check: resource.ComposeTestCheckFunc(
@@ -306,7 +305,6 @@ func testAccCheckPagerDutyEscalationPolicyDestroy(s *terraform.State) error {
 		if _, _, err := client.EscalationPolicies.Get(r.Primary.ID, &pagerduty.GetEscalationPolicyOptions{}); err == nil {
 			return fmt.Errorf("Escalation Policy still exists")
 		}
-
 	}
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util/apiutil"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -53,22 +54,23 @@ func (d *dataSourceIntegration) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	var found *pagerduty.Service
-	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		list, err := d.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{})
+	err := apiutil.All(ctx, func(offset int) (bool, error) {
+		list, err := d.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{
+			Query:  searchName.ValueString(),
+			Limit:  apiutil.Limit,
+			Offset: uint(offset),
+		})
 		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
-			}
-			return retry.RetryableError(err)
+			return false, err
 		}
 
 		for _, service := range list.Services {
 			if service.Name == searchName.ValueString() {
 				found = &service
-				break
+				return false, nil
 			}
 		}
-		return nil
+		return list.More, nil
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(

@@ -25,7 +25,7 @@ func resourcePagerDutyService() *schema.Resource {
 		Delete:        resourcePagerDutyServiceDelete,
 		CustomizeDiff: customizePagerDutyServiceDiff,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -419,12 +419,14 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 		ag := attr.(string)
 		service.AlertGrouping = &ag
 	}
+
 	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
 		service.AlertGroupingParameters = expandAlertGroupingParameters(attr)
 	} else {
 		// Clear AlertGroupingParameters as it takes precedence over AlertGrouping and AlertGroupingTimeout which are apparently deprecated (that's not explicitly documented in the API)
 		service.AlertGroupingParameters = nil
 	}
+
 	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
 		if attr.(string) != "null" {
 			if val, err := strconv.Atoi(attr.(string)); err == nil {
@@ -598,11 +600,15 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	} else {
 		d.Set("alert_grouping_timeout", strconv.Itoa(*service.AlertGroupingTimeout))
 	}
-	if service.AlertGroupingParameters != nil {
+
+	_, hasGrouping := d.GetOk("alert_grouping")
+	_, hasGroupingParams := d.GetOk("alert_grouping_parameters")
+	if service.AlertGroupingParameters != nil && (!hasGrouping && hasGroupingParams) {
 		if err := d.Set("alert_grouping_parameters", flattenAlertGroupingParameters(service.AlertGroupingParameters)); err != nil {
 			return err
 		}
 	}
+
 	if service.AutoPauseNotificationsParameters != nil {
 		if err := d.Set("auto_pause_notifications_parameters", flattenAutoPauseNotificationsParameters(service.AutoPauseNotificationsParameters)); err != nil {
 			return err
@@ -649,7 +655,7 @@ func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParame
 		alertGroupingParameters.Type = &groupingType
 	}
 
-	alertGroupingParameters.Config = expandAlertGroupingConfig(ragpVal["config"])
+	alertGroupingParameters.Config = expandAlertGroupingConfig(groupingType, ragpVal["config"])
 	if groupingType == "content_based" && alertGroupingParameters.Config != nil {
 		alertGroupingParameters.Config.Timeout = nil
 	}
@@ -675,7 +681,7 @@ func expandAutoPauseNotificationsParameters(v interface{}) *pagerduty.AutoPauseN
 	return autoPauseNotificationsParameters
 }
 
-func expandAlertGroupingConfig(v interface{}) *pagerduty.AlertGroupingConfig {
+func expandAlertGroupingConfig(groupingType string, v interface{}) *pagerduty.AlertGroupingConfig {
 	alertGroupingConfig := &pagerduty.AlertGroupingConfig{}
 	rconfig := v.([]interface{})
 	if len(rconfig) == 0 || rconfig[0] == nil {
@@ -683,24 +689,33 @@ func expandAlertGroupingConfig(v interface{}) *pagerduty.AlertGroupingConfig {
 	}
 	config := rconfig[0].(map[string]interface{})
 
-	alertGroupingConfig.Fields = []string{}
-	if val, ok := config["fields"]; ok {
-		for _, field := range val.([]interface{}) {
-			alertGroupingConfig.Fields = append(alertGroupingConfig.Fields, field.(string))
+	if groupingType == "time" {
+		if val, ok := config["timeout"]; ok {
+			to := val.(int)
+			alertGroupingConfig.Timeout = &to
 		}
 	}
-	if val, ok := config["aggregate"]; ok {
-		agg := val.(string)
-		alertGroupingConfig.Aggregate = &agg
+
+	if groupingType == "intelligent" || groupingType == "content_based" {
+		if val, ok := config["time_window"]; ok {
+			to := val.(int)
+			alertGroupingConfig.TimeWindow = &to
+		}
 	}
-	if val, ok := config["timeout"]; ok {
-		to := val.(int)
-		alertGroupingConfig.Timeout = &to
+
+	if groupingType == "content_based" {
+		alertGroupingConfig.Fields = []string{}
+		if val, ok := config["fields"]; ok {
+			for _, field := range val.([]interface{}) {
+				alertGroupingConfig.Fields = append(alertGroupingConfig.Fields, field.(string))
+			}
+		}
+		if val, ok := config["aggregate"]; ok {
+			agg := val.(string)
+			alertGroupingConfig.Aggregate = &agg
+		}
 	}
-	if val, ok := config["time_window"]; ok {
-		to := val.(int)
-		alertGroupingConfig.TimeWindow = &to
-	}
+
 	return alertGroupingConfig
 }
 

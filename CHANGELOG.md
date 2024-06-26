@@ -1,3 +1,21 @@
+## v3.14.3 (June 20, 2024)
+
+BUG FIXES:
+
+* Handle 403 at EO path service refresh as orphan ([#890](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/890))
+
+## v3.14.2 (June 19, 2024)
+
+BUG FIXES:
+
+* Remove invalid `alert_grouping_parameters` fields after strict check in API ([#888](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/888))
+
+## v3.14.1 (June 19, 2024)
+
+BUG FIXES:
+
+* Fix datasource `pagerduty_service_integration` not finding service when they're many ([#886](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/886))
+
 ## 3.14.0 (June 14, 2024)
 
 FEATURES:
@@ -1221,9 +1239,9 @@ BUG FIXES:
 
 BUG FIXES:
 
-* data-source/pagerduty_team: Fix team search issue [[#110](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/110)]
+* data-source/pagerduty_team: Fix team search issue ([#110](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/110))
 * resource/pagerduty_maintenance_window: Suppress spurious diff in `start_time` & `end_time` ([#116](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/116))
-* resource/pagerduty_service: Set invitation_sent [[#127](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/127)]
+* resource/pagerduty_service: Set invitation_sent ([#127](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/127))
 * resource/pagerduty_escalation_policy: Correctly set teams ([#129](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/129))
 
 IMPROVEMENTS:

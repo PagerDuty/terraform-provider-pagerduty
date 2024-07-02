@@ -70,6 +70,7 @@ func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSourc
 func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 	return [](func() resource.Resource){
 		func() resource.Resource { return &resourceAddon{} },
+		func() resource.Resource { return &resourceAutomationActionsActionServiceAssociation{} },
 		func() resource.Resource { return &resourceAutomationActionsAction{} },
 		func() resource.Resource { return &resourceBusinessService{} },
 		func() resource.Resource { return &resourceExtensionServiceNow{} },

@@ -1,3 +1,13 @@
+## v3.14.4 (June 26, 2024)
+
+IMPROVEMENTS:
+
+* Use all pages to search for `data.pagerduty_escalation_policy` ([#894](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/894))
+
+BUG FIXES:
+
+* Prevent null-pointer panic at escalation policy ([#894](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/894))
+
 ## v3.14.3 (June 20, 2024)
 
 BUG FIXES:

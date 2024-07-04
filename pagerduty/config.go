@@ -75,7 +75,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 
 	var httpClient *http.Client
 	httpClient = http.DefaultClient
-	httpClient.Timeout = 1 * time.Minute
+	httpClient.Timeout = 2 * time.Minute
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if c.InsecureTls {

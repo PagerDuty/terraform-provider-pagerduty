@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -189,6 +190,7 @@ resource "pagerduty_service" "foo" {
 }
 `, username, email, escalationPolicy, service)
 }
+
 func testAccCheckPagerDutyProviderAuthWithMultipleMethodsConfig(username, email, escalationPolicy, service string) string {
 	return fmt.Sprintf(`
 provider "pagerduty" {
@@ -330,4 +332,28 @@ func testAccGetPagerDutyAccountDomain(t *testing.T) string {
 		accountDomain = u.Hostname()
 	}
 	return accountDomain
+}
+
+func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
+	client, _ := testAccProvider.Meta().(*Config).Client()
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "pagerduty_team" {
+			continue
+		}
+
+		if _, _, err := client.Teams.Get(r.Primary.ID); err == nil {
+			return fmt.Errorf("Team still exists")
+		}
+
+	}
+	return nil
+}
+
+func testAccCheckPagerDutyTeamConfig(team string) string {
+	return fmt.Sprintf(`
+
+resource "pagerduty_team" "foo" {
+  name        = "%s"
+  description = "foo"
+}`, team)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.dataSourceLicenses. Kept for testing purposes.
 func dataSourcePagerDutyLicenses() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyLicensesRead,
@@ -90,4 +91,65 @@ func flattenLicense(l *pagerduty.License) map[string]interface{} {
 	}
 
 	return license
+}
+
+var licenseSchema = map[string]*schema.Schema{
+	"id": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
+	"type": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
+	"name": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
+	"summary": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
+	"description": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
+	"role_group": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
+	"current_value": {
+		Type:     schema.TypeInt,
+		Optional: true,
+		Computed: true,
+	},
+	"allocations_available": {
+		Type:     schema.TypeInt,
+		Optional: true,
+		Computed: true,
+	},
+	"valid_roles": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		Elem: &schema.Schema{
+			Type: schema.TypeString,
+		},
+	},
+	"self": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
+	"html_url": {
+		Type:     schema.TypeString,
+		Optional: true,
+		Computed: true,
+	},
 }

@@ -13,8 +13,8 @@ func TestAccDataSourcePagerDutyLicenses_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyLicensesConfig(name),
@@ -30,8 +30,8 @@ func TestAccDataSourcePagerDutyLicenses_WithID(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyLicensesConfigWithID(name),
@@ -80,7 +80,7 @@ func testAccDataSourcePagerDutyLicensesWithID(n string, id string) resource.Test
 		a := r.Primary.Attributes
 
 		if val, ok := a["id"]; !ok || val != id {
-			return fmt.Errorf("Expected id to match provided value: %s", id)
+			return fmt.Errorf("Expected id to match provided value: %s\n%#v", id, a)
 		}
 
 		return testLicenses(a)

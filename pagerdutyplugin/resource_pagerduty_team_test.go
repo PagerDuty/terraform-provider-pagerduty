@@ -1,15 +1,16 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 	"testing"
 
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func init() {
@@ -25,25 +26,16 @@ func init() {
 }
 
 func testSweepTeam(region string) error {
-	config, err := sharedConfigForRegion(region)
+	ctx := context.Background()
+	response, err := testAccProvider.client.ListTeamsWithContext(ctx, pagerduty.ListTeamOptions{})
 	if err != nil {
 		return err
 	}
 
-	client, err := config.Client()
-	if err != nil {
-		return err
-	}
-
-	resp, _, err := client.Teams.List(&pagerduty.ListTeamsOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, team := range resp.Teams {
+	for _, team := range response.Teams {
 		if strings.HasPrefix(team.Name, "test") || strings.HasPrefix(team.Name, "tf-") {
 			log.Printf("Destroying team %s (%s)", team.Name, team.ID)
-			if _, err := client.Teams.Delete(team.ID); err != nil {
+			if err := testAccProvider.client.DeleteTeamWithContext(ctx, team.ID); err != nil {
 				return err
 			}
 		}
@@ -57,9 +49,9 @@ func TestAccPagerDutyTeam_Basic(t *testing.T) {
 	teamUpdated := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamConfig(team),
@@ -111,9 +103,9 @@ func TestAccPagerDutyTeam_DefaultRole(t *testing.T) {
 	defaultRoleUpdated := "none"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamDefaultRoleConfig(team, defaultRole),
@@ -143,9 +135,9 @@ func TestAccPagerDutyTeam_Parent(t *testing.T) {
 	parent := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamWithParentConfig(team, parent),
@@ -169,13 +161,14 @@ func TestAccPagerDutyTeam_Parent(t *testing.T) {
 }
 
 func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
+	ctx := context.Background()
+
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_team" {
 			continue
 		}
 
-		if _, _, err := client.Teams.Get(r.Primary.ID); err == nil {
+		if _, err := testAccProvider.client.GetTeamWithContext(ctx, r.Primary.ID); err == nil {
 			return fmt.Errorf("Team still exists")
 		}
 
@@ -183,11 +176,11 @@ func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckPagerDutyTeamExists(n string) resource.TestCheckFunc {
+func testAccCheckPagerDutyTeamExists(_ string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client, _ := testAccProvider.Meta().(*Config).Client()
 		for _, r := range s.RootModule().Resources {
-			if _, _, err := client.Teams.Get(r.Primary.ID); err != nil {
+			ctx := context.Background()
+			if _, err := testAccProvider.client.GetTeamWithContext(ctx, r.Primary.ID); err != nil {
 				return fmt.Errorf("Received an error retrieving team %s ID: %s", err, r.Primary.ID)
 			}
 		}
@@ -246,8 +239,8 @@ func testAccExternallyDestroyTeam(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No Team ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		_, err := client.Teams.Delete(rs.Primary.ID)
+		ctx := context.Background()
+		err := testAccProvider.client.DeleteTeamWithContext(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

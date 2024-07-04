@@ -53,12 +53,15 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSource) {
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
-		func() datasource.DataSource { return &dataSourceIntegration{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
+		func() datasource.DataSource { return &dataSourceIntegration{} },
+		func() datasource.DataSource { return &dataSourceLicense{} },
+		func() datasource.DataSource { return &dataSourceLicenses{} },
+		func() datasource.DataSource { return &dataSourcePriority{} },
+		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourcesScores{} },
 		func() datasource.DataSource { return &dataSourceStandards{} },
-		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceTag{} },
 	}
 }
@@ -72,6 +75,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceServiceDependency{} },
 		func() resource.Resource { return &resourceTagAssignment{} },
 		func() resource.Resource { return &resourceTag{} },
+		func() resource.Resource { return &resourceTeam{} },
 		func() resource.Resource { return &resourceUserHandoffNotificationRule{} },
 	}
 }

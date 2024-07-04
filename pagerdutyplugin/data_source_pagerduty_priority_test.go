@@ -9,8 +9,8 @@ import (
 func TestAccDataSourcePagerDutyPriority_Basic(t *testing.T) {
 	dataSourceName := "data.pagerduty_priority.p1"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyPriorityConfig,
@@ -22,11 +22,12 @@ func TestAccDataSourcePagerDutyPriority_Basic(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDataSourcePagerDutyPriority_P2(t *testing.T) {
 	dataSourceName := "data.pagerduty_priority.p2"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyP2Config,

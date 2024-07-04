@@ -12,6 +12,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.dataSourcePriority. Kept for testing purposes.
 func dataSourcePagerDutyPriority() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyPriorityRead,

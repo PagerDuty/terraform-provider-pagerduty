@@ -41,6 +41,7 @@ func TestAccPagerDutyEventOrchestrationPathGlobal_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyEventOrchestrationGlobalDefaultConfig(team, escalationPolicy, service, orch),
 				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
+
 			// Adding/updating/deleting automation_action properties
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsConfig(team, escalationPolicy, service, orch),
@@ -276,7 +277,7 @@ func createBaseGlobalOrchConfig(t, ep, s, o string) string {
 	`, t, ep, s, o)
 }
 
-func testAccCheckPagerDutyEventOrchestrationGlobalDefaultConfig(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationGlobalDefaultConfigDefaultConfig(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
@@ -286,6 +287,27 @@ func testAccCheckPagerDutyEventOrchestrationGlobalDefaultConfig(t, ep, s, o stri
 			}
 			set {
 				id = "start"
+			}
+		}
+	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationGlobalDefaultWithEscalationPolicy(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {}
+			}
+			set {
+				id = "start"
+				rule {
+						label = "rule 1"
+						actions {
+							 "escalation_policy": "POLICY"
+						}
+				}
 			}
 		}
 	`)

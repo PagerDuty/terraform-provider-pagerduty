@@ -83,6 +83,11 @@ func buildEventOrchestrationPathGlobalRuleActionsSchema() map[string]*schema.Sch
 		Optional: true,
 	}
 
+	a["escalation_policy"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+	}
+
 	return a
 }
 

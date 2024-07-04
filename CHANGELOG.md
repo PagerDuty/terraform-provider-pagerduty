@@ -1,3 +1,14 @@
+## v3.14.5 (July 4, 2024)
+
+IMPROVEMENTS:
+
+* Migrate pack #3 of datasources and resources to terraform plugin framework ([#896](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/896))
+  - `data/pagerduty_license`
+  - `data/pagerduty_licenses`
+  - `data/pagerduty_priority`
+  - `resource/pagerduty_team`
+* `PagerDuty/pagerduty`: Address: API calls canceled by client because of Timeout ([#900](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/900))
+
 ## v3.14.4 (June 26, 2024)
 
 IMPROVEMENTS:

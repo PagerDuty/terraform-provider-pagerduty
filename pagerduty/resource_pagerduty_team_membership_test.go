@@ -298,7 +298,7 @@ resource "pagerduty_escalation_policy" "foo" {
 `, user, team, role, escalationPolicy)
 }
 
-func TestAccPagerDutyTeamMembership_basic(t *testing.T) { // from gpt and modified
+func TestAccPagerDutyTeamMembership_basic(t *testing.T) {
 	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -306,8 +306,6 @@ func TestAccPagerDutyTeamMembership_basic(t *testing.T) { // from gpt and modifi
 	escalationPolicy1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	escalationPolicy2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
-	fmt.Print("starting tests\n")
-	fmt.Printf("starting tests\n\n")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -329,16 +327,14 @@ func TestAccPagerDutyTeamMembership_basic(t *testing.T) { // from gpt and modifi
 					testAccCheckPagerDutyTeamExists("pagerduty_team.bar"),
 					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.foo"),
 					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.bar"),
-					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.foo", "foo"),
-					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.bar", "bar"),
+					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.foo", "pagerduty_team.foo"),
+					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.bar", "pagerduty_team.bar"),
 				),
 			},
 		},
 	})
 }
 
-// update this tomorrow
-// the check should involve a call to the API and inspecting the state on the server
 func testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches(n, expectedTeam string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -346,18 +342,22 @@ func testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches(n, expectedTeam stri
 			return fmt.Errorf("Not found: %s", n)
 		}
 
-		teams := rs.Primary.Attributes["teams.#"]
-		if teams != "1" {
-			return fmt.Errorf("Expected teams to have 1 element, got: %s", teams)
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		expectedTeamID, err := getTeamID(s, expectedTeam)
+		if err != nil {
+			return err
 		}
 
-		team := rs.Primary.Attributes["teams.0"]
-		if team != expectedTeam {
-			return fmt.Errorf("Expected team to be %s, got: %s", expectedTeam, team)
+		// get the object from remote state -- tests for prescence
+		remoteResource, _, err := client.EscalationPolicies.Get(rs.Primary.ID, &pagerduty.GetEscalationPolicyOptions{})
+		if err != nil {
+			return fmt.Errorf("%s\n", err)
 		}
 
-		return fmt.Errorf("dummy error")
-		// return nil
+		if attachedTeam := remoteResource.Teams[0].ID; attachedTeam != expectedTeamID {
+			return fmt.Errorf("Mismatch detected. Expected %s, and got %s\n", expectedTeamID, attachedTeam)
+		}
+		return nil
 	}
 }
 
@@ -379,13 +379,13 @@ resource "pagerduty_team" "bar" {
 }
 
 resource "pagerduty_team_membership" "foo" {
-  user_id = data.pagerduty_user.foo.id
+  user_id = pagerduty_user.foo.id
   team_id = pagerduty_team.foo.id
   role    = "%[3]v"
 }
 
 resource "pagerduty_team_membership" "bar" {
-  user_id = data.pagerduty_user.foo.id
+  user_id = pagerduty_user.foo.id
   team_id = pagerduty_team.bar.id
   role    = "%[3]v"
 }
@@ -398,7 +398,7 @@ resource "pagerduty_escalation_policy" "foo" {
     escalation_delay_in_minutes = 10
     target {
       type = "user_reference"
-      id   = data.pagerduty_user.foo.id
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -411,7 +411,7 @@ resource "pagerduty_escalation_policy" "bar" {
     escalation_delay_in_minutes = 10
     target {
       type = "user_reference"
-      id   = data.pagerduty_user.foo.id
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -436,7 +436,7 @@ resource "pagerduty_team" "bar" {
   description = "bar"
 }
 resource "pagerduty_team_membership" "bar" {
-  user_id = data.pagerduty_user.foo.id
+  user_id = pagerduty_user.foo.id
   team_id = pagerduty_team.bar.id
   role    = "%[3]v"
 }
@@ -449,7 +449,7 @@ resource "pagerduty_escalation_policy" "foo" {
     escalation_delay_in_minutes = 10
     target {
       type = "user_reference"
-      id   = data.pagerduty_user.foo.id
+      id   = pagerduty_user.foo.id
     }
   }
 }
@@ -462,9 +462,18 @@ resource "pagerduty_escalation_policy" "bar" {
     escalation_delay_in_minutes = 10
     target {
       type = "user_reference"
-      id   = data.pagerduty_user.foo.id
+      id   = pagerduty_user.foo.id
     }
   }
 }
 `, user, team1, role, escalationPolicy1, team2, escalationPolicy2)
+}
+
+func getTeamID(s *terraform.State, teamName string) (string, error) {
+	for name, r := range s.RootModule().Resources {
+		if name == teamName {
+			return r.Primary.ID, nil
+		}
+	}
+	return "", fmt.Errorf("Could not find team %s\n", teamName)
 }

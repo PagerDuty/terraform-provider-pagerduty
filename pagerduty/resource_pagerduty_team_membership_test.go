@@ -316,55 +316,29 @@ func TestAccPagerDutyTeamMembership_basic(t *testing.T) { // from gpt and modifi
 			{
 				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant_UnrelatedEPs(user, team1, team2, role, escalationPolicy1, escalationPolicy2),
 				Check: resource.ComposeTestCheckFunc(
-					printdebug("checkpoint1-1\n\n"),
 					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
-					printdebug("checkpoint1-2\n\n"),
-
 					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.bar"),
-					printdebug("checkpoint1-3\n\n"),
-
 					resource.TestCheckResourceAttr("pagerduty_team_membership.bar", "role", "manager"),
-					printdebug("checkpoint1-4\n\n"),
 				),
 			},
 			{
-				// ResourceName: "pagerduty_team_membership.foo",
-				// ImportState:  true,
-				// RefreshState: true,
 				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant_UnrelatedEPsUpdated(user, team1, team2, role, escalationPolicy1, escalationPolicy2),
 				Check: resource.ComposeTestCheckFunc(
-					printdebug("checkpoint2-1\n\n"),
-
-					testAccCheckPagerDutyTeamMembershipDestroyState("pagerduty_team_membership.foo"),
-					printdebug("checkpoint2-2\n\n"),
-
-					testAccCheckPagerDutyTeamExists("pagerduty_team.foobar"),
-					printdebug("checkpoint2-3\n\n"),
-
+					testAccCheckPagerDutyTeamMembershipNoExists("pagerduty_team_membership.foo"),
+					testAccCheckPagerDutyTeamExists("pagerduty_team.foo"),
+					testAccCheckPagerDutyTeamExists("pagerduty_team.bar"),
 					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.foo"),
-					printdebug("checkpoint2-4\n\n"),
-
 					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.bar"),
-					printdebug("checkpoint2-5\n\n"),
-
 					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.foo", "foo"),
-					printdebug("checkpoint2-6\n\n"),
-
 					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.bar", "bar"),
-					printdebug("checkpoint2-7\n\n"),
 				),
 			},
 		},
 	})
 }
 
-func printdebug(msg string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Printf(msg)
-		return nil
-	}
-}
-
+// update this tomorrow
+// the check should involve a call to the API and inspecting the state on the server
 func testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches(n, expectedTeam string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -383,21 +357,6 @@ func testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches(n, expectedTeam stri
 		}
 
 		return fmt.Errorf("dummy error")
-		// return nil
-	}
-}
-
-func testAccCheckPagerDutyTeamMembershipDestroyState(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID != "" {
-			return fmt.Errorf("Resource still exists: %s", n)
-		}
-		return fmt.Errorf("dummy error: %s", "wow")
 		// return nil
 	}
 }
@@ -435,8 +394,6 @@ resource "pagerduty_escalation_policy" "foo" {
   name      = "%[4]v"
   num_loops = 2
   teams     = [pagerduty_team.foo.id]
-  description = "foo"
-
   rule {
     escalation_delay_in_minutes = 10
     target {
@@ -450,8 +407,6 @@ resource "pagerduty_escalation_policy" "bar" {
   name      = "%[6]v"
   num_loops = 2
   teams     = [pagerduty_team.bar.id]
-  description = "bar"
-
   rule {
     escalation_delay_in_minutes = 10
     target {
@@ -460,6 +415,7 @@ resource "pagerduty_escalation_policy" "bar" {
     }
   }
 }
+
 `, user, team1, role, escalationPolicy1, team2, escalationPolicy2)
 }
 
@@ -479,8 +435,6 @@ resource "pagerduty_team" "bar" {
   name        = "%[5]v"
   description = "bar"
 }
-
-// now the user should be on a single team
 resource "pagerduty_team_membership" "bar" {
   user_id = data.pagerduty_user.foo.id
   team_id = pagerduty_team.bar.id
@@ -491,7 +445,6 @@ resource "pagerduty_escalation_policy" "foo" {
   name      = "%[4]v"
   num_loops = 2
   teams     = [pagerduty_team.foo.id]
-
   rule {
     escalation_delay_in_minutes = 10
     target {
@@ -504,9 +457,7 @@ resource "pagerduty_escalation_policy" "foo" {
 resource "pagerduty_escalation_policy" "bar" {
   name      = "%[6]v"
   num_loops = 2
-  description = "bar"
   teams     = [pagerduty_team.bar.id]
-
   rule {
     escalation_delay_in_minutes = 10
     target {

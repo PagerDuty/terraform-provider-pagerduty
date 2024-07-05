@@ -190,6 +190,44 @@ func resourcePagerDutyTeamMembershipUpdate(d *schema.ResourceData, meta interfac
 	return fetchPagerDutyTeamMembershipWithRetries(d, meta, genError, 0, d.Get("role").(string))
 }
 
+func getAllEPsForTeam(client *pagerduty.Client, teamID string) ([]string, error) {
+	const maxLimit = 100
+	var escalationPolicyIDs []string
+	opts := &pagerduty.ListEscalationPoliciesOptions{
+		TeamIDs: []string{teamID},
+		Limit:   maxLimit,
+		Offset:  0,
+	}
+
+	for {
+		listResp, _, err := client.EscalationPolicies.List(opts)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ep := range listResp.EscalationPolicies {
+			escalationPolicyIDs = append(escalationPolicyIDs, ep.ID)
+		}
+
+		if !listResp.More {
+			break
+		}
+		opts.Offset += opts.Limit
+	}
+	return escalationPolicyIDs, nil
+}
+
+func filterEPsAssociatedToTeam(client *pagerduty.Client, teamID string, epsAssociatedToUser []string) ([]string, error) {
+	// take epsAssociatedToUser and return EP IDs asscociated with teamID
+	epIdsAssociatedWithTeam, err := getAllEPsForTeam(client, teamID)
+	if err != nil {
+		return nil, err
+	}
+
+	epsInBoth := intersect(epIdsAssociatedWithTeam, epsAssociatedToUser)
+	return epsInBoth, nil
+}
+
 func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interface{}) error {
 	client, err := meta.(*Config).Client()
 	if err != nil {
@@ -209,7 +247,12 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 		return err
 	}
 
-	epsDissociatedFromTeam, err := dissociateEPsFromTeam(client, teamID, epsAssociatedToUser)
+	epsAssociatedWithUserAndTeam, err := filterEPsAssociatedToTeam(client, teamID, epsAssociatedToUser)
+	if err != nil {
+		return err
+	}
+
+	epsDissociatedFromTeam, err := dissociateEPsFromTeam(client, teamID, epsAssociatedWithUserAndTeam)
 	if err != nil {
 		return err
 	}
@@ -335,4 +378,18 @@ func isTeamMember(user *pagerduty.User, teamID string) bool {
 	}
 
 	return found
+}
+
+func intersect(slice1, slice2 []string) []string {
+	m := make(map[string]struct{})
+	for _, item := range slice1 {
+		m[item] = struct{}{}
+	}
+	var intersection []string
+	for _, item := range slice2 {
+		if _, found := m[item]; found {
+			intersection = append(intersection, item)
+		}
+	}
+	return intersection
 }

@@ -355,14 +355,16 @@ func testAccCheckPagerDutyEventOrchestrationServiceEscalationPolicy(ep, s string
 			}
 
 			catch_all {
-				actions { }
+				actions {
+					escalation_policy = "POLICY"
+				}
 			}
 			set {
 				id = "start"
 				rule {
 						label = "rule 1"
 						actions {
-							 "escalation_policy": "POLICY"
+							 escalation_policy = "POLICY"
 						}
 				}
 			}

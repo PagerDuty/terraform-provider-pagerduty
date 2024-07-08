@@ -489,6 +489,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.Suppress = a["suppress"].(bool)
 		actions.Suspend = intTypeToIntPtr(a["suspend"].(int))
 		actions.Priority = a["priority"].(string)
+		actions.EscalationPolicy = a["escalation_policy"].(string)
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)

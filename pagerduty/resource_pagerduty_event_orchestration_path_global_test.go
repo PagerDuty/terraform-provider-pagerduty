@@ -42,7 +42,7 @@ func TestAccPagerDutyEventOrchestrationPathGlobal_Basic(t *testing.T) {
 				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
 			{
-				Config: testAccCheckPagerDutyEventOrchestrationGlobalDefaultWithEscalationPolicy(team, escalationPolicy, service, orch),
+				Config: testAccCheckPagerDutyEventOrchestrationGlobalWithEscalationPolicy(team, escalationPolicy, service, orch),
 				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
 
@@ -296,20 +296,22 @@ func testAccCheckPagerDutyEventOrchestrationGlobalDefaultConfig(t, ep, s, o stri
 	`)
 }
 
-func testAccCheckPagerDutyEventOrchestrationGlobalDefaultWithEscalationPolicy(t, ep, s, o string) string {
+func testAccCheckPagerDutyEventOrchestrationGlobalWithEscalationPolicy(t, ep, s, o string) string {
 	return fmt.Sprintf("%s%s", createBaseGlobalOrchConfig(t, ep, s, o),
 		`resource "pagerduty_event_orchestration_global" "my_global_orch" {
 			event_orchestration = pagerduty_event_orchestration.orch.id
 
 			catch_all {
-				actions {}
+				actions {
+					escalation_policy = "POLICY"
+				}
 			}
 			set {
 				id = "start"
 				rule {
 						label = "rule 1"
 						actions {
-							 "escalation_policy": "POLICY"
+							 escalation_policy = "POLICY"
 						}
 				}
 			}

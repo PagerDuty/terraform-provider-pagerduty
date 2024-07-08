@@ -43,6 +43,10 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
 				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationServiceEscalationPolicy(escalationPolicy, service),
+				Check:  resource.ComposeTestCheckFunc(baseChecks...),
+			},
 			// Adding/updating/deleting automation_action properties
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(escalationPolicy, service),
@@ -339,6 +343,31 @@ func createBaseServicePathConfig(ep, s string) string {
 		}
 	}
 	`, ep, s)
+}
+
+func testAccCheckPagerDutyEventOrchestrationServiceEscalationPolicy(ep, s string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		`resource "pagerduty_event_orchestration_service" "serviceA" {
+			service = pagerduty_service.bar.id
+
+			set {
+				id = "start"
+			}
+
+			catch_all {
+				actions { }
+			}
+			set {
+				id = "start"
+				rule {
+						label = "rule 1"
+						actions {
+							 "escalation_policy": "POLICY"
+						}
+				}
+			}
+		}
+	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(ep, s string) string {

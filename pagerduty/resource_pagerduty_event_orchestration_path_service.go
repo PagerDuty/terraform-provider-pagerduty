@@ -82,6 +82,10 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 			Schema: eventOrchestrationIncidentCustomFieldsObjectSchema,
 		},
 	},
+	"escalation_policy": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
 }
 
 var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPathServiceRuleActionsSchema()
@@ -89,11 +93,6 @@ var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPath
 func buildEventOrchestrationPathServiceRuleActionsSchema() map[string]*schema.Schema {
 	a := eventOrchestrationPathServiceCatchAllActionsSchema
 	a["route_to"] = &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-	}
-
-	a["escalation_policy"] = &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	}

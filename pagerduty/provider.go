@@ -104,7 +104,6 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_event_orchestration_integration":            dataSourcePagerDutyEventOrchestrationIntegration(),
 			"pagerduty_event_orchestration_global_cache_variable":  dataSourcePagerDutyEventOrchestrationGlobalCacheVariable(),
 			"pagerduty_event_orchestration_service_cache_variable": dataSourcePagerDutyEventOrchestrationServiceCacheVariable(),
-			"pagerduty_automation_actions_runner":                  dataSourcePagerDutyAutomationActionsRunner(),
 			"pagerduty_incident_workflow":                          dataSourcePagerDutyIncidentWorkflow(),
 			"pagerduty_incident_custom_field":                      dataSourcePagerDutyIncidentCustomField(),
 			"pagerduty_team_members":                               dataSourcePagerDutyTeamMembers(),

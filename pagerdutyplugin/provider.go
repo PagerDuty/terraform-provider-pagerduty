@@ -53,11 +53,12 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSource) {
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceAutomationActionsAction{} },
+		func() datasource.DataSource { return &dataSourceAutomationActionsRunner{} },
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceIntegration{} },
-		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourceLicenses{} },
+		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourcePriority{} },
 		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },

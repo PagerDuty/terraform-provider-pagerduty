@@ -792,7 +792,6 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(ep
 					label = "rule 1 updated"
 					actions {
 						route_to = "set-2"
-						escalation_policy = ""
 					}
 				}
 			}
@@ -810,7 +809,6 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsDeleteConfig(ep
 
 			catch_all {
 				actions {
-					escalation_policy = ""
 				 }
 			}
 		}

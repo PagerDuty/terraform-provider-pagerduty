@@ -570,13 +570,14 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 	var actionsMap []map[string]interface{}
 
 	flattenedAction := map[string]interface{}{
-		"route_to":     actions.RouteTo,
-		"severity":     actions.Severity,
-		"event_action": actions.EventAction,
-		"suppress":     actions.Suppress,
-		"suspend":      actions.Suspend,
-		"priority":     actions.Priority,
-		"annotate":     actions.Annotate,
+		"route_to":          actions.RouteTo,
+		"severity":          actions.Severity,
+		"event_action":      actions.EventAction,
+		"suppress":          actions.Suppress,
+		"suspend":           actions.Suspend,
+		"priority":          actions.Priority,
+		"annotate":          actions.Annotate,
+		"escalation_policy": actions.EscalationPolicy,
 	}
 
 	if actions.Variables != nil {

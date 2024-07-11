@@ -75,6 +75,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceAutomationActionsActionTeamAssociation{} },
 		func() resource.Resource { return &resourceAutomationActionsAction{} },
 		func() resource.Resource { return &resourceAutomationActionsRunnerTeamAssociation{} },
+		func() resource.Resource { return &resourceAutomationActionsRunner{} },
 		func() resource.Resource { return &resourceBusinessService{} },
 		func() resource.Resource { return &resourceExtensionServiceNow{} },
 		func() resource.Resource { return &resourceExtension{} },

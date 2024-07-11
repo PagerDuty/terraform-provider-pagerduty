@@ -140,6 +140,9 @@ func TestAccPagerDutyEventOrchestrationPathGlobal_Basic(t *testing.T) {
 							resource.TestCheckResourceAttrSet(res, "set.0.rule.1.id"),
 							resource.TestCheckResourceAttrSet(res, "set.1.rule.0.id"),
 							resource.TestCheckResourceAttrSet(res, "set.1.rule.1.id"),
+							resource.TestCheckResourceAttr(
+								res, "set.1.rule.0.action.escalation_policy.id", "pagerduty_escalation_policy.ep.id",
+							),
 						}...,
 					)...,
 				),
@@ -660,6 +663,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 					label = "set-2 rule 1"
 					actions {
 						suspend = 15
+						escalation_policy = pagerduty_escalation_policy.foo.id
 					}
 				}
 				rule {
@@ -697,7 +701,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 				actions {
 					drop_event = false
 					priority = "P0IN2KX"
-					escalation_policy = "POLICY4"
+					escalation_policy = pagerduty_escalation_policy.foo.id
 					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
 					severity = "info"
 					event_action = "resolve"

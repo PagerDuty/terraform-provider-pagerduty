@@ -8,6 +8,7 @@ import (
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util/apiutil"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -52,7 +53,9 @@ func (d *dataSourceEventOrchestration) Read(ctx context.Context, req datasource.
 
 	var found *pagerduty.Orchestration
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		response, err := d.client.ListOrchestrationsWithContext(ctx, pagerduty.ListOrchestrationsOptions{})
+		o := pagerduty.ListOrchestrationsOptions{Limit: apiutil.Limit}
+
+		response, err := d.client.ListOrchestrationsWithContext(ctx, o)
 		if err != nil {
 			if util.IsBadRequestError(err) {
 				return retry.NonRetryableError(err)
@@ -76,6 +79,7 @@ func (d *dataSourceEventOrchestration) Read(ctx context.Context, req datasource.
 		return
 	}
 
+	found = fetchGetEventOrchestration(ctx, d.client, found.ID)
 	if found == nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Unable to locate any event orchestration with the name: %s", searchName),
@@ -83,8 +87,6 @@ func (d *dataSourceEventOrchestration) Read(ctx context.Context, req datasource.
 		)
 		return
 	}
-
-	// TODO: Get
 
 	model := dataSourceEventOrchestrationModel{
 		ID:          types.StringValue(found.ID),
@@ -98,6 +100,28 @@ type dataSourceEventOrchestrationModel struct {
 	ID          types.String `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
 	Integration types.List   `tfsdk:"integration"`
+}
+
+func fetchGetEventOrchestration(ctx context.Context, client *pagerduty.Client, id string) *pagerduty.Orchestration {
+	var orchestration *pagerduty.Orchestration
+
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+		resp, err := client.GetOrchestrationWithContext(ctx, id, &pagerduty.GetOrchestrationOptions{})
+		if err != nil {
+			if util.IsBadRequestError(err) {
+				return retry.NonRetryableError(err)
+			}
+			return retry.RetryableError(err)
+		}
+		orchestration = resp
+		return nil
+	})
+
+	if err != nil || orchestration == nil {
+		return nil
+	}
+
+	return orchestration
 }
 
 var eventOrchestrationIntegrationObjectType = types.ObjectType{
@@ -120,7 +144,7 @@ func flattenEventOrchestrationIntegrations(list []*pagerduty.OrchestrationIntegr
 	for _, integration := range list {
 		obj := types.ObjectValueMust(eventOrchestrationIntegrationObjectType.AttrTypes, map[string]attr.Value{
 			"id":         types.StringValue(integration.ID),
-			"label":      types.StringNull(),
+			"label":      types.StringNull(integration.Label),
 			"parameters": flattenEventOrchestrationIntegrationParameters(integration.Parameters),
 		})
 		elements = append(elements, obj)

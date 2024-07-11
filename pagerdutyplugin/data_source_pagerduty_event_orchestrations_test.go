@@ -31,6 +31,8 @@ func TestAccDataSourcePagerDutyEventOrchestrations_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.pagerduty_event_orchestrations.by_name", "event_orchestrations.0.name", fmt.Sprintf("%s-matching-eo-name1", multipleMatchesName)),
 					resource.TestCheckResourceAttr(
+						"data.pagerduty_event_orchestrations.by_name", "event_orchestrations.0.integration.0.parameters.0.type", "foo"),
+					resource.TestCheckResourceAttr(
 						"data.pagerduty_event_orchestrations.by_name", "event_orchestrations.1.name", fmt.Sprintf("%s-matching-eo-name2", multipleMatchesName)),
 					resource.TestCheckNoResourceAttr(
 						"data.pagerduty_event_orchestrations.by_name", "event_orchestrations.2"),

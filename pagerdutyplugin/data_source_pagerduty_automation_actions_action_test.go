@@ -13,8 +13,8 @@ func TestAccDataSourcePagerDutyAutomationActionsAction_Basic(t *testing.T) {
 	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyAutomationActionsActionConfig(name),
@@ -74,7 +74,7 @@ resource "pagerduty_automation_actions_action" "test" {
 		process_automation_job_id = "pa_job_id_123"
 		process_automation_job_arguments = "-arg 1"
 		process_automation_node_filter = "tags: production"
-	  }
+	}
 }
 
 data "pagerduty_automation_actions_action" "foo" {

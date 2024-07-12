@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -27,9 +28,9 @@ func TestAccPagerDutyAutomationActionsRunner_Basic(t *testing.T) {
 	descriptionUpdated := fmt.Sprintf("Description of %s-updated", runnerName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyAutomationActionsRunnerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAutomationActionsRunnerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyAutomationActionsRunnerConfig(runnerName),
@@ -62,12 +63,14 @@ func TestAccPagerDutyAutomationActionsRunner_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyAutomationActionsRunnerDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
+	client := testAccProvider.client
+	ctx := context.Background()
+
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_automation_actions_runner" {
 			continue
 		}
-		if _, _, err := client.AutomationActionsRunner.Get(r.Primary.ID); err == nil {
+		if _, err := client.GetAutomationActionsRunnerWithContext(ctx, r.Primary.ID); err == nil {
 			return fmt.Errorf("Automation Actions Runner still exists")
 		}
 	}
@@ -84,8 +87,10 @@ func testAccCheckPagerDutyAutomationActionsRunnerExists(n string) resource.TestC
 			return fmt.Errorf("No Automation Actions Runner ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.AutomationActionsRunner.Get(rs.Primary.ID)
+		client := testAccProvider.client
+		ctx := context.Background()
+
+		found, err := client.GetAutomationActionsRunnerWithContext(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

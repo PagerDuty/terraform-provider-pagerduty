@@ -292,16 +292,16 @@ func ResourcePagerDutyParseColonCompoundID(id string) (string, string, error) {
 	return parts[0], parts[1], nil
 }
 
+func IsValidTZ(v string) bool {
+	foundAt := sort.SearchStrings(validTZ, v)
+	return foundAt < len(validTZ) && validTZ[foundAt] == v
+}
+
 func ValidateTZValueDiagFunc(v interface{}, p cty.Path) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	value := v.(string)
-	valid := false
-
-	foundAt := sort.SearchStrings(validTZ, value)
-	if foundAt < len(validTZ) && validTZ[foundAt] == value {
-		valid = true
-	}
+	valid := IsValidTZ(value)
 
 	if !valid {
 		diags = append(diags, diag.Diagnostic{

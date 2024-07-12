@@ -272,17 +272,17 @@ type ServiceOrchestrationRuleCondition struct {
 
 // ServiceOrchestrationRuleActions are the actions that will be taken to change the resulting alert and incident.
 type ServiceOrchestrationRuleActions struct {
-	RouteTo                    string                       `json:"route_to,omitempty"`
-	Suppress                   bool                         `json:"suppress,omitempty"`
-	Suspend                    uint                         `json:"suspend,omitempty"`
-	Priority                   string                       `json:"priority,omitempty"`
-	Annotate                   string                       `json:"annotate,omitempty"`
-	PagerDutyAutomationActions []*PagerDutyAutomationAction `json:"pagerduty_automation_actions,omitempty"`
-	AutomationActions          []*AutomationAction          `json:"automation_actions,omitempty"`
-	Severity                   string                       `json:"severity,omitempty"`
-	EventAction                string                       `json:"event_action,omitempty"`
-	Variables                  []*OrchestrationVariable     `json:"variables,omitempty"`
-	Extractions                []*OrchestrationExtraction   `json:"extractions,omitempty"`
+	RouteTo                    string                           `json:"route_to,omitempty"`
+	Suppress                   bool                             `json:"suppress,omitempty"`
+	Suspend                    uint                             `json:"suspend,omitempty"`
+	Priority                   string                           `json:"priority,omitempty"`
+	Annotate                   string                           `json:"annotate,omitempty"`
+	PagerDutyAutomationActions []*PagerDutyAutomationAction     `json:"pagerduty_automation_actions,omitempty"`
+	AutomationActions          []*OrchestrationAutomationAction `json:"automation_actions,omitempty"`
+	Severity                   string                           `json:"severity,omitempty"`
+	EventAction                string                           `json:"event_action,omitempty"`
+	Variables                  []*OrchestrationVariable         `json:"variables,omitempty"`
+	Extractions                []*OrchestrationExtraction       `json:"extractions,omitempty"`
 }
 
 type ServiceOrchestrationActive struct {
@@ -451,7 +451,7 @@ type PagerDutyAutomationAction struct {
 	ActionID string `json:"action_id,omitempty"`
 }
 
-type AutomationAction struct {
+type OrchestrationAutomationAction struct {
 	Name       string                    `json:"name,omitempty"`
 	URL        string                    `json:"url,omitempty"`
 	AutoSend   bool                      `json:"auto_send,omitempty"`

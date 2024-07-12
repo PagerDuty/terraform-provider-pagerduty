@@ -43,10 +43,6 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(escalationPolicy, service),
 				Check:  resource.ComposeTestCheckFunc(baseChecks...),
 			},
-			{
-				Config: testAccCheckPagerDutyEventOrchestrationServiceEscalationPolicy(escalationPolicy, service),
-				Check:  resource.ComposeTestCheckFunc(baseChecks...),
-			},
 			// Adding/updating/deleting automation_action properties
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(escalationPolicy, service),
@@ -139,6 +135,9 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 							resource.TestCheckResourceAttrSet(resourceName, "set.0.rule.0.id"),
 							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.0.id"),
 							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.1.id"),
+							resource.TestCheckResourceAttr(
+								resourceName, "set.0.rule.0.actions.0.escalation_policy", "POLICY3",
+							),
 						}...,
 					)...,
 				),
@@ -343,33 +342,6 @@ func createBaseServicePathConfig(ep, s string) string {
 		}
 	}
 	`, ep, s)
-}
-
-func testAccCheckPagerDutyEventOrchestrationServiceEscalationPolicy(ep, s string) string {
-	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
-		`resource "pagerduty_event_orchestration_service" "serviceA" {
-			service = pagerduty_service.bar.id
-
-			set {
-				id = "start"
-			}
-
-			catch_all {
-				actions {
-					escalation_policy = "POLICY"
-				}
-			}
-			set {
-				id = "start"
-				rule {
-						label = "rule 1"
-						actions {
-							 escalation_policy = "POLICY"
-						}
-				}
-			}
-		}
-	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationPathServiceDefaultConfig(ep, s string) string {
@@ -578,7 +550,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 					actions {
 						route_to = "set-1"
 						priority = "P0IN2KQ"
-						escalation_policy = "POLICY1"
+						escalation_policy = pagerduty_escalation_policy.foo.id
 						annotate = "Routed through an event orchestration"
 						pagerduty_automation_action {
 							action_id = "01CSB5SMOKCKVRI5GN0LJG7SMB"
@@ -636,7 +608,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 				actions {
 					suspend = 120
 					priority = "P0IN2KW"
-					escalation_policy = "POLICY2"
+					escalation_policy = pagerduty_escalation_policy.foo.id
 					annotate = "Routed through an event orchestration - catch-all rule"
 					pagerduty_automation_action {
 						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMC"

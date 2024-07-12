@@ -378,10 +378,7 @@ func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRul
 		actions.Suppress = a["suppress"].(bool)
 		actions.Suspend = intTypeToIntPtr(a["suspend"].(int))
 		actions.Priority = a["priority"].(string)
-		// TODO?
-		if a["escalation_policy"] != nil {
-			actions.EscalationPolicy = a["escalation_policy"].(string)
-		}
+		actions.EscalationPolicy = stringTypeToStringPtr(a["escalation_policy"].(string))
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)
@@ -455,7 +452,7 @@ func flattenGlobalPathActions(actions *pagerduty.EventOrchestrationPathRuleActio
 		"suspend":           actions.Suspend,
 		"priority":          actions.Priority,
 		"annotate":          actions.Annotate,
-		"escalation_policy": actions.EscalationPolicy,
+		"escalation_policy": stringPtrToStringType(actions.EscalationPolicy),
 	}
 
 	if actions.Variables != nil {

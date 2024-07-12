@@ -512,7 +512,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsConfig(t, ep, s,
 					actions {
 						route_to = "set-1"
 						priority = "P0IN2KQ"
-						escalation_policy = "POLICY1"
+						escalation_policy = pagerduty_escalation_policy.ep.id
 						annotate = "Routed through an event orchestration"
 						severity = "critical"
 						event_action = "trigger"
@@ -576,7 +576,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsConfig(t, ep, s,
 				actions {
 					drop_event = true
 					priority = "P0IN2KW"
-					escalation_policy = "POLICY2"
+					escalation_policy = pagerduty_escalation_policy.ep.id
 					annotate = "Routed through an event orchestration - catch-all rule"
 					severity = "warning"
 					event_action = "trigger"

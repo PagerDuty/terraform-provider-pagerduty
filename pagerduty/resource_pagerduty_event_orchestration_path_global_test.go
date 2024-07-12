@@ -135,6 +135,9 @@ func TestAccPagerDutyEventOrchestrationPathGlobal_Basic(t *testing.T) {
 							resource.TestCheckResourceAttrSet(res, "set.0.rule.1.id"),
 							resource.TestCheckResourceAttrSet(res, "set.1.rule.0.id"),
 							resource.TestCheckResourceAttrSet(res, "set.1.rule.1.id"),
+							resource.TestCheckResourceAttr(
+								res, "set.0.rule.0.actions.0.escalation_policy", "POLICY3",
+							),
 						}...,
 					)...,
 				),
@@ -481,6 +484,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsConfig(t, ep, s,
 					actions {
 						route_to = "set-1"
 						priority = "P0IN2KQ"
+						escalation_policy = pagerduty_escalation_policy.foo.id
 						annotate = "Routed through an event orchestration"
 						severity = "critical"
 						event_action = "trigger"
@@ -544,6 +548,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsConfig(t, ep, s,
 				actions {
 					drop_event = true
 					priority = "P0IN2KW"
+					escalation_policy = pagerduty_escalation_policy.foo.id
 					annotate = "Routed through an event orchestration - catch-all rule"
 					severity = "warning"
 					event_action = "trigger"
@@ -589,6 +594,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 					actions {
 						route_to = "set-2"
 						priority = "P0IN2KR"
+						escalation_policy = "POLICY3"
 						annotate = "Routed through a service orchestration!"
 						severity = "warning"
 						event_action = "resolve"
@@ -629,6 +635,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 					label = "set-2 rule 1"
 					actions {
 						suspend = 15
+						escalation_policy = pagerduty_escalation_policy.foo.id
 					}
 				}
 				rule {
@@ -666,6 +673,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAllActionsUpdateConfig(t, 
 				actions {
 					drop_event = false
 					priority = "P0IN2KX"
+					escalation_policy = "POLICY4"
 					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
 					severity = "info"
 					event_action = "resolve"

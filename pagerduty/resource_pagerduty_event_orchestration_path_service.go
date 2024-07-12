@@ -82,6 +82,10 @@ var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Sche
 			Schema: eventOrchestrationIncidentCustomFieldsObjectSchema,
 		},
 	},
+	"escalation_policy": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
 }
 
 var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPathServiceRuleActionsSchema()
@@ -484,6 +488,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.Suppress = a["suppress"].(bool)
 		actions.Suspend = intTypeToIntPtr(a["suspend"].(int))
 		actions.Priority = a["priority"].(string)
+		actions.EscalationPolicy = stringTypeToStringPtr(a["escalation_policy"].(string))
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)
@@ -565,13 +570,14 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 	var actionsMap []map[string]interface{}
 
 	flattenedAction := map[string]interface{}{
-		"route_to":     actions.RouteTo,
-		"severity":     actions.Severity,
-		"event_action": actions.EventAction,
-		"suppress":     actions.Suppress,
-		"suspend":      actions.Suspend,
-		"priority":     actions.Priority,
-		"annotate":     actions.Annotate,
+		"route_to":          actions.RouteTo,
+		"severity":          actions.Severity,
+		"event_action":      actions.EventAction,
+		"suppress":          actions.Suppress,
+		"suspend":           actions.Suspend,
+		"priority":          actions.Priority,
+		"annotate":          actions.Annotate,
+		"escalation_policy": stringPtrToStringType(actions.EscalationPolicy),
 	}
 
 	if actions.Variables != nil {

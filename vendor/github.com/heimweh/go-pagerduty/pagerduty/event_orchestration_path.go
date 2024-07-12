@@ -65,6 +65,7 @@ type EventOrchestrationPathRuleActions struct {
 	EventAction                string                                             `json:"event_action"`
 	Variables                  []*EventOrchestrationPathActionVariables           `json:"variables"`
 	Extractions                []*EventOrchestrationPathActionExtractions         `json:"extractions"`
+	EscalationPolicy           *string                                            `json:"escalation_policy"`
 }
 
 type EventOrchestrationPathDynamicRouteTo struct {

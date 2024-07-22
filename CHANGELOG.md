@@ -1,3 +1,10 @@
+## v3.15.0 (July 22, 2024)
+
+FEATURES:
+
+* `resource/pagerduty_event_orchestration_router`, `resource/pagerduty_event_orchestration_global`, `resource/pagerduty_event_orchestration_service`: Event Orchestration: add support for Dynamic Routing and Dynamic Escalation Policy Assignment ([#885](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/885))
+
+
 ## v3.14.5 (July 4, 2024)
 
 IMPROVEMENTS:

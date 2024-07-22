@@ -427,3 +427,7 @@ func emptyOrchestrationPathStructBuilder(pathType string) *pagerduty.EventOrches
 
 	return commonEmptyOrchestrationPath()
 }
+
+func isNonEmptyList(arg interface{}) bool {
+	return !isNilFunc(arg) && len(arg.([]interface{})) > 0
+}

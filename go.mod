@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.6.0
-	github.com/heimweh/go-pagerduty v0.0.0-20240503143637-3459408ac715
+	github.com/heimweh/go-pagerduty v0.0.0-20240722154207-95f2261a009a
 )
 
 require (

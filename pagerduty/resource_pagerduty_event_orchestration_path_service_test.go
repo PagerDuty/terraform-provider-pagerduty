@@ -135,6 +135,9 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 							resource.TestCheckResourceAttrSet(resourceName, "set.0.rule.0.id"),
 							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.0.id"),
 							resource.TestCheckResourceAttrSet(resourceName, "set.1.rule.1.id"),
+							resource.TestCheckResourceAttr(
+								resourceName, "set.0.rule.0.actions.0.escalation_policy", "POLICY3",
+							),
 						}...,
 					)...,
 				),
@@ -547,6 +550,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 					actions {
 						route_to = "set-1"
 						priority = "P0IN2KQ"
+						escalation_policy = pagerduty_escalation_policy.foo.id
 						annotate = "Routed through an event orchestration"
 						pagerduty_automation_action {
 							action_id = "01CSB5SMOKCKVRI5GN0LJG7SMB"
@@ -604,6 +608,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 				actions {
 					suspend = 120
 					priority = "P0IN2KW"
+					escalation_policy = pagerduty_escalation_policy.foo.id
 					annotate = "Routed through an event orchestration - catch-all rule"
 					pagerduty_automation_action {
 						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMC"
@@ -652,6 +657,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 					actions {
 						route_to = "set-2"
 						priority = "P0IN2KR"
+						escalation_policy = "POLICY3"
 						annotate = "Routed through a service orchestration!"
 						pagerduty_automation_action {
 							action_id = "01CSB5SMOKCKVRI5GN0LJG7SMBUPDATED"
@@ -723,6 +729,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 				actions {
 					suspend = 360
 					priority = "P0IN2KX"
+					escalation_policy = "POLICY4"
 					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
 					pagerduty_automation_action {
 						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMD"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -22,6 +23,7 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePagerDutyEventOrchestrationPathRouterImport,
 		},
+		CustomizeDiff: checkDynamicRoutingRule,
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
 				Type:     schema.TypeString,
@@ -63,9 +65,29 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 										MaxItems: 1, // there can only be one action for router
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
+												"dynamic_route_to": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"lookup_by": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"regex": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"source": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+														},
+													},
+												},
 												"route_to": {
 													Type:     schema.TypeString,
-													Required: true,
+													Optional: true,
 													ValidateFunc: func(v interface{}, key string) (warns []string, errs []error) {
 														value := v.(string)
 														if value == "unrouted" {
@@ -111,6 +133,54 @@ func resourcePagerDutyEventOrchestrationPathRouter() *schema.Resource {
 			},
 		},
 	}
+}
+
+func checkDynamicRoutingRule(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+	rNum := diff.Get("set.0.rule.#").(int)
+	draIdxs := []int{}
+	errorMsgs := []string{}
+
+	for ri := 0; ri < rNum; ri++ {
+		dra := diff.Get(fmt.Sprintf("set.0.rule.%d.actions.0.dynamic_route_to", ri))
+		hasDra := isNonEmptyList(dra)
+		if !hasDra {
+			continue
+		}
+		draIdxs = append(draIdxs, ri)
+	}
+	// 1. Only the first rule of the first ("start") set can have the Dynamic Routing action:
+	if len(draIdxs) > 1 {
+		idxs := []string{}
+		for _, idx := range draIdxs {
+			idxs = append(idxs, fmt.Sprintf("%d", idx))
+		}
+		errorMsgs = append(errorMsgs, fmt.Sprintf("A Router can have at most one Dynamic Routing rule; Rules with the dynamic_route_to action found at indexes: %s", strings.Join(idxs, ", ")))
+	}
+	// 2. The Dynamic Routing action can only be used in the first rule of the first set:
+	if len(draIdxs) > 0 && draIdxs[0] != 0 {
+		errorMsgs = append(errorMsgs, fmt.Sprintf("The Dynamic Routing rule must be the first rule in a Router"))
+	}
+	// 3. If the Dynamic Routing rule is the first rule of the first set,
+	// validate its configuration. It cannot have any conditions or the `route_to` action:
+	if len(draIdxs) == 1 && draIdxs[0] == 0 {
+		condNum := diff.Get("set.0.rule.0.condition.#").(int)
+		// diff.NewValueKnown(str) will return false if the value is based on interpolation that was unavailable at diff time,
+		// which may be the case for the `route_to` action when it references a pagerduty_service resource.
+		// Source: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/helper/schema#ResourceDiff.NewValueKnown
+		routeToValueKnown := diff.NewValueKnown("set.0.rule.0.actions.0.route_to")
+		routeTo := diff.Get("set.0.rule.0.actions.0.route_to").(string)
+		if condNum > 0 {
+			errorMsgs = append(errorMsgs, fmt.Sprintf("Dynamic Routing rules cannot have conditions"))
+		}
+		if !routeToValueKnown || routeToValueKnown && routeTo != "" {
+			errorMsgs = append(errorMsgs, fmt.Sprintf("Dynamic Routing rules cannot have the `route_to` action"))
+		}
+	}
+
+	if len(errorMsgs) > 0 {
+		return fmt.Errorf("Invalid Dynamic Routing rule configuration:\n- %s", strings.Join(errorMsgs, "\n- "))
+	}
+	return nil
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -294,7 +364,12 @@ func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleAct
 	actions := new(pagerduty.EventOrchestrationPathRuleActions)
 	for _, ai := range v.([]interface{}) {
 		am := ai.(map[string]interface{})
-		actions.RouteTo = am["route_to"].(string)
+		dra := am["dynamic_route_to"]
+		if isNonEmptyList(dra) {
+			actions.DynamicRouteTo = expandRouterDynamicRouteToAction(dra)
+		} else {
+			actions.RouteTo = am["route_to"].(string)
+		}
 	}
 
 	return actions
@@ -309,6 +384,17 @@ func expandCatchAll(v interface{}) *pagerduty.EventOrchestrationPathCatchAll {
 	}
 
 	return catchAll
+}
+
+func expandRouterDynamicRouteToAction(v interface{}) *pagerduty.EventOrchestrationPathDynamicRouteTo {
+	dr := new(pagerduty.EventOrchestrationPathDynamicRouteTo)
+	for _, i := range v.([]interface{}) {
+		dra := i.(map[string]interface{})
+		dr.LookupBy = dra["lookup_by"].(string)
+		dr.Regex = dra["regex"].(string)
+		dr.Source = dra["source"].(string)
+	}
+	return dr
 }
 
 func flattenSets(orchPathSets []*pagerduty.EventOrchestrationPathSet) []interface{} {
@@ -344,7 +430,11 @@ func flattenRouterActions(actions *pagerduty.EventOrchestrationPathRuleActions) 
 	var actionsMap []map[string]interface{}
 
 	am := make(map[string]interface{})
-	am["route_to"] = actions.RouteTo
+	if actions.DynamicRouteTo != nil {
+		am["dynamic_route_to"] = flattenRouterDynamicRouteToAction(actions.DynamicRouteTo)
+	} else {
+		am["route_to"] = actions.RouteTo
+	}
 	actionsMap = append(actionsMap, am)
 	return actionsMap
 }
@@ -358,6 +448,18 @@ func flattenCatchAll(catchAll *pagerduty.EventOrchestrationPathCatchAll) []map[s
 	caMap = append(caMap, c)
 
 	return caMap
+}
+
+func flattenRouterDynamicRouteToAction(dra *pagerduty.EventOrchestrationPathDynamicRouteTo) []map[string]interface{} {
+	var dr []map[string]interface{}
+
+	dr = append(dr, map[string]interface{}{
+		"lookup_by": dra.LookupBy,
+		"regex":     dra.Regex,
+		"source":    dra.Source,
+	})
+
+	return dr
 }
 
 func resourcePagerDutyEventOrchestrationPathRouterImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

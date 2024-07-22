@@ -53,6 +53,7 @@ type EventOrchestrationPathRuleCondition struct {
 type EventOrchestrationPathRuleActions struct {
 	DropEvent                  bool                                               `json:"drop_event"`
 	RouteTo                    string                                             `json:"route_to"`
+	DynamicRouteTo             *EventOrchestrationPathDynamicRouteTo              `json:"dynamic_route_to"`
 	Suppress                   bool                                               `json:"suppress"`
 	Suspend                    *int                                               `json:"suspend"`
 	Priority                   string                                             `json:"priority"`
@@ -64,6 +65,13 @@ type EventOrchestrationPathRuleActions struct {
 	EventAction                string                                             `json:"event_action"`
 	Variables                  []*EventOrchestrationPathActionVariables           `json:"variables"`
 	Extractions                []*EventOrchestrationPathActionExtractions         `json:"extractions"`
+	EscalationPolicy           *string                                            `json:"escalation_policy"`
+}
+
+type EventOrchestrationPathDynamicRouteTo struct {
+	Source   string `json:"source,omitempty"`
+	Regex    string `json:"regex,omitempty"`
+	LookupBy string `json:"lookup_by,omitempty"`
 }
 
 type EventOrchestrationPathIncidentCustomFieldUpdate struct {

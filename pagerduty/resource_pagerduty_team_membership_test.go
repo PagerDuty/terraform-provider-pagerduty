@@ -297,3 +297,183 @@ resource "pagerduty_escalation_policy" "foo" {
 }
 `, user, team, role, escalationPolicy)
 }
+
+func TestAccPagerDutyTeamMembership_basic(t *testing.T) {
+	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	role := "manager"
+	escalationPolicy1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicy2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant_UnrelatedEPs(user, team1, team2, role, escalationPolicy1, escalationPolicy2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.bar"),
+					resource.TestCheckResourceAttr("pagerduty_team_membership.bar", "role", "manager"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant_UnrelatedEPsUpdated(user, team1, team2, role, escalationPolicy1, escalationPolicy2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipNoExists("pagerduty_team_membership.foo"),
+					testAccCheckPagerDutyTeamExists("pagerduty_team.foo"),
+					testAccCheckPagerDutyTeamExists("pagerduty_team.bar"),
+					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.foo"),
+					testAccCheckPagerDutyEscalationPolicyExists("pagerduty_escalation_policy.bar"),
+					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.foo", "pagerduty_team.foo"),
+					testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches("pagerduty_escalation_policy.bar", "pagerduty_team.bar"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyEscalationPolicyTeamsFieldMatches(n, expectedTeam string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		expectedTeamID, err := getTeamID(s, expectedTeam)
+		if err != nil {
+			return err
+		}
+
+		// get the object from remote state -- tests for prescence
+		remoteResource, _, err := client.EscalationPolicies.Get(rs.Primary.ID, &pagerduty.GetEscalationPolicyOptions{})
+		if err != nil {
+			return fmt.Errorf("%s\n", err)
+		}
+
+		if attachedTeam := remoteResource.Teams[0].ID; attachedTeam != expectedTeamID {
+			return fmt.Errorf("Mismatch detected. Expected %s, and got %s\n", expectedTeamID, attachedTeam)
+		}
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant_UnrelatedEPs(user, team1, team2, role, escalationPolicy1, escalationPolicy2 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name = "%[1]v"
+  email = "%[1]v@foo.test"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[2]v"
+  description = "foo"
+}
+
+resource "pagerduty_team" "bar" {
+  name        = "%[5]v"
+  description = "bar"
+}
+
+resource "pagerduty_team_membership" "foo" {
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.foo.id
+  role    = "%[3]v"
+}
+
+resource "pagerduty_team_membership" "bar" {
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.bar.id
+  role    = "%[3]v"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%[4]v"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "bar" {
+  name      = "%[6]v"
+  num_loops = 2
+  teams     = [pagerduty_team.bar.id]
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+`, user, team1, role, escalationPolicy1, team2, escalationPolicy2)
+}
+
+func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant_UnrelatedEPsUpdated(user, team1, team2, role, escalationPolicy1, escalationPolicy2 string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name = "%[1]v"
+  email = "%[1]v@foo.test"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[2]v"
+  description = "foo"
+}
+
+resource "pagerduty_team" "bar" {
+  name        = "%[5]v"
+  description = "bar"
+}
+resource "pagerduty_team_membership" "bar" {
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.bar.id
+  role    = "%[3]v"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%[4]v"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "bar" {
+  name      = "%[6]v"
+  num_loops = 2
+  teams     = [pagerduty_team.bar.id]
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+`, user, team1, role, escalationPolicy1, team2, escalationPolicy2)
+}
+
+func getTeamID(s *terraform.State, teamName string) (string, error) {
+	for name, r := range s.RootModule().Resources {
+		if name == teamName {
+			return r.Primary.ID, nil
+		}
+	}
+	return "", fmt.Errorf("Could not find team %s\n", teamName)
+}

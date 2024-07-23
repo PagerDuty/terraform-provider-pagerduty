@@ -176,12 +176,14 @@ func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckPagerDutyTeamExists(_ string) resource.TestCheckFunc {
+func testAccCheckPagerDutyTeamExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		for _, r := range s.RootModule().Resources {
-			ctx := context.Background()
-			if _, err := testAccProvider.client.GetTeamWithContext(ctx, r.Primary.ID); err != nil {
-				return fmt.Errorf("Received an error retrieving team %s ID: %s", err, r.Primary.ID)
+		client, _ := testAccProvider.Meta().(*Config).Client()
+		for name, r := range s.RootModule().Resources {
+			if name == n {
+				if _, _, err := client.Teams.Get(r.Primary.ID); err != nil {
+					return fmt.Errorf("Received an error retrieving team %s ID: %s", err, r.Primary.ID)
+				}
 			}
 		}
 		return nil

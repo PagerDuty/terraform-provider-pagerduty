@@ -253,7 +253,12 @@ func buildEPsIdsList(l []*pagerduty.OnCall) []string {
 func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, error) {
 	var oncalls []*pagerduty.OnCall
 	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
-		resp, _, err := c.OnCall.List(&pagerduty.ListOnCallOptions{UserIds: []string{userID}})
+		now := time.Now()
+		resp, _, err := c.OnCall.List(&pagerduty.ListOnCallOptions{
+			UserIds: []string{userID},
+			Since:   now.Format(time.RFC3339),
+			Until:   now.Add(time.Hour * 24 * 90).Format(time.RFC3339),
+		})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)

@@ -30,10 +30,10 @@ resource "pagerduty_event_orchestration_router" "router" {
     rule {
       label = "Dynamically route events related to specific PagerDuty services"
       actions {
-        dynamic_route_to = {
+        dynamic_route_to {
           lookup_by = "service_id"
           source = "event.custom_details.pd_service_id"
-          regexp = "(.*)"
+          regex = "(.*)"
         }
       }
     }

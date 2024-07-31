@@ -1,3 +1,15 @@
+## v3.15.1 (July 31, 2024)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_event_orchestration_router`: Update code samples in the pagerduty_event_orchestration_router resource docs ([#917](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/917))
+
+BUG FIXES:
+
+* `resource/pagerduty_service`: Update flattening of auto pause notif params in service ([#919](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/919))
+* `resource/pagerduty_service_integration`: Address: Service email integrations - unable to configure text after and text before value extractors ([#920](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/920))
+* `PagerDuty/pagerduty`: Allow appending to UserAgent with ldflag ([#921](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/921))
+
 ## v3.15.0 (July 22, 2024)
 
 FEATURES:

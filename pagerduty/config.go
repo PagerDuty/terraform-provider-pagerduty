@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 	"github.com/heimweh/go-pagerduty/persistentconfig"
@@ -98,6 +99,13 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		APIAuthTokenType:          c.APITokenType,
 	}
 
+	if util.UserAgentAppend != "" {
+		if config.UserAgent == "" {
+			config.UserAgent = "heimweh/go-pagerduty(terraform)"
+		}
+		config.UserAgent += " " + util.UserAgentAppend
+	}
+
 	client, err := pagerduty.NewClient(config)
 	if err != nil {
 		return nil, err
@@ -147,6 +155,13 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 		HTTPClient: httpClient,
 		Token:      c.UserToken,
 		UserAgent:  c.UserAgent,
+	}
+
+	if util.UserAgentAppend != "" {
+		if config.UserAgent == "" {
+			config.UserAgent = "heimweh/go-pagerduty(terraform)"
+		}
+		config.UserAgent += " " + util.UserAgentAppend
 	}
 
 	client, err := pagerduty.NewClient(config)

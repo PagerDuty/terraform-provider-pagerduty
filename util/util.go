@@ -492,3 +492,5 @@ func CheckJSONEqual(expected string) resource.CheckResourceAttrWithFunc {
 		return nil
 	})
 }
+
+var UserAgentAppend string

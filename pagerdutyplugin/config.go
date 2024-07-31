@@ -92,10 +92,15 @@ func (c *Config) Client(ctx context.Context) (*pagerduty.Client, error) {
 	maxRetries := 1
 	retryInterval := 60 // seconds
 
+	userAgentVersion := c.TerraformVersion
+	if util.UserAgentAppend != "" {
+		userAgentVersion += " " + util.UserAgentAppend
+	}
+
 	clientOpts := []pagerduty.ClientOptions{
 		WithHTTPClient(httpClient),
 		pagerduty.WithAPIEndpoint(apiURL),
-		pagerduty.WithTerraformProvider(c.TerraformVersion),
+		pagerduty.WithTerraformProvider(userAgentVersion),
 		pagerduty.WithRetryPolicy(maxRetries, retryInterval),
 	}
 

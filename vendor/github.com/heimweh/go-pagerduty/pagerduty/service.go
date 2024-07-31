@@ -122,8 +122,8 @@ type Predicate struct {
 type ValueExtractor struct {
 	ValueName   string `json:"value_name,omitempty"`
 	Part        string `json:"part,omitempty"`
-	StartsAfter string `json:"starts_after,omitempty"`
-	EndsBefore  string `json:"ends_before,omitempty"`
+	StartsAfter string `json:"starts_after"`
+	EndsBefore  string `json:"ends_before"`
 	Type        string `json:"type,omitempty"`
 	Regex       string `json:"regex,omitempty"`
 }

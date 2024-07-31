@@ -757,6 +757,9 @@ func flattenAutoPauseNotificationsParameters(v *pagerduty.AutoPauseNotifications
 	if v.Enabled {
 		autoPauseNotificationsParameters["timeout"] = v.Timeout
 	}
+	if !v.Enabled && v.Timeout == nil {
+		autoPauseNotificationsParameters["timeout"] = 120
+	}
 
 	return []interface{}{autoPauseNotificationsParameters}
 }

@@ -119,3 +119,35 @@ func TestAccPagerDutyServiceWithAutoPauseNotifications_import(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPagerDutyServiceWithAutoPauseNotificationsDisabled_import(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAutoPauseNotificationsParametersUpdated(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "false"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "120"),
+				),
+			},
+
+			{
+				ResourceName:      "pagerduty_service.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

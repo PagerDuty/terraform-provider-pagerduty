@@ -203,13 +203,14 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Removing user: %s from team: %s", userID, teamID)
 
-	// Extracting Escalation Policies ids where this team referenced
-	epsAssociatedToUser, err := extractEPsAssociatedToUser(client, userID)
+	// Extract Escalation Policies associated to the team for which the userID is
+	// a rule target.
+	epsAssociatedToTeamAndUser, err := extractEPsAssociatedToTeamAndUser(client, teamID, userID)
 	if err != nil {
 		return err
 	}
 
-	epsDissociatedFromTeam, err := dissociateEPsFromTeam(client, teamID, epsAssociatedToUser)
+	epsDissociatedFromTeam, err := dissociateEPsFromTeam(client, teamID, epsAssociatedToTeamAndUser)
 	if err != nil {
 		return err
 	}
@@ -240,20 +241,21 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 	return nil
 }
 
-func buildEPsIdsList(l []*pagerduty.OnCall) []string {
+func buildEPsIdsList(l []*pagerduty.EscalationPolicy) []string {
 	eps := []string{}
 	for _, o := range l {
-		if o.EscalationPolicy != nil {
-			eps = append(eps, o.EscalationPolicy.ID)
-		}
+		eps = append(eps, o.ID)
 	}
 	return unique(eps)
 }
 
-func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, error) {
-	var oncalls []*pagerduty.OnCall
+// extractEPsAssociatedToTeamAndUser returns the IDs of escalation policies
+// associated to the specified team and for which the specified user is a rule
+// target.
+func extractEPsAssociatedToTeamAndUser(c *pagerduty.Client, teamID, userID string) ([]string, error) {
+	var eps []*pagerduty.EscalationPolicy
 	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
-		resp, _, err := c.OnCall.List(&pagerduty.ListOnCallOptions{UserIds: []string{userID}})
+		resp, _, err := c.EscalationPolicies.List(&pagerduty.ListEscalationPoliciesOptions{TeamIDs: []string{teamID}})
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)
@@ -262,14 +264,28 @@ func extractEPsAssociatedToUser(c *pagerduty.Client, userID string) ([]string, e
 			time.Sleep(2 * time.Second)
 			return retry.RetryableError(err)
 		}
-		oncalls = resp.Oncalls
+		eps = resp.EscalationPolicies
 		return nil
 	})
 	if retryErr != nil {
 		return nil, retryErr
 	}
-	epsAssociatedToUser := buildEPsIdsList(oncalls)
-	return epsAssociatedToUser, nil
+
+	// filter all team escalation policies to only those for which the specified
+	// user is a target.
+	userEPs := []*pagerduty.EscalationPolicy{}
+	for _, ep := range eps {
+		for _, rule := range ep.EscalationRules {
+			for _, target := range rule.Targets {
+				if target.ID == userID {
+					userEPs = append(userEPs, ep)
+				}
+			}
+		}
+	}
+
+	epsAssociatedToTeamAndUser := buildEPsIdsList(userEPs)
+	return epsAssociatedToTeamAndUser, nil
 }
 
 func dissociateEPsFromTeam(c *pagerduty.Client, teamID string, eps []string) ([]string, error) {

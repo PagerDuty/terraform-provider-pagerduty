@@ -107,6 +107,35 @@ func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependant(t *test
 	})
 }
 
+func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependantAndMultipleTeams(t *testing.T) {
+	userOne := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamOne := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	teamTwo := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	role := "manager"
+	escalationPolicyOne := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicyTwo := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantAndMultipleTeams(userOne, teamOne, teamTwo, role, escalationPolicyOne, escalationPolicyTwo),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.one"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantAndMultipleTeamsUpdated(userOne, teamOne, teamTwo, role, escalationPolicyOne, escalationPolicyTwo),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipNoExists("pagerduty_team_membership.one"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyTeamMembershipDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -296,4 +325,116 @@ resource "pagerduty_escalation_policy" "foo" {
   }
 }
 `, user, team, role, escalationPolicy)
+}
+
+func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantAndMultipleTeams(user, teamOne, teamTwo, role, escalationPolicyOne, escalationPolicyTwo string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "one" {
+  name = "%[1]v"
+  email = "%[1]v@foo.test"
+}
+
+resource "pagerduty_team" "one" {
+  name        = "%[2]v"
+  description = "team_one"
+}
+
+resource "pagerduty_team" "two" {
+  name        = "%[3]v"
+  description = "team_two"
+}
+
+resource "pagerduty_team_membership" "one" {
+  user_id = pagerduty_user.one.id
+  team_id = pagerduty_team.one.id
+  role    = "%[4]v"
+}
+
+resource "pagerduty_team_membership" "two" {
+  user_id = pagerduty_user.one.id
+  team_id = pagerduty_team.two.id
+  role    = "%[4]v"
+}
+
+resource "pagerduty_escalation_policy" "one" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.one.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.one.id
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "two" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.two.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.one.id
+    }
+  }
+}
+`, user, teamOne, teamTwo, role, escalationPolicyOne, escalationPolicyTwo)
+}
+
+func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantAndMultipleTeamsUpdated(user, teamOne, teamTwo, role, escalationPolicyOne, escalationPolicyTwo string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "one" {
+  name = "%[1]v"
+  email = "%[1]v@foo.test"
+}
+
+resource "pagerduty_team" "one" {
+  name        = "%[2]v"
+  description = "team_one"
+}
+
+resource "pagerduty_team" "two" {
+  name        = "%[3]v"
+  description = "team_two"
+}
+
+resource "pagerduty_team_membership" "two" {
+  user_id = pagerduty_user.one.id
+  team_id = pagerduty_team.two.id
+  role    = "%[4]v"
+}
+
+resource "pagerduty_escalation_policy" "one" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.one.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.one.id
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "two" {
+  name      = "%s"
+  num_loops = 2
+  teams     = [pagerduty_team.two.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.one.id
+    }
+  }
+}
+`, user, teamOne, teamTwo, role, escalationPolicyOne, escalationPolicyTwo)
 }

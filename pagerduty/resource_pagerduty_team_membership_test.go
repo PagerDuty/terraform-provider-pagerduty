@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -81,7 +82,8 @@ func TestAccPagerDutyTeamMembership_WithRoleConsistentlyAssigned(t *testing.T) {
 }
 
 func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependant(t *testing.T) {
-	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	userFoo := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	userBar := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	role := "manager"
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
@@ -92,16 +94,27 @@ func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependant(t *test
 		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant(user, team, role, escalationPolicy),
+				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant(userFoo, userBar, team, role, escalationPolicy),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
 				),
 			},
+			// This test case is expected to fail because userFoo is a member of the
+			// escalation policy
 			{
-				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantUpdated(user, team, role, escalationPolicy),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyTeamMembershipNoExists("pagerduty_team_membership.foo"),
-				),
+				Config:      testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantUpdated(userFoo, userBar, team, role, escalationPolicy),
+				ExpectError: regexp.MustCompile("User \".*\" can't be removed from Team \".*\" as they belong to an Escalation Policy on this team"),
+			},
+			// This test case is expected to pass because userFoo is being removed
+			// from escalation policy as remediation measure to unblock the team
+			// membership removal
+			{
+				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantAfterRemediation(userFoo, userBar, team, role, escalationPolicy),
+			},
+			// This test case is expected to pass because userFoo is no longer a
+			// member of the escalation policy
+			{
+				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantUpdated(userFoo, userBar, team, role, escalationPolicy),
 			},
 		},
 	})
@@ -236,26 +249,31 @@ resource "pagerduty_team_membership" "foo" {
 `, user, team, role)
 }
 
-func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant(user, team, role, escalationPolicy string) string {
+func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant(userFoo, userBar, team, role, escalationPolicy string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
-  name = "%[1]v"
-  email = "%[1]v@foo.test"
+  name  = "%[1]s"
+  email = "%[1]s@foo.test"
+}
+
+resource "pagerduty_user" "bar" {
+  name  = "%[2]s"
+  email = "%[2]s@bar.test"
 }
 
 resource "pagerduty_team" "foo" {
-  name        = "%[2]v"
+  name        = "%[3]s"
   description = "foo"
 }
 
 resource "pagerduty_team_membership" "foo" {
   user_id = pagerduty_user.foo.id
   team_id = pagerduty_team.foo.id
-  role    = "%[3]v"
+  role    = "%[4]s"
 }
 
 resource "pagerduty_escalation_policy" "foo" {
-  name      = "%s"
+  name      = "%[5]s"
   num_loops = 2
   teams     = [pagerduty_team.foo.id]
 
@@ -265,25 +283,34 @@ resource "pagerduty_escalation_policy" "foo" {
       type = "user_reference"
       id   = pagerduty_user.foo.id
     }
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.bar.id
+    }
   }
 }
-`, user, team, role, escalationPolicy)
+`, userFoo, userBar, team, role, escalationPolicy)
 }
 
-func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantUpdated(user, team, role, escalationPolicy string) string {
+func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantUpdated(userFoo, userBar, team, role, escalationPolicy string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "foo" {
-  name = "%[1]v"
-  email = "%[1]v@foo.test"
+  name  = "%[1]s"
+  email = "%[1]s@foo.test"
+}
+
+resource "pagerduty_user" "bar" {
+  name  = "%[2]s"
+  email = "%[2]s@bar.test"
 }
 
 resource "pagerduty_team" "foo" {
-  name        = "%[2]v"
+  name        = "%[3]s"
   description = "foo"
 }
 
 resource "pagerduty_escalation_policy" "foo" {
-  name      = "%[4]s"
+  name      = "%[5]s"
   num_loops = 2
   teams     = [pagerduty_team.foo.id]
 
@@ -293,7 +320,43 @@ resource "pagerduty_escalation_policy" "foo" {
       type = "user_reference"
       id   = pagerduty_user.foo.id
     }
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.bar.id
+    }
   }
 }
-`, user, team, role, escalationPolicy)
+`, userFoo, userBar, team, role, escalationPolicy)
+}
+
+func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantAfterRemediation(userFoo, userBar, team, role, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%[1]s"
+  email = "%[1]s@foo.test"
+}
+
+resource "pagerduty_user" "bar" {
+  name  = "%[2]s"
+  email = "%[2]s@bar.test"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[3]s"
+  description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%[5]s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.bar.id
+    }
+  }
+}`, userFoo, userBar, team, role, escalationPolicy)
 }

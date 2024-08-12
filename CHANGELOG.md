@@ -1,3 +1,9 @@
+## v3.15.2 (August 12, 2024)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_team_membership`: fix: improve team_membership deletion logic ([#918](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/918))
+
 ## v3.15.1 (July 31, 2024)
 
 IMPROVEMENTS:

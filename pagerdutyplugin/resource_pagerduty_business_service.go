@@ -107,10 +107,11 @@ func (r *resourceBusinessService) Read(ctx context.Context, req resource.ReadReq
 	log.Printf("[INFO] Reading PagerDuty business service %s", state.ID)
 
 	state, found := requestGetBusinessService(ctx, r.client, state.ID.ValueString(), false, &resp.Diagnostics)
+	if !found {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 	if resp.Diagnostics.HasError() {
-		if !found {
-			resp.State.RemoveResource(ctx)
-		}
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)

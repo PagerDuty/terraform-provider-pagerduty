@@ -46,6 +46,15 @@ func TestAccPagerDutyBusinessService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("pagerduty_business_service.foo", "self"),
 				),
 			},
+			// Validating that externally removed business services are detected and
+			// planed for re-creation
+			{
+				Config: testAccCheckPagerDutyBusinessServiceConfig(nameUpdated, descriptionUpdated, pointOfContactUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternallyDestroyBusinessService("pagerduty_business_service.foo"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -143,6 +152,27 @@ func testAccCheckPagerDutyBusinessServiceDestroy(s *terraform.State) error {
 
 	}
 	return nil
+}
+
+func testAccExternallyDestroyBusinessService(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		client := testAccProvider.client
+		ctx := context.Background()
+
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No Business Service ID is set")
+		}
+
+		if err := client.DeleteBusinessServiceWithContext(ctx, rs.Primary.ID); err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
 func testAccCheckPagerDutyBusinessServiceConfig(name, description, poc string) string {

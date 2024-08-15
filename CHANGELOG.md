@@ -1,3 +1,9 @@
+## v3.15.3 (August 14, 2024)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_business_service`: Address: Errors when trying to apply a business service that was manually deleted from PD ([#925](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/925))
+
 ## v3.15.2 (August 12, 2024)
 
 IMPROVEMENTS:

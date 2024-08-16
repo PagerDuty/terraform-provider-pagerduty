@@ -1,3 +1,9 @@
+## v3.15.4 (August 16, 2024)
+
+IMPROVEMENTS:
+
+* `PagerDuty/pagerduty`: Address: API calls cancelled by client because of Timeout ([#926](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/926))
+
 ## v3.15.3 (August 14, 2024)
 
 IMPROVEMENTS:

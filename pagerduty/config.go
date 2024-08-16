@@ -79,6 +79,14 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	httpClient.Timeout = 2 * time.Minute
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// Set the maximum number of idle (keep-alive) connections across all hosts
+	// Experimenting with these values to see if it helps with the connection pool
+	// and hence to solve the issue
+	// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/904
+	transport.MaxIdleConns = 0
+	transport.MaxIdleConnsPerHost = 500
+	transport.MaxConnsPerHost = 0
+
 	if c.InsecureTls {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
@@ -142,8 +150,17 @@ func (c *Config) SlackClient() (*pagerduty.Client, error) {
 
 	var httpClient *http.Client
 	httpClient = http.DefaultClient
+	httpClient.Timeout = 2 * time.Minute
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// Set the maximum number of idle (keep-alive) connections across all hosts
+	// Experimenting with these values to see if it helps with the connection pool
+	// and hence to solve the issue
+	// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/904
+	transport.MaxIdleConns = 0
+	transport.MaxIdleConnsPerHost = 500
+	transport.MaxConnsPerHost = 0
+
 	if c.InsecureTls {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}

@@ -1,3 +1,9 @@
+## v3.15.6 (August 23, 2024)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_team_membership`: Return remediation measures for team membership deletion with EP dependencies ([#863](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/863))
+
 ## v3.15.5 (August 22, 2024)
 
 IMPROVEMENTS:

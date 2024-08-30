@@ -12,9 +12,9 @@ func TestAccPagerDutyAutomationActionsAction_import(t *testing.T) {
 	actionName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyAutomationActionsActionDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAutomationActionsActionDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfig(actionName),

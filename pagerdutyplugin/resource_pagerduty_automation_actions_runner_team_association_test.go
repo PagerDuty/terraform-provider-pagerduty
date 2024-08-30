@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -25,9 +27,9 @@ func TestAccPagerDutyAutomationActionsRunnerTeamAssociation_Basic(t *testing.T) 
 	teamName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyAutomationActionsRunnerTeamAssociationDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAutomationActionsRunnerTeamAssociationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyAutomationActionsRunnerTeamAssociationConfig(runnerName, teamName),
@@ -42,17 +44,18 @@ func TestAccPagerDutyAutomationActionsRunnerTeamAssociation_Basic(t *testing.T) 
 }
 
 func testAccCheckPagerDutyAutomationActionsRunnerTeamAssociationDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_automation_actions_runner_team_association" {
 			continue
 		}
-		runnerID, teamID, err := resourcePagerDutyParseColonCompoundID(r.Primary.ID)
+		runnerID, teamID, err := util.ResourcePagerDutyParseColonCompoundID(r.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		if _, _, err := client.AutomationActionsRunner.GetAssociationToTeam(runnerID, teamID); err == nil {
+		client := testAccProvider.client
+		ctx := context.Background()
+		if _, err := client.GetAutomationActionsRunnerTeamWithContext(ctx, runnerID, teamID); err == nil {
 			return fmt.Errorf("Automation Actions Runner Team association still exists")
 		}
 	}
@@ -69,13 +72,14 @@ func testAccCheckPagerDutyAutomationActionsRunnerTeamAssociationExists(n string)
 			return fmt.Errorf("No Automation Actions Runner ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		runnerID, teamID, err := resourcePagerDutyParseColonCompoundID(rs.Primary.ID)
+		runnerID, teamID, err := util.ResourcePagerDutyParseColonCompoundID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		found, _, err := client.AutomationActionsRunner.GetAssociationToTeam(runnerID, teamID)
+		client := testAccProvider.client
+		ctx := context.Background()
+		found, err := client.GetAutomationActionsRunnerTeamWithContext(ctx, runnerID, teamID)
 		if err != nil {
 			return err
 		}

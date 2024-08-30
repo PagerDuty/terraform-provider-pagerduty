@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -28,9 +29,9 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 	actionClassificationUpdated := "remediation"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyAutomationActionsActionDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAutomationActionsActionDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyAutomationActionsActionTypeProcessAutomationConfig(actionName),
@@ -48,10 +49,10 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", "tags: production"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", ""),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "id"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "creation_time"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
@@ -70,15 +71,14 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_classification", actionClassificationUpdated),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", "updated_pa_job_id_123"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
-					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", ""),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "id"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "creation_time"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
@@ -98,9 +98,9 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 	actionClassificationUpdated := "remediation"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyAutomationActionsActionDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAutomationActionsActionDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyAutomationActionsActionTypeScriptConfig(actionName),
@@ -112,12 +112,12 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "type", "action"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "action_classification"),
 					// Known defect with inconsistent handling of nested aggregates: https://github.com/hashicorp/terraform-plugin-sdk/issues/413
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", ""),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", "java --version"),
 					resource.TestCheckResourceAttr(
@@ -139,16 +139,16 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 						"pagerduty_automation_actions_action.foo", "description", descriptionUpdated),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_classification", actionClassificationUpdated),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter", ""),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_id"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_job_arguments"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.process_automation_node_filter"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_automation_actions_action.foo", "action_data_reference.0.script", "echo 777"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command", ""),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_automation_actions_action.foo", "action_data_reference.0.invocation_command"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
@@ -159,12 +159,13 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 }
 
 func testAccCheckPagerDutyAutomationActionsActionDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
+	client := testAccProvider.client
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_automation_actions_action" {
 			continue
 		}
-		if _, _, err := client.AutomationActionsAction.Get(r.Primary.ID); err == nil {
+		ctx := context.Background()
+		if _, err := client.GetAutomationActionWithContext(ctx, r.Primary.ID); err == nil {
 			return fmt.Errorf("Automation Actions Action still exists")
 		}
 	}
@@ -181,8 +182,9 @@ func testAccCheckPagerDutyAutomationActionsActionExists(n string) resource.TestC
 			return fmt.Errorf("No Automation Actions Action ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		found, _, err := client.AutomationActionsAction.Get(rs.Primary.ID)
+		client := testAccProvider.client
+		ctx := context.Background()
+		found, err := client.GetAutomationActionWithContext(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

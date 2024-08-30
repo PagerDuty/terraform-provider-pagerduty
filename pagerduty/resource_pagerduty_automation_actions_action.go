@@ -11,6 +11,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.resourceAutomationActionsAction. Kept for testing.
 func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutyAutomationActionsActionCreate,

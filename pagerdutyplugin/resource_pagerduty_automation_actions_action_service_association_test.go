@@ -1,9 +1,11 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -28,9 +30,9 @@ func TestAccPagerDutyAutomationActionsActionServiceAssociation_Basic(t *testing.
 	serviceName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyAutomationActionsActionServiceAssociationDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAutomationActionsActionServiceAssociationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyAutomationActionsActionServiceAssociationConfig(username, email, escalationPolicy, serviceName, actionName),
@@ -45,17 +47,18 @@ func TestAccPagerDutyAutomationActionsActionServiceAssociation_Basic(t *testing.
 }
 
 func testAccCheckPagerDutyAutomationActionsActionServiceAssociationDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_automation_actions_action_service_association" {
 			continue
 		}
-		actionID, serviceID, err := resourcePagerDutyParseColonCompoundID(r.Primary.ID)
+		actionID, serviceID, err := util.ResourcePagerDutyParseColonCompoundID(r.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		if _, _, err := client.AutomationActionsAction.GetAssociationToService(actionID, serviceID); err == nil {
+		client := testAccProvider.client
+		ctx := context.Background()
+		if _, err := client.GetAutomationActionServiceWithContext(ctx, actionID, serviceID); err == nil {
 			return fmt.Errorf("Automation Actions Runner still exists")
 		}
 	}
@@ -72,13 +75,14 @@ func testAccCheckPagerDutyAutomationActionsActionServiceAssociationExists(n stri
 			return fmt.Errorf("No Automation Actions Runner ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-		actionID, serviceID, err := resourcePagerDutyParseColonCompoundID(rs.Primary.ID)
+		actionID, serviceID, err := util.ResourcePagerDutyParseColonCompoundID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		found, _, err := client.AutomationActionsAction.GetAssociationToService(actionID, serviceID)
+		ctx := context.Background()
+		client := testAccProvider.client
+		found, err := client.GetAutomationActionServiceWithContext(ctx, actionID, serviceID)
 		if err != nil {
 			return err
 		}

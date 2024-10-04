@@ -3,7 +3,7 @@ module github.com/PagerDuty/terraform-provider-pagerduty
 go 1.20
 
 require (
-	github.com/PagerDuty/go-pagerduty v1.8.1-0.20240524180345-9b652f07c450
+	github.com/PagerDuty/go-pagerduty v1.8.1-0.20241002154647-8ceedfd04d88
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/hc-install v0.6.2
@@ -66,7 +66,7 @@ require (
 	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/oauth2 v0.18.0 // indirect
+	golang.org/x/oauth2 v0.15.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

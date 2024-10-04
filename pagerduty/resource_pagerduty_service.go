@@ -78,6 +78,7 @@ func resourcePagerDutyService() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				MaxItems:      1,
+				Deprecated:    "Use a resource `pagerduty_alert_grouping_setting` instead",
 				ConflictsWith: []string{"alert_grouping", "alert_grouping_timeout"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

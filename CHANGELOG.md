@@ -1,3 +1,9 @@
+## v3.15.7 (October 9, 2024)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_escalation_policy`: Ensure escalation rule targets are added in same order as the plan ([#937](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/937))
+
 ## v3.15.6 (August 23, 2024)
 
 IMPROVEMENTS:

@@ -446,7 +446,7 @@ func flattenResponders(rlist []*pagerduty.Responder) []interface{} {
 		// EscalationRules
 		if r.EscalationRules != nil {
 			// flattenEscalationRules in resource_pagerduty_escalation_policy
-			flattenedR["escalation_rules"] = flattenEscalationRules(r.EscalationRules)
+			flattenedR["escalation_rules"] = flattenEscalationRules(r.EscalationRules, nil)
 		}
 		// Services
 		if r.Services != nil {

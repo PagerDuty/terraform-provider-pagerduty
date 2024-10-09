@@ -220,7 +220,7 @@ func setResourceEPProps(d *schema.ResourceData, escalationPolicy *pagerduty.Esca
 		return fmt.Errorf("error setting teams: %s", err)
 	}
 
-	if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules)); err != nil {
+	if err := d.Set("rule", flattenEscalationRules(escalationPolicy.EscalationRules, d)); err != nil {
 		return err
 	}
 	return nil
@@ -353,10 +353,10 @@ func expandEscalationRuleAssignmentStrategy(v interface{}) *pagerduty.Escalation
 	return escalationRuleAssignmentStrategy
 }
 
-func flattenEscalationRules(v []*pagerduty.EscalationRule) []map[string]interface{} {
+func flattenEscalationRules(v []*pagerduty.EscalationRule, d *schema.ResourceData) []map[string]interface{} {
 	var escalationRules []map[string]interface{}
 
-	for _, er := range v {
+	for i, er := range v {
 		escalationRule := map[string]interface{}{
 			"id":                          er.ID,
 			"escalation_delay_in_minutes": er.EscalationDelayInMinutes,
@@ -370,14 +370,38 @@ func flattenEscalationRules(v []*pagerduty.EscalationRule) []map[string]interfac
 		escalationRule["escalation_rule_assignment_strategy"] = escalationRuleAssignmentStrategy
 
 		var targets []map[string]interface{}
+		addedTargets := map[string]struct{}{}
 
+		// Append targets in same orden as plan, then mark them as added
+		if d != nil {
+			targetsPlan := d.Get(fmt.Sprintf("rule.%d.target", i)).([]any)
+			for _, tpValue := range targetsPlan {
+				var ert *pagerduty.EscalationTargetReference
+				for _, t := range er.Targets {
+					if t.ID == tpValue.(map[string]any)["id"].(string) {
+						ert = t
+						break
+					}
+				}
+				if ert == nil {
+					continue
+				}
+				escalationRuleTarget := map[string]interface{}{"id": ert.ID, "type": ert.Type}
+				targets = append(targets, escalationRuleTarget)
+				addedTargets[ert.ID] = struct{}{}
+			}
+		}
+
+		// Append targets not present in plan
 		for _, ert := range er.Targets {
+			if _, found := addedTargets[ert.ID]; found {
+				continue
+			}
 			escalationRuleTarget := map[string]interface{}{"id": ert.ID, "type": ert.Type}
 			targets = append(targets, escalationRuleTarget)
 		}
 
 		escalationRule["target"] = targets
-
 		escalationRules = append(escalationRules, escalationRule)
 	}
 

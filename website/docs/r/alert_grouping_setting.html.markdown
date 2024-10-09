@@ -1,0 +1,66 @@
+---
+layout: "pagerduty"
+page_title: "PagerDuty: pagerduty_alert_grouping_setting"
+sidebar_current: "docs-pagerduty-resource-alert-grouping-setting"
+description: |-
+  Creates and manages an alert grouping setting in PagerDuty.
+---
+
+# pagerduty\_alert\_grouping\_setting
+
+An [alert grouping setting](https://developer.pagerduty.com/api-reference/create-an-alert-grouping-setting)
+stores and centralize the configuration used during grouping of the alerts.
+
+## Example Usage
+
+```hcl
+data "pagerduty_escalation_policy" "default" {
+	name = "Default"
+}
+
+resource "pagerduty_service" "basic" {
+	name = "Example"
+	escalation_policy = data.pagerduty_escalation_policy.default.id
+}
+
+resource "pagerduty_alert_grouping_setting" "%[1]s" {
+  name = "Configuration for type-1 devices"
+  type = "content_based"
+  services = [pagerduty_service.basic.id]
+  config {
+    time_window = 300
+    aggregate = "all"
+    fields = ["fields"]
+  }
+}
+```
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `name` - (Required) The name for the alert groupig settings.
+* `type` - (Required) The type of alert grouping; one of `intelligent`, `time`, `content_based` or  `content_based_intelligent`.
+* `services` - (Required) The list IDs of services associated to this setting.
+* `config` - (Required) The set of values used for configuration.
+
+The `config` block contains the following arguments:
+
+* `timeout` - (Optional) The duration in minutes within which to automatically group incoming alerts. This setting is only required and applies when `type` is set to `time`. To continue grouping alerts until the incident is resolved leave this value unset or set it to `null`.
+* `aggregate` - (Optional) One of `any` or `all`. This setting is only required and applies when `type` is set to `content_based` or `content_based_intelligent`. Group alerts based on one or all of `fields` value(s).
+* `fields` - (Optional) Alerts will be grouped together if the content of these fields match. This setting is only required and applies when `type` is set to `content_based` or `content_based_intelligent`.
+* `time_window` - (Optional) The maximum amount of time allowed between Alerts. This setting applies only when `type` is set to `intelligent`, `content_based`, `content_based_intelligent`. Value must be between `300` and `3600` or exactly `86400` (86400 is supported only for `content_based` alert grouping). Any Alerts arriving greater than `time_window` seconds apart will not be grouped together. This is a rolling time window and is counted from the most recently grouped alert. The window is extended every time a new alert is added to the group, up to 24 hours. To use the recommended time window leave this value unset or set it to `null`.
+
+## Attributes Reference
+
+The following attributes are exported:
+
+  * `id` - The ID of the alert grouping setting.
+
+## Import
+
+Alert grouping settings can be imported using its `id`, e.g.
+
+```
+$ terraform import pagerduty_alert_grouping_setting.example P3DH5M6
+```

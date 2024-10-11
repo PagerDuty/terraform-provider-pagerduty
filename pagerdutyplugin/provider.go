@@ -52,6 +52,7 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 
 func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSource) {
 	return [](func() datasource.DataSource){
+		func() datasource.DataSource { return &dataSourceAlertGroupingSetting{} },
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceIntegration{} },
@@ -69,6 +70,7 @@ func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSourc
 func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 	return [](func() resource.Resource){
 		func() resource.Resource { return &resourceAddon{} },
+		func() resource.Resource { return &resourceAlertGroupingSetting{} },
 		func() resource.Resource { return &resourceBusinessService{} },
 		func() resource.Resource { return &resourceExtensionServiceNow{} },
 		func() resource.Resource { return &resourceExtension{} },

@@ -1,3 +1,9 @@
+## v3.16.0 (October 14, 2024)
+
+FEATURES:
+
+* `resource/pagerduty_alert_grouping_setting`: Add resource and data source for Alert Grouping Setting ([935](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/935))
+
 ## v3.15.7 (October 9, 2024)
 
 IMPROVEMENTS:

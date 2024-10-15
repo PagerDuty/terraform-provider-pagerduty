@@ -210,4 +210,5 @@ PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER=1 make testacc TESTARGS="-run PagerD
 | `PAGERDUTY_ACC_INCIDENT_CUSTOM_FIELDS`                       | Custom Fields       |
 | `PAGERDUTY_ACC_LICENSE_NAME`                                 | Licenses            |
 | `PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER`                | Schedule            |
+| `PAGERDUTY_ACC_JIRA_ACCOUNT_MAPPING_ID`                      | Set Jira account-mapping ID to use during acceptance tests |
 | `PAGERDUTY_ACC_EXTERNAL_PROVIDER_VERSION`                    | Modifies the version used to compare plans between sdkv2 and framework implementations. Default `~> 3.6`. |

@@ -57,6 +57,7 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
 				),
 			},
 			{
@@ -84,6 +85,7 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
 				),
 			},
 		},
@@ -127,6 +129,7 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
+					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents"),
 				),
 			},
 			{
@@ -152,6 +155,7 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
+					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents"),
 				),
 			},
 		},
@@ -214,7 +218,8 @@ resource "pagerduty_automation_actions_action" "foo" {
 		process_automation_job_id = "pa_job_id_123"
 		process_automation_job_arguments = "-arg 1"
 		process_automation_node_filter = "tags: production"
-	  }
+	  },
+	only_invocable_on_unresolved_incidents = "true"
 }
 `, actionName, actionName)
 }

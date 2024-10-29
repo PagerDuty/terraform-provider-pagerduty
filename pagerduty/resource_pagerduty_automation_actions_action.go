@@ -99,6 +99,11 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"only_invocable_on_unresolved_incidents": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -151,6 +156,11 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 	if attr, ok := d.GetOk("modify_time"); ok {
 		val := attr.(string)
 		automationActionsAction.ModifyTime = &val
+	}
+
+	if attr, ok := d.GetOk("only_invocable_on_unresolved_incidents"); ok {
+		val := attr.(bool)
+		automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &val
 	}
 
 	return &automationActionsAction, nil
@@ -297,6 +307,10 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 			if automationActionsAction.ActionClassification != nil {
 				d.Set("action_classification", &automationActionsAction.ActionClassification)
+			}
+
+			if automationActionsAction.OnlyInvocableOnUnresolvedIncidents != nil {
+				d.Set("only_invocable_on_unresolved_incidents", &automationActionsAction.OnlyInvocableOnUnresolvedIncidents)
 			}
 		}
 		return nil

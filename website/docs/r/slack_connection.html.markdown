@@ -80,9 +80,9 @@ The following arguments are supported:
     - `incident.status_update_published`
     - `incident.reopened`
   * `priorities` - (Optional) Allows you to filter events by priority. Needs to be an array of PagerDuty priority IDs. Available through [pagerduty_priority](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) data source.
-    - When omitted or set to an empty array (`[]`) in the configuration for a Slack Connection, its default behaviour is to set `priorities` to `No Priority` value.
+    - When omitted or set to an empty array (`[]`) in the configuration for a Slack Connection, its default behavior is to set `priorities` to `No Priority` value.
     - When set to `["*"]` its corresponding value for `priorities` in Slack Connection's configuration will be `Any Priority`.
-  * `urgency` - (Optional) Allows you to filter events by urgency. Either `high` or `low`.
+  * `urgency` - (Optional) Allows you to filter events by urgency. Either `high`, `low` or `null` for Any urgency. Default is `null`.
 
 ## Attributes Reference
 

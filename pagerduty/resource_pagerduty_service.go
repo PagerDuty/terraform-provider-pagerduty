@@ -78,7 +78,7 @@ func resourcePagerDutyService() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				MaxItems:      1,
-				Deprecated:    "Use a resource `pagerduty_alert_grouping_setting` instead",
+				Deprecated:    "Use a resource `pagerduty_alert_grouping_setting` instead.\nFollow the migration guide at https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/alert_grouping_setting#migration-from-alert_grouping_parameters",
 				ConflictsWith: []string{"alert_grouping", "alert_grouping_timeout"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

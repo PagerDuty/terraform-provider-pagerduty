@@ -1,3 +1,15 @@
+## v3.17.0 (November 4, 2024)
+
+FEATURES:
+
+* `resource/pagerduty_jira_cloud_account_mapping_rule`: Add support for Jira Cloud integration ([942](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/942))
+* `data/pagerduty_jira_cloud_account_mapping`: Add support for Jira Cloud integration ([942](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/942))
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_service`: Add link to migration docs in `alert_grouping_parameters` deprecation ([947](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/947))
+* `PagerDuty/pagerduty`: Fix `pagerudty.com` typo in docs ([939](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/939))
+
 ## v3.16.0 (October 14, 2024)
 
 FEATURES:

@@ -18,7 +18,8 @@ import (
 )
 
 type Provider struct {
-	client *pagerduty.Client
+	client         *pagerduty.Client
+	apiURLOverride string
 }
 
 func (p *Provider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -56,8 +57,9 @@ func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSourc
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceIntegration{} },
-		func() datasource.DataSource { return &dataSourceLicense{} },
+		func() datasource.DataSource { return &dataSourceJiraCloudAccountMapping{} },
 		func() datasource.DataSource { return &dataSourceLicenses{} },
+		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourcePriority{} },
 		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
@@ -74,6 +76,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceBusinessService{} },
 		func() resource.Resource { return &resourceExtensionServiceNow{} },
 		func() resource.Resource { return &resourceExtension{} },
+		func() resource.Resource { return &resourceJiraCloudAccountMappingRule{} },
 		func() resource.Resource { return &resourceServiceDependency{} },
 		func() resource.Resource { return &resourceTagAssignment{} },
 		func() resource.Resource { return &resourceTag{} },
@@ -120,6 +123,10 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		APIURLOverride:      args.APIURLOverride.ValueString(),
 		ServiceRegion:       serviceRegion,
 		InsecureTls:         insecureTls,
+	}
+
+	if config.APIURLOverride == "" && p.apiURLOverride != "" {
+		config.APIURLOverride = p.apiURLOverride
 	}
 
 	if !args.UseAppOauthScopedToken.IsNull() {

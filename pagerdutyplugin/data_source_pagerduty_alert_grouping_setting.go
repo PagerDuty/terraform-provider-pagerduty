@@ -68,13 +68,12 @@ func (d *dataSourceAlertGroupingSetting) Read(ctx context.Context, req datasourc
 		return
 	}
 
-	var cursorAfter, cursorBefore string
+	var cursorAfter string
 	var found *pagerduty.AlertGroupingSetting
 	err := apiutil.All(ctx, func(offset int) (bool, error) {
 		resp, err := d.client.ListAlertGroupingSettings(ctx, pagerduty.ListAlertGroupingSettingsOptions{
-			After:  cursorAfter,
-			Before: cursorBefore,
-			Limit:  100,
+			After: cursorAfter,
+			Limit: 100,
 		})
 		if err != nil {
 			return false, err
@@ -87,6 +86,7 @@ func (d *dataSourceAlertGroupingSetting) Read(ctx context.Context, req datasourc
 			}
 		}
 
+		cursorAfter = resp.After
 		return resp.After != "", nil
 	})
 	if err != nil {

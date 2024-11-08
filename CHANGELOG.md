@@ -1,3 +1,9 @@
+## v3.17.1 (November 8, 2024)
+
+BUG FIXES:
+
+* Fix cursor for datasource alert grouping setting ([950](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/950))
+
 ## v3.17.0 (November 4, 2024)
 
 FEATURES:

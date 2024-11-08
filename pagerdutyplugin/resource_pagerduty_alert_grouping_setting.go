@@ -147,6 +147,9 @@ func (r *resourceAlertGroupingSetting) Create(ctx context.Context, req resource.
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		response, err := r.client.CreateAlertGroupingSetting(ctx, plan)
 		if err != nil {
+			if util.IsBadRequestError(err) {
+				return retry.NonRetryableError(err)
+			}
 			return retry.RetryableError(err)
 		}
 		plan.ID = response.ID

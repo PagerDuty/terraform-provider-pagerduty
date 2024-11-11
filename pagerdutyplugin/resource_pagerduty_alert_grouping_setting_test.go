@@ -213,6 +213,28 @@ func TestAccPagerDutyAlertGroupingSetting_Time_WithTimeoutZero(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyAlertGroupingSetting_serviceNotExist(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+	name := fmt.Sprintf("%s grouping", service)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPagerDutyAlertGroupingSettingServiceNotExist(ref, service, name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists("pagerduty_alert_grouping_setting."+ref),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "name", name),
+					resource.TestCheckResourceAttrSet("pagerduty_alert_grouping_setting."+ref, "description"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyAlertGroupingSettingDestroy(s *terraform.State) error {
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_alert_grouping_setting" {
@@ -406,4 +428,38 @@ resource "pagerduty_alert_grouping_setting" "foo" {
 	}
 	services = [pagerduty_service.foo.id]
 }`, service1, name)
+}
+
+func testAccPagerDutyAlertGroupingSettingServiceNotExist(ref, service, name string) string {
+	return fmt.Sprintf(`
+data "pagerduty_escalation_policy" "default" {
+  name = "Default"
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%[2]s"
+  auto_resolve_timeout    = "null"
+  acknowledgement_timeout = 1800
+  escalation_policy       = data.pagerduty_escalation_policy.default.id
+  alert_creation          = "create_alerts_and_incidents"
+
+  auto_pause_notifications_parameters {
+    enabled = true
+    timeout = 120
+  }
+
+  incident_urgency_rule {
+    type    = "constant"
+    urgency = "high"
+  }
+}
+
+resource "pagerduty_alert_grouping_setting" "%[1]s" {
+  name     = "%[3]s"
+  services = [pagerduty_service.foo.id]
+  type     = "intelligent"
+  config {
+    time_window = 300
+  }
+}`, ref, service, name)
 }

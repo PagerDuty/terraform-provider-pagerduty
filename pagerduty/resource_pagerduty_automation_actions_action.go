@@ -163,6 +163,9 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &val
 	}
 
+	attr, _ := d.Get("only_invocable_on_unresolved_incidents").(bool)
+	automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &attr
+
 	return &automationActionsAction, nil
 }
 
@@ -310,7 +313,7 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 			}
 
 			if automationActionsAction.OnlyInvocableOnUnresolvedIncidents != nil {
-				d.Set("only_invocable_on_unresolved_incidents", &automationActionsAction.OnlyInvocableOnUnresolvedIncidents)
+				d.Set("only_invocable_on_unresolved_incidents", *automationActionsAction.OnlyInvocableOnUnresolvedIncidents)
 			}
 		}
 		return nil

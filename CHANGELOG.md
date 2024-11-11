@@ -1,3 +1,9 @@
+## v3.17.2 (November 11, 2024)
+
+BUG FIXES:
+
+* Address: Using pagerduty_alert_grouping_setting causes error HTTP response failed with status code 404 and no JSON error object was present ([952](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/952))
+
 ## v3.17.1 (November 8, 2024)
 
 BUG FIXES:

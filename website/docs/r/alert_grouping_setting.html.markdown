@@ -40,6 +40,7 @@ resource "pagerduty_alert_grouping_setting" "%[1]s" {
 The following arguments are supported:
 
 * `name` - (Required) The name for the alert groupig settings.
+* `description` - A human-friendly text to describe and identify this alert grouping setting.
 * `type` - (Required) The type of alert grouping; one of `intelligent`, `time`, `content_based` or  `content_based_intelligent`.
 * `services` - (Required)  [Updating can cause a resource replacement] The list IDs of services associated to this setting.
 * `config` - (Required) The set of values used for configuration.

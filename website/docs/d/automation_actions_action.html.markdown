@@ -31,14 +31,15 @@ The following attributes are exported:
 * `id` - The ID of the action.
 * `name` - The name of the action.
 * `type` - The type of object. The value returned will be `action`.
-* `action_type` - The type of the action. The only allowed values are `process_automation` and `script`. 
+* `action_type` - The type of the action. The only allowed values are `process_automation` and `script`.
 * `creation_time` - The time action was created. Represented as an ISO 8601 timestamp.
 * `action_data_reference` - Action Data block. Action Data is documented below.
 * `description` - (Optional) The description of the action.
-* `runner_id` - (Optional) The Process Automation Actions runner to associate the action with. 
+* `runner_id` - (Optional) The Process Automation Actions runner to associate the action with.
 * `runner_type` - (Optional) The type of the runner associated with the action.
-* `action_classification` - (Optional) The category of the action. The only allowed values are `diagnostic` and `remediation`. 
+* `action_classification` - (Optional) The category of the action. The only allowed values are `diagnostic` and `remediation`.
 * `modify_time` - (Optional) The last time action has been modified. Represented as an ISO 8601 timestamp.
+* `only_invocable_on_unresolved_incidents` - (Optional) Whether or not the action can be invoked on unresolved incidents.
 
 Action Data (`action_data_reference`) supports the following:
 

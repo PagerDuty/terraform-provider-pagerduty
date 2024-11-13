@@ -75,6 +75,7 @@ resource "pagerduty_automation_actions_action" "test" {
 		process_automation_job_arguments = "-arg 1"
 		process_automation_node_filter = "tags: production"
 	  }
+	only_invocable_on_unresolved_incidents = true
 }
 
 data "pagerduty_automation_actions_action" "foo" {

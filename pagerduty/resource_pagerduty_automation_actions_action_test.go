@@ -129,7 +129,7 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
-					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 				),
 			},
 			{
@@ -155,7 +155,7 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
-					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 				),
 			},
 		},
@@ -243,7 +243,8 @@ resource "pagerduty_automation_actions_action" "foo" {
 	runner_id = pagerduty_automation_actions_runner.foo_runner.id
 	action_data_reference {
 		process_automation_job_id = "updated_pa_job_id_123"
-	  }
+	}
+	only_invocable_on_unresolved_incidents = "false"
 }
 `, previousActionName, actionName, actionDescription, actionClassification)
 }

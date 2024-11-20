@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	install "github.com/hashicorp/hc-install"
 	"github.com/hashicorp/hc-install/fs"
 	"github.com/hashicorp/hc-install/product"
+	"github.com/hashicorp/hc-install/releases"
 	"github.com/hashicorp/hc-install/src"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
@@ -50,19 +52,38 @@ func getTFStateSnapshot() (*tfStateSnapshot, error) {
 	installer := install.NewInstaller()
 	defer installer.Remove(ctx)
 
-	tfVersionConstrain := ">= 1.0.6"
+	tfVersionConstrain := ">= 1.1.0"
+	log.Printf("[pagerduty] Ensuring terraform %q is installed...", tfVersionConstrain)
 	execPath, err := installer.Ensure(ctx, []src.Source{
 		&fs.Version{
 			Product:     product.Terraform,
 			Constraints: version.MustConstraints(version.NewConstraint(tfVersionConstrain)),
 		},
 	})
+
 	if err != nil {
 		isTFVersionUnavailableError := strings.Contains(err.Error(), "terraform: executable file not found in $PATH")
 		if !isTFVersionUnavailableError {
 			return nil, err
 		}
-		return nil, fmt.Errorf("terraform binary version %q not found in $PATH", tfVersionConstrain)
+		installVersionString := "1.9.8" // latest at the time of writing
+		installTargetVersion := version.Must(version.NewVersion(installVersionString))
+		log.Printf("[pagerduty] Unable to locate terraform binary matching %q in $PATH, installing %q", tfVersionConstrain, installVersionString)
+		execPathInstalled, installError := installer.Ensure(context.Background(), []src.Source{
+			&fs.ExactVersion{
+				Product: product.Terraform,
+				Version: installTargetVersion,
+			},
+			&releases.ExactVersion{
+				Product: product.Terraform,
+				Version: installTargetVersion,
+			},
+		})
+		if installError != nil {
+			return nil, fmt.Errorf("[pagerduty] Failed to install terraform %q", installVersionString)
+		}
+		log.Printf("[pagerduty] Successfully installed to %q", execPathInstalled)
+		execPath = execPathInstalled
 	}
 
 	workingDir, err := os.Getwd()

@@ -36,6 +36,7 @@ func resourcePagerDutyIncidentWorkflowTrigger() *schema.Resource {
 			"workflow": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"services": {
 				Type:     schema.TypeList,
@@ -88,15 +89,27 @@ func resourcePagerDutyIncidentWorkflowTriggerCreate(ctx context.Context, d *sche
 
 	log.Printf("[INFO] Creating PagerDuty incident workflow trigger %s for %s.", iwt.Type, iwt.Workflow.ID)
 
-	createdWorkflowTrigger, _, err := client.IncidentWorkflowTriggers.CreateContext(ctx, iwt)
+	err = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+		createdWorkflowTrigger, _, err := client.IncidentWorkflowTriggers.CreateContext(ctx, iwt)
+		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return retry.NonRetryableError(err)
+			}
+
+			return retry.RetryableError(err)
+		}
+
+		err = flattenIncidentWorkflowTrigger(d, createdWorkflowTrigger)
+		if err != nil {
+			return retry.NonRetryableError(err)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = flattenIncidentWorkflowTrigger(d, createdWorkflowTrigger)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	return nil
 }
 
@@ -122,15 +135,26 @@ func resourcePagerDutyIncidentWorkflowTriggerUpdate(ctx context.Context, d *sche
 
 	log.Printf("[INFO] Updating PagerDuty incident workflow trigger %s", d.Id())
 
-	updatedWorkflowTrigger, _, err := client.IncidentWorkflowTriggers.UpdateContext(ctx, d.Id(), iwt)
+	err = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+		updatedWorkflowTrigger, _, err := client.IncidentWorkflowTriggers.UpdateContext(ctx, d.Id(), iwt)
+		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) {
+				return retry.NonRetryableError(err)
+			}
+			return retry.RetryableError(err)
+		}
+
+		err = flattenIncidentWorkflowTrigger(d, updatedWorkflowTrigger)
+		if err != nil {
+			return retry.NonRetryableError(err)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = flattenIncidentWorkflowTrigger(d, updatedWorkflowTrigger)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	return nil
 }
 
@@ -142,6 +166,9 @@ func resourcePagerDutyIncidentWorkflowTriggerDelete(ctx context.Context, d *sche
 
 	_, err = client.IncidentWorkflowTriggers.DeleteContext(ctx, d.Id())
 	if err != nil {
+		if isErrCode(err, http.StatusNotFound) {
+			return diag.FromErr(handleNotFoundError(err, d))
+		}
 		return diag.FromErr(err)
 	}
 	return nil
@@ -209,7 +236,9 @@ func fetchIncidentWorkflowTrigger(ctx context.Context, d *schema.ResourceData, m
 func flattenIncidentWorkflowTrigger(d *schema.ResourceData, t *pagerduty.IncidentWorkflowTrigger) error {
 	d.SetId(t.ID)
 	d.Set("type", t.TriggerType.String())
-	d.Set("workflow", t.Workflow.ID)
+	if t.Workflow != nil {
+		d.Set("workflow", t.Workflow.ID)
+	}
 	d.Set("services", flattenIncidentWorkflowEnabledServices(t.Services))
 	d.Set("subscribed_to_all_services", t.SubscribedToAllServices)
 	if t.Condition != nil {

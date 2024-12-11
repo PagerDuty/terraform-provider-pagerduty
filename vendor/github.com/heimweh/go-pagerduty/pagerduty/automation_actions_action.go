@@ -7,21 +7,20 @@ import "fmt"
 type AutomationActionsActionService service
 
 type AutomationActionsAction struct {
-	ID                                 string                               `json:"id"`
-	Name                               string                               `json:"name"`
-	Description                        *string                              `json:"description,omitempty"`
-	ActionType                         string                               `json:"action_type"`
-	RunnerID                           *string                              `json:"runner,omitempty"`
-	ActionDataReference                AutomationActionsActionDataReference `json:"action_data_reference"`
-	Services                           []*ServiceReference                  `json:"services,omitempty"`
-	Teams                              []*TeamReference                     `json:"teams,omitempty"`
-	Privileges                         *AutomationActionsPrivileges         `json:"privileges,omitempty"`
-	Type                               *string                              `json:"type,omitempty"`
-	ActionClassification               *string                              `json:"action_classification,omitempty"`
-	RunnerType                         *string                              `json:"runner_type,omitempty"`
-	CreationTime                       *string                              `json:"creation_time,omitempty"`
-	ModifyTime                         *string                              `json:"modify_time,omitempty"`
-	OnlyInvocableOnUnresolvedIncidents *bool                                `json:"only_invocable_on_unresolved_incidents,omitempty"`
+	ID                   string                               `json:"id"`
+	Name                 string                               `json:"name"`
+	Description          *string                              `json:"description,omitempty"`
+	ActionType           string                               `json:"action_type"`
+	RunnerID             *string                              `json:"runner,omitempty"`
+	ActionDataReference  AutomationActionsActionDataReference `json:"action_data_reference"`
+	Services             []*ServiceReference                  `json:"services,omitempty"`
+	Teams                []*TeamReference                     `json:"teams,omitempty"`
+	Privileges           *AutomationActionsPrivileges         `json:"privileges,omitempty"`
+	Type                 *string                              `json:"type,omitempty"`
+	ActionClassification *string                              `json:"action_classification,omitempty"`
+	RunnerType           *string                              `json:"runner_type,omitempty"`
+	CreationTime         *string                              `json:"creation_time,omitempty"`
+	ModifyTime           *string                              `json:"modify_time,omitempty"`
 }
 
 type AutomationActionsActionDataReference struct {

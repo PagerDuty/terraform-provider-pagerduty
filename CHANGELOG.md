@@ -1,3 +1,15 @@
+## v3.18.2 (December 19, 2024)
+
+IMPROVEMENTS:
+
+* Install a fresh terraform binary if we're unable to locate a matching version in PATH. ([941](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/941))
+
+## v3.18.1 (November 20, 2024)
+
+BUG FIXES:
+
+* Avoid panic at null workflow in IW trigger, allowing it to refresh ([955](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/955))
+
 ## v3.18.0 (November 19, 2024)
 
 FEATURES:
@@ -7,7 +19,6 @@ FEATURES:
 IMPROVEMENTS:
 
 * Add description to `alert_grouping_setting` docs ([953](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/953))
-
 
 ## v3.17.2 (November 11, 2024)
 

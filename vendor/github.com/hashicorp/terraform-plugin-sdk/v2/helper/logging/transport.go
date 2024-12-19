@@ -18,6 +18,11 @@ type transport struct {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if v := os.Getenv("PAGERDUTY_EARLY_ACCESS"); v != "" {
+		log.Println("[DEBUG]", v)
+		req.Header.Add("X-Early-Access", v)
+	}
+
 	if IsDebugOrHigher() {
 		reqData, err := httputil.DumpRequestOut(req, true)
 		if err == nil {

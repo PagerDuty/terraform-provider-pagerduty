@@ -418,7 +418,9 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("alert_grouping"); ok {
 		ag := attr.(string)
-		service.AlertGrouping = &ag
+		if ag != "rules" {
+			service.AlertGrouping = &ag
+		}
 	}
 
 	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
@@ -524,6 +526,10 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	d.SetId(service.ID)
+
+	// We wait for internal subsystem to sync. Otherwise fields like
+	// alert_grouping_parameters will return empty.
+	time.Sleep(500 * time.Millisecond)
 
 	return fetchService(d, meta, genError)
 }

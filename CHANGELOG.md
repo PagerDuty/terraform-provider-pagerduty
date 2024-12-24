@@ -1,3 +1,9 @@
+## v3.18.3 (December 24, 2024)
+
+IMPROVEMENTS:
+
+* Fix service update conflict on alert grouping rules ([959](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/959))
+
 ## v3.18.2 (December 19, 2024)
 
 IMPROVEMENTS:

@@ -406,7 +406,7 @@ func TestAccPagerDutyService_AlertGrouping(t *testing.T) {
 	// and will be removed in a future release.
 }
 
-func TestAccPagerDutyService_AlertContentGrouping(t *testing.T) {
+func TestAccPagerDutyService_AlertGroupingContentBased(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))

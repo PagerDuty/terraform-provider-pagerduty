@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"strings"
 )
 
@@ -30,6 +31,10 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		} else {
 			log.Printf("[ERROR] %s API Request error: %#v", t.name, err)
 		}
+	}
+
+	if v := os.Getenv("PAGERDUTY_EARLY_ACCESS"); v != "" {
+		req.Header.Add("X-Early-Access", v)
 	}
 
 	resp, err := t.transport.RoundTrip(req)

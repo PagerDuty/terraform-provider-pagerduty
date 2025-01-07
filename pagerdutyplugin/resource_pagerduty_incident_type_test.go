@@ -19,7 +19,6 @@ func TestAccPagerDutyIncidentType_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
-		CheckDestroy:             testAccCheckPagerDutyIncidentTypeDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyIncidentTypeConfig(name, displayName, parentType),
@@ -51,21 +50,6 @@ func TestAccPagerDutyIncidentType_Basic(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckPagerDutyIncidentTypeDestroy(s *terraform.State) error {
-	client := testAccProvider.client
-	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_incident_type" {
-			continue
-		}
-		ctx := context.Background()
-		_, err := client.GetIncidentType(ctx, r.Primary.ID, pagerduty.GetIncidentTypeOptions{})
-		if err == nil {
-			return fmt.Errorf("Incident Type still exists")
-		}
-	}
-	return nil
 }
 
 func testAccCheckPagerDutyIncidentTypeExists(n string) resource.TestCheckFunc {

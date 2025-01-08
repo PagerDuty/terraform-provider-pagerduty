@@ -42,6 +42,7 @@ The following attributes are exported:
 * `only_invocable_on_unresolved_incidents` - (Optional) Whether or not the action can be invoked on unresolved incidents.
 * `allow_invocation_manually` - (Optional) Whether or not the action can be invoked manually by a user on the PagerDuty website.
 * `allow_invocation_from_event_orchestration` - (Optional) Whether or not the action can be invoked automatically from a PagerDuty Event Orchestration.
+* `map_to_all_services` - (Optional) If the action should be able to be run against all services or just specified ones.
 
 Action Data (`action_data_reference`) supports the following:
 

@@ -180,9 +180,6 @@ func validateIncidentWorkflowTrigger(_ context.Context, d *schema.ResourceDiff, 
 	if triggerType == "manual" && hadCondition {
 		return fmt.Errorf("when trigger type manual is used, condition must not be specified")
 	}
-	if triggerType == "conditional" && !hadCondition {
-		return fmt.Errorf("when trigger type conditional is used, condition must be specified")
-	}
 
 	// pagerduty_incident_workflow_trigger.permissions input validation
 	permissionRestricted := d.Get("permissions.0.restricted").(bool)

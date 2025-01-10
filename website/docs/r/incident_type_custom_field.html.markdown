@@ -12,32 +12,41 @@ An [incident type custom fields](https://developer.pagerduty.com/api-reference/4
 are a feature which will allow customers to extend Incidents with their own
 custom data, to provide additional context and support features such as
 customized filtering, search and analytics. Custom Fields can be applied to
-different incident types.
+different incident types. Child types will inherit custom fields from their
+parent types.
+
 
 ## Example Usage
 
 ```hcl
-resource "pagerduty_incident_custom_field" "alarm_time" {
+resource "pagerduty_incident_type_custom_field" "alarm_time" {
   name          = "alarm_time_minutes"
   display_name  = "Alarm Time"
   data_type     = "integer"
   field_type    = "single_value"
   default_value = jsonencode(5)
+  incident_type = "incident_default"
 }
 
-resource "pagerduty_incident_custom_field" "level" {
-  name         = "level"
-  display_name = "Level"
-  data_type    = "string"
-  field_type   = "single_value_fixed"
+data "pagerduty_incident_type" "foo" {
+    display_name = "Foo"
+}
+
+resource "pagerduty_incident_type_custom_field" "level" {
+  name          = "level"
+  incident_type = data.pagerduty_incident_type.foo.id
+  display_name  = "Level"
+  data_type     = "string"
+  field_type    = "single_value_fixed"
   field_options = ["Trace", "Debug", "Info", "Warn", "Error", "Fatal"]
 }
 
-resource "pagerduty_incident_custom_field" "cs_impact" {
-  name         = "impact"
-  display_name = "Customer Impact"
-  data_type    = "string"
-  field_type   = "multi_value"
+resource "pagerduty_incident_type_custom_field" "cs_impact" {
+  name          = "impact"
+  incident_type = data.pagerduty_incident_type.foo.id
+  display_name  = "Customer Impact"
+  data_type     = "string"
+  field_type    = "multi_value"
 }
 ```
 
@@ -52,7 +61,7 @@ The following arguments are supported:
 * `field_type` - (Required) [Updating causes resource replacement] The field type of the field. Must be one of `single_value`, `single_value_fixed`, `multi_value`, or `multi_value_fixed`.
 * `description` - The description of the custom field.
 * `default_value` - The default value to set when new incidents are created. Always specified as a string.
-* `enabled` - Whether the custom field is enabled.
+* `enabled` - Whether the custom field is enabled. Defaults to true if not provided.
 * `field_options` - The options for the custom field. Can only be applied to fields with a type of `single_value_fixed` or `multi_value_fixed`.
 
 ## Attributes Reference

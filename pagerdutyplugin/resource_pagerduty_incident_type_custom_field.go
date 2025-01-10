@@ -90,6 +90,7 @@ func (r *resourceIncidentTypeCustomField) Schema(_ context.Context, _ resource.S
 			"incident_type": schema.StringAttribute{
 				Required:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				Validators:    []validator.String{stringvalidator.LengthAtLeast(1)},
 			},
 			"display_name": schema.StringAttribute{
 				Required: true,

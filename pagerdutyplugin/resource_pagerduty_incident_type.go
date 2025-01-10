@@ -82,8 +82,10 @@ func (r *resourceIncidentType) Create(ctx context.Context, req resource.CreateRe
 		Name:        model.Name.ValueString(),
 		DisplayName: model.DisplayName.ValueString(),
 		ParentType:  model.ParentType.ValueString(),
-		Enabled:     model.Enabled.ValueBoolPointer(),
 		Description: model.Description.ValueStringPointer(),
+	}
+	if !model.Enabled.IsNull() && !model.Enabled.IsUnknown() {
+		plan.Enabled = model.Enabled.ValueBoolPointer()
 	}
 	log.Printf("[INFO] Creating PagerDuty incident type %s", plan.Name)
 

@@ -493,4 +493,32 @@ func CheckJSONEqual(expected string) resource.CheckResourceAttrWithFunc {
 	})
 }
 
+// Returns a pair of lists with additions and removals necessary to make set
+// `from` turn into set `to`.
+func CalculateDiff(from, to []string) (additions, deletions []string) {
+	setA := make(map[string]struct{})
+	for _, a := range from {
+		setA[a] = struct{}{}
+	}
+
+	setB := make(map[string]struct{})
+	for _, b := range to {
+		setB[b] = struct{}{}
+	}
+
+	for b := range setB {
+		if _, found := setA[b]; !found {
+			additions = append(additions, b)
+		}
+	}
+
+	for a := range setA {
+		if _, found := setB[a]; !found {
+			deletions = append(deletions, a)
+		}
+	}
+
+	return
+}
+
 var UserAgentAppend string

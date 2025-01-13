@@ -3,7 +3,7 @@ module github.com/PagerDuty/terraform-provider-pagerduty
 go 1.20
 
 require (
-	github.com/PagerDuty/go-pagerduty v1.8.1-0.20241111225923-0ef8f340dd3c
+	github.com/PagerDuty/go-pagerduty v1.8.1-0.20250113202017-9831333ebe6b
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/hc-install v0.6.2
@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.6.0
-	github.com/heimweh/go-pagerduty v0.0.0-20240731213000-b0991665ac52
+	github.com/heimweh/go-pagerduty v0.0.0-20250113182705-ce1f94dc30af
 )
 
 require (

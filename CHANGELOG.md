@@ -1,3 +1,13 @@
+## v3.19.0 (January 13, 2025)
+
+FEATURES:
+
+* Add support for **Incident Types** ([962](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/962))
+  - `data/pagerduty_incident_type`
+  - `data/pagerduty_incident_type_custom_field`
+  - `resource/pagerduty_incident_type`
+  - `resource/pagerduty_incident_type_custom_field`
+
 ## v3.18.3 (December 24, 2024)
 
 IMPROVEMENTS:

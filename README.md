@@ -56,12 +56,12 @@ The `go-pagerduty` library relies on various APIs to interact with PagerDuty's r
 
 ### To activate caching support
 
-| Environment Variable       | Example Value                                                                      | Description                                                                                                                                  |
-|----------------------------|------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| TF_PAGERDUTY_CACHE         | memory                                                                             | Activate **In Memory** cache.                                                                                                                |
-| TF_PAGERDUTY_CACHE         | `mongodb+srv://[mongouser]:[mongopass]@[mongodbname].[mongosubdomain].mongodb.net` | Activate MongoDB cache.                                                                                                                      |
-| TF_PAGERDUTY_CACHE_MAX_AGE | 30s                                                                                | Only applicable for MongoDB cache. Time in seconds for cached data to become staled. Default value `10s`.                                    |
-| TF_PAGERDUTY_CACHE_PREFILL | 1                                                                                  | Only applicable for MongoDB cache. Indicates to pre-fill data in cache for *Abilities*, *Users*, *Contact Methods* and *Notification Rules*. |
+| Environment Variable         | Example Value                                                                      | Description                                                                                                                                  |
+|------------------------------|------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| `TF_PAGERDUTY_CACHE`         | memory                                                                             | Activate **In Memory** cache.                                                                                                                |
+| `TF_PAGERDUTY_CACHE`         | `mongodb+srv://[mongouser]:[mongopass]@[mongodbname].[mongosubdomain].mongodb.net` | Activate MongoDB cache.                                                                                                                      |
+| `TF_PAGERDUTY_CACHE_MAX_AGE` | 30s                                                                                | Only applicable for MongoDB cache. Time in seconds for cached data to become staled. Default value `10s`.                                    |
+| `TF_PAGERDUTY_CACHE_PREFILL` | 1                                                                                  | Only applicable for MongoDB cache. Indicates to pre-fill data in cache for *Abilities*, *Users*, *Contact Methods* and *Notification Rules*. |
 
 
 ## Development

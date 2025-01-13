@@ -1,3 +1,9 @@
+## v3.19.1 (January 13, 2025)
+
+FIXES:
+
+* Add support for Incident Types (retry failed release)
+
 ## v3.19.0 (January 13, 2025)
 
 FEATURES:

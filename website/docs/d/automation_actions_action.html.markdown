@@ -40,6 +40,8 @@ The following attributes are exported:
 * `action_classification` - (Optional) The category of the action. The only allowed values are `diagnostic` and `remediation`.
 * `modify_time` - (Optional) The last time action has been modified. Represented as an ISO 8601 timestamp.
 * `only_invocable_on_unresolved_incidents` - (Optional) Whether or not the action can be invoked on unresolved incidents.
+* `allow_invocation_manually` - (Optional) Whether or not the action can be invoked manually by a user on the PagerDuty website.
+* `allow_invocation_from_event_orchestration` - (Optional) Whether or not the action can be invoked automatically from a PagerDuty Event Orchestration.
 
 Action Data (`action_data_reference`) supports the following:
 

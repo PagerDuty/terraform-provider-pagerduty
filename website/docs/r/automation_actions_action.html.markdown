@@ -53,6 +53,8 @@ Action Data (`action_data_reference`) supports the following:
   * `script` - (Required for `script` action_type) Body of the script to be executed on the Runner. Max length is 16777215 characters.
   * `invocation_command` - (Optional) The command to execute the script with.
   * `only_invocable_on_unresolved_incidents` - (Optional) Whether or not the action can be invoked on unresolved incidents.
+  * `allow_invocation_manually` - (Optional) Whether or not the action can be invoked manually by a user on the PagerDuty website.
+  * `allow_invocation_from_event_orchestration` - (Optional) Whether or not the action can be invoked automatically from a PagerDuty Event Orchestration.
 
 ## Attributes Reference
 

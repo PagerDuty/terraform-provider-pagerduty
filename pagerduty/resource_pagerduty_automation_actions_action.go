@@ -99,11 +99,30 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
 			"only_invocable_on_unresolved_incidents": {
 				Type:     schema.TypeBool,
 				Computed: true,
 				Optional: true,
 			},
+<<<<<<< HEAD
+=======
+			"allow_invocation_manually": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
+			"allow_invocation_from_event_orchestration": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
+>>>>>>> Stashed changes
+>>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
 		},
 	}
 }
@@ -158,6 +177,11 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		automationActionsAction.ModifyTime = &val
 	}
 
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
 	if attr, ok := d.GetOk("only_invocable_on_unresolved_incidents"); ok {
 		val := attr.(bool)
 		automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &val
@@ -166,6 +190,26 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 	attr, _ := d.Get("only_invocable_on_unresolved_incidents").(bool)
 	automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &attr
 
+<<<<<<< HEAD
+=======
+	if attr, ok := d.GetOk("allow_invocation_manually"); ok {
+		val := attr.(bool)
+		automationActionsAction.AllowInvocationManually = &val
+	}
+
+	attr, _ := d.Get("allow_invocation_manually").(bool)
+	automationActionsAction.AllowInvocationManually = &attr
+
+	if attr, ok := d.GetOk("allow_invocation_from_event_orchestration"); ok {
+		val := attr.(bool)
+		automationActionsAction.AllowInvocationFromEventOrchestration = &val
+	}
+
+	attr, _ := d.Get("allow_invocation_from_event_orchestration").(bool)
+	automationActionsAction.AllowInvocationFromEventOrchestration = &attr
+
+>>>>>>> Stashed changes
+>>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
 	return &automationActionsAction, nil
 }
 
@@ -314,6 +358,14 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 			if automationActionsAction.OnlyInvocableOnUnresolvedIncidents != nil {
 				d.Set("only_invocable_on_unresolved_incidents", *automationActionsAction.OnlyInvocableOnUnresolvedIncidents)
+			}
+
+			if automationActionsAction.AllowInvocationManually != nil {
+				d.Set("allow_invocation_manually", *automationActionsAction.AllowInvocationManually)
+			}
+
+			if automationActionsAction.AllowInvocationFromEventOrchestration != nil {
+				d.Set("allow_invocation_from_event_orchestration", *automationActionsAction.AllowInvocationFromEventOrchestration)
 			}
 		}
 		return nil

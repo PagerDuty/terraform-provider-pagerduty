@@ -1,3 +1,9 @@
+## v3.21.1 (February 20, 2025)
+
+FEATURES:
+
+* Add `allow_invocation_manually` and `allow_invocation_from_event_orchestration` to Automation Action's schema
+
 ## v3.21.0 (February 17, 2025)
 
 BUG FIXES:
@@ -115,6 +121,10 @@ IMPROVEMENTS:
 * `resource/pagerduty_service`: Add link to migration docs in `alert_grouping_parameters` deprecation ([947](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/947))
 * `PagerDuty/pagerduty`: Fix `pagerudty.com` typo in docs ([939](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/939))
 
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
+>>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
 ## v3.16.0 (October 14, 2024)
 
 FEATURES:
@@ -1022,14 +1032,14 @@ FEATURES:
 IMPROVEMENTS:
 * `data_source/pagerduty_user`: Add support for pagination. Gets all users. ([#511](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/511))
 
-BUG FIXES: 
+BUG FIXES:
 * `resource/pagerduty_service_integration`: Fix permadiff in email_parser with type regex & minor docs update ([#479](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/479))
 
 ## 2.4.2 (May 20, 2022)
 
 IMPROVEMENTS:
 * Acceptance Test Improvements: Use "@foo.test" email addresses in tests. ([#491](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/491))
-* Acceptance Test Improvements: Adding better notes to README on running ACC ([#503](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/503)) 
+* Acceptance Test Improvements: Adding better notes to README on running ACC ([#503](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/503))
 * `resource/pagerduty_ruleset_rule`: Introduce support for `catch_all` rules. ([#481](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/481))
 * Docs: `resource/pagerduty_slack_connection`: Improved notes on resource supporting Slack V2 Next Generation ([#496](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/496))
 

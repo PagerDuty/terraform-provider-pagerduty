@@ -99,6 +99,16 @@ func dataSourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"allow_invocation_from_event_orchestration": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
+			"allow_invocation_manually": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }

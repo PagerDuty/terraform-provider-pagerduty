@@ -220,7 +220,7 @@ func (r *resourceIncidentType) Update(ctx context.Context, req resource.UpdateRe
 func (r *resourceIncidentType) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	resp.Diagnostics.AddWarning(
 		"Cannot delete incident type",
-		"This action has no effect, and you might want to disable your incident type by changing it with `enabled = false`.",
+		"This action has no effect, and you might want to disable your incident type by changing it with `enabled = false`. If you want terraform to stop tracking this resource please use `terraform state rm`.",
 	)
 }
 

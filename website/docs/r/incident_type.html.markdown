@@ -15,6 +15,7 @@ incident, a major incident, or a fraud incident.
 <div role="alert" class="alert alert-warning">
   <div class="alert-title"><i class="fa fa-warning"></i>Resource limitation</div>
   <p>Incident Types cannot be deleted, only disabled</p>
+  <p>If you want terraform to stop tracking this resource please use <code>terraform state rm</code>.</p>
 </div>
 
 

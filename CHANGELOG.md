@@ -1,3 +1,9 @@
+## v3.19.2 (January 15, 2025)
+
+FIXES:
+
+* Address: Unable to import service dependencies ([970](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/970))
+
 ## v3.19.1 (January 13, 2025)
 
 FIXES:

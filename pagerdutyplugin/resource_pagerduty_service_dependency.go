@@ -334,6 +334,7 @@ func (r *resourceServiceDependency) ImportState(ctx context.Context, req resourc
 			"Error importing pagerduty_service_dependency",
 			"Expecting an importation ID formed as '<supporting_service_id>.<supporting_service_type>.<service_dependency_id>'",
 		)
+		return
 	}
 	supID, supRt, id := ids[0], ids[1], ids[2]
 	serviceDependency, err := r.requestGetServiceDependency(ctx, id, supID, supRt)

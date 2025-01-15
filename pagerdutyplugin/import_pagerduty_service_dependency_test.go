@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -30,6 +31,13 @@ func TestAccPagerDutyServiceDependency_import(t *testing.T) {
 				ImportStateIdFunc: testAccCheckPagerDutyServiceDependencyID,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+
+			{
+				ResourceName:  "pagerduty_service_dependency.foo",
+				ImportStateId: "wrongFormatID",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Expecting an importation ID formed as`),
 			},
 		},
 	})

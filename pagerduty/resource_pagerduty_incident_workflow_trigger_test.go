@@ -102,29 +102,6 @@ resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
 	})
 }
 
-func TestAccPagerDutyIncidentWorkflowTrigger_ConditionalTypeWithoutCondition(t *testing.T) {
-	config := `
-resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
-  type             = "conditional"
-  workflow         = "ignored"
-  subscribed_to_all_services = true
-}
-`
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-			testAccPreCheckIncidentWorkflows(t)
-		},
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      config,
-				ExpectError: regexp.MustCompile("when trigger type conditional is used, condition must be specified"),
-			},
-		},
-	})
-}
-
 func TestAccPagerDutyIncidentWorkflowTrigger_SubscribedToAllWithInvalidServices(t *testing.T) {
 	config := `
 resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
@@ -203,6 +180,17 @@ func TestAccPagerDutyIncidentWorkflowTrigger_BasicConditionalAllServices(t *test
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
 		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", ""),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow_trigger.test", "subscribed_to_all_services", "true"),
+				),
+			},
 			{
 				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, "incident.priority matches 'P1'"),
 				Check: resource.ComposeTestCheckFunc(
@@ -384,6 +372,17 @@ func TestAccPagerDutyIncidentWorkflowTrigger_ChangeTypeCausesReplace(t *testing.
 		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
 		Steps: []resource.TestStep{
 			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", ""),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow_trigger.test", "subscribed_to_all_services", "true"),
+				),
+			},
+			{
 				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, "incident.priority matches 'P1'"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
@@ -445,6 +444,17 @@ func TestAccPagerDutyIncidentWorkflowTrigger_CannotChangeType(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
 		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", ""),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow_trigger.test", "subscribed_to_all_services", "true"),
+				),
+			},
 			{
 				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigConditionalAllServices(workflow, "incident.priority matches 'P1'"),
 				Check: resource.ComposeTestCheckFunc(

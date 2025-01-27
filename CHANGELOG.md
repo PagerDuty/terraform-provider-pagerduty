@@ -1,3 +1,10 @@
+## v3.19.3 (January 27, 2025)
+
+IMPROVEMENTS:
+
+* Expand upon documentation for Event Orchestrations ([971](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/971))
+* `pagerduty_incident_workflow_trigger` remove value check on conditional ([964](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/964))
+
 ## v3.19.2 (January 15, 2025)
 
 FIXES:

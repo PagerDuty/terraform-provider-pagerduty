@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
@@ -37,15 +38,22 @@ func (r *resourceTag) Metadata(_ context.Context, _ resource.MetadataRequest, re
 func (r *resourceTag) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"label": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+			"id": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
-			"html_url": schema.StringAttribute{Computed: true},
-			"id":       schema.StringAttribute{Computed: true},
-			"summary":  schema.StringAttribute{Computed: true},
+			"label": schema.StringAttribute{
+				Required:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			},
+			"html_url": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"summary": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
 }
@@ -55,6 +63,7 @@ func (r *resourceTag) Create(ctx context.Context, req resource.CreateRequest, re
 	if d := req.Config.Get(ctx, &model); d.HasError() {
 		resp.Diagnostics.Append(d...)
 	}
+
 	tagBody := buildTag(&model)
 	log.Printf("[INFO] Creating PagerDuty tag %s", tagBody.Label)
 
@@ -62,7 +71,7 @@ func (r *resourceTag) Create(ctx context.Context, req resource.CreateRequest, re
 		tag, err := r.client.CreateTagWithContext(ctx, tagBody)
 		if err != nil {
 			var apiErr pagerduty.APIError
-			if errors.As(err, &apiErr) && apiErr.StatusCode == 400 {
+			if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusBadRequest {
 				return retry.NonRetryableError(err)
 			}
 			return retry.RetryableError(err)

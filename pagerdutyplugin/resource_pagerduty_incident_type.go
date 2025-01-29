@@ -9,10 +9,10 @@ import (
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/validate"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -35,10 +35,8 @@ func (r *resourceIncidentType) Schema(_ context.Context, _ resource.SchemaReques
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
@@ -59,7 +57,11 @@ func (r *resourceIncidentType) Schema(_ context.Context, _ resource.SchemaReques
 				Required: true,
 			},
 			"description": schema.StringAttribute{Optional: true},
-			"enabled":     schema.BoolAttribute{Optional: true, Computed: true},
+			"enabled": schema.BoolAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
 			"type": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
@@ -123,7 +125,7 @@ func (r *resourceIncidentType) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	model, err = requestGetIncidentType(ctx, r.client, id, plan.ParentType, true, &resp.Diagnostics)
+	model, err = requestGetIncidentType(ctx, r.client, id, plan.ParentType, true)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Error reading PagerDuty incident type %s", id),
@@ -149,7 +151,7 @@ func (r *resourceIncidentType) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	state, err := requestGetIncidentType(ctx, r.client, id.ValueString(), parent.ValueString(), false, &resp.Diagnostics)
+	state, err := requestGetIncidentType(ctx, r.client, id.ValueString(), parent.ValueString(), false)
 	if err != nil {
 		if util.IsNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
@@ -193,7 +195,6 @@ func (r *resourceIncidentType) Update(ctx context.Context, req resource.UpdateRe
 			"Can not update value of field \"parent_type\"",
 			"",
 		)
-
 	}
 
 	incidentType, err := r.client.UpdateIncidentType(ctx, id, plan)
@@ -209,7 +210,7 @@ func (r *resourceIncidentType) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	model, err = flattenIncidentType(ctx, r.client, incidentType, model.ParentType.ValueString(), &resp.Diagnostics)
+	model, err = flattenIncidentType(ctx, r.client, incidentType, model.ParentType.ValueString())
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 	}
@@ -242,7 +243,7 @@ type resourceIncidentTypeModel struct {
 	Type        types.String `tfsdk:"type"`
 }
 
-func requestGetIncidentType(ctx context.Context, client *pagerduty.Client, id, parent string, retryNotFound bool, diags *diag.Diagnostics) (resourceIncidentTypeModel, error) {
+func requestGetIncidentType(ctx context.Context, client *pagerduty.Client, id, parent string, retryNotFound bool) (resourceIncidentTypeModel, error) {
 	var model resourceIncidentTypeModel
 
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
@@ -257,7 +258,7 @@ func requestGetIncidentType(ctx context.Context, client *pagerduty.Client, id, p
 			return retry.RetryableError(err)
 		}
 
-		model, err = flattenIncidentType(ctx, client, incidentType, parent, diags)
+		model, err = flattenIncidentType(ctx, client, incidentType, parent)
 		if err != nil {
 			return retry.NonRetryableError(err)
 		}
@@ -268,7 +269,7 @@ func requestGetIncidentType(ctx context.Context, client *pagerduty.Client, id, p
 	return model, err
 }
 
-func flattenIncidentType(ctx context.Context, client *pagerduty.Client, response *pagerduty.IncidentType, parent string, diags *diag.Diagnostics) (resourceIncidentTypeModel, error) {
+func flattenIncidentType(ctx context.Context, client *pagerduty.Client, response *pagerduty.IncidentType, parent string) (resourceIncidentTypeModel, error) {
 	if parent != response.Parent.ID {
 		incidentType, err := client.GetIncidentType(ctx, parent, pagerduty.GetIncidentTypeOptions{})
 		if err != nil {

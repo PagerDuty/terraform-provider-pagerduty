@@ -37,21 +37,30 @@ func (r *resourceBusinessService) Metadata(_ context.Context, _ resource.Metadat
 func (r *resourceBusinessService) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"html_url":         schema.StringAttribute{Computed: true},
-			"name":             schema.StringAttribute{Required: true},
-			"point_of_contact": schema.StringAttribute{Optional: true},
-			"self":             schema.StringAttribute{Computed: true},
-			"summary":          schema.StringAttribute{Computed: true},
-			"team":             schema.StringAttribute{Optional: true},
 			"id": schema.StringAttribute{
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
+			"name": schema.StringAttribute{Required: true},
 			"description": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
 				Default:  stringdefault.StaticString("Managed by Terraform"),
 			},
+			"html_url": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"point_of_contact": schema.StringAttribute{Optional: true},
+			"self": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"summary": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"team": schema.StringAttribute{Optional: true},
 			"type": schema.StringAttribute{
 				Optional:           true,
 				Computed:           true,

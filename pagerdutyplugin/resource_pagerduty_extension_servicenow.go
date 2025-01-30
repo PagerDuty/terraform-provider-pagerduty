@@ -37,27 +37,47 @@ func (r *resourceExtensionServiceNow) Metadata(_ context.Context, _ resource.Met
 func (r *resourceExtensionServiceNow) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id":           schema.StringAttribute{Computed: true},
-			"name":         schema.StringAttribute{Optional: true, Computed: true},
-			"html_url":     schema.StringAttribute{Computed: true},
-			"type":         schema.StringAttribute{Optional: true, Computed: true},
-			"endpoint_url": schema.StringAttribute{Optional: true, Sensitive: true},
+			"id": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"name": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"html_url": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"type": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"endpoint_url": schema.StringAttribute{
+				Optional:  true,
+				Sensitive: true,
+			},
 			"extension_objects": schema.SetAttribute{
-				Required:    true,
-				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.RequiresReplace(),
-				},
+				Required:      true,
+				ElementType:   types.StringType,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.RequiresReplace()},
 			},
 			"extension_schema": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+				Required:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
-			"snow_user":     schema.StringAttribute{Required: true},
-			"snow_password": schema.StringAttribute{Required: true, Sensitive: true},
-			"summary":       schema.StringAttribute{Optional: true, Computed: true},
+			"snow_user": schema.StringAttribute{Required: true},
+			"snow_password": schema.StringAttribute{
+				Required:  true,
+				Sensitive: true,
+			},
+			"summary": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 			"sync_options": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
@@ -293,6 +313,7 @@ func buildPagerdutyExtensionServiceNow(ctx context.Context, model *resourceExten
 
 func buildExtensionServiceNowObjects(ctx context.Context, set types.Set, diags *diag.Diagnostics) []pagerduty.APIObject {
 	var target []string
+
 	diags.Append(set.ElementsAs(ctx, &target, false)...)
 
 	list := []pagerduty.APIObject{}
@@ -313,6 +334,7 @@ func flattenExtensionServiceNow(src *pagerduty.Extension, snowPassword *string, 
 	}
 
 	b, _ := json.Marshal(src.Config)
+
 	var config pagerDutyExtensionServiceNowConfig
 	_ = json.Unmarshal(b, &config)
 

@@ -91,7 +91,11 @@ func (r *resourceServiceDependency) Schema(_ context.Context, _ resource.SchemaR
 
 	dependencyBlockObject := schema.NestedBlockObject{
 		Attributes: map[string]schema.Attribute{
-			"type": schema.StringAttribute{Optional: true, Computed: true},
+			"type": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 		},
 		Blocks: map[string]schema.Block{
 			"supporting_service": schema.ListNestedBlock{
@@ -124,7 +128,10 @@ func (r *resourceServiceDependency) Schema(_ context.Context, _ resource.SchemaR
 
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Computed: true},
+			"id": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 		},
 		Blocks: map[string]schema.Block{
 			"dependency": dependencyBlock,

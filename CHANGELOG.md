@@ -1,3 +1,9 @@
+## v3.19.4 (January 30, 2025)
+
+IMPROVEMENTS:
+
+* UseStateForUnknown in all computed fields ([973](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/973))
+
 ## v3.19.3 (January 27, 2025)
 
 IMPROVEMENTS:

@@ -181,7 +181,7 @@ func resourcePagerDutyUserNotificationRuleImport(d *schema.ResourceData, meta in
 	ids := strings.Split(d.Id(), ":")
 
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_user_notification_rule. Expecting an ID formed as '<user_id>.<notification_rule_id>'")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing pagerduty_user_notification_rule. Expecting an ID formed as '<user_id>:<notification_rule_id>'")
 	}
 	uid, id := ids[0], ids[1]
 

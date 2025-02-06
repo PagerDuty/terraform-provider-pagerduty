@@ -13,90 +13,94 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
-var eventOrchestrationPathServiceCatchAllActionsSchema = map[string]*schema.Schema{
-	"suppress": {
-		Type:     schema.TypeBool,
-		Optional: true,
-	},
-	"suspend": {
-		Type:     schema.TypeInt,
-		Optional: true,
-	},
-	"priority": {
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"annotate": {
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"pagerduty_automation_action": {
-		Type:     schema.TypeList,
-		Optional: true,
-		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"action_id": {
-					Type:     schema.TypeString,
-					Required: true,
+func buildEventOrchestrationPathServiceCatchAllActionsSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"suppress": {
+			Type:     schema.TypeBool,
+			Optional: true,
+		},
+		"suspend": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"priority": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"annotate": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"pagerduty_automation_action": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"action_id": {
+						Type:     schema.TypeString,
+						Required: true,
+					},
 				},
 			},
 		},
-	},
-	"automation_action": {
-		Type:     schema.TypeList,
-		Optional: true,
-		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: eventOrchestrationAutomationActionSchema,
+		"automation_action": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: eventOrchestrationAutomationActionSchema,
+			},
 		},
-	},
-	"severity": {
-		Type:             schema.TypeString,
-		Optional:         true,
-		ValidateDiagFunc: validateEventOrchestrationPathSeverity(),
-	},
-	"event_action": {
-		Type:             schema.TypeString,
-		Optional:         true,
-		ValidateDiagFunc: validateEventOrchestrationPathEventAction(),
-	},
-	"variable": {
-		Type:     schema.TypeList,
-		Optional: true,
-		Elem: &schema.Resource{
-			Schema: eventOrchestrationPathVariablesSchema,
+		"severity": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			ValidateDiagFunc: validateEventOrchestrationPathSeverity(),
 		},
-	},
-	"extraction": {
-		Type:     schema.TypeList,
-		Optional: true,
-		Elem: &schema.Resource{
-			Schema: eventOrchestrationPathExtractionsSchema,
+		"event_action": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			ValidateDiagFunc: validateEventOrchestrationPathEventAction(),
 		},
-	},
-	"incident_custom_field_update": {
-		Type:     schema.TypeList,
-		Optional: true,
-		Elem: &schema.Resource{
-			Schema: eventOrchestrationIncidentCustomFieldsObjectSchema,
+		"variable": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: eventOrchestrationPathVariablesSchema,
+			},
 		},
-	},
-	"escalation_policy": {
-		Type:     schema.TypeString,
-		Optional: true,
-	},
+		"extraction": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: eventOrchestrationPathExtractionsSchema,
+			},
+		},
+		"incident_custom_field_update": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: eventOrchestrationIncidentCustomFieldsObjectSchema,
+			},
+		},
+		"escalation_policy": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"route_to": {
+			Type:       schema.TypeString,
+			Deprecated: "The 'route_to' attribute is no longer supported for catch-all rules.",
+			Optional:   true,
+		},
+	}
 }
 
 var eventOrchestrationPathServiceRuleActionsSchema = buildEventOrchestrationPathServiceRuleActionsSchema()
+var eventOrchestrationPathServiceCatchAllActionsSchema = buildEventOrchestrationPathServiceCatchAllActionsSchema()
 
 func buildEventOrchestrationPathServiceRuleActionsSchema() map[string]*schema.Schema {
-	a := eventOrchestrationPathServiceCatchAllActionsSchema
-	a["route_to"] = &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-	}
-
+	a := buildEventOrchestrationPathServiceCatchAllActionsSchema()
+	a["route_to"].Deprecated = ""
 	return a
 }
 
@@ -178,7 +182,7 @@ func resourcePagerDutyEventOrchestrationPathService() *schema.Resource {
 							Required: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
-								Schema: eventOrchestrationPathServiceRuleActionsSchema,
+								Schema: eventOrchestrationPathServiceCatchAllActionsSchema,
 							},
 						},
 					},

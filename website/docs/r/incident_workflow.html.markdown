@@ -33,6 +33,7 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the workflow.
 * `description` - (Optional) The description of the workflow.
+* `is_enabled` - (Optional) Indicates whether the Incident Workflow is enabled or not. Disabled workflows will not be triggered, and will not count toward the account's enabled workflow limit.
 * `team` - (Optional) A team ID. If specified then workflow edit permissions will be scoped to members of this team.
 * `step` - (Optional) The steps in the workflow.
 

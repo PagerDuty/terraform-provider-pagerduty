@@ -1,3 +1,15 @@
+## v3.20.0 (February 6, 2025)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_user_notification_rule`: Fix import diagnostic in user notification rule ([976](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/976))
+* `PagerDuty/pagerduty`: Bump golang.org/x/crypto from 0.21.0 to 0.31.0 ([957](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/957))
+* `resource/pagerduty_event_orchestration_service`: Add deprecation warning for the route_to action within a Service Orchestration catch-all rule ([977](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/977))
+
+FEATURES:
+
+* `resource/pagerduty_incident_workflow`: Add support  for `is_enabled` field to `pagerduty_incidenet_workflow` ([978](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/978))
+
 ## v3.19.4 (January 30, 2025)
 
 IMPROVEMENTS:

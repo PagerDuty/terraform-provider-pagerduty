@@ -67,6 +67,15 @@ func resourcePagerDutyIncidentWorkflow() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"is_enabled": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateDiagFunc: validateValueDiagFunc([]string{
+					"true",
+					"false",
+				}),
+			},
 			"step": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -477,6 +486,9 @@ func flattenIncidentWorkflow(
 	if iw.Team != nil {
 		d.Set("team", iw.Team.ID)
 	}
+	if iw.IsEnabled != nil {
+		d.Set("is_enabled", strconv.FormatBool(*iw.IsEnabled))
+	}
 
 	if includeSteps {
 		steps := flattenIncidentWorkflowSteps(iw, specifiedSteps, isImport)
@@ -617,6 +629,10 @@ func buildIncidentWorkflowStruct(d *schema.ResourceData) (
 		iw.Team = &pagerduty.TeamReference{
 			ID: team.(string),
 		}
+	}
+	if is_enabled, ok := d.GetOk("is_enabled"); ok {
+		b := is_enabled.(string) == "true"
+		iw.IsEnabled = &b
 	}
 
 	specifiedSteps := make([]*SpecifiedStep, 0)

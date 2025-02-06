@@ -67,6 +67,7 @@ func TestAccPagerDutyIncidentWorkflow_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_incident_workflow.test", "name", workflowName),
 					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "description", "Managed by Terraform"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "is_enabled", "true"),
 					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.#", "2"),
 					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.#", "1"),
 					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.generated", "false"),
@@ -81,6 +82,7 @@ func TestAccPagerDutyIncidentWorkflow_Basic(t *testing.T) {
 						"pagerduty_incident_workflow.test", "name", workflowName),
 					resource.TestCheckResourceAttr(
 						"pagerduty_incident_workflow.test", "description", "some description"),
+					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "is_enabled", "false"),
 					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.#", "2"),
 					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.#", "1"),
 					resource.TestCheckResourceAttr("pagerduty_incident_workflow.test", "step.0.input.0.generated", "false"),
@@ -327,6 +329,7 @@ func testAccCheckPagerDutyIncidentWorkflowConfigUpdate(name string) string {
 resource "pagerduty_incident_workflow" "test" {
   name = "%s"
   description = "some description"
+  is_enabled = false
   step {
     name           = "Example Step"
     action         = "pagerduty.com:incident-workflows:send-status-update:1"

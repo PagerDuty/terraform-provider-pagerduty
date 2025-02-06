@@ -18,6 +18,7 @@ type IncidentWorkflow struct {
 	Self        string                  `json:"self,omitempty"`
 	Steps       []*IncidentWorkflowStep `json:"steps,omitempty"`
 	Team        *TeamReference          `json:"team,omitempty"`
+	IsEnabled   *bool                   `json:"is_enabled,omitempty"`
 }
 
 // IncidentWorkflowStep represents a step in an incident workflow.

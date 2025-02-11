@@ -270,7 +270,7 @@ func requestGetIncidentType(ctx context.Context, client *pagerduty.Client, id, p
 }
 
 func flattenIncidentType(ctx context.Context, client *pagerduty.Client, response *pagerduty.IncidentType, parent string) (resourceIncidentTypeModel, error) {
-	if parent != response.Parent.ID {
+	if response.Parent != nil && parent != response.Parent.ID {
 		incidentType, err := client.GetIncidentType(ctx, parent, pagerduty.GetIncidentTypeOptions{})
 		if err != nil {
 			return resourceIncidentTypeModel{}, err

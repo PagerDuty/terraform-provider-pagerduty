@@ -108,8 +108,14 @@ func resourcePagerDutyMaintenanceWindowRead(d *schema.ResourceData, meta interfa
 		}
 
 		d.Set("description", window.Description)
-		d.Set("start_time", window.StartTime)
-		d.Set("end_time", window.EndTime)
+
+		startTime, _ := time.Parse(time.RFC3339Nano, window.StartTime)
+		startTime = startTime.Truncate(time.Minute)
+		d.Set("start_time", startTime.Format(time.RFC3339))
+
+		endTime, _ := time.Parse(time.RFC3339Nano, window.StartTime)
+		endTime = endTime.Truncate(time.Minute)
+		d.Set("end_time", endTime.Format(time.RFC3339))
 
 		if err := d.Set("services", flattenServices(window.Services)); err != nil {
 			return retry.NonRetryableError(err)

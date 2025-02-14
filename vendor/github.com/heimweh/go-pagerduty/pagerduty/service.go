@@ -133,7 +133,7 @@ type Service struct {
 	AcknowledgementTimeout           *int                              `json:"acknowledgement_timeout"`
 	Addons                           []*AddonReference                 `json:"addons,omitempty"`
 	AlertCreation                    string                            `json:"alert_creation,omitempty"`
-	AlertGrouping                    *string                           `json:"alert_grouping"`
+	AlertGrouping                    **string                          `json:"alert_grouping,omitempty"`
 	AlertGroupingTimeout             *int                              `json:"alert_grouping_timeout,omitempty"`
 	AlertGroupingParameters          *AlertGroupingParameters          `json:"alert_grouping_parameters,omitempty"`
 	AutoPauseNotificationsParameters *AutoPauseNotificationsParameters `json:"auto_pause_notifications_parameters,omitempty"`

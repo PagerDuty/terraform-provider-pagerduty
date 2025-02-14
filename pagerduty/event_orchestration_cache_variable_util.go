@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -27,6 +28,7 @@ var resourceEventOrchestrationCacheVariableConfigurationSchema = map[string]*sch
 		ValidateDiagFunc: validateValueDiagFunc([]string{
 			"recent_value",
 			"trigger_event_count",
+			"external_data",
 		}),
 	},
 	"regex": {
@@ -34,6 +36,10 @@ var resourceEventOrchestrationCacheVariableConfigurationSchema = map[string]*sch
 		Optional: true,
 	},
 	"source": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"data_type": {
 		Type:     schema.TypeString,
 		Optional: true,
 	},
@@ -63,28 +69,67 @@ var dataSourceEventOrchestrationCacheVariableConfigurationSchema = map[string]*s
 		Type:     schema.TypeString,
 		Computed: true,
 	},
+	"data_type": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
 	"ttl_seconds": {
 		Type:     schema.TypeInt,
 		Computed: true,
 	},
 }
 
-func checkConfiguration(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+func checkEventOrchestrationCacheVariableConfiguration(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
+	c := diff.Get("condition").([]interface{})
 	t := diff.Get("configuration.0.type").(string)
 	s := diff.Get("configuration.0.source").(string)
 	r := diff.Get("configuration.0.regex").(string)
+	dt := diff.Get("configuration.0.data_type").(string)
 	ts := diff.Get("configuration.0.ttl_seconds").(int)
 
-	if t == "recent_value" && (r == "" || s == "") {
-		return fmt.Errorf("Invalid configuration: regex and source cannot be null when type is recent_value")
+	missingAttrErr := ""
+	unsupportedAttrErr := ""
+
+	if t == "recent_value" {
+		if r == "" || s == "" {
+			missingAttrErr = "regex and source cannot be null"
+		}
+		if dt != "" || ts != 0 {
+			unsupportedAttrErr = "data_type and ttl_seconds cannot be used"
+		}
 	}
-	if t == "trigger_event_count" && ts == 0 {
-		return fmt.Errorf("Invalid configuration: ttl_seconds cannot be null when type is trigger_event_count")
+	if t == "trigger_event_count" {
+		if ts == 0 {
+			missingAttrErr = "ttl_seconds cannot be null"
+		}
+		if r != "" || s != "" || dt != "" {
+			unsupportedAttrErr = "regex, source, and data_type cannot be used"
+		}
 	}
-	if (r != "" || s != "") && ts != 0 {
-		return fmt.Errorf("Invalid configuration: ttl_seconds cannot be used in conjuction with regex and source")
+	if t == "external_data" {
+		if dt == "" || ts == 0 {
+			missingAttrErr = "data_type and ttl_seconds cannot be null"
+		}
+		if len(c) > 0 || r != "" || s != "" {
+			unsupportedAttrErr = "condition, regex and source cannot be used"
+		}
+	}
+
+	if missingAttrErr != "" || unsupportedAttrErr != "" {
+		errors := formatErrors([]string{missingAttrErr, unsupportedAttrErr})
+		return fmt.Errorf("Invalid configuration: %s when type is %s", errors, t)
 	}
 	return nil
+}
+
+func formatErrors(errors []string) string {
+	var filtered []string
+	for _, s := range errors {
+		if s != "" {
+			filtered = append(filtered, s)
+		}
+	}
+	return strings.Join(filtered, ", and ")
 }
 
 func getIdentifier(cacheVariableType string) string {
@@ -169,6 +214,7 @@ func expandEventOrchestrationCacheVariableConfiguration(v interface{}) *pagerdut
 		conf.Type = c["type"].(string)
 		conf.Regex = c["regex"].(string)
 		conf.Source = c["source"].(string)
+		conf.DataType = c["data_type"].(string)
 		conf.TTLSeconds = c["ttl_seconds"].(int)
 	}
 
@@ -193,6 +239,7 @@ func flattenEventOrchestrationCacheVariableConfiguration(conf *pagerduty.EventOr
 		"type":        conf.Type,
 		"regex":       conf.Regex,
 		"source":      conf.Source,
+		"data_type":   conf.DataType,
 		"ttl_seconds": conf.TTLSeconds,
 	}
 

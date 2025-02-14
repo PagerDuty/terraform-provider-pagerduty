@@ -6,7 +6,7 @@ description: |-
   Creates and manages an escalation policy in PagerDuty.
 ---
 
-# pagerduty\_escalation_policy
+# pagerduty\_escalation\_policy
 
 An [escalation policy](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODEyNQ-create-an-escalation-policy) determines what user or schedule will be notified first, second, and so on when an incident is triggered. Escalation policies are used by one or more services.
 
@@ -83,3 +83,7 @@ Escalation policies can be imported using the `id`, e.g.
 ```
 $ terraform import pagerduty_escalation_policy.main PLBP09X
 ```
+
+## Known issues
+
+Block `escalation_rule_assignment_strategy` inside `rule` cannot be set explicitly when a PagerDuty account doesn't have access to the "Teams" feature, it will cause an error `POST API call to https://api.pagerduty.com/escalation_policies failed: 403 Forbidden`, please delete this block.

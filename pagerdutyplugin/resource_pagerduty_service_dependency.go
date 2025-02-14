@@ -101,14 +101,14 @@ func (r *resourceServiceDependency) Schema(_ context.Context, _ resource.SchemaR
 			"supporting_service": schema.ListNestedBlock{
 				Validators: []validator.List{
 					listvalidator.IsRequired(),
-					listvalidator.SizeAtLeast(1),
+					listvalidator.SizeBetween(1, 1),
 				},
 				NestedObject: supportingServiceBlockObject,
 			},
 			"dependent_service": schema.ListNestedBlock{
 				Validators: []validator.List{
 					listvalidator.IsRequired(),
-					listvalidator.SizeAtLeast(1),
+					listvalidator.SizeBetween(1, 1),
 				},
 				NestedObject: dependencyServiceBlockObject,
 			},
@@ -119,7 +119,7 @@ func (r *resourceServiceDependency) Schema(_ context.Context, _ resource.SchemaR
 		NestedObject: dependencyBlockObject,
 		Validators: []validator.List{
 			listvalidator.IsRequired(),
-			listvalidator.SizeBetween(1, 1),
+			listvalidator.SizeAtLeast(1),
 		},
 		PlanModifiers: []planmodifier.List{
 			listplanmodifier.RequiresReplace(),

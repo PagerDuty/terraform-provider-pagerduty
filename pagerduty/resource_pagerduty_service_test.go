@@ -736,7 +736,7 @@ func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "false"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "0"),
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "120"),
 				),
 			},
 			{
@@ -758,7 +758,7 @@ func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.enabled", "false"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "0"),
+						"pagerduty_service.foo", "auto_pause_notifications_parameters.0.timeout", "120"),
 				),
 			},
 		},

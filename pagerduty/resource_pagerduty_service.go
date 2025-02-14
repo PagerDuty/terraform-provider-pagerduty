@@ -418,8 +418,11 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 
 	if attr, ok := d.GetOk("alert_grouping"); ok {
 		ag := attr.(string)
-		if ag != "rules" {
-			service.AlertGrouping = &ag
+		if ag == "content_based_intelligent" || ag == "rules" {
+			service.AlertGrouping = nil
+		} else {
+			agPtr := &ag
+			service.AlertGrouping = &agPtr
 		}
 	}
 
@@ -599,8 +602,8 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 	}
 	d.Set("alert_creation", service.AlertCreation)
-	if service.AlertGrouping != nil && *service.AlertGrouping != "" {
-		d.Set("alert_grouping", *service.AlertGrouping)
+	if service.AlertGrouping != nil && *service.AlertGrouping != nil && **service.AlertGrouping != "" {
+		d.Set("alert_grouping", **service.AlertGrouping)
 	}
 	if service.AlertGroupingTimeout == nil {
 		d.Set("alert_grouping_timeout", "null")

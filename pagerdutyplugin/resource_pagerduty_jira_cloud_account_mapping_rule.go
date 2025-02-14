@@ -439,12 +439,19 @@ func buildPagerdutyJiraCloudCustomFields(ctx context.Context, list types.List, d
 
 	var customFields []pagerduty.JiraCloudCustomField
 	for _, cf := range target {
+		var v interface{}
+		valueString := cf.Value.ValueString()
+
+		if err := json.Unmarshal([]byte(valueString), &v); err != nil {
+			v = valueString
+		}
+
 		field := pagerduty.JiraCloudCustomField{
 			SourceIncidentField:  nil,
 			TargetIssueField:     cf.TargetIssueField.ValueString(),
 			TargetIssueFieldName: cf.TargetIssueFieldName.ValueString(),
 			Type:                 cf.Type.ValueString(),
-			Value:                cf.Value.ValueString(),
+			Value:                v,
 		}
 		if !cf.SourceIncidentField.IsNull() && !cf.SourceIncidentField.IsUnknown() {
 			field.SourceIncidentField = cf.SourceIncidentField.ValueStringPointer()

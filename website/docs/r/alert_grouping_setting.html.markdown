@@ -8,7 +8,7 @@ description: |-
 
 # pagerduty\_alert\_grouping\_setting
 
-An [alert grouping setting](https://developer.pagerduty.com/api-reference/create-an-alert-grouping-setting)
+An [alert grouping setting](https://developer.pagerduty.com/api-reference/587edbc8ff416-create-an-alert-grouping-setting)
 stores and centralize the configuration used during grouping of the alerts.
 
 ## Example Usage
@@ -23,7 +23,7 @@ resource "pagerduty_service" "basic" {
 	escalation_policy = data.pagerduty_escalation_policy.default.id
 }
 
-resource "pagerduty_alert_grouping_setting" "%[1]s" {
+resource "pagerduty_alert_grouping_setting" "basic_settings" {
   name = "Configuration for type-1 devices"
   type = "content_based"
   services = [pagerduty_service.basic.id]

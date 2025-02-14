@@ -32,32 +32,11 @@ var (
 	_ resource.ResourceWithConfigure      = (*resourceAlertGroupingSetting)(nil)
 	_ resource.ResourceWithImportState    = (*resourceAlertGroupingSetting)(nil)
 	_ resource.ResourceWithValidateConfig = (*resourceAlertGroupingSetting)(nil)
+	_ resource.ResourceWithModifyPlan     = (*resourceAlertGroupingSetting)(nil)
 )
 
 func (r *resourceAlertGroupingSetting) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "pagerduty_alert_grouping_setting"
-}
-
-func (r *resourceAlertGroupingSetting) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var model resourceAlertGroupingSettingModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &model)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	t := pagerduty.AlertGroupingSettingType(model.Type.ValueString())
-
-	if t == pagerduty.AlertGroupingSettingContentBasedIntelligentType || t == pagerduty.AlertGroupingSettingIntelligentType || t == pagerduty.AlertGroupingSettingTimeType {
-		if len(model.Services.Elements()) > 1 {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("services"),
-				"Invalid configuration",
-				fmt.Sprintf("Setting of type %q allows for only one service in the array", t),
-			)
-			return
-		}
-	}
 }
 
 func (r *resourceAlertGroupingSetting) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -128,6 +107,69 @@ func (r *resourceAlertGroupingSetting) Schema(_ context.Context, _ resource.Sche
 	}
 }
 
+func (r *resourceAlertGroupingSetting) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var model resourceAlertGroupingSettingModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &model)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	t := pagerduty.AlertGroupingSettingType(model.Type.ValueString())
+	if t == pagerduty.AlertGroupingSettingTimeType {
+		if len(model.Services.Elements()) > 1 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("services"),
+				"Invalid configuration",
+				fmt.Sprintf("Setting of type %q allows for only one service in the array", t),
+			)
+			return
+		}
+	}
+
+	if t == pagerduty.AlertGroupingSettingContentBasedType || t == pagerduty.AlertGroupingSettingContentBasedIntelligentType {
+		if model.Config.Attributes()["fields"].IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("config").AtName("fields"), "Invalid value", "'fields' cannot be blank")
+		}
+		if model.Config.Attributes()["aggregate"].IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("config").AtName("aggregate"), "Invalid value", "'aggregate' cannot be blank")
+		}
+		return
+	}
+}
+
+func (r *resourceAlertGroupingSetting) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planUsesTimeout := r.UsesTimeout(ctx, req.Plan, &resp.Diagnostics)
+	planUsesTimeWindow := r.UsesTimeWindow(ctx, req.Plan, &resp.Diagnostics)
+
+	timeFieldChanged := r.UsesTimeout(ctx, req.State, &resp.Diagnostics) && planUsesTimeWindow
+	timeFieldChangedAlt := r.UsesTimeWindow(ctx, req.State, &resp.Diagnostics) && planUsesTimeout
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if timeFieldChanged || timeFieldChangedAlt {
+		if planUsesTimeout {
+			resp.Plan.SetAttribute(ctx, path.Root("config").AtName("time_window"), types.Int64Null())
+		}
+		if planUsesTimeWindow {
+			resp.Plan.SetAttribute(ctx, path.Root("config").AtName("timeout"), types.Int64Null())
+		}
+	} else {
+		if planUsesTimeout {
+			var timeWindow types.Int64
+			resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("config").AtName("time_window"), &timeWindow)...)
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("config").AtName("time_window"), timeWindow)...)
+		}
+		if planUsesTimeWindow {
+			var timeout types.Int64
+			resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("config").AtName("timeout"), &timeout)...)
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("config").AtName("timeout"), timeout)...)
+		}
+	}
+}
+
 func (r *resourceAlertGroupingSetting) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var model resourceAlertGroupingSettingModel
 
@@ -162,7 +204,7 @@ func (r *resourceAlertGroupingSetting) Create(ctx context.Context, req resource.
 		return
 	}
 
-	model, err = requestGetAlertGroupingSetting(ctx, r.client, plan.ID, true, &resp.Diagnostics)
+	model, err = requestGetAlertGroupingSetting(ctx, r.client, plan.ID, true)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Error reading PagerDuty alert grouping setting %s", plan.ID),
@@ -183,7 +225,7 @@ func (r *resourceAlertGroupingSetting) Read(ctx context.Context, req resource.Re
 	}
 	log.Printf("[INFO] Reading PagerDuty alert grouping setting %s", id)
 
-	state, err := requestGetAlertGroupingSetting(ctx, r.client, id.ValueString(), false, &resp.Diagnostics)
+	state, err := requestGetAlertGroupingSetting(ctx, r.client, id.ValueString(), false)
 	if err != nil {
 		if util.IsNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
@@ -333,7 +375,7 @@ type resourceAlertGroupingSettingModel struct {
 	Services    types.Set    `tfsdk:"services"`
 }
 
-func requestGetAlertGroupingSetting(ctx context.Context, client *pagerduty.Client, id string, retryNotFound bool, diags *diag.Diagnostics) (resourceAlertGroupingSettingModel, error) {
+func requestGetAlertGroupingSetting(ctx context.Context, client *pagerduty.Client, id string, retryNotFound bool) (resourceAlertGroupingSettingModel, error) {
 	var model resourceAlertGroupingSettingModel
 
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
@@ -510,4 +552,31 @@ outerLoop:
 	}
 
 	resp.RequiresReplace = noneReused
+}
+
+func (r *resourceAlertGroupingSetting) UsesTimeWindow(ctx context.Context, s SchemaGetter, diags *diag.Diagnostics) bool {
+	var typeValue types.String
+
+	diags.Append(s.GetAttribute(ctx, path.Root("type"), &typeValue)...)
+	if diags.HasError() {
+		return false
+	}
+
+	t := pagerduty.AlertGroupingSettingType(typeValue.ValueString())
+
+	return t == pagerduty.AlertGroupingSettingContentBasedType ||
+		t == pagerduty.AlertGroupingSettingIntelligentType ||
+		t == pagerduty.AlertGroupingSettingContentBasedIntelligentType
+}
+
+func (r *resourceAlertGroupingSetting) UsesTimeout(ctx context.Context, s SchemaGetter, diags *diag.Diagnostics) bool {
+	var typeValue types.String
+
+	diags.Append(s.GetAttribute(ctx, path.Root("type"), &typeValue)...)
+	if diags.HasError() {
+		return false
+	}
+
+	t := pagerduty.AlertGroupingSettingType(typeValue.ValueString())
+	return t == pagerduty.AlertGroupingSettingTimeType
 }

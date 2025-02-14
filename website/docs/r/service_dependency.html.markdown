@@ -46,8 +46,8 @@ resource "pagerduty_service_dependency" "bar" {
 The following arguments are supported:
 
   * `dependency` - (Required) The relationship between the `supporting_service` and `dependent_service`. One and only one dependency block must be defined.
-  * `supporting_service` - (Required) The service that supports the dependent service. Dependency supporting service documented below.
-  * `dependent_service` - (Required) The service that dependents on the supporting service. Dependency dependent service documented below.
+  * `supporting_service` - (Required) The service that supports the dependent service. Dependency supporting service documented below. One and only one `supporting_service` dependency block must be defined.
+  * `dependent_service` - (Required) The service that dependents on the supporting service. Dependency dependent service documented below. One and only one `dependent_service` dependency block must be defined.
 
 Dependency supporting and dependent service supports the following:
 

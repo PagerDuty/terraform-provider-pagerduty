@@ -1,3 +1,21 @@
+## v3.21.0 (February 17, 2025)
+
+BUG FIXES:
+
+* `resource/pagerduty_service`: Fix `alert_grouping` breaking updates for services using a `content_based_intelligent` alert grouping setting.
+* `resource/pagerduty_jira_cloud_account_rule`: Fix custom field value by sending objects as json instead of escaped string
+* `resource/pagerduty_incident_type`: Fix allow import of Base Incident type
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_alert_grouping_setting`: Fix time unit for docs of `config.timeout`
+* `resource/pagerduty_escalation_policy`: Add doc for 403 error when explicit `assign_to_everyone`
+* `resource/pagerduty_service_dependency`: Fix validation and docs to acknowledge single relationship pairs
+
+FEATURES:
+
+* `resource/pagerduty_alert_grouping_setting`: Allow `intelligent` and `content_based_intelligent` resources to have many services
+
 ## v3.20.0 (February 6, 2025)
 
 IMPROVEMENTS:

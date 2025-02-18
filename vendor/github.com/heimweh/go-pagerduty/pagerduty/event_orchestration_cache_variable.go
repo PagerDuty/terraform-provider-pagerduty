@@ -15,10 +15,12 @@ type EventOrchestrationCacheVariableCondition struct {
 // Configuration for a cache variable changes depending on the type:
 //   - if `Type` is `recent_value`; then use `Regex` and `Source`
 //   - if `Type` is `trigger_event_count`; then use `TTLSeconds`
+//   - if `Type` is `external_data`; then use `DataType` and `TTLSeconds`
 type EventOrchestrationCacheVariableConfiguration struct {
 	Type       string `json:"type,omitempty"`
 	Regex      string `json:"regex,omitempty"`
 	Source     string `json:"source,omitempty"`
+	DataType   string `json:"data_type,omitempty"`
 	TTLSeconds int    `json:"ttl_seconds,omitempty"`
 }
 
@@ -28,6 +30,7 @@ type EventOrchestrationCacheVariable struct {
 	Disabled      bool                                          `json:"disabled"`
 	Conditions    []*EventOrchestrationCacheVariableCondition   `json:"conditions"`
 	Configuration *EventOrchestrationCacheVariableConfiguration `json:"configuration,omitempty"`
+	DataEndpoint  string                                        `json:"data_endpoint,omitempty"`
 	CreatedAt     string                                        `json:"created_at,omitempty"`
 	CreatedBy     *UserReference                                `json:"created_by,omitempty"`
 	UpdatedAt     string                                        `json:"updated_at,omitempty"`

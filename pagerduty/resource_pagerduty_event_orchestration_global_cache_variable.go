@@ -16,7 +16,7 @@ func resourcePagerDutyEventOrchestrationGlobalCacheVariable() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePagerDutyEventOrchestrationGlobalCacheVariableImport,
 		},
-		CustomizeDiff: checkConfiguration,
+		CustomizeDiff: checkEventOrchestrationCacheVariableConfiguration,
 		Schema: map[string]*schema.Schema{
 			"event_orchestration": {
 				Type:     schema.TypeString,

@@ -57,22 +57,9 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
-<<<<<<< HEAD
-<<<<<<< HEAD
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
-=======
-<<<<<<< Updated upstream
-=======
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "true"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "true"),
->>>>>>> Stashed changes
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "true"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "true"),
->>>>>>> 75344b3e (address rebase issues)
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "true")
 				),
 			},
 			{
@@ -100,22 +87,9 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
-<<<<<<< HEAD
-<<<<<<< HEAD
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
-=======
-<<<<<<< Updated upstream
-=======
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
->>>>>>> Stashed changes
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
->>>>>>> 75344b3e (address rebase issues)
 				),
 			},
 		},
@@ -159,22 +133,9 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
-<<<<<<< HEAD
-<<<<<<< HEAD
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
-=======
-<<<<<<< Updated upstream
-=======
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
->>>>>>> Stashed changes
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
->>>>>>> 75344b3e (address rebase issues)
 				),
 			},
 			{
@@ -200,22 +161,9 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "modify_time"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
-<<<<<<< HEAD
-<<<<<<< HEAD
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
-=======
-<<<<<<< Updated upstream
-=======
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
->>>>>>> Stashed changes
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
->>>>>>> 75344b3e (address rebase issues)
 				),
 			},
 		},
@@ -305,25 +253,10 @@ resource "pagerduty_automation_actions_action" "foo" {
 	runner_id = pagerduty_automation_actions_runner.foo_runner.id
 	action_data_reference {
 		process_automation_job_id = "updated_pa_job_id_123"
-<<<<<<< HEAD
-<<<<<<< HEAD
-	}
-	only_invocable_on_unresolved_incidents = "false"
-=======
-<<<<<<< Updated upstream
-	  }
-=======
-=======
->>>>>>> 75344b3e (address rebase issues)
 	}
 	only_invocable_on_unresolved_incidents = "false"
 	allow_invocation_manually = "false"
 	allow_invocation_from_event_orchestration = "false"
-<<<<<<< HEAD
->>>>>>> Stashed changes
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
->>>>>>> 75344b3e (address rebase issues)
 }
 `, previousActionName, actionName, actionDescription, actionClassification)
 }

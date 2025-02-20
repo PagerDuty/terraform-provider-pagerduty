@@ -99,21 +99,11 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
->>>>>>> 75344b3e (address rebase issues)
 			"only_invocable_on_unresolved_incidents": {
 				Type:     schema.TypeBool,
 				Computed: true,
 				Optional: true,
 			},
-<<<<<<< HEAD
-=======
 			"allow_invocation_manually": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -124,11 +114,6 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
-<<<<<<< HEAD
->>>>>>> Stashed changes
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
->>>>>>> 75344b3e (address rebase issues)
 		},
 	}
 }
@@ -183,14 +168,6 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		automationActionsAction.ModifyTime = &val
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
->>>>>>> 75344b3e (address rebase issues)
 	if attr, ok := d.GetOk("only_invocable_on_unresolved_incidents"); ok {
 		val := attr.(bool)
 		automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &val
@@ -199,8 +176,6 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 	attr, _ := d.Get("only_invocable_on_unresolved_incidents").(bool)
 	automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &attr
 
-<<<<<<< HEAD
-=======
 	if attr, ok := d.GetOk("allow_invocation_manually"); ok {
 		val := attr.(bool)
 		automationActionsAction.AllowInvocationManually = &val
@@ -217,11 +192,6 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 	attr, _ := d.Get("allow_invocation_from_event_orchestration").(bool)
 	automationActionsAction.AllowInvocationFromEventOrchestration = &attr
 
-<<<<<<< HEAD
->>>>>>> Stashed changes
->>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
-=======
->>>>>>> 75344b3e (address rebase issues)
 	return &automationActionsAction, nil
 }
 

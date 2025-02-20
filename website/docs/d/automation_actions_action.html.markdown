@@ -43,6 +43,10 @@ The following attributes are exported:
 * `allow_invocation_manually` - (Optional) Whether or not the action can be invoked manually by a user on the PagerDuty website.
 * `allow_invocation_from_event_orchestration` - (Optional) Whether or not the action can be invoked automatically from a PagerDuty Event Orchestration.
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 75344b3e (address rebase issues)
 Action Data (`action_data_reference`) supports the following:
 
   * `process_automation_job_id` - (Required for `process_automation` action_type) The ID of the Process Automation job to execute.

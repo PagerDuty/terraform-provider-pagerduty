@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ## v3.21.1 (February 20, 2025)
+=======
+## v3.18.4 (January 13, 2025)
+>>>>>>> 75344b3e (address rebase issues)
 
 FEATURES:
 
@@ -69,6 +73,7 @@ FEATURES:
   - `resource/pagerduty_incident_type`
   - `resource/pagerduty_incident_type_custom_field`
 
+<<<<<<< HEAD
 ## v3.18.3 (December 24, 2024)
 
 IMPROVEMENTS:
@@ -125,6 +130,8 @@ IMPROVEMENTS:
 =======
 >>>>>>> Stashed changes
 >>>>>>> f352c045 (AA-1910 add allow_invocation_manually and allow_invocation_from_event_orchestration attributes to automation actions)
+=======
+>>>>>>> 75344b3e (address rebase issues)
 ## v3.16.0 (October 14, 2024)
 
 FEATURES:

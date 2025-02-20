@@ -78,6 +78,10 @@ resource "pagerduty_automation_actions_action" "test" {
 	only_invocable_on_unresolved_incidents = true
 	allow_invocation_from_event_orchestration = true
 	allow_invocation_manually = true
+<<<<<<< HEAD
+=======
+
+>>>>>>> 75344b3e (address rebase issues)
 }
 
 data "pagerduty_automation_actions_action" "foo" {

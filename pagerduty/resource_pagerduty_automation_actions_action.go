@@ -181,16 +181,10 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		automationActionsAction.AllowInvocationManually = &val
 	}
 
-	attr, _ := d.Get("allow_invocation_manually").(bool)
-	automationActionsAction.AllowInvocationManually = &attr
-
 	if attr, ok := d.GetOk("allow_invocation_from_event_orchestration"); ok {
 		val := attr.(bool)
 		automationActionsAction.AllowInvocationFromEventOrchestration = &val
 	}
-
-	attr, _ := d.Get("allow_invocation_from_event_orchestration").(bool)
-	automationActionsAction.AllowInvocationFromEventOrchestration = &attr
 
 	return &automationActionsAction, nil
 }

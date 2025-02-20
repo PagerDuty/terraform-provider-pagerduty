@@ -59,7 +59,7 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "true"),
-					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "true")
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "true"),
 				),
 			},
 			{

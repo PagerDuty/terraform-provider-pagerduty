@@ -24,7 +24,7 @@ resource "pagerduty_event_orchestration" "event_orchestration" {
   team = pagerduty_team.database_team.id
 }
 
-resource "pagerduty_event_orchestration_global_cache_variable" "cache_var" {
+resource "pagerduty_event_orchestration_global_cache_variable" "recent_host" {
   event_orchestration = pagerduty_event_orchestration.event_orchestration.id
   name = "recent_host"
 
@@ -39,10 +39,31 @@ resource "pagerduty_event_orchestration_global_cache_variable" "cache_var" {
   }
 }
 
+resource "pagerduty_event_orchestration_service_cache_variable" "host_ignore_list" {
+  event_orchestration = pagerduty_event_orchestration.event_orchestration.id
+  name = "host_ignore_list"
+
+  configuration {
+    type = "external_data"
+    data_type = "string"
+    ttl_seconds = 3000
+  }
+}
+
 resource "pagerduty_event_orchestration_global" "global" {
   event_orchestration = pagerduty_event_orchestration.event_orchestration.id
   set {
     id = "start"
+    rule {
+      label = "Drop events originating from hosts on the ignore list"
+      condition {
+        expression = "cache_var.host_ignore_list matches part event.custom_details.host"
+      }
+      actions {
+        drop = true
+      }
+    }
+
     rule {
       label = "Always annotate the incident with the event source for all events"
       actions {
@@ -64,13 +85,14 @@ The following arguments are supported:
 * `event_orchestration` - (Required) ID of the Global Event Orchestration to which this Cache Variable belongs.
 * `name` - (Required) Name of the Cache Variable associated with the Global Event Orchestration.
 * `disabled` - (Optional) Indicates whether the Cache Variable is disabled and would therefore not be evaluated.
-* `condition` - Conditions to be evaluated in order to determine whether or not to update the Cache Variable's stored value.
+* `condition` - Conditions to be evaluated in order to determine whether or not to update the Cache Variable's stored value. This attribute can only be used when `configuration.0.type` is `recent_value` or `trigger_event_count`.
   * `expression`- A [PCL condition][2] string.
 * `configuration` - A configuration object to define what and how values will be stored in the Cache Variable.
-  * `type` - The [type of value][1] to store into the Cache Variable. Can be one of: `recent_value` or `trigger_event_count`.
+  * `type` - The [type of value][1] to store into the Cache Variable. Can be one of: `recent_value`, `trigger_event_count` or `external_data`.
   * `source` - The path to the event field where the `regex` will be applied to extract a value. You can use any valid [PCL path][3]. This field is only used when `type` is `recent_value`
   * `regex` - A [RE2 regular expression][4] that will be matched against the field specified via the `source` argument. This field is only used when `type` is `recent_value`
-  * `ttl_seconds` - The number of seconds indicating how long to count incoming trigger events for. This field is only used when `type` is `trigger_event_count`
+  * `ttl_seconds` - The number of seconds indicating how long to count incoming trigger events for. This field is only used when `type` is `trigger_event_count` or `external_data`
+  * `data_type` - The type of data that will eventually be set for the Cache Variable via an API request. This field is only used when type is `external_data`
 
 ## Attributes Reference
 

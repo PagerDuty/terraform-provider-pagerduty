@@ -1,3 +1,9 @@
+## v3.21.1 (March 12, 2025)
+
+IMPROVEMENTS:
+
+* `PagerDuty/pagerduty`: Add PagerDuty API support status doc guide ([990](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/990))
+
 ## v3.21.0 (February 17, 2025)
 
 BUG FIXES:

@@ -1,6 +1,6 @@
 module github.com/PagerDuty/terraform-provider-pagerduty
 
-go 1.20
+go 1.21
 
 require (
 	github.com/PagerDuty/go-pagerduty v1.8.1-0.20250113202017-9831333ebe6b

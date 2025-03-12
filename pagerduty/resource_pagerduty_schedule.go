@@ -159,7 +159,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 									"start_day_of_week": {
 										Type:         schema.TypeInt,
 										Optional:     true,
-										ValidateFunc: validation.IntBetween(1, 7),
+										ValidateFunc: validation.IntBetween(0, 7),
 									},
 
 									"duration_seconds": {

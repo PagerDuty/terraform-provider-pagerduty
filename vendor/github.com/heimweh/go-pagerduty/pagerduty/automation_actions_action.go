@@ -24,6 +24,7 @@ type AutomationActionsAction struct {
 	OnlyInvocableOnUnresolvedIncidents    *bool                                `json:"only_invocable_on_unresolved_incidents,omitempty"`
 	AllowInvocationManually               *bool                                `json:"allow_invocation_manually,omitempty"`
 	AllowInvocationFromEventOrchestration *bool                                `json:"allow_invocation_from_event_orchestration,omitempty"`
+	MapToAllServices                      *bool                                `json:"map_to_all_services,omitempty"`
 }
 
 type AutomationActionsActionDataReference struct {

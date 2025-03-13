@@ -1,9 +1,3 @@
-## v3.21.1 (February 20, 2025)
-
-FEATURES:
-
-* Add `allow_invocation_manually` and `allow_invocation_from_event_orchestration` to Automation Action's schema
-
 ## v3.21.0 (February 17, 2025)
 
 BUG FIXES:

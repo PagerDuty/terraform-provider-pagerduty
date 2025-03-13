@@ -228,8 +228,6 @@ resource "pagerduty_automation_actions_action" "foo" {
 		process_automation_node_filter = "tags: production"
 	  }
 	only_invocable_on_unresolved_incidents = "true"
-	allow_invocation_manually = "true"
-	allow_invocation_from_event_orchestration = "true"
 }
 `, actionName, actionName)
 }

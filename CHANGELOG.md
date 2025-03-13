@@ -1,3 +1,18 @@
+## v3.22.0 (March 13, 2025)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_automation_actions_action`: Add `allow_invocation_manually` ([983](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/983))
+* `resource/pagerduty_automation_actions_action`: Add `allow_invocation_from_event_orchestration` ([983](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/983))
+* `resource/pagerduty_automation_actions_action`: Add `map_to_all_services` ([965](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/965))
+* `data/pagerduty_automation_actions_action`: Add `allow_invocation_manually` ([983](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/983))
+* `data/pagerduty_automation_actions_action`: Add `allow_invocation_from_event_orchestration` ([983](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/983))
+* `data/pagerduty_automation_actions_action`: Add `map_to_all_services` ([965](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/965))
+
+BUG FIXES:
+
+* `resource/pagerduty_schedule`: Don't error when `start_day_of_week` is equal to zero ([991](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/991))
+
 ## v3.21.1 (March 12, 2025)
 
 IMPROVEMENTS:

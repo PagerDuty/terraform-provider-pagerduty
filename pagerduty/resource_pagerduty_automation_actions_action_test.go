@@ -60,6 +60,7 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "true"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "true"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "map_to_all_services", "true"),
 				),
 			},
 			{
@@ -90,6 +91,7 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "map_to_all_services", "false"),
 				),
 			},
 		},
@@ -136,6 +138,7 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "map_to_all_services", "false"),
 				),
 			},
 			{
@@ -164,6 +167,7 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "map_to_all_services", "false"),
 				),
 			},
 		},
@@ -228,6 +232,7 @@ resource "pagerduty_automation_actions_action" "foo" {
 		process_automation_node_filter = "tags: production"
 	  }
 	only_invocable_on_unresolved_incidents = "true"
+	map_to_all_services = "true"
 }
 `, actionName, actionName)
 }
@@ -255,6 +260,7 @@ resource "pagerduty_automation_actions_action" "foo" {
 	only_invocable_on_unresolved_incidents = "false"
 	allow_invocation_manually = "false"
 	allow_invocation_from_event_orchestration = "false"
+	map_to_all_services = "false"
 }
 `, previousActionName, actionName, actionDescription, actionClassification)
 }

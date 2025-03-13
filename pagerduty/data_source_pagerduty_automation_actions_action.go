@@ -109,6 +109,11 @@ func dataSourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"map_to_all_services": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -175,6 +180,10 @@ func dataSourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta
 
 		if automationActionsAction.AllowInvocationFromEventOrchestration != nil {
 			d.Set("allow_invocation_from_event_orchestration", *automationActionsAction.AllowInvocationFromEventOrchestration)
+		}
+
+		if automationActionsAction.AllowInvocationFromEventOrchestration != nil {
+			d.Set("map_to_all_services", *automationActionsAction.MapToAllServices)
 		}
 
 		return nil

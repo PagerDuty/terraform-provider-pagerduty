@@ -115,6 +115,11 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"map_to_all_services": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -183,6 +188,9 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		val := strValue == "true"
 		automationActionsAction.AllowInvocationFromEventOrchestration = &val
 	}
+
+	attr2, _ := d.Get("map_to_all_services").(bool)
+	automationActionsAction.MapToAllServices = &attr2
 
 	return &automationActionsAction, nil
 }
@@ -342,6 +350,10 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 			if automationActionsAction.AllowInvocationFromEventOrchestration != nil {
 				v := strconv.FormatBool(*automationActionsAction.AllowInvocationFromEventOrchestration)
 				d.Set("allow_invocation_from_event_orchestration", v)
+			}
+
+			if automationActionsAction.MapToAllServices != nil {
+				d.Set("map_to_all_services", *automationActionsAction.MapToAllServices)
 			}
 		}
 		return nil

@@ -42,7 +42,16 @@ func testAccDataSourcePagerdutyAutomationActionsAction(rName, dsName string) res
 			return fmt.Errorf("No Action ID is set")
 		}
 
-		testAtts := []string{"id", "name", "description", "action_type", "runner_id", "action_data_reference", "type", "action_classification", "runner_type", "creation_time", "modify_time"}
+		testAtts := []string{
+			"id", "name", "description", "action_type",
+			"runner_id", "action_data_reference", "type",
+			"action_classification", "runner_type",
+			"creation_time", "modify_time",
+			"only_invocable_on_unresolved_incidents",
+			"allow_invocation_manually",
+			"allow_invocation_from_event_orchestration",
+			"map_to_all_services",
+		}
 
 		for _, att := range testAtts {
 			if dsA[att] != srcA[att] {
@@ -78,6 +87,7 @@ resource "pagerduty_automation_actions_action" "test" {
 	only_invocable_on_unresolved_incidents = true
 	allow_invocation_from_event_orchestration = true
 	allow_invocation_manually = true
+	map_to_all_services = true
 }
 
 data "pagerduty_automation_actions_action" "foo" {

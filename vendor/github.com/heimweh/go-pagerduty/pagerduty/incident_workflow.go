@@ -34,7 +34,7 @@ type IncidentWorkflowStep struct {
 type IncidentWorkflowActionConfiguration struct {
 	ActionID          string                                    `json:"action_id,omitempty"`
 	Description       *string                                   `json:"description,omitempty"`
-	Inputs            []*IncidentWorkflowActionInput            `json:"inputs,omitempty"`
+	Inputs            []*IncidentWorkflowActionInput            `json:"inputs"`
 	InlineStepsInputs []*IncidentWorkflowActionInlineStepsInput `json:"inline_steps_inputs,omitempty"`
 }
 

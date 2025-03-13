@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -104,6 +105,16 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"allow_invocation_manually": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+			"allow_invocation_from_event_orchestration": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -158,13 +169,20 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 		automationActionsAction.ModifyTime = &val
 	}
 
-	if attr, ok := d.GetOk("only_invocable_on_unresolved_incidents"); ok {
-		val := attr.(bool)
-		automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &val
-	}
-
 	attr, _ := d.Get("only_invocable_on_unresolved_incidents").(bool)
 	automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &attr
+
+	if attr, ok := d.GetOk("allow_invocation_manually"); ok {
+		strValue := attr.(string)
+		val := strValue == "true"
+		automationActionsAction.AllowInvocationManually = &val
+	}
+
+	if attr, ok := d.GetOk("allow_invocation_from_event_orchestration"); ok {
+		strValue := attr.(string)
+		val := strValue == "true"
+		automationActionsAction.AllowInvocationFromEventOrchestration = &val
+	}
 
 	return &automationActionsAction, nil
 }
@@ -314,6 +332,16 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 			if automationActionsAction.OnlyInvocableOnUnresolvedIncidents != nil {
 				d.Set("only_invocable_on_unresolved_incidents", *automationActionsAction.OnlyInvocableOnUnresolvedIncidents)
+			}
+
+			if automationActionsAction.AllowInvocationManually != nil {
+				v := strconv.FormatBool(*automationActionsAction.AllowInvocationManually)
+				d.Set("allow_invocation_manually", v)
+			}
+
+			if automationActionsAction.AllowInvocationFromEventOrchestration != nil {
+				v := strconv.FormatBool(*automationActionsAction.AllowInvocationFromEventOrchestration)
+				d.Set("allow_invocation_from_event_orchestration", v)
 			}
 		}
 		return nil

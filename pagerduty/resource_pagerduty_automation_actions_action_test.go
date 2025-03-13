@@ -58,6 +58,8 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "true"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "true"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "true"),
 				),
 			},
 			{
@@ -86,6 +88,8 @@ func TestAccPagerDutyAutomationActionsActionTypeProcessAutomation_Basic(t *testi
 					resource.TestCheckResourceAttrSet("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "runner_type", "runbook"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
 				),
 			},
 		},
@@ -130,6 +134,8 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
 				),
 			},
 			{
@@ -156,6 +162,8 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_type"),
 					resource.TestCheckNoResourceAttr("pagerduty_automation_actions_action.foo", "runner_id"),
 					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "only_invocable_on_unresolved_incidents", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_from_event_orchestration", "false"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "allow_invocation_manually", "false"),
 				),
 			},
 		},
@@ -245,6 +253,8 @@ resource "pagerduty_automation_actions_action" "foo" {
 		process_automation_job_id = "updated_pa_job_id_123"
 	}
 	only_invocable_on_unresolved_incidents = "false"
+	allow_invocation_manually = "false"
+	allow_invocation_from_event_orchestration = "false"
 }
 `, previousActionName, actionName, actionDescription, actionClassification)
 }

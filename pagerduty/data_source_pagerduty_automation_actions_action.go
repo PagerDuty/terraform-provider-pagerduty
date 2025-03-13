@@ -165,6 +165,18 @@ func dataSourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta
 			d.Set("action_classification", &automationActionsAction.ActionClassification)
 		}
 
+		if automationActionsAction.OnlyInvocableOnUnresolvedIncidents != nil {
+			d.Set("only_invocable_on_unresolved_incidents", *automationActionsAction.OnlyInvocableOnUnresolvedIncidents)
+		}
+
+		if automationActionsAction.AllowInvocationManually != nil {
+			d.Set("allow_invocation_manually", *automationActionsAction.AllowInvocationManually)
+		}
+
+		if automationActionsAction.AllowInvocationFromEventOrchestration != nil {
+			d.Set("allow_invocation_from_event_orchestration", *automationActionsAction.AllowInvocationFromEventOrchestration)
+		}
+
 		return nil
 	})
 }

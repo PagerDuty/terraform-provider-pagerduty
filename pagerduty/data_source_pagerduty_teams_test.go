@@ -24,21 +24,21 @@ func TestAccDataSourcePagerDutyTeams_Basic(t *testing.T) {
 					testAccDataSourcePagerDutyTeamsExists("data.pagerduty_teams.test_all_teams"),
 					testAccDataSourcePagerDutyTeamsExists("data.pagerduty_teams.test_by_1_team"),
 					resource.TestCheckResourceAttrSet(
-						"data.pagerduty_users.test_all_teams", "teams.#"),
+						"data.pagerduty_teams.test_all_teams", "teams.#"),
 					resource.TestCheckTypeSetElemNestedAttrs(
-						"data.pagerduty_users.test_all_teams",
+						"data.pagerduty_teams.test_all_teams",
 						"teams.*",
 						map[string]string{
 							"name": teamname1,
 						}),
 					resource.TestCheckTypeSetElemNestedAttrs(
-						"data.pagerduty_users.test_all_teams",
+						"data.pagerduty_teams.test_all_teams",
 						"teams.*",
 						map[string]string{
 							"name": teamname2,
 						}),
 					resource.TestCheckTypeSetElemNestedAttrs(
-						"data.pagerduty_users.test_all_teams",
+						"data.pagerduty_teams.test_all_teams",
 						"teams.*",
 						map[string]string{
 							"name": teamname3,

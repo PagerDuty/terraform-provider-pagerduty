@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -26,20 +27,46 @@ func TestAccPagerDutyEventOrchestrationGlobalCacheVariable_Basic(t *testing.T) {
 	orchn1 := "orch_1"
 	name2 := fmt.Sprintf("tf_global_cache_variable_updated_%s", acctest.RandString(5))
 	orchn2 := "orch_2"
-
+	invalidConfigRecentValue := `
+		configuration {
+			type = "recent_value"
+			regex = ".*"
+			ttl_seconds = 300
+		}
+	`
+	invalidConfigTriggerEventCount := `
+		configuration {
+			type = "trigger_event_count"
+			data_type = "string"
+			ttl_seconds = 60
+		}
+	`
+	invalidConfigExternalData := `
+		configuration {
+			type = "external_data"
+			data_type = "boolean"
+		}
+	`
 	config1 := `
 		configuration {
-  		type = "trigger_event_count"
-  		ttl_seconds = 60
-    }
-  `
+			type = "trigger_event_count"
+			ttl_seconds = 60
+		}
+	`
 	config2 := `
 		configuration {
-  		type = "recent_value"
-  		source = "event.summary"
-  		regex = ".*"
-    }
-  `
+			type = "recent_value"
+			source = "event.summary"
+			regex = ".*"
+		}
+	`
+	config3 := `
+		configuration {
+			type = "external_data"
+			data_type = "boolean"
+			ttl_seconds = 1200
+		}
+	`
 	cond1 := ``
 	cond2 := `
 		condition {
@@ -54,6 +81,25 @@ func TestAccPagerDutyEventOrchestrationGlobalCacheVariable_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckPagerDutyEventOrchestrationGlobalCacheVariableDestroy,
 		Steps: []resource.TestStep{
+			// cache variable with an invalid configuration - recent_value:
+			{
+				Config:      testAccCheckPagerDutyEventOrchestrationGlobalCacheVariableConfig(orch, name1, orchn1, disabled1, invalidConfigRecentValue, cond1),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration: regex and source cannot be null, and data_type and ttl_seconds cannot be used when type is recent_value"),
+			},
+			// cache variable with an invalid configuration - trigger_event_count:
+			{
+				Config:      testAccCheckPagerDutyEventOrchestrationGlobalCacheVariableConfig(orch, name1, orchn1, disabled1, invalidConfigTriggerEventCount, cond1),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration: regex, source, and data_type cannot be used when type is trigger_event_count"),
+			},
+			// cache variable with an invalid configuration - external_data:
+			{
+				Config:      testAccCheckPagerDutyEventOrchestrationGlobalCacheVariableConfig(orch, name1, orchn1, disabled1, invalidConfigExternalData, cond1),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid configuration: data_type and ttl_seconds cannot be null when type is external_data"),
+			},
+			// configure a valid cache variable:
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationGlobalCacheVariableConfig(orch, name1, orchn1, disabled1, config1, cond1),
 				Check: resource.ComposeTestCheckFunc(
@@ -78,6 +124,16 @@ func TestAccPagerDutyEventOrchestrationGlobalCacheVariable_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(cv, "configuration.0.type", "recent_value"),
 					resource.TestCheckResourceAttr(cv, "configuration.0.source", "event.summary"),
 					resource.TestCheckResourceAttr(cv, "configuration.0.regex", ".*"),
+				),
+			},
+			// update config again:
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationGlobalCacheVariableConfig(orch, name1, orchn1, disabled1, config3, cond1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationGlobalCacheVariableID(cv, orchn1),
+					resource.TestCheckResourceAttr(cv, "configuration.0.type", "external_data"),
+					resource.TestCheckResourceAttr(cv, "configuration.0.data_type", "boolean"),
+					resource.TestCheckResourceAttr(cv, "configuration.0.ttl_seconds", "1200"),
 				),
 			},
 			// update condition:

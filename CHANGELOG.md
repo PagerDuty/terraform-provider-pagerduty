@@ -1,3 +1,18 @@
+## v3.23.0 (March 19, 2025)
+
+FEATURES:
+
+* **New Data Source:** `pagerduty_teams` ([989](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/989))
+* `resource/pagerduty_event_orchestration_global_cache_variable`: Add support for Event Orchestration `external_data` cache variables([984](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/984))
+* `resource/pagerduty_event_orchestration_service_cache_variable`: Add support for Event Orchestration `external_data` cache variables([984](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/984))
+* `data/pagerduty_event_orchestration_global_cache_variable`: Add support for Event Orchestration `external_data` cache variables([984](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/984))
+* `data/source_pagerduty_event_orchestration_service_cache_variable`: Add support for Event Orchestration `external_data` cache variables([984](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/984))
+
+BUG FIXES:
+
+* `resource/pagerduty_webhook_subscription`: Remove state of webhook subscriptions externally deleted ([994](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/994))
+* `resource/pagerduty_incident_workflow`: Don't omit 'inputs' field in `pagerduty_incident_workflow.step` as it's required by the API ([992](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/992))
+
 ## v3.22.0 (March 13, 2025)
 
 IMPROVEMENTS:

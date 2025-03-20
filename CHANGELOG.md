@@ -1,3 +1,9 @@
+## v3.23.1 (March 20, 2025)
+
+BUG FIXES:
+
+* `resource/pagerduty_webhook_subscription`: Fix Read always failing ([997](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/997))
+
 ## v3.23.0 (March 19, 2025)
 
 FEATURES:

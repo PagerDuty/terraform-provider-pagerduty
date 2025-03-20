@@ -211,6 +211,9 @@ func genError(err error, d *schema.ResourceData) error {
 }
 
 func handleNotFoundError(err error, d *schema.ResourceData) error {
+	if err == nil {
+		return nil
+	}
 	if isErrCode(err, 404) || isMalformedNotFoundError(err) {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")

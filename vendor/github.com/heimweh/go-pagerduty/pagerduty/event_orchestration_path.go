@@ -80,17 +80,17 @@ type EventOrchestrationPathIncidentCustomFieldUpdate struct {
 }
 
 type EventOrchestrationPathPagerdutyAutomationAction struct {
-	ActionId string `json:"action_id,omitempty"`
+	ActionId     string   `json:"action_id,omitempty"`
 	TriggerTypes []string `json:"trigger_types,omitempty"`
 }
 
 type EventOrchestrationPathAutomationAction struct {
-	Name       string                                          `json:"name,omitempty"`
-	Url        string                                          `json:"url,omitempty"`
-	AutoSend   bool                                            `json:"auto_send,omitempty"`
-	Headers    []*EventOrchestrationPathAutomationActionObject `json:"headers"`
-	Parameters []*EventOrchestrationPathAutomationActionObject `json:"parameters"`
-	TriggerTypes []string `json:"trigger_types,omitempty"`
+	Name         string                                          `json:"name,omitempty"`
+	Url          string                                          `json:"url,omitempty"`
+	AutoSend     bool                                            `json:"auto_send,omitempty"`
+	Headers      []*EventOrchestrationPathAutomationActionObject `json:"headers"`
+	Parameters   []*EventOrchestrationPathAutomationActionObject `json:"parameters"`
+	TriggerTypes []string                                        `json:"trigger_types,omitempty"`
 }
 
 type EventOrchestrationPathAutomationActionObject struct {

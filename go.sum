@@ -8,8 +8,8 @@ github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c h1:kMFnB0vCcX
 github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azugULFRteWMNc0=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
 github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
-github.com/alenapan/go-pagerduty v0.0.0-20250324143909-5c8050f3efbb h1:72hZSr4DmLTJ+a7M2rn8BZiRIfRA6mg0HxFmBHxeZhs=
-github.com/alenapan/go-pagerduty v0.0.0-20250324143909-5c8050f3efbb/go.mod h1:r59w5iyN01Qvi734yA5hZldbSeJJmsJzee/1kQ/MK7s=
+github.com/alexzakabluk/go-pagerduty v0.0.0-20250325172012-9f2ddcb0c5f6 h1:bBzBqFH4kzRTDcsppiBU/oB2G2bM+2h250C5i+WqHTY=
+github.com/alexzakabluk/go-pagerduty v0.0.0-20250325172012-9f2ddcb0c5f6/go.mod h1:r59w5iyN01Qvi734yA5hZldbSeJJmsJzee/1kQ/MK7s=
 github.com/apparentlymart/go-textseg/v12 v12.0.0/go.mod h1:S/4uRK2UtaQttw1GenVJEynmyUenKwP++x/+DdGV/Ec=
 github.com/apparentlymart/go-textseg/v15 v15.0.0 h1:uYvfpb3DyLSCGWnctWKGj857c6ew1u1fNQOlOtuGxQY=
 github.com/apparentlymart/go-textseg/v15 v15.0.0/go.mod h1:K8XmNZdhEBkdlyDdvbmmsvpAG721bKi0joRfFdHIWJ4=

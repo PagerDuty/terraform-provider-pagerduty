@@ -41,6 +41,12 @@ func buildEventOrchestrationPathServiceCatchAllActionsSchema() map[string]*schem
 						Type:     schema.TypeString,
 						Required: true,
 					},
+					"trigger_types": {
+						Type:     schema.TypeList,
+						Optional: true,
+						MaxItems: 1,
+						Elem:     &schema.Schema{Type: schema.TypeString},
+					},
 				},
 			},
 		},
@@ -512,7 +518,8 @@ func expandServicePathPagerDutyAutomationActions(v interface{}) []*pagerduty.Eve
 	for _, i := range v.([]interface{}) {
 		a := i.(map[string]interface{})
 		pdaa := &pagerduty.EventOrchestrationPathPagerdutyAutomationAction{
-			ActionId: a["action_id"].(string),
+			ActionId:     a["action_id"].(string),
+			TriggerTypes: expandEventOrchestrationAutomationTriggerTypes(a["trigger_types"]),
 		}
 
 		result = append(result, pdaa)
@@ -609,8 +616,9 @@ func flattenServicePathPagerDutyAutomationActions(v []*pagerduty.EventOrchestrat
 	var result []interface{}
 
 	for _, i := range v {
-		pdaa := map[string]string{
-			"action_id": i.ActionId,
+		pdaa := map[string]interface{}{
+			"action_id":     i.ActionId,
+			"trigger_types": i.TriggerTypes,
 		}
 
 		result = append(result, pdaa)

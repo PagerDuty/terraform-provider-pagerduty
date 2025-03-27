@@ -670,18 +670,22 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 			return retry.RetryableError(err)
 		}
 
-		if err := d.Set("type", serviceIntegration.Type); err != nil {
-			return retry.RetryableError(err)
-		}
-
-		if serviceIntegration.Service != nil {
-			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
+		vendorID := ""
+		if serviceIntegration.Vendor != nil {
+			vendorID = serviceIntegration.Vendor.ID
+			if err := d.Set("vendor", vendorID); err != nil {
 				return retry.RetryableError(err)
 			}
 		}
 
-		if serviceIntegration.Vendor != nil {
-			if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
+		if vendorID == "" {
+			if err := d.Set("type", serviceIntegration.Type); err != nil {
+				return retry.RetryableError(err)
+			}
+		}
+
+		if serviceIntegration.Service != nil {
+			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
 				return retry.RetryableError(err)
 			}
 		}

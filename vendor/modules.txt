@@ -261,7 +261,7 @@ github.com/hashicorp/terraform-svchost
 # github.com/hashicorp/yamux v0.1.1
 ## explicit; go 1.15
 github.com/hashicorp/yamux
-# github.com/heimweh/go-pagerduty v0.0.0-20250319162404-3d9cf89703c0 => github.com/alexzakabluk/go-pagerduty v0.0.0-20250325172012-9f2ddcb0c5f6
+# github.com/heimweh/go-pagerduty v0.0.0-20250414155133-f9f4e0b0c59b
 ## explicit; go 1.17
 github.com/heimweh/go-pagerduty/pagerduty
 github.com/heimweh/go-pagerduty/persistentconfig
@@ -561,4 +561,3 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/ini.v1 v1.67.0
 ## explicit
 gopkg.in/ini.v1
-# github.com/heimweh/go-pagerduty => github.com/alexzakabluk/go-pagerduty v0.0.0-20250325172012-9f2ddcb0c5f6

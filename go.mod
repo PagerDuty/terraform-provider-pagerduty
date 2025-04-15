@@ -1,6 +1,7 @@
 module github.com/PagerDuty/terraform-provider-pagerduty
 
 go 1.21
+toolchain go1.24.1
 
 require (
 	github.com/PagerDuty/go-pagerduty v1.8.1-0.20250113202017-9831333ebe6b
@@ -62,7 +63,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/zclconf/go-cty v1.14.1 // indirect
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.22.0 // indirect

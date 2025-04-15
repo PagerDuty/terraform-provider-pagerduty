@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -13,6 +14,11 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 	timeZone := "America/New_York"
 	teamname1 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
 	teamname2 := fmt.Sprintf("tf-team-%s", acctest.RandString(5))
+
+	licensename := "Digital Operations (Stakeholder)"
+	if v := os.Getenv("PAGERDUTY_ACC_LICENSE_NAME"); v != "" {
+		licensename = v
+	}
 
 	username1 := fmt.Sprintf("tf-user1-%s", acctest.RandString(5))
 	email1 := fmt.Sprintf("%s@foo.test", username1)
@@ -33,11 +39,11 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 	timeZone3 := timeZone
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3),
+				Config: testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, licensename, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourcePagerDutyUsersExists("data.pagerduty_users.test_all_users"),
 					testAccDataSourcePagerDutyUsersExists("data.pagerduty_users.test_by_1_team"),
@@ -126,13 +132,17 @@ func testAccDataSourcePagerDutyUsersExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3 string) string {
+func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, licensename, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3 string) string {
 	return fmt.Sprintf(`
     resource "pagerduty_team" "test1" {
-        name        = "%s"
+        name = "%s"
     }
     resource "pagerduty_team" "test2" {
-        name        = "%s"
+        name = "%s"
+    }
+
+    data "pagerduty_license" "stakeholder" {
+        name = "%s"
     }
 
     resource "pagerduty_user" "test_wo_team" {
@@ -141,6 +151,7 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       job_title = "%s"
       time_zone = "%s"
       description = "%s"
+      license = data.pagerduty_license.stakeholder.id
     }
     resource "pagerduty_user" "test_w_team1" {
       name = "%s"
@@ -148,6 +159,7 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       job_title = "%s"
       time_zone = "%s"
       description = "%s"
+      license = data.pagerduty_license.stakeholder.id
     }
     resource "pagerduty_user" "test_w_team2" {
       name = "%s"
@@ -155,6 +167,7 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       job_title = "%s"
       time_zone = "%s"
       description = "%s"
+      license = data.pagerduty_license.stakeholder.id
     }
 
     resource "pagerduty_team_membership" "test1" {
@@ -179,5 +192,10 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       depends_on = [pagerduty_team_membership.test2]
       team_ids = [pagerduty_team.test1.id, pagerduty_team.test2.id]
     }
-`, teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3)
+`,
+		teamname1, teamname2, licensename,
+		username1, email1, title1, timeZone1, description1,
+		username2, email2, title2, timeZone2, description2,
+		username3, email3, title3, timeZone3, description3,
+	)
 }

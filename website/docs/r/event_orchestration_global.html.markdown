@@ -82,13 +82,15 @@ resource "pagerduty_event_orchestration_global" "global" {
       }
     }
     rule {
-      label = "Otherwise, set the incident to P1 and run a diagnostic"
+      label = "Otherwise, set the incident to P1, pause for 10 mins and run a diagnostic once the alert is suspended"
       actions {
         priority = data.pagerduty_priority.p1.id
+        suspend = 600
         automation_action {
           name = "db-diagnostic"
           url = "https://example.com/run-diagnostic"
           auto_send = true
+          trigger_types = ["alert_suspended"]
         }
       }
     }
@@ -130,10 +132,11 @@ The following arguments are supported:
 * `incident_custom_field_update` - (Optional) Assign a custom field to the resulting incident.
   * `id` - (Required) The custom field id
   * `value` - (Required) The value to assign to this custom field
-* `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) associated with the resulting incident.
+* `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) to be run for certain alert states.
   * `name` - (Required) Name of this Webhook.
   * `url` - (Required) The API endpoint where PagerDuty's servers will send the webhook request.
-  * `auto_send` - (Optional) When true, PagerDuty's servers will automatically send this webhook request as soon as the resulting incident is created. When false, your incident responder will be able to manually trigger the Webhook via the PagerDuty website and mobile app.
+  * `auto_send` - (Optional) When true, PagerDuty's servers will automatically send this webhook request as soon as the resulting incident or alert is created. When false, your incident responder will be able to manually trigger the Webhook via the PagerDuty website and mobile app.
+  * `trigger_types` - (Optional) The Webhook will be associated (or automatically triggered, if `auto_send` is `true`) with the incident or alert, whenever an alert reaches the specified state. Allowed values are: `["alert_triggered"]`, `["alert_suspended"]`, `["alert_suppressed"]`. NOTE: `auto_send` must be `true` for trigger types of `["alert_suspended"]` and `["alert_suppressed"]`
   * `header` - (Optional) Specify custom key/value pairs that'll be sent with the webhook request as request headers.
     * `key` - (Required) Name to identify the header
     * `value` - (Required) Value of this header

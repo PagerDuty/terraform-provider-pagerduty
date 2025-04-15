@@ -326,6 +326,8 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsConfig(t,
 									key = "region"
 									value = "us"
 								}
+								
+								trigger_types = ["alert_suppressed"]
 							}
 					}
 				}
@@ -355,6 +357,8 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsConfig(t,
 							key = "region1"
 							value = "us1"
 						}
+
+						trigger_types = ["alert_suspended"]
 					}
 				}
 			}
@@ -384,6 +388,8 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsParamsUpd
 									key = "source_region"
 									value = "eu"
 								}
+
+								trigger_types = ["alert_triggered"]
 							}
 					}
 				}
@@ -404,6 +410,8 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsParamsUpd
 							key = "source2"
 							value = "orch2"
 						}
+
+						trigger_types = ["alert_triggered"]
 					}
 				}
 			}
@@ -424,6 +432,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsParamsDel
 							automation_action {
 								name = "test"
 								url = "https://test.com"
+								trigger_types = ["alert_triggered"]
 							}
 					}
 				}
@@ -434,6 +443,7 @@ func testAccCheckPagerDutyEventOrchestrationPathGlobalAutomationActionsParamsDel
 					automation_action {
 						name = "catch-all test upd"
 						url = "https://catch-all-test-upd.com"
+						trigger_types = ["alert_triggered"]
 					}
 				}
 			}

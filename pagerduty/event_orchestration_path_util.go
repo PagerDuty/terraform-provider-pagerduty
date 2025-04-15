@@ -104,6 +104,12 @@ var eventOrchestrationAutomationActionSchema = map[string]*schema.Schema{
 			Schema: eventOrchestrationAutomationActionObjectSchema,
 		},
 	},
+	"trigger_types": {
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem:     &schema.Schema{Type: schema.TypeString},
+	},
 }
 
 func invalidExtractionRegexTemplateNilConfig() string {
@@ -297,11 +303,12 @@ func expandEventOrchestrationPathAutomationActions(v interface{}) []*pagerduty.E
 	for _, i := range v.([]interface{}) {
 		a := i.(map[string]interface{})
 		aa := &pagerduty.EventOrchestrationPathAutomationAction{
-			Name:       a["name"].(string),
-			Url:        a["url"].(string),
-			AutoSend:   a["auto_send"].(bool),
-			Headers:    expandEventOrchestrationAutomationActionObjects(a["header"]),
-			Parameters: expandEventOrchestrationAutomationActionObjects(a["parameter"]),
+			Name:         a["name"].(string),
+			Url:          a["url"].(string),
+			AutoSend:     a["auto_send"].(bool),
+			Headers:      expandEventOrchestrationAutomationActionObjects(a["header"]),
+			Parameters:   expandEventOrchestrationAutomationActionObjects(a["parameter"]),
+			TriggerTypes: expandEventOrchestrationAutomationTriggerTypes(a["trigger_types"]),
 		}
 
 		result = append(result, aa)
@@ -321,6 +328,20 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 		}
 
 		result = append(result, obj)
+	}
+
+	return result
+}
+
+func expandEventOrchestrationAutomationTriggerTypes(v interface{}) []string {
+	if v == nil {
+		return nil
+	}
+
+	var result []string
+
+	for _, i := range v.([]interface{}) {
+		result = append(result, i.(string))
 	}
 
 	return result
@@ -346,11 +367,12 @@ func flattenEventOrchestrationAutomationActions(v []*pagerduty.EventOrchestratio
 
 	for _, i := range v {
 		pdaa := map[string]interface{}{
-			"name":      i.Name,
-			"url":       i.Url,
-			"auto_send": i.AutoSend,
-			"header":    flattenEventOrchestrationAutomationActionObjects(i.Headers),
-			"parameter": flattenEventOrchestrationAutomationActionObjects(i.Parameters),
+			"name":          i.Name,
+			"url":           i.Url,
+			"auto_send":     i.AutoSend,
+			"header":        flattenEventOrchestrationAutomationActionObjects(i.Headers),
+			"parameter":     flattenEventOrchestrationAutomationActionObjects(i.Parameters),
+			"trigger_types": i.TriggerTypes,
 		}
 
 		result = append(result, pdaa)

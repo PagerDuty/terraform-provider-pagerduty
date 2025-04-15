@@ -59,7 +59,7 @@ func TestAccPagerDutyEventOrchestrationPathService_Basic(t *testing.T) {
 					append(
 						baseChecks,
 						resource.TestCheckResourceAttr(
-							resourceName, "set.0.rule.0.actions.0.automation_action.0.auto_send", "false",
+							resourceName, "set.0.rule.0.actions.0.automation_action.0.auto_send", "true",
 						),
 					)...,
 				),
@@ -370,29 +370,31 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(e
 				rule {
 					label = "rule 1"
 					actions {
-							automation_action {
-								name = "test"
-								url = "https://test.com"
-								auto_send = true
+						automation_action {
+							name = "test"
+							url = "https://test.com"
+							auto_send = true
 
-								header {
-									key = "foo"
-									value = "bar"
-								}
-								header {
-									key = "baz"
-									value = "buz"
-								}
-
-								parameter {
-									key = "source"
-									value = "orch"
-								}
-								parameter {
-									key = "region"
-									value = "us"
-								}
+							header {
+								key = "foo"
+								value = "bar"
 							}
+							header {
+								key = "baz"
+								value = "buz"
+							}
+
+							parameter {
+								key = "source"
+								value = "orch"
+							}
+							parameter {
+								key = "region"
+								value = "us"
+							}
+
+							trigger_types = ["alert_triggered"]
+						}
 					}
 				}
 			}
@@ -421,6 +423,8 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsConfig(e
 							key = "region1"
 							value = "us1"
 						}
+
+						trigger_types = ["alert_suspended"]
 					}
 				}
 			}
@@ -438,19 +442,22 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUp
 				rule {
 					label = "rule 1"
 					actions {
-							automation_action {
-								name = "test1"
-								url = "https://test1.com"
+						automation_action {
+							name = "test1"
+							url = "https://test1.com"
+							auto_send = true
 
-								header {
-									key = "foo1"
-									value = "bar1"
-								}
-								parameter {
-									key = "source_region"
-									value = "eu"
-								}
+							header {
+								key = "foo1"
+								value = "bar1"
 							}
+							parameter {
+								key = "source_region"
+								value = "eu"
+							}
+							
+							trigger_types = ["alert_suppressed"]
+						}
 					}
 				}
 			}
@@ -470,6 +477,8 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsUp
 							key = "source2"
 							value = "orch2"
 						}
+
+						trigger_types = ["alert_triggered"]
 					}
 				}
 			}
@@ -487,10 +496,11 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDe
 				rule {
 					label = "rule 1"
 					actions {
-							automation_action {
-								name = "test"
-								url = "https://test.com"
-							}
+						automation_action {
+							name = "test"
+							url = "https://test.com"
+							trigger_types = ["alert_triggered"]
+						}
 					}
 				}
 			}
@@ -500,6 +510,8 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAutomationActionsParamsDe
 					automation_action {
 						name = "catch-all test upd"
 						url = "https://catch-all-test-upd.com"
+						auto_send = true
+						trigger_types = ["alert_suppressed"]
 					}
 				}
 			}
@@ -554,6 +566,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 						annotate = "Routed through an event orchestration"
 						pagerduty_automation_action {
 							action_id = "01CSB5SMOKCKVRI5GN0LJG7SMB"
+							trigger_types = ["alert_suppressed"]
 						}
 						severity = "critical"
 						event_action = "trigger"
@@ -612,6 +625,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsConfig(ep, s st
 					annotate = "Routed through an event orchestration - catch-all rule"
 					pagerduty_automation_action {
 						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMC"
+						trigger_types = ["alert_suspended"]
 					}
 					severity = "warning"
 					event_action = "trigger"
@@ -661,6 +675,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 						annotate = "Routed through a service orchestration!"
 						pagerduty_automation_action {
 							action_id = "01CSB5SMOKCKVRI5GN0LJG7SMBUPDATED"
+							trigger_types = ["alert_suspended"]
 						}
 						severity = "warning"
 						event_action = "resolve"
@@ -733,6 +748,7 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceAllActionsUpdateConfig(ep
 					annotate = "[UPD] Routed through an event orchestration - catch-all rule"
 					pagerduty_automation_action {
 						action_id = "01CSB5SMOKCKVRI5GN0LJG7SMD"
+						trigger_types = ["alert_triggered"]
 					}
 					severity = "info"
 					event_action = "resolve"

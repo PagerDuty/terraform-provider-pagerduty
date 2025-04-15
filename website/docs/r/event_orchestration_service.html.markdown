@@ -140,6 +140,7 @@ resource "pagerduty_event_orchestration_service" "www" {
           name = "Canary Slack Notification"
           url = "https://our-slack-listerner.test/canary-notification"
           auto_send = true
+          trigger_types = ["alert_triggered"]
           parameter {
             key = "channel"
             value = "#my-team-channel"
@@ -156,12 +157,16 @@ resource "pagerduty_event_orchestration_service" "www" {
       }
     }
     rule {
-      label = "Never bother the on-call for info-level events outside of work hours"
+      label = "Never bother the on-call for info-level events outside of work hours, and let an Automation Action fix it instead"
       condition {
         expression = "event.severity matches 'info' and not (now in Mon,Tue,Wed,Thu,Fri 09:00:00 to 17:00:00 America/Los_Angeles)"
       }
       actions {
         suppress = true
+        pagerduty_automation_action {
+          action_id = "01FJV5A8OA5MKHOYFHV35SM2Z0"
+          trigger_types = ["alert_suppressed"]
+        }
       }
     }
   }
@@ -202,12 +207,14 @@ The following arguments are supported:
 * `incident_custom_field_update` - (Optional) Assign a custom field to the resulting incident.
   * `id` - (Required) The custom field id
   * `value` - (Required) The value to assign to this custom field
-* `pagerduty_automation_action` - (Optional) Configure a [Process Automation](https://support.pagerduty.com/docs/event-orchestration#process-automation) associated with the resulting incident.
+* `pagerduty_automation_action` - (Optional) Configure a [Process Automation](https://support.pagerduty.com/docs/event-orchestration#process-automation) to be run for certain alert states.
   * `action_id` - (Required) Id of the Process Automation action to be triggered.
-* `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) associated with the resulting incident.
+  * `trigger_types` - (Optional) The Automation Action will be triggered whenever an alert reaches the specified state. Allowed values are: `["alert_triggered"]`, `["alert_suspended"]`, `["alert_suppressed"]`
+* `automation_action` - (Optional) Create a [Webhook](https://support.pagerduty.com/docs/event-orchestration#webhooks) to be run for certain alert states.
   * `name` - (Required) Name of this Webhook.
   * `url` - (Required) The API endpoint where PagerDuty's servers will send the webhook request.
-  * `auto_send` - (Optional) When true, PagerDuty's servers will automatically send this webhook request as soon as the resulting incident is created. When false, your incident responder will be able to manually trigger the Webhook via the PagerDuty website and mobile app.
+  * `auto_send` - (Optional) When true, PagerDuty's servers will automatically send this webhook request as soon as the resulting incident or alert is created. When false, your incident responder will be able to manually trigger the Webhook via the PagerDuty website and mobile app.
+  * `trigger_types` - (Optional) The Webhook will be associated (or automatically triggered, if `auto_send` is `true`) with the incident or alert, whenever an alert reaches the specified state. Allowed values are: `["alert_triggered"]`, `["alert_suspended"]`, `["alert_suppressed"]`. NOTE: `auto_send` must be `true` for trigger types of `["alert_suspended"]` and `["alert_suppressed"]`
   * `header` - (Optional) Specify custom key/value pairs that'll be sent with the webhook request as request headers.
     * `key` - (Required) Name to identify the header
     * `value` - (Required) Value of this header

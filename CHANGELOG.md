@@ -1,3 +1,14 @@
+## v3.24.0 (April 15, 2025)
+
+FEATURES:
+* `resource/pagerduty_event_orchestration_service` Add support for Event Orchestration Automation trigger\_types [998](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/998)
+* `resource/pagerduty_event_orchestration_global` Add support for Event Orchestration Automation trigger\_types [998](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/998)
+
+BUG FIXES:
+* `PagerDuty/pagerduty`: Bump golang.org/x/crypto from 0.33.0 to 0.35.0 [1002](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1002)
+* `resource/pagerduty_slack_connection`: Make event config for slack connections a set [1000](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1000)
+* `resource/pagerduty_service_integration`: Fix service\_integration documentation [912](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/912)
+
 ## v3.23.1 (March 20, 2025)
 
 BUG FIXES:

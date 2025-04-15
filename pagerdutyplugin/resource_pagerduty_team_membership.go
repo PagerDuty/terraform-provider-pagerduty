@@ -287,7 +287,13 @@ func requestAddTeamMembership(ctx context.Context, client *pagerduty.Client, pla
 func fetchEscalationPoliciesWithUser(ctx context.Context, client *pagerduty.Client, userID string, diags *diag.Diagnostics) []pagerduty.EscalationPolicy {
 	var oncalls []pagerduty.OnCall
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		resp, err := client.ListOnCallsWithContext(ctx, pagerduty.ListOnCallOptions{UserIDs: []string{userID}, Limit: 100})
+		now := time.Now()
+		resp, err := client.ListOnCallsWithContext(ctx, pagerduty.ListOnCallOptions{
+			UserIDs: []string{userID},
+			Since:   now.Format(time.RFC3339),
+			Until:   now.Add(time.Hour * 24 * 90).Format(time.RFC3339),
+			Limit:   100,
+		})
 		if err != nil {
 			if util.IsBadRequestError(err) {
 				return retry.NonRetryableError(err)

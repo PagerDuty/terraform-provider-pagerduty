@@ -221,7 +221,7 @@ func expandConnectionConfig(v interface{}) pagerduty.ConnectionConfig {
 	var config pagerduty.ConnectionConfig
 
 	config = pagerduty.ConnectionConfig{
-		Events:     expandConfigList(c["events"].([]interface{})),
+		Events:     expandConfigList(c["events"].(*schema.Set).List()),
 		Priorities: expandStarWildcardConfig(expandConfigList(c["priorities"].([]interface{}))),
 		Urgency:    nil,
 	}

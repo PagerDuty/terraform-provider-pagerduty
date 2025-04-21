@@ -12,7 +12,10 @@ import (
 )
 
 func ValidateContactAddress(typeKey, countryCodeKey string) validator.String {
-	return &contactAddressValidator{stringDescriptor{"TODO"}, typeKey, countryCodeKey}
+	return &contactAddressValidator{
+		stringDescriptor{"Validates phone number has an appropriate format according to the standand of each country"},
+		typeKey, countryCodeKey,
+	}
 }
 
 type contactAddressValidator struct {

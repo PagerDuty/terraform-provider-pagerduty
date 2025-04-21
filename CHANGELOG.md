@@ -1,3 +1,13 @@
+## v3.24.1 (April 21, 2025)
+
+IMPROVEMENTS:
+
+* `PagerDuty/pagerduty`: Migrate datasources and resources to terraform plugin framework ([905](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/905))
+
+BUG FIXES:
+
+* Fix panic at slack connection caused by bad casting ([1004](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1004))
+
 ## v3.24.0 (April 15, 2025)
 
 FEATURES:

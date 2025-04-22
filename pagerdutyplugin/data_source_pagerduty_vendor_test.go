@@ -34,8 +34,8 @@ func TestAccDataSourcePagerDutyVendor_ExactMatch(t *testing.T) {
 			{
 				Config: testAccDataSourcePagerDutyExactMatchConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceName, "id", "PAM4FGS"),
-					resource.TestCheckResourceAttr(dataSourceName, "name", "Datadog"),
+					resource.TestCheckResourceAttr(dataSourceName, "id", "PKAPG94"),
+					resource.TestCheckResourceAttr(dataSourceName, "name", "Sentry"),
 				),
 			},
 		},
@@ -68,7 +68,7 @@ data "pagerduty_vendor" "foo" {
 
 const testAccDataSourcePagerDutyExactMatchConfig = `
 data "pagerduty_vendor" "foo" {
-  name = "datadog"
+  name = "sentry"
 }
 `
 

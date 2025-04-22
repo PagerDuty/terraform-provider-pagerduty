@@ -6,7 +6,6 @@ import (
 	"log"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
@@ -14,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 type dataSourceVendor struct{ client *pagerduty.Client }
@@ -49,14 +47,27 @@ func (d *dataSourceVendor) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	var found *pagerduty.Vendor
-	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		list, err := d.client.ListVendorsWithContext(ctx, pagerduty.ListVendorOptions{})
+	more := true
+	offset := 0
+
+	var err error
+
+	for more {
+		var list *pagerduty.ListVendorResponse
+		list, err = d.client.ListVendorsWithContext(ctx, pagerduty.ListVendorOptions{
+			Limit:  100,
+			Offset: uint(offset),
+		})
 		if err != nil {
 			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
+				break
 			}
-			return retry.RetryableError(err)
+			more = true
+			continue
 		}
+
+		more = list.More
+		offset += int(list.Limit)
 
 		for _, vendor := range list.Vendors {
 			if strings.EqualFold(vendor.Name, searchName.ValueString()) {
@@ -75,8 +86,8 @@ func (d *dataSourceVendor) Read(ctx context.Context, req datasource.ReadRequest,
 				}
 			}
 		}
-		return nil
-	})
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Error reading PagerDuty vendor %s", searchName),

@@ -1,3 +1,9 @@
+## v3.24.2 (April 22, 2025)
+
+BUG FIXES:
+
+* `data/pagerduty_vendor`: Fix pagination for `data.pagerduty_vendor` ([1006](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1006))
+
 ## v3.24.1 (April 21, 2025)
 
 IMPROVEMENTS:

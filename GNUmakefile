@@ -45,5 +45,10 @@ test-compile:
 update-go-pagerduty:
 	go get github.com/heimweh/go-pagerduty/pagerduty && go mod tidy && go mod vendor
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website website-test
+# Run test sweepers to clean up resources created during acceptance tests
+# Usage: make sweep SWEEP_RESOURCE=pagerduty_service_custom_field
+sweep:
+	SWEEP=1 go test ./pagerdutyplugin -v -sweep=$(SWEEP_RESOURCE)
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website website-test sweep
 

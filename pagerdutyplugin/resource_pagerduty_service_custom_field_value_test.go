@@ -12,19 +12,19 @@ import (
 )
 
 func init() {
-	resource.AddTestSweepers("pagerduty_custom_field_value", &resource.Sweeper{
-		Name: "pagerduty_custom_field_value",
-		F:    testSweepCustomFieldValue,
+	resource.AddTestSweepers("pagerduty_service_custom_field_value", &resource.Sweeper{
+		Name: "pagerduty_service_custom_field_value",
+		F:    testSweepServiceCustomFieldValue,
 	})
 }
 
-func testSweepCustomFieldValue(_ string) error {
+func testSweepServiceCustomFieldValue(_ string) error {
 	// Custom field values are tied to services, so we don't need to clean them up separately
 	// They will be cleaned up when the services are cleaned up
 	return nil
 }
 
-func TestAccPagerDutyCustomFieldValue_Basic(t *testing.T) {
+func TestAccPagerDutyServiceCustomFieldValue_Basic(t *testing.T) {
 	serviceName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	fieldName := fmt.Sprintf("tf_%s", acctest.RandString(5))
 	fieldDisplayName := fmt.Sprintf("TF Test %s", acctest.RandString(5))
@@ -34,34 +34,34 @@ func TestAccPagerDutyCustomFieldValue_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
-		CheckDestroy:             testAccCheckPagerDutyCustomFieldValueDestroy,
+		CheckDestroy:             testAccCheckPagerDutyServiceCustomFieldValueDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyCustomFieldValueConfig(serviceName, fieldName, fieldDisplayName, fieldValue),
+				Config: testAccCheckPagerDutyServiceCustomFieldValueConfig(serviceName, fieldName, fieldDisplayName, fieldValue),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyCustomFieldValueExists("pagerduty_custom_field_value.test"),
+					testAccCheckPagerDutyServiceCustomFieldValueExists("pagerduty_service_custom_field_value.test"),
 					resource.TestCheckResourceAttrSet(
-						"pagerduty_custom_field_value.test", "id"),
+						"pagerduty_service_custom_field_value.test", "id"),
 					resource.TestCheckResourceAttrSet(
-						"pagerduty_custom_field_value.test", "service_id"),
+						"pagerduty_service_custom_field_value.test", "service_id"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_custom_field_value.test", "custom_fields.#", "1"),
+						"pagerduty_service_custom_field_value.test", "custom_fields.#", "1"),
 				),
 			},
 			{
-				Config: testAccCheckPagerDutyCustomFieldValueConfigUpdated(serviceName, fieldName, fieldDisplayName, updatedFieldValue),
+				Config: testAccCheckPagerDutyServiceCustomFieldValueConfigUpdated(serviceName, fieldName, fieldDisplayName, updatedFieldValue),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyCustomFieldValueExists("pagerduty_custom_field_value.test"),
+					testAccCheckPagerDutyServiceCustomFieldValueExists("pagerduty_service_custom_field_value.test"),
 					resource.TestCheckResourceAttrSet(
-						"pagerduty_custom_field_value.test", "id"),
+						"pagerduty_service_custom_field_value.test", "id"),
 					resource.TestCheckResourceAttrSet(
-						"pagerduty_custom_field_value.test", "service_id"),
+						"pagerduty_service_custom_field_value.test", "service_id"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_custom_field_value.test", "custom_fields.#", "1"),
+						"pagerduty_service_custom_field_value.test", "custom_fields.#", "1"),
 				),
 			},
 			{
-				ResourceName:            "pagerduty_custom_field_value.test",
+				ResourceName:            "pagerduty_service_custom_field_value.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"custom_fields"},
@@ -70,7 +70,7 @@ func TestAccPagerDutyCustomFieldValue_Basic(t *testing.T) {
 	})
 }
 
-func TestAccPagerDutyCustomFieldValue_Multiple(t *testing.T) {
+func TestAccPagerDutyServiceCustomFieldValue_Multiple(t *testing.T) {
 	serviceName := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	field1Name := fmt.Sprintf("tf_%s", acctest.RandString(5))
 	field1DisplayName := fmt.Sprintf("TF Test %s", acctest.RandString(5))
@@ -80,28 +80,28 @@ func TestAccPagerDutyCustomFieldValue_Multiple(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
-		CheckDestroy:             testAccCheckPagerDutyCustomFieldValueDestroy,
+		CheckDestroy:             testAccCheckPagerDutyServiceCustomFieldValueDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckPagerDutyCustomFieldValueConfigMultiple(serviceName, field1Name, field1DisplayName, field2Name, field2DisplayName),
+				Config: testAccCheckPagerDutyServiceCustomFieldValueConfigMultiple(serviceName, field1Name, field1DisplayName, field2Name, field2DisplayName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyCustomFieldValueExists("pagerduty_custom_field_value.test"),
+					testAccCheckPagerDutyServiceCustomFieldValueExists("pagerduty_service_custom_field_value.test"),
 					resource.TestCheckResourceAttrSet(
-						"pagerduty_custom_field_value.test", "id"),
+						"pagerduty_service_custom_field_value.test", "id"),
 					resource.TestCheckResourceAttrSet(
-						"pagerduty_custom_field_value.test", "service_id"),
+						"pagerduty_service_custom_field_value.test", "service_id"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_custom_field_value.test", "custom_fields.#", "2"),
+						"pagerduty_service_custom_field_value.test", "custom_fields.#", "2"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckPagerDutyCustomFieldValueDestroy(s *terraform.State) error {
+func testAccCheckPagerDutyServiceCustomFieldValueDestroy(s *terraform.State) error {
 	client := testAccProvider.client
 	for _, r := range s.RootModule().Resources {
-		if r.Type != "pagerduty_custom_field_value" {
+		if r.Type != "pagerduty_service_custom_field_value" {
 			continue
 		}
 
@@ -125,7 +125,7 @@ func testAccCheckPagerDutyCustomFieldValueDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckPagerDutyCustomFieldValueExists(n string) resource.TestCheckFunc {
+func testAccCheckPagerDutyServiceCustomFieldValueExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -152,7 +152,7 @@ func testAccCheckPagerDutyCustomFieldValueExists(n string) resource.TestCheckFun
 	}
 }
 
-func testAccCheckPagerDutyCustomFieldValueConfig(serviceName, fieldName, fieldDisplayName, fieldValue string) string {
+func testAccCheckPagerDutyServiceCustomFieldValueConfig(serviceName, fieldName, fieldDisplayName, fieldValue string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_team" "test" {
   name = "%s-team"
@@ -193,7 +193,7 @@ resource "pagerduty_service_custom_field" "test" {
   enabled      = true
 }
 
-resource "pagerduty_custom_field_value" "test" {
+resource "pagerduty_service_custom_field_value" "test" {
   service_id = pagerduty_service.test.id
   
   custom_fields {
@@ -206,7 +206,7 @@ resource "pagerduty_custom_field_value" "test" {
 `, serviceName, serviceName, serviceName, serviceName, serviceName, fieldName, fieldDisplayName, fieldValue)
 }
 
-func testAccCheckPagerDutyCustomFieldValueConfigUpdated(serviceName, fieldName, fieldDisplayName, fieldValue string) string {
+func testAccCheckPagerDutyServiceCustomFieldValueConfigUpdated(serviceName, fieldName, fieldDisplayName, fieldValue string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_team" "test" {
   name = "%s-team"
@@ -247,7 +247,7 @@ resource "pagerduty_service_custom_field" "test" {
   enabled      = true
 }
 
-resource "pagerduty_custom_field_value" "test" {
+resource "pagerduty_service_custom_field_value" "test" {
   service_id = pagerduty_service.test.id
   
   custom_fields {
@@ -260,7 +260,7 @@ resource "pagerduty_custom_field_value" "test" {
 `, serviceName, serviceName, serviceName, serviceName, serviceName, fieldName, fieldDisplayName, fieldValue)
 }
 
-func testAccCheckPagerDutyCustomFieldValueConfigMultiple(serviceName, field1Name, field1DisplayName, field2Name, field2DisplayName string) string {
+func testAccCheckPagerDutyServiceCustomFieldValueConfigMultiple(serviceName, field1Name, field1DisplayName, field2Name, field2DisplayName string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_team" "test" {
   name = "%s-team"
@@ -310,7 +310,7 @@ resource "pagerduty_service_custom_field" "test2" {
   enabled      = true
 }
 
-resource "pagerduty_custom_field_value" "test" {
+resource "pagerduty_service_custom_field_value" "test" {
   service_id = pagerduty_service.test.id
   
   custom_fields {

@@ -16,36 +16,36 @@ import (
 )
 
 var (
-	_ resource.Resource                = &CustomFieldValueResource{}
-	_ resource.ResourceWithConfigure   = &CustomFieldValueResource{}
-	_ resource.ResourceWithImportState = &CustomFieldValueResource{}
+	_ resource.Resource                = &ServiceCustomFieldValueResource{}
+	_ resource.ResourceWithConfigure   = &ServiceCustomFieldValueResource{}
+	_ resource.ResourceWithImportState = &ServiceCustomFieldValueResource{}
 )
 
-func NewCustomFieldValueResource() resource.Resource {
-	return &CustomFieldValueResource{}
+func serviceCustomFieldValueResource() resource.Resource {
+	return &ServiceCustomFieldValueResource{}
 }
 
-type CustomFieldValueResource struct {
+type ServiceCustomFieldValueResource struct {
 	client *pagerduty.Client
 }
 
-type CustomFieldValueResourceModel struct {
+type ServiceCustomFieldValueResourceModel struct {
 	ID           types.String `tfsdk:"id"`
 	ServiceID    types.String `tfsdk:"service_id"`
 	CustomFields types.List   `tfsdk:"custom_fields"`
 }
 
-type CustomFieldValueModel struct {
+type ServiceCustomFieldValueModel struct {
 	ID    types.String `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
 	Value types.String `tfsdk:"value"`
 }
 
-func (r *CustomFieldValueResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = "pagerduty_custom_field_value"
+func (r *ServiceCustomFieldValueResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = "pagerduty_service_custom_field_value"
 }
 
-func (r *CustomFieldValueResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *ServiceCustomFieldValueResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "A resource to manage PagerDuty Service Custom Field Values. Note: This is an Early Access feature that requires the X-EARLY-ACCESS header with service-custom-fields-preview value for all API operations.",
 		Attributes: map[string]schema.Attribute{
@@ -78,7 +78,7 @@ func (r *CustomFieldValueResource) Schema(_ context.Context, _ resource.SchemaRe
 	}
 }
 
-func (r *CustomFieldValueResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *ServiceCustomFieldValueResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -95,8 +95,8 @@ func (r *CustomFieldValueResource) Configure(_ context.Context, req resource.Con
 	r.client = client
 }
 
-func (r *CustomFieldValueResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan CustomFieldValueResourceModel
+func (r *ServiceCustomFieldValueResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan ServiceCustomFieldValueResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -105,7 +105,7 @@ func (r *CustomFieldValueResource) Create(ctx context.Context, req resource.Crea
 	serviceID := plan.ServiceID.ValueString()
 
 	// Extract custom fields from plan
-	var customFieldModels []CustomFieldValueModel
+	var customFieldModels []ServiceCustomFieldValueModel
 	resp.Diagnostics.Append(plan.CustomFields.ElementsAs(ctx, &customFieldModels, false)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -163,8 +163,8 @@ func (r *CustomFieldValueResource) Create(ctx context.Context, req resource.Crea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *CustomFieldValueResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state CustomFieldValueResourceModel
+func (r *ServiceCustomFieldValueResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state ServiceCustomFieldValueResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -199,8 +199,8 @@ func (r *CustomFieldValueResource) Read(ctx context.Context, req resource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *CustomFieldValueResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan CustomFieldValueResourceModel
+func (r *ServiceCustomFieldValueResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan ServiceCustomFieldValueResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -209,7 +209,7 @@ func (r *CustomFieldValueResource) Update(ctx context.Context, req resource.Upda
 	serviceID := plan.ServiceID.ValueString()
 
 	// Extract custom fields from plan
-	var customFieldModels []CustomFieldValueModel
+	var customFieldModels []ServiceCustomFieldValueModel
 	resp.Diagnostics.Append(plan.CustomFields.ElementsAs(ctx, &customFieldModels, false)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -264,12 +264,12 @@ func (r *CustomFieldValueResource) Update(ctx context.Context, req resource.Upda
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *CustomFieldValueResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *ServiceCustomFieldValueResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// This is a no-op as there's no explicit delete operation for custom field values
 	// They are tied to the service and will be deleted when the service is deleted
 }
 
-func (r *CustomFieldValueResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *ServiceCustomFieldValueResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// The import ID is the service ID
 	resource.ImportStatePassthroughID(ctx, path.Root("service_id"), req, resp)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
@@ -292,9 +292,9 @@ func (r *CustomFieldValueResource) ImportState(ctx context.Context, req resource
 	resp.State = readResp.State
 }
 
-func (r *CustomFieldValueResource) mapResponseToModel(ctx context.Context, result *pagerduty.ListServiceCustomFieldValuesResponse, model *CustomFieldValueResourceModel) error {
+func (r *ServiceCustomFieldValueResource) mapResponseToModel(ctx context.Context, result *pagerduty.ListServiceCustomFieldValuesResponse, model *ServiceCustomFieldValueResourceModel) error {
 	// First, extract the current custom fields from the model to maintain the same order and selection
-	var currentFields []CustomFieldValueModel
+	var currentFields []ServiceCustomFieldValueModel
 	if !model.CustomFields.IsNull() {
 		diags := model.CustomFields.ElementsAs(ctx, &currentFields, false)
 		if diags.HasError() {
@@ -315,7 +315,7 @@ func (r *CustomFieldValueResource) mapResponseToModel(ctx context.Context, resul
 	}
 
 	// Update the current fields with values from the API response
-	updatedFields := make([]CustomFieldValueModel, 0, len(currentFields))
+	updatedFields := make([]ServiceCustomFieldValueModel, 0, len(currentFields))
 	for _, field := range currentFields {
 		updatedField := field
 

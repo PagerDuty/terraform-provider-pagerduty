@@ -88,7 +88,7 @@ resource "pagerduty_service_custom_field" "test" {
   description  = "Environment where this service is deployed"
 }
 
-resource "pagerduty_custom_field_value" "test" {
+resource "pagerduty_service_custom_field_value" "test" {
   service_id = pagerduty_service.test.id
   
   custom_fields {
@@ -99,7 +99,7 @@ resource "pagerduty_custom_field_value" "test" {
 
 data "pagerduty_service_custom_field_value" "test" {
   service_id = pagerduty_service.test.id
-  depends_on = [pagerduty_custom_field_value.test]
+  depends_on = [pagerduty_service_custom_field_value.test]
 }
 `, username, email, escalationPolicy, service, fieldName)
 }

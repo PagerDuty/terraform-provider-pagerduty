@@ -198,7 +198,7 @@ resource "pagerduty_service_custom_field_value" "test" {
   
   custom_fields {
     name  = pagerduty_service_custom_field.test.name
-    value = "%s"
+    value = jsonencode("%s")
   }
 
   depends_on = [pagerduty_service_custom_field.test]
@@ -252,7 +252,7 @@ resource "pagerduty_service_custom_field_value" "test" {
   
   custom_fields {
     name  = pagerduty_service_custom_field.test.name
-    value = "%s"
+    value = jsonencode("%s")
   }
 
   depends_on = [pagerduty_service_custom_field.test]
@@ -317,14 +317,14 @@ resource "pagerduty_service_custom_field_value" "test" {
     # ID is computed and will be populated by the API
     id    = null
     name  = pagerduty_service_custom_field.test1.name
-    value = "value1"
+    value = jsonencode("value1")
   }
   
   custom_fields {
     # ID is computed and will be populated by the API
     id    = null
     name  = pagerduty_service_custom_field.test2.name
-    value = "value2"
+    value = jsonencode("value2")
   }
 
   depends_on = [

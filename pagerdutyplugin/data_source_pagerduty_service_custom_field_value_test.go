@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -45,6 +46,25 @@ func testAccDataSourcePagerDutyServiceCustomFieldValue(n string) resource.TestCh
 
 		if a["custom_fields.#"] == "0" {
 			return fmt.Errorf("Expected to get at least one custom field value")
+		}
+
+		// Verify the environment field exists and has the expected value
+		foundEnvironmentField := false
+		count, _ := strconv.Atoi(a["custom_fields.#"])
+		for i := 0; i < count; i++ {
+			name := a[fmt.Sprintf("custom_fields.%d.name", i)]
+			if name == "environment" {
+				foundEnvironmentField = true
+				value := a[fmt.Sprintf("custom_fields.%d.value", i)]
+				if value == "" {
+					return fmt.Errorf("Expected environment field to have a value")
+				}
+				break
+			}
+		}
+
+		if !foundEnvironmentField {
+			return fmt.Errorf("Expected to find environment field in custom fields")
 		}
 
 		return nil
@@ -93,7 +113,7 @@ resource "pagerduty_service_custom_field_value" "test" {
   
   custom_fields {
     name  = pagerduty_service_custom_field.test.name
-    value = "production"
+    value = jsonencode("production")
   }
 }
 

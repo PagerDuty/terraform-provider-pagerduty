@@ -2,12 +2,14 @@ package pagerduty
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -48,7 +50,7 @@ func (*dataSourceServiceCustomFieldValue) Schema(ctx context.Context, req dataso
 						"data_type":    types.StringType,
 						"field_type":   types.StringType,
 						"type":         types.StringType,
-						"value":        types.StringType,
+						"value":        jsontypes.NormalizedType{},
 					},
 				},
 			},
@@ -93,8 +95,16 @@ func (d *dataSourceServiceCustomFieldValue) Read(ctx context.Context, req dataso
 	// Create custom field objects
 	customFieldsList := []dataSourceServiceCustomFieldValueItemModel{}
 	for _, field := range result.CustomFields {
-		// Convert the value to string representation
-		valueStr := formatFieldValue(field.Value)
+		// Initialize with null value
+		value := jsontypes.NewNormalizedNull()
+
+		// Only set the value if it's not nil
+		if field.Value != nil {
+			buf, err := json.Marshal(field.Value)
+			if err == nil {
+				value = jsontypes.NewNormalizedValue(string(buf))
+			}
+		}
 
 		customFieldsList = append(customFieldsList, dataSourceServiceCustomFieldValueItemModel{
 			ID:          types.StringValue(field.ID),
@@ -104,7 +114,7 @@ func (d *dataSourceServiceCustomFieldValue) Read(ctx context.Context, req dataso
 			DataType:    types.StringValue(string(field.DataType)),
 			FieldType:   types.StringValue(string(field.FieldType)),
 			Type:        types.StringValue(field.Type),
-			Value:       types.StringValue(valueStr),
+			Value:       value,
 		})
 	}
 
@@ -118,7 +128,7 @@ func (d *dataSourceServiceCustomFieldValue) Read(ctx context.Context, req dataso
 			"data_type":    types.StringType,
 			"field_type":   types.StringType,
 			"type":         types.StringType,
-			"value":        types.StringType,
+			"value":        jsontypes.NormalizedType{},
 		},
 	}, customFieldsList)
 
@@ -136,33 +146,6 @@ func (d *dataSourceServiceCustomFieldValue) Read(ctx context.Context, req dataso
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
-// formatFieldValue converts a field value of any type to a string representation
-func formatFieldValue(value interface{}) string {
-	if value == nil {
-		return ""
-	}
-
-	switch v := value.(type) {
-	case string:
-		return v
-	case []interface{}:
-		// For multi-value fields, convert to comma-separated string
-		values := make([]string, 0, len(v))
-		for _, val := range v {
-			values = append(values, fmt.Sprintf("%v", val))
-		}
-		return fmt.Sprintf("%v", values)
-	case map[string]interface{}:
-		// For complex value types with nested value field
-		if val, ok := v["value"]; ok {
-			return fmt.Sprintf("%v", val)
-		}
-		return fmt.Sprintf("%v", v)
-	default:
-		return fmt.Sprintf("%v", v)
-	}
-}
-
 type dataSourceServiceCustomFieldValueModel struct {
 	ID           types.String `tfsdk:"id"`
 	ServiceID    types.String `tfsdk:"service_id"`
@@ -170,12 +153,12 @@ type dataSourceServiceCustomFieldValueModel struct {
 }
 
 type dataSourceServiceCustomFieldValueItemModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	DisplayName types.String `tfsdk:"display_name"`
-	Description types.String `tfsdk:"description"`
-	DataType    types.String `tfsdk:"data_type"`
-	FieldType   types.String `tfsdk:"field_type"`
-	Type        types.String `tfsdk:"type"`
-	Value       types.String `tfsdk:"value"`
+	ID          types.String         `tfsdk:"id"`
+	Name        types.String         `tfsdk:"name"`
+	DisplayName types.String         `tfsdk:"display_name"`
+	Description types.String         `tfsdk:"description"`
+	DataType    types.String         `tfsdk:"data_type"`
+	FieldType   types.String         `tfsdk:"field_type"`
+	Type        types.String         `tfsdk:"type"`
+	Value       jsontypes.Normalized `tfsdk:"value"`
 }

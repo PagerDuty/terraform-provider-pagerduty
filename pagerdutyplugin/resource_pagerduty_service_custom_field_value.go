@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -36,9 +37,9 @@ type ServiceCustomFieldValueResourceModel struct {
 }
 
 type ServiceCustomFieldValueModel struct {
-	ID    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Value types.String `tfsdk:"value"`
+	ID    types.String         `tfsdk:"id"`
+	Name  types.String         `tfsdk:"name"`
+	Value jsontypes.Normalized `tfsdk:"value"`
 }
 
 func (r *ServiceCustomFieldValueResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -70,7 +71,7 @@ func (r *ServiceCustomFieldValueResource) Schema(_ context.Context, _ resource.S
 					AttrTypes: map[string]attr.Type{
 						"id":    types.StringType,
 						"name":  types.StringType,
-						"value": types.StringType,
+						"value": jsontypes.NormalizedType{},
 					},
 				},
 			},
@@ -365,7 +366,7 @@ func (r *ServiceCustomFieldValueResource) mapResponseToModel(ctx context.Context
 
 			// Only update the value if it's not nil or empty
 			if valueStr != "<nil>" && valueStr != "" {
-				updatedField.Value = types.StringValue(valueStr)
+				updatedField.Value = jsontypes.NewNormalizedValue(valueStr)
 			}
 		}
 
@@ -377,7 +378,7 @@ func (r *ServiceCustomFieldValueResource) mapResponseToModel(ctx context.Context
 		AttrTypes: map[string]attr.Type{
 			"id":    types.StringType,
 			"name":  types.StringType,
-			"value": types.StringType,
+			"value": jsontypes.NormalizedType{},
 		},
 	}, updatedFields)
 

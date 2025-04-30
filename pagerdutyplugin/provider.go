@@ -66,6 +66,7 @@ func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSourc
 		func() datasource.DataSource { return &dataSourcePriority{} },
 		func() datasource.DataSource { return &dataSourceSchedule{} },
 		func() datasource.DataSource { return &dataSourceServiceCustomField{} },
+		func() datasource.DataSource { return &dataSourceServiceCustomFieldValue{} },
 		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourcesScores{} },

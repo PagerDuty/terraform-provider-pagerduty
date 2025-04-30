@@ -82,6 +82,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceAddon{} },
 		func() resource.Resource { return &resourceAlertGroupingSetting{} },
 		func() resource.Resource { return &resourceBusinessService{} },
+		func() resource.Resource { return NewCustomFieldValueResource() },
 		func() resource.Resource { return &resourceExtensionServiceNow{} },
 		func() resource.Resource { return &resourceExtension{} },
 		func() resource.Resource { return &resourceIncidentTypeCustomField{} },

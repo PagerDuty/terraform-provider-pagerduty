@@ -176,12 +176,8 @@ func (c *Client) UpdateServiceCustomField(ctx context.Context, field *ServiceCus
 
 // DeleteServiceCustomField deletes a custom field for services
 func (c *Client) DeleteServiceCustomField(ctx context.Context, id string) error {
-	// Note: The X-EARLY-ACCESS header is required for this API but the delete method doesn't accept headers
-	// This is a known limitation in the current client implementation
-	headers := map[string]string{
-		"X-EARLY-ACCESS": "service-custom-fields-preview",
-	}
-
+	// Set the required X-EARLY-ACCESS header for this API
+	headers := map[string]string{"X-EARLY-ACCESS": "service-custom-fields-preview"}
 	_, err := c.deleteWithHeaders(ctx, "/services/custom_fields/"+id, headers)
 	return err
 }

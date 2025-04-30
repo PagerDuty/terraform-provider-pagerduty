@@ -1,4 +1,4 @@
-# github.com/PagerDuty/go-pagerduty v1.8.1-0.20250113202017-9831333ebe6b
+# github.com/PagerDuty/go-pagerduty v1.8.1-0.20250113202017-9831333ebe6b => github.com/imjaroiswebdev/go-pagerduty-cli v0.0.0-20250430212524-e49c51bbb53a
 ## explicit; go 1.19
 github.com/PagerDuty/go-pagerduty
 # github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
@@ -561,3 +561,4 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/ini.v1 v1.67.0
 ## explicit
 gopkg.in/ini.v1
+# github.com/PagerDuty/go-pagerduty => github.com/imjaroiswebdev/go-pagerduty-cli v0.0.0-20250430212524-e49c51bbb53a

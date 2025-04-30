@@ -2,10 +2,13 @@ package pagerduty
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -13,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -22,29 +26,26 @@ var (
 	_ resource.ResourceWithImportState = &ServiceCustomFieldResource{}
 )
 
-func NewServiceCustomFieldResource() resource.Resource {
-	return &ServiceCustomFieldResource{}
-}
-
 type ServiceCustomFieldResource struct {
 	client *pagerduty.Client
 }
 
 type ServiceCustomFieldResourceModel struct {
-	ID           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	DisplayName  types.String `tfsdk:"display_name"`
-	Description  types.String `tfsdk:"description"`
-	DataType     types.String `tfsdk:"data_type"`
-	FieldType    types.String `tfsdk:"field_type"`
-	DefaultValue types.String `tfsdk:"default_value"`
-	Enabled      types.Bool   `tfsdk:"enabled"`
-	FieldOptions types.List   `tfsdk:"field_options"`
+	ID           types.String         `tfsdk:"id"`
+	Name         types.String         `tfsdk:"name"`
+	DisplayName  types.String         `tfsdk:"display_name"`
+	Description  types.String         `tfsdk:"description"`
+	DataType     types.String         `tfsdk:"data_type"`
+	FieldType    types.String         `tfsdk:"field_type"`
+	DefaultValue jsontypes.Normalized `tfsdk:"default_value"`
+	Enabled      types.Bool           `tfsdk:"enabled"`
+	FieldOptions types.List           `tfsdk:"field_option"`
 }
 
 type ServiceCustomFieldOptionModel struct {
-	ID    types.String `tfsdk:"id"`
-	Value types.String `tfsdk:"value"`
+	ID       types.String `tfsdk:"id"`
+	Value    types.String `tfsdk:"value"`
+	DataType types.String `tfsdk:"data_type"`
 }
 
 func (r *ServiceCustomFieldResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -94,6 +95,7 @@ func (r *ServiceCustomFieldResource) Schema(_ context.Context, _ resource.Schema
 			"default_value": schema.StringAttribute{
 				Description: "Default value for the field.",
 				Optional:    true,
+				CustomType:  jsontypes.NormalizedType{},
 			},
 			"enabled": schema.BoolAttribute{
 				Description: "Whether the field is enabled.",
@@ -101,13 +103,23 @@ func (r *ServiceCustomFieldResource) Schema(_ context.Context, _ resource.Schema
 				Computed:    true,
 				Default:     booldefault.StaticBool(true),
 			},
-			"field_options": schema.ListAttribute{
+		},
+		Blocks: map[string]schema.Block{
+			"field_option": schema.ListNestedBlock{
 				Description: "The options for the custom field. Applies only to `single_value_fixed` and `multi_value_fixed` field types.",
-				Optional:    true,
-				ElementType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":    types.StringType,
-						"value": types.StringType,
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Computed:      true,
+							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						},
+						"data_type": schema.StringAttribute{
+							Required:   true,
+							Validators: []validator.String{stringvalidator.OneOf("string")},
+						},
+						"value": schema.StringAttribute{
+							Required: true,
+						},
 					},
 				},
 			},
@@ -152,7 +164,17 @@ func (r *ServiceCustomFieldResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	if !plan.DefaultValue.IsNull() {
-		field.DefaultValue = plan.DefaultValue.ValueString()
+		var v any
+		err := json.Unmarshal([]byte(plan.DefaultValue.ValueString()), &v)
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("default_value"),
+				"Invalid value",
+				"Invalid JSON string: "+err.Error(),
+			)
+			return
+		}
+		field.DefaultValue = v
 	}
 
 	if !plan.FieldOptions.IsNull() {
@@ -199,39 +221,30 @@ func (r *ServiceCustomFieldResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	if createdField.DefaultValue != nil {
-		defaultValueStr := fmt.Sprintf("%v", createdField.DefaultValue)
-		plan.DefaultValue = types.StringValue(defaultValueStr)
+		buf, _ := json.Marshal(createdField.DefaultValue)
+		plan.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
 	} else {
-		plan.DefaultValue = types.StringNull()
+		plan.DefaultValue = jsontypes.NewNormalizedNull()
 	}
 
 	if len(createdField.FieldOptions) > 0 {
 		fieldOptions := make([]ServiceCustomFieldOptionModel, 0, len(createdField.FieldOptions))
 		for _, option := range createdField.FieldOptions {
 			fieldOptions = append(fieldOptions, ServiceCustomFieldOptionModel{
-				ID:    types.StringValue(option.ID),
-				Value: types.StringValue(option.Data.Value),
+				ID:       types.StringValue(option.ID),
+				Value:    types.StringValue(option.Data.Value),
+				DataType: types.StringValue(string(option.Data.DataType)),
 			})
 		}
 
-		fieldOptionsList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":    types.StringType,
-				"value": types.StringType,
-			},
-		}, fieldOptions)
+		fieldOptionsList, diags := types.ListValueFrom(ctx, serviceCustomFieldObjectType, fieldOptions)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 		plan.FieldOptions = fieldOptionsList
 	} else {
-		plan.FieldOptions = types.ListNull(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":    types.StringType,
-				"value": types.StringType,
-			},
-		})
+		plan.FieldOptions = types.ListNull(serviceCustomFieldObjectType)
 	}
 
 	// Set state
@@ -277,39 +290,30 @@ func (r *ServiceCustomFieldResource) Read(ctx context.Context, req resource.Read
 	}
 
 	if field.DefaultValue != nil {
-		defaultValueStr := fmt.Sprintf("%v", field.DefaultValue)
-		state.DefaultValue = types.StringValue(defaultValueStr)
+		buf, _ := json.Marshal(field.DefaultValue)
+		state.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
 	} else {
-		state.DefaultValue = types.StringNull()
+		state.DefaultValue = jsontypes.NewNormalizedNull()
 	}
 
 	if len(field.FieldOptions) > 0 {
 		fieldOptions := make([]ServiceCustomFieldOptionModel, 0, len(field.FieldOptions))
 		for _, option := range field.FieldOptions {
 			fieldOptions = append(fieldOptions, ServiceCustomFieldOptionModel{
-				ID:    types.StringValue(option.ID),
-				Value: types.StringValue(option.Data.Value),
+				ID:       types.StringValue(option.ID),
+				Value:    types.StringValue(option.Data.Value),
+				DataType: types.StringValue(string(option.Data.DataType)),
 			})
 		}
 
-		fieldOptionsList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":    types.StringType,
-				"value": types.StringType,
-			},
-		}, fieldOptions)
+		fieldOptionsList, diags := types.ListValueFrom(ctx, serviceCustomFieldObjectType, fieldOptions)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 		state.FieldOptions = fieldOptionsList
 	} else {
-		state.FieldOptions = types.ListNull(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":    types.StringType,
-				"value": types.StringType,
-			},
-		})
+		state.FieldOptions = types.ListNull(serviceCustomFieldObjectType)
 	}
 
 	// Set state
@@ -336,7 +340,17 @@ func (r *ServiceCustomFieldResource) Update(ctx context.Context, req resource.Up
 	}
 
 	if !plan.DefaultValue.IsNull() {
-		field.DefaultValue = plan.DefaultValue.ValueString()
+		var v any
+		err := json.Unmarshal([]byte(plan.DefaultValue.ValueString()), &v)
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("default_value"),
+				"Invalid value",
+				"Invalid JSON string: "+err.Error(),
+			)
+			return
+		}
+		field.DefaultValue = v
 	}
 
 	if !plan.FieldOptions.IsNull() {
@@ -386,39 +400,30 @@ func (r *ServiceCustomFieldResource) Update(ctx context.Context, req resource.Up
 	}
 
 	if updatedField.DefaultValue != nil {
-		defaultValueStr := fmt.Sprintf("%v", updatedField.DefaultValue)
-		plan.DefaultValue = types.StringValue(defaultValueStr)
+		buf, _ := json.Marshal(updatedField.DefaultValue)
+		plan.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
 	} else {
-		plan.DefaultValue = types.StringNull()
+		plan.DefaultValue = jsontypes.NewNormalizedNull()
 	}
 
 	if len(updatedField.FieldOptions) > 0 {
 		fieldOptions := make([]ServiceCustomFieldOptionModel, 0, len(updatedField.FieldOptions))
 		for _, option := range updatedField.FieldOptions {
 			fieldOptions = append(fieldOptions, ServiceCustomFieldOptionModel{
-				ID:    types.StringValue(option.ID),
-				Value: types.StringValue(option.Data.Value),
+				ID:       types.StringValue(option.ID),
+				Value:    types.StringValue(option.Data.Value),
+				DataType: types.StringValue(string(option.Data.DataType)),
 			})
 		}
 
-		fieldOptionsList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":    types.StringType,
-				"value": types.StringType,
-			},
-		}, fieldOptions)
+		fieldOptionsList, diags := types.ListValueFrom(ctx, serviceCustomFieldObjectType, fieldOptions)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 		plan.FieldOptions = fieldOptionsList
 	} else {
-		plan.FieldOptions = types.ListNull(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":    types.StringType,
-				"value": types.StringType,
-			},
-		})
+		plan.FieldOptions = types.ListNull(serviceCustomFieldObjectType)
 	}
 
 	// Set state
@@ -444,4 +449,12 @@ func (r *ServiceCustomFieldResource) Delete(ctx context.Context, req resource.De
 
 func (r *ServiceCustomFieldResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+var serviceCustomFieldObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"id":        types.StringType,
+		"value":     types.StringType,
+		"data_type": types.StringType,
+	},
 }

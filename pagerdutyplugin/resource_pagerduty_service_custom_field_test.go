@@ -24,7 +24,7 @@ func testSweepServiceCustomField(_ string) error {
 	ctx := context.Background()
 
 	options := pagerduty.ListServiceCustomFieldsOptions{
-		Include: []string{"field_options"},
+		Include: []string{"field_option"},
 	}
 
 	resp, err := testAccProvider.client.ListServiceCustomFields(ctx, options)
@@ -52,6 +52,7 @@ func TestAccPagerDutyServiceCustomField_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceCustomFieldDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyServiceCustomFieldConfig(name, displayName),
@@ -84,7 +85,7 @@ func TestAccPagerDutyServiceCustomField_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_custom_field.test", "description", "Updated test service custom field"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_custom_field.test", "enabled", "true"),
+						"pagerduty_service_custom_field.test", "enabled", "false"),
 				),
 			},
 			{
@@ -116,9 +117,9 @@ func TestAccPagerDutyServiceCustomField_WithOptions(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_custom_field.test_options", "field_type", "single_value_fixed"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_custom_field.test_options", "field_options.#", "3"),
+						"pagerduty_service_custom_field.test_options", "field_option.#", "3"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_custom_field.test_options", "default_value", "production"),
+						"pagerduty_service_custom_field.test_options", "default_value", `"production"`),
 				),
 			},
 			{
@@ -126,9 +127,9 @@ func TestAccPagerDutyServiceCustomField_WithOptions(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerDutyServiceCustomFieldExists("pagerduty_service_custom_field.test_options"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_custom_field.test_options", "field_options.#", "4"),
+						"pagerduty_service_custom_field.test_options", "field_option.#", "4"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_custom_field.test_options", "default_value", "staging"),
+						"pagerduty_service_custom_field.test_options", "default_value", `"staging"`),
 				),
 			},
 			{
@@ -160,7 +161,32 @@ func TestAccPagerDutyServiceCustomField_MultiValueFixed(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_custom_field.test_multi", "field_type", "multi_value_fixed"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_custom_field.test_multi", "field_options.#", "3"),
+						"pagerduty_service_custom_field.test_multi", "field_option.#", "2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "field_option.0.value", "us-east-1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "field_option.1.value", "us-west-1"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceCustomFieldConfigMultiValueFixedUpdated(name, displayName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "name", name),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "display_name", displayName),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "data_type", "string"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "field_type", "multi_value_fixed"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "field_option.#", "3"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "field_option.0.value", "us-east-1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "field_option.1.value", "us-east-2"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test_multi", "field_option.2.value", "us-west-2"),
 				),
 			},
 		},
@@ -229,7 +255,7 @@ func testAccCheckPagerDutyServiceCustomFieldDestroy(s *terraform.State) error {
 
 		ctx := context.Background()
 		options := pagerduty.ListServiceCustomFieldsOptions{
-			Include: []string{"field_options"},
+			Include: []string{"field_option"},
 		}
 
 		_, err := testAccProvider.client.GetServiceCustomField(ctx, r.Primary.ID, options)
@@ -253,7 +279,7 @@ func testAccCheckPagerDutyServiceCustomFieldExists(n string) resource.TestCheckF
 
 		ctx := context.Background()
 		options := pagerduty.ListServiceCustomFieldsOptions{
-			Include: []string{"field_options"},
+			Include: []string{"field_option"},
 		}
 
 		found, err := testAccProvider.client.GetServiceCustomField(ctx, rs.Primary.ID, options)
@@ -277,7 +303,6 @@ resource "pagerduty_service_custom_field" "test" {
   data_type    = "string"
   field_type   = "single_value"
   description  = "Test service custom field"
-  enabled      = true
 }
 `, name, displayName)
 }
@@ -290,7 +315,7 @@ resource "pagerduty_service_custom_field" "test" {
   data_type    = "string"
   field_type   = "single_value"
   description  = "Updated test service custom field"
-  enabled      = true
+  enabled      = false
 }
 `, name, displayName)
 }
@@ -304,18 +329,21 @@ resource "pagerduty_service_custom_field" "test_options" {
   field_type   = "single_value_fixed"
   description  = "Test service custom field with options"
   enabled      = true
-  default_value = "production"
-  
-  field_options {
+  default_value = jsonencode("production")
+
+  field_option {
     value = "production"
+    data_type = "string"
   }
-  
-  field_options {
+
+  field_option {
     value = "staging"
+    data_type = "string"
   }
-  
-  field_options {
+
+  field_option {
     value = "development"
+    data_type = "string"
   }
 }
 `, name, displayName)
@@ -330,21 +358,25 @@ resource "pagerduty_service_custom_field" "test_options" {
   field_type   = "single_value_fixed"
   description  = "Test service custom field with options"
   enabled      = true
-  default_value = "staging"
-  
-  field_options {
+  default_value = jsonencode("staging")
+
+  field_option {
+    data_type = "string"
     value = "production"
   }
-  
-  field_options {
+
+  field_option {
+    data_type = "string"
     value = "staging"
   }
-  
-  field_options {
+
+  field_option {
+    data_type = "string"
     value = "development"
   }
-  
-  field_options {
+
+  field_option {
+    data_type = "string"
     value = "testing"
   }
 }
@@ -360,17 +392,43 @@ resource "pagerduty_service_custom_field" "test_multi" {
   field_type   = "multi_value_fixed"
   description  = "Test multi-value fixed service custom field"
   enabled      = true
-  
-  field_options {
+
+  field_option {
     value = "us-east-1"
+    data_type = "string"
   }
-  
-  field_options {
+
+  field_option {
     value = "us-west-1"
+    data_type = "string"
   }
-  
-  field_options {
-    value = "eu-west-1"
+}
+`, name, displayName)
+}
+
+func testAccCheckPagerDutyServiceCustomFieldConfigMultiValueFixedUpdated(name, displayName string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_service_custom_field" "test_multi" {
+  name         = "%s"
+  display_name = "%s"
+  data_type    = "string"
+  field_type   = "multi_value_fixed"
+  description  = "Test multi-value fixed service custom field"
+  enabled      = true
+
+  field_option {
+    value = "us-east-1"
+    data_type = "string"
+  }
+
+  field_option {
+    value = "us-east-2"
+    data_type = "string"
+  }
+
+  field_option {
+    value = "us-west-2"
+    data_type = "string"
   }
 }
 `, name, displayName)
@@ -379,13 +437,13 @@ resource "pagerduty_service_custom_field" "test_multi" {
 func testAccCheckPagerDutyServiceCustomFieldConfigBooleanType(name, displayName string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_service_custom_field" "test_boolean" {
-  name         = "%s"
-  display_name = "%s"
-  data_type    = "boolean"
-  field_type   = "single_value"
-  description  = "Test boolean service custom field"
-  default_value = "true"
-  enabled      = true
+  name          = "%s"
+  display_name  = "%s"
+  data_type     = "boolean"
+  field_type    = "single_value"
+  description   = "Test boolean service custom field"
+  default_value = jsonencode(true)
+  enabled       = true
 }
 `, name, displayName)
 }
@@ -393,13 +451,13 @@ resource "pagerduty_service_custom_field" "test_boolean" {
 func testAccCheckPagerDutyServiceCustomFieldConfigIntegerType(name, displayName string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_service_custom_field" "test_integer" {
-  name         = "%s"
-  display_name = "%s"
-  data_type    = "integer"
-  field_type   = "single_value"
-  description  = "Test integer service custom field"
-  default_value = "42"
-  enabled      = true
+  name          = "%s"
+  display_name  = "%s"
+  data_type     = "integer"
+  field_type    = "single_value"
+  description   = "Test integer service custom field"
+  default_value = jsonencode(42)
+  enabled       = true
 }
 `, name, displayName)
 }

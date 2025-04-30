@@ -30,24 +30,6 @@ type ServiceCustomFieldResource struct {
 	client *pagerduty.Client
 }
 
-type ServiceCustomFieldResourceModel struct {
-	ID           types.String         `tfsdk:"id"`
-	Name         types.String         `tfsdk:"name"`
-	DisplayName  types.String         `tfsdk:"display_name"`
-	Description  types.String         `tfsdk:"description"`
-	DataType     types.String         `tfsdk:"data_type"`
-	FieldType    types.String         `tfsdk:"field_type"`
-	DefaultValue jsontypes.Normalized `tfsdk:"default_value"`
-	Enabled      types.Bool           `tfsdk:"enabled"`
-	FieldOptions types.List           `tfsdk:"field_option"`
-}
-
-type ServiceCustomFieldOptionModel struct {
-	ID       types.String `tfsdk:"id"`
-	Value    types.String `tfsdk:"value"`
-	DataType types.String `tfsdk:"data_type"`
-}
-
 func (r *ServiceCustomFieldResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "pagerduty_service_custom_field"
 }
@@ -57,11 +39,9 @@ func (r *ServiceCustomFieldResource) Schema(_ context.Context, _ resource.Schema
 		Description: "A resource to manage PagerDuty Service Custom Fields. Note: This is an Early Access feature that requires the X-EARLY-ACCESS header with service-custom-fields-preview value for all API operations.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "The ID of the resource.",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Description:   "The ID of the resource.",
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the field. May include ASCII characters, specifically lowercase letters, digits, and underescores. The `name` for a Field must be unique and cannot be changed once created.",
@@ -77,6 +57,21 @@ func (r *ServiceCustomFieldResource) Schema(_ context.Context, _ resource.Schema
 			"description": schema.StringAttribute{
 				Description: "A description of the data this field contains.",
 				Optional:    true,
+			},
+			"summary": schema.StringAttribute{
+				Description:   "A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to display_name",
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"type": schema.StringAttribute{
+				Description:   "API object type",
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"self": schema.StringAttribute{
+				Description:   "The API show URL at which the object is accessible",
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"data_type": schema.StringAttribute{
 				Description: "The kind of data the custom field is allowed to contain.",
@@ -213,6 +208,9 @@ func (r *ServiceCustomFieldResource) Create(ctx context.Context, req resource.Cr
 	plan.DataType = types.StringValue(string(createdField.DataType))
 	plan.FieldType = types.StringValue(string(createdField.FieldType))
 	plan.Enabled = types.BoolValue(createdField.Enabled)
+	plan.Summary = types.StringValue(createdField.Summary)
+	plan.Type = types.StringValue(createdField.Type)
+	plan.Self = types.StringValue(createdField.Self)
 
 	if createdField.Description != "" {
 		plan.Description = types.StringValue(createdField.Description)
@@ -282,6 +280,9 @@ func (r *ServiceCustomFieldResource) Read(ctx context.Context, req resource.Read
 	state.DataType = types.StringValue(string(field.DataType))
 	state.FieldType = types.StringValue(string(field.FieldType))
 	state.Enabled = types.BoolValue(field.Enabled)
+	state.Summary = types.StringValue(field.Summary)
+	state.Type = types.StringValue(field.Type)
+	state.Self = types.StringValue(field.Self)
 
 	if field.Description != "" {
 		state.Description = types.StringValue(field.Description)
@@ -392,6 +393,9 @@ func (r *ServiceCustomFieldResource) Update(ctx context.Context, req resource.Up
 	plan.DataType = types.StringValue(string(updatedField.DataType))
 	plan.FieldType = types.StringValue(string(updatedField.FieldType))
 	plan.Enabled = types.BoolValue(updatedField.Enabled)
+	plan.Summary = types.StringValue(updatedField.Summary)
+	plan.Type = types.StringValue(updatedField.Type)
+	plan.Self = types.StringValue(updatedField.Self)
 
 	if updatedField.Description != "" {
 		plan.Description = types.StringValue(updatedField.Description)
@@ -457,4 +461,25 @@ var serviceCustomFieldObjectType = types.ObjectType{
 		"value":     types.StringType,
 		"data_type": types.StringType,
 	},
+}
+
+type ServiceCustomFieldResourceModel struct {
+	ID           types.String         `tfsdk:"id"`
+	Name         types.String         `tfsdk:"name"`
+	DisplayName  types.String         `tfsdk:"display_name"`
+	Description  types.String         `tfsdk:"description"`
+	Summary      types.String         `tfsdk:"summary"`
+	Type         types.String         `tfsdk:"type"`
+	Self         types.String         `tfsdk:"self"`
+	DataType     types.String         `tfsdk:"data_type"`
+	FieldType    types.String         `tfsdk:"field_type"`
+	DefaultValue jsontypes.Normalized `tfsdk:"default_value"`
+	Enabled      types.Bool           `tfsdk:"enabled"`
+	FieldOptions types.List           `tfsdk:"field_option"`
+}
+
+type ServiceCustomFieldOptionModel struct {
+	ID       types.String `tfsdk:"id"`
+	Value    types.String `tfsdk:"value"`
+	DataType types.String `tfsdk:"data_type"`
 }

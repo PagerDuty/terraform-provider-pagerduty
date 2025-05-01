@@ -1,3 +1,12 @@
+## v3.25.0 (April 30, 2025)
+
+FEATURES:
+* add support for service custom fields ([1011](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1011))
+    - `data/pagerduty_service_custom_field`
+    - `data/pagerduty_service_custom_field_value`
+    - `resource/pagerduty_service_custom_field`
+    - `resource/pagerduty_service_custom_field_value`
+
 ## v3.24.2 (April 22, 2025)
 
 BUG FIXES:

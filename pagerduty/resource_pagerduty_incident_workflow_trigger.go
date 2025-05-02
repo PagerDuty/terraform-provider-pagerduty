@@ -277,7 +277,14 @@ func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) 
 		iwt.Services = buildIncidentWorkflowTriggerServices(services)
 	}
 
-	if condition, ok := d.GetOk("condition"); ok {
+	// Special handling for condition to support empty string conditions
+	// GetOk won't return true for empty strings, but we need to set them
+	// for conditional triggers that execute on incident creation
+	triggerType := d.Get("type").(string)
+	if triggerType == "conditional" {
+		condStr := d.Get("condition").(string)
+		iwt.Condition = &condStr
+	} else if condition, ok := d.GetOk("condition"); ok {
 		condStr := condition.(string)
 		iwt.Condition = &condStr
 	}

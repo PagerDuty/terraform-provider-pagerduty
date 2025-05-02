@@ -519,3 +519,28 @@ func testAccCheckPagerDutyIncidentWorkflowTriggerExists(n string) resource.TestC
 		return nil
 	}
 }
+
+func TestBuildIncidentWorkflowTriggerStruct_HandlesEmptyCondition(t *testing.T) {
+	r := resourcePagerDutyIncidentWorkflowTrigger()
+	d := r.Data(nil)
+
+	d.Set("type", "conditional")
+	d.Set("workflow", "DUMMY_WORKFLOW_ID")
+	d.Set("condition", "")
+	d.Set("subscribed_to_all_services", true)
+
+	triggerStruct, err := buildIncidentWorkflowTriggerStruct(d, true)
+	if err != nil {
+		t.Fatalf("Error building incident workflow trigger struct: %v", err)
+	}
+
+	if triggerStruct.Condition == nil {
+		t.Error("Expected condition to be an empty string, got nil")
+	} else if *triggerStruct.Condition != "" {
+		t.Errorf("Expected condition to be an empty string, got %q", *triggerStruct.Condition)
+	}
+
+	if triggerStruct.TriggerType != pagerduty.IncidentWorkflowTriggerTypeConditional {
+		t.Errorf("Expected trigger type to be conditional, got %s", triggerStruct.TriggerType.String())
+	}
+}

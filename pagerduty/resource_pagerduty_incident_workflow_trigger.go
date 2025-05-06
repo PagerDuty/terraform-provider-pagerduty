@@ -262,6 +262,8 @@ func flattenIncidentWorkflowEnabledServices(s []*pagerduty.ServiceReference) []s
 }
 
 func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) (*pagerduty.IncidentWorkflowTrigger, error) {
+	triggerType := d.Get("type").(string)
+
 	iwt := pagerduty.IncidentWorkflowTrigger{
 		SubscribedToAllServices: d.Get("subscribed_to_all_services").(bool),
 	}
@@ -270,7 +272,7 @@ func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) 
 		iwt.Workflow = &pagerduty.IncidentWorkflow{
 			ID: d.Get("workflow").(string),
 		}
-		iwt.TriggerType = pagerduty.IncidentWorkflowTriggerTypeFromString(d.Get("type").(string))
+		iwt.TriggerType = pagerduty.IncidentWorkflowTriggerTypeFromString(triggerType)
 	}
 
 	if services, ok := d.GetOk("services"); ok {
@@ -280,7 +282,6 @@ func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) 
 	// Special handling for condition to support empty string conditions
 	// GetOk won't return true for empty strings, but we need to set them
 	// for conditional triggers that execute on incident creation
-	triggerType := d.Get("type").(string)
 	if triggerType == "conditional" {
 		condStr := d.Get("condition").(string)
 		iwt.Condition = &condStr

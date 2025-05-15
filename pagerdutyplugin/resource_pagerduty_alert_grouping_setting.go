@@ -218,26 +218,49 @@ func (r *resourceAlertGroupingSetting) Create(ctx context.Context, req resource.
 
 func (r *resourceAlertGroupingSetting) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var id types.String
+	var expected resourceAlertGroupingSettingModel
 
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &id)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &expected)...) // Get expected state
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &id)...) // Get ID
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	log.Printf("[INFO] Reading PagerDuty alert grouping setting %s", id)
 
-	state, err := requestGetAlertGroupingSetting(ctx, r.client, id.ValueString(), false)
-	if err != nil {
-		if util.IsNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
+	const maxRetries = 6
+	const retryInterval = 10 * time.Second
+	var lastErr error
+
+	for i := 0; i < maxRetries; i++ {
+		state, err := requestGetAlertGroupingSetting(ctx, r.client, id.ValueString(), false)
+		if err != nil {
+			if util.IsNotFoundError(err) {
+				resp.State.RemoveResource(ctx)
+				return
+			}
+			lastErr = err
+			log.Printf("[WARN] Error reading alert grouping setting (attempt %d/%d): %v", i+1, maxRetries, err)
+			time.Sleep(retryInterval)
+			continue
+		}
+
+		if isAlertGroupingConfigConsistent(ctx, &expected, &state) {
+			resp.Diagnostics.Append(resp.State.Set(ctx, state)...) // Only update state if config is consistent
 			return
 		}
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Error reading PagerDuty alert grouping setting %s", id),
-			err.Error(),
-		)
-		return
+		log.Printf("[WARN] Inconsistent config from PagerDuty API for alert grouping setting %s (attempt %d/%d). Retrying...", id.ValueString(), i+1, maxRetries)
+		time.Sleep(retryInterval)
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+
+	msg := "PagerDuty API returned inconsistent or incomplete alert grouping setting config after retries. Keeping last known good state. Manual intervention may be required."
+	log.Printf("[ERROR] %s ID=%s", msg, id.ValueString())
+	resp.Diagnostics.AddWarning("PagerDuty API inconsistency", msg)
+	if lastErr != nil {
+		resp.Diagnostics.AddError("Last error from PagerDuty API", lastErr.Error())
+	}
 }
 
 func (r *resourceAlertGroupingSetting) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -579,4 +602,24 @@ func (r *resourceAlertGroupingSetting) UsesTimeout(ctx context.Context, s Schema
 
 	t := pagerduty.AlertGroupingSettingType(typeValue.ValueString())
 	return t == pagerduty.AlertGroupingSettingTimeType
+}
+
+// isAlertGroupingConfigConsistent compares the expected and actual alert grouping config.
+func isAlertGroupingConfigConsistent(ctx context.Context, expected, actual *resourceAlertGroupingSettingModel) bool {
+	if expected == nil || actual == nil {
+		return false
+	}
+	// Compare Type
+	if !expected.Type.Equal(actual.Type) {
+		return false
+	}
+	// Compare Config (object)
+	if !expected.Config.Equal(actual.Config) {
+		return false
+	}
+	// Compare Services
+	if !expected.Services.Equal(actual.Services) {
+		return false
+	}
+	return true
 }

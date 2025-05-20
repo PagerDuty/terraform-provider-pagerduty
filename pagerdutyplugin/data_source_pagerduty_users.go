@@ -65,18 +65,32 @@ func (d *dataSourceUsers) Read(ctx context.Context, req datasource.ReadRequest, 
 	for _, v := range teamIdStrings {
 		teamIds = append(teamIds, v.ValueString())
 	}
-	opts := pagerduty.ListUsersOptions{TeamIDs: teamIds}
 
 	var model dataSourceUsersModel
+	users := []pagerduty.User{}
+	offset := uint(0)
+	more := true
+
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		response, err := d.client.ListUsersWithContext(ctx, opts)
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
+		for more {
+			response, err := d.client.ListUsersWithContext(ctx, pagerduty.ListUsersOptions{
+				TeamIDs: teamIds,
+				Limit:   100,
+				Offset:  offset,
+			})
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
-			return retry.RetryableError(err)
+
+			more = response.More
+			offset += response.Limit
+			users = append(users, response.Users...)
 		}
-		model = flattenUsers(response.Users, list)
+
+		model = flattenUsers(users, list)
 		return nil
 	})
 	if err != nil {

@@ -1,3 +1,10 @@
+## v3.25.1 (May 20, 2025)
+
+BUG FIXES:
+
+* `data/pagerduty_users`: Fix pagination ([1013](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1013))
+* `resource/pagerduty_service_custom_field_value`: Fix value assignment for multi\_value\_fixed ([1020](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1020))
+
 ## v3.25.0 (April 30, 2025)
 
 FEATURES:

@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -131,7 +132,12 @@ func (r *ServiceCustomFieldValueResource) Create(ctx context.Context, req resour
 			return
 		}
 
-		customField.Value = field.Value.ValueString()
+		d := field.Value.Unmarshal(&customField.Value)
+		resp.Diagnostics.Append(d...)
+		if d.HasError() {
+			return
+		}
+
 		pdCustomFields = append(pdCustomFields, customField)
 	}
 
@@ -235,7 +241,12 @@ func (r *ServiceCustomFieldValueResource) Update(ctx context.Context, req resour
 			return
 		}
 
-		customField.Value = field.Value.ValueString()
+		d := field.Value.Unmarshal(&customField.Value)
+		resp.Diagnostics.Append(d...)
+		if d.HasError() {
+			return
+		}
+
 		pdCustomFields = append(pdCustomFields, customField)
 	}
 
@@ -342,32 +353,9 @@ func (r *ServiceCustomFieldValueResource) mapResponseToModel(ctx context.Context
 			}
 
 			// Format the value based on its type
-			var valueStr string
-			switch v := apiField.Value.(type) {
-			case string:
-				valueStr = v
-			case []interface{}:
-				// For multi-value fields, convert to comma-separated string
-				values := make([]string, 0, len(v))
-				for _, val := range v {
-					values = append(values, fmt.Sprintf("%v", val))
-				}
-				valueStr = strings.Join(values, ",")
-			case map[string]interface{}:
-				// For complex value types with nested value field
-				if val, ok := v["value"]; ok {
-					valueStr = fmt.Sprintf("%v", val)
-				} else {
-					valueStr = fmt.Sprintf("%v", v)
-				}
-			default:
-				valueStr = fmt.Sprintf("%v", v)
-			}
 
-			// Only update the value if it's not nil or empty
-			if valueStr != "<nil>" && valueStr != "" {
-				updatedField.Value = jsontypes.NewNormalizedValue(valueStr)
-			}
+			buf, _ := json.Marshal(apiField.Value)
+			updatedField.Value = jsontypes.NewNormalizedValue(string(buf))
 		}
 
 		updatedFields = append(updatedFields, updatedField)

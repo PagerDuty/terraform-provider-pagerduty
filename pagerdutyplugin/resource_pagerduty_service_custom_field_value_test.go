@@ -98,6 +98,33 @@ func TestAccPagerDutyServiceCustomFieldValue_Multiple(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyServiceCustomFieldValue_MultiValueFixed(t *testing.T) {
+	serviceName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	fieldName := fmt.Sprintf("tf_%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyServiceCustomFieldValueDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceCustomFieldValueConfigMultiValueFixed(serviceName, fieldName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceCustomFieldValueExists("pagerduty_service_custom_field_value.test"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_service_custom_field_value.test", "id"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_service_custom_field_value.test", "service_id"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field_value.test", "custom_fields.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field_value.test", "custom_fields.0.value", `["foo","qux"]`),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyServiceCustomFieldValueDestroy(s *terraform.State) error {
 	client := testAccProvider.client
 	for _, r := range s.RootModule().Resources {
@@ -333,4 +360,69 @@ resource "pagerduty_service_custom_field_value" "test" {
   ]
 }
 `, serviceName, serviceName, serviceName, serviceName, serviceName, field1Name, field1DisplayName, field2Name, field2DisplayName)
+}
+
+func testAccCheckPagerDutyServiceCustomFieldValueConfigMultiValueFixed(serviceName, fieldName string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_escalation_policy" "test" {
+  name      = "%s-policy"
+  num_loops = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.test.id
+    }
+  }
+}
+
+resource "pagerduty_user" "test" {
+  name  = "%s-user"
+  email = "%s@foo.test"
+}
+
+resource "pagerduty_service" "test" {
+  name                    = "%s"
+  auto_resolve_timeout    = 14400
+  acknowledgement_timeout = 600
+  escalation_policy       = pagerduty_escalation_policy.test.id
+}
+
+resource "pagerduty_service_custom_field" "test1" {
+  name         = "%s"
+  display_name = "%s"
+  data_type    = "string"
+  field_type   = "multi_value_fixed"
+  description  = "Test service custom field 1"
+  enabled      = true
+  field_option {
+    value = "foo"
+    data_type    = "string"
+  }
+  field_option {
+    value = "bar"
+    data_type    = "string"
+  }
+  field_option {
+    value = "baz"
+    data_type    = "string"
+  }
+  field_option {
+    value = "qux"
+    data_type    = "string"
+  }
+}
+
+resource "pagerduty_service_custom_field_value" "test" {
+  service_id = pagerduty_service.test.id
+  custom_fields {
+    name  = pagerduty_service_custom_field.test1.name
+    value = jsonencode([
+      "foo",
+      "qux",
+    ])
+  }
+  depends_on = [pagerduty_service_custom_field.test1]
+}
+`, serviceName, serviceName, serviceName, serviceName, fieldName, fieldName)
 }

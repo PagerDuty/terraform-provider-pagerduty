@@ -282,10 +282,7 @@ func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) 
 	// Special handling for condition to support empty string conditions
 	// GetOk won't return true for empty strings, but we need to set them
 	// for conditional triggers that execute on incident creation
-	if triggerType == "conditional" {
-		condStr := d.Get("condition").(string)
-		iwt.Condition = &condStr
-	} else if condition, ok := d.GetOk("condition"); ok {
+	if condition, ok := d.GetOk("condition"); triggerType == "conditional" || ok {
 		condStr := condition.(string)
 		iwt.Condition = &condStr
 	}

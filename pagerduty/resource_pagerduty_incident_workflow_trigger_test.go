@@ -480,6 +480,77 @@ func TestAccPagerDutyIncidentWorkflowTrigger_CannotChangeType(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyIncidentWorkflowTrigger_UpdateToEmptyCondition(t *testing.T) {
+	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	configFn := func(condition string) string {
+		return fmt.Sprintf(`
+resource "pagerduty_user" "example" {
+  name  = "%s-user"
+  email = "%[1]s-user@foo.test"
+}
+
+resource "pagerduty_escalation_policy" "test" {
+  name      = "%[1]s-ep"
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.example.id
+    }
+  }
+}
+
+resource "pagerduty_service" "test" {
+  name = "%[1]s"
+  escalation_policy = pagerduty_escalation_policy.test.id
+}
+
+resource "pagerduty_incident_workflow" "test" {
+  name = "%[1]s-incident-workflow"
+}
+
+resource "pagerduty_incident_workflow_trigger" "test" {
+  type       = "conditional"
+  workflow   = pagerduty_incident_workflow.test.id
+  condition  = "%s"
+  subscribed_to_all_services = false
+  services = [pagerduty_service.test.id]
+}
+`, name, condition)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: configFn("incident.priority matches 'P1'"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", "incident.priority matches 'P1'"),
+				),
+			},
+			{
+				Config: configFn(""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "conditional"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "condition", ""),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyIncidentWorkflowTriggerDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -517,30 +588,5 @@ func testAccCheckPagerDutyIncidentWorkflowTriggerExists(n string) resource.TestC
 		}
 
 		return nil
-	}
-}
-
-func TestBuildIncidentWorkflowTriggerStruct_HandlesEmptyCondition(t *testing.T) {
-	r := resourcePagerDutyIncidentWorkflowTrigger()
-	d := r.Data(nil)
-
-	d.Set("type", "conditional")
-	d.Set("workflow", "DUMMY_WORKFLOW_ID")
-	d.Set("condition", "")
-	d.Set("subscribed_to_all_services", true)
-
-	triggerStruct, err := buildIncidentWorkflowTriggerStruct(d, true)
-	if err != nil {
-		t.Fatalf("Error building incident workflow trigger struct: %v", err)
-	}
-
-	if triggerStruct.Condition == nil {
-		t.Error("Expected condition to be an empty string, got nil")
-	} else if *triggerStruct.Condition != "" {
-		t.Errorf("Expected condition to be an empty string, got %q", *triggerStruct.Condition)
-	}
-
-	if triggerStruct.TriggerType != pagerduty.IncidentWorkflowTriggerTypeConditional {
-		t.Errorf("Expected trigger type to be conditional, got %s", triggerStruct.TriggerType.String())
 	}
 }

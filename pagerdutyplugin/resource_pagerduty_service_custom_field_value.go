@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -15,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var (
@@ -142,8 +145,19 @@ func (r *ServiceCustomFieldValueResource) Create(ctx context.Context, req resour
 	}
 
 	// Update custom field values
-	result, err := r.client.UpdateServiceCustomFieldValues(ctx, serviceID, &pagerduty.ListServiceCustomFieldValuesResponse{
-		CustomFields: pdCustomFields,
+	var result *pagerduty.ListServiceCustomFieldValuesResponse
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+		var err error
+		result, err = r.client.UpdateServiceCustomFieldValues(ctx, serviceID, &pagerduty.ListServiceCustomFieldValuesResponse{
+			CustomFields: pdCustomFields,
+		})
+		if err != nil {
+			if util.IsBadRequestError(err) {
+				return retry.NonRetryableError(err)
+			}
+			return retry.RetryableError(err)
+		}
+		return nil
 	})
 
 	if err != nil {

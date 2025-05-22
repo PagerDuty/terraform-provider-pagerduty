@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -442,13 +443,15 @@ func (r *ServiceCustomFieldResource) Delete(ctx context.Context, req resource.De
 	}
 
 	err := r.client.DeleteServiceCustomField(ctx, state.ID.ValueString())
-	if err != nil {
+	if err != nil && !util.IsNotFoundError(err) {
 		resp.Diagnostics.AddError(
 			"Error Deleting PagerDuty Service Custom Field",
 			fmt.Sprintf("Could not delete service custom field %s: %s", state.ID.ValueString(), err),
 		)
 		return
 	}
+
+	resp.State.RemoveResource(ctx)
 }
 
 func (r *ServiceCustomFieldResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

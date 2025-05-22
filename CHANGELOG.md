@@ -1,3 +1,11 @@
+## v3.25.2 (May 22, 2025)
+
+BUG FIXES:
+
+* `resource/pagerduty_incident_workflow_trigger`: Fix issue where condition cannot currently be an empty string ([1012](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1012))
+* `resource/pagerduty_service_custom_field`: Improve handling of 404 errors on Delete ([1021](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1021))
+* `resource/pagerduty_service_custom_field_value`: Retry creation in order to wait for its associated custom field to exist ([1021](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1021))
+
 ## v3.25.1 (May 20, 2025)
 
 BUG FIXES:

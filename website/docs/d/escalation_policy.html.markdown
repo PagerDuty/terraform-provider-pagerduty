@@ -36,5 +36,7 @@ The following arguments are supported:
 ## Attributes Reference
 * `id` - The ID of the found escalation policy.
 * `name` - The short name of the found escalation policy.
+* `description` - The description of the found escalation policy.
+* `teams` - The IDs of the teams associated with the found escalation policy.
 
 [1]: https://developer.pagerduty.com/api-reference/b3A6Mjc0ODEyNA-list-escalation-policies

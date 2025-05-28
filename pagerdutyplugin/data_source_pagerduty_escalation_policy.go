@@ -7,6 +7,7 @@ import (
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util/apiutil"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -26,6 +27,13 @@ func (*dataSourceEscalationPolicy) Schema(ctx context.Context, req datasource.Sc
 		Attributes: map[string]schema.Attribute{
 			"id":   schema.StringAttribute{Computed: true},
 			"name": schema.StringAttribute{Required: true},
+			"description": schema.StringAttribute{
+				Computed: true,
+			},
+			"teams": schema.ListAttribute{
+				Computed:    true,
+				ElementType: types.StringType,
+			},
 		},
 	}
 }
@@ -42,7 +50,10 @@ func (d *dataSourceEscalationPolicy) Read(ctx context.Context, req datasource.Re
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	opts := pagerduty.ListEscalationPoliciesOptions{Query: searchName.ValueString()}
+	opts := pagerduty.ListEscalationPoliciesOptions{
+		Query:    searchName.ValueString(),
+		Includes: []string{"teams"},
+	}
 
 	var found *pagerduty.EscalationPolicy
 	err := apiutil.All(ctx, func(offset int) (bool, error) {
@@ -77,13 +88,25 @@ func (d *dataSourceEscalationPolicy) Read(ctx context.Context, req datasource.Re
 	}
 
 	model := dataSourceEscalationPolicyModel{
-		ID:   types.StringValue(found.ID),
-		Name: types.StringValue(found.Name),
+		ID:          types.StringValue(found.ID),
+		Name:        types.StringValue(found.Name),
+		Description: types.StringValue(found.Description),
+		Teams:       flattenTeams(found.Teams),
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
+func flattenTeams(teams []pagerduty.APIReference) types.List {
+	elements := make([]attr.Value, 0, len(teams))
+	for _, e := range teams {
+		elements = append(elements, types.StringValue(e.ID))
+	}
+	return types.ListValueMust(types.StringType, elements)
+}
+
 type dataSourceEscalationPolicyModel struct {
-	ID   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	Teams       types.List   `tfsdk:"teams"`
 }

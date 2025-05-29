@@ -1,3 +1,9 @@
+## v3.26.0 (May 29, 2025)
+
+FEATURES:
+
+* `data/pagerduty_escalation_policy`: Add attributes `description` and `teams` ([1023](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1023))
+
 ## v3.25.2 (May 22, 2025)
 
 BUG FIXES:

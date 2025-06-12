@@ -180,6 +180,8 @@ func availableOauthScopes() []string {
 		"extension_schemas.read",
 		"extensions.read",
 		"extensions.write",
+		"incident_types.read",
+		"incident_types.write",
 		"incident_workflows.read",
 		"incident_workflows.write",
 		"incident_workflows:instances.write",
@@ -190,6 +192,8 @@ func availableOauthScopes() []string {
 		"jira_cloud_rules.write",
 		"licenses.read",
 		"notifications.read",
+		"oauth_delegations.read",
+		"oauth_delegations.write",
 		"oncalls.read",
 		"priorities.read",
 		"response_plays.read",
@@ -218,6 +222,11 @@ func availableOauthScopes() []string {
 		"users:sessions.read",
 		"users:sessions.write",
 		"vendors.read",
+		"webhook_subscriptions.read",
+		"webhook_subscriptions.write",
+		"workflow_integrations.read",
+		"workflow_integrations:connections.read",
+		"workflow_integrations:connections.write",
 	}
 }
 

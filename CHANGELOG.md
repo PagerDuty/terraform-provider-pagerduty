@@ -1,3 +1,13 @@
+## v3.26.1 (Jun 13th, 2025)
+
+BUG FIXES:
+
+* `PagerDuty/pagerduty`: Add jira cloud to oauth scope ([1027](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1027))
+* `PagerDuty/pagerduty`: Bump github.com/cloudflare/circl from 1.3.7 to 1.6.1 ([1026](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1026))
+* `PagerDuty/pagerduty`: Bump golang.org/x/net from v0.22.0 to v0.41.0 ([1030](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1030))
+* `resource/pagerduty_service`: Fix error with 201 status code response during Update ([1029](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1029))
+* `resource/pagerduty_user_notification_rule`: Change user_notification_rule examples ([1028](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1028))
+
 ## v3.26.0 (May 29, 2025)
 
 FEATURES:

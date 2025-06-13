@@ -555,12 +555,12 @@ func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
 
-	updatedService, _, err := client.Services.Update(d.Id(), service)
+	_, _, err = client.Services.Update(d.Id(), service)
 	if err != nil {
 		return handleNotFoundError(err, d)
 	}
 
-	return flattenService(d, updatedService)
+	return fetchService(d, meta, handleNotFoundError)
 }
 
 func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) error {

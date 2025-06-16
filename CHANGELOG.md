@@ -1,3 +1,9 @@
+## v3.26.2 (Jun 16th, 2025)
+
+BUG FIXES:
+
+* `PagerDuty/pagerduty`: Fix missing docs for automation Action `map_to_all_services` ([1031](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1031))
+
 ## v3.26.1 (Jun 13th, 2025)
 
 BUG FIXES:

@@ -141,6 +141,22 @@ func checkDynamicRoutingRule(context context.Context, diff *schema.ResourceDiff,
 	errorMsgs := []string{}
 
 	for ri := 0; ri < rNum; ri++ {
+		// Check that each rule has either route_to or dynamic_route_to set in actions
+		actionsPath := fmt.Sprintf("set.0.rule.%d.actions", ri)
+		if actionsRaw, ok := diff.GetOk(actionsPath); ok {
+			actions := actionsRaw.([]interface{})
+			if len(actions) == 0 {
+				errorMsgs = append(errorMsgs, fmt.Sprintf("Rule %d: actions cannot be empty", ri))
+				continue
+			}
+			action, ok := actions[0].(map[string]interface{})
+			_, hasRouteTo := action["route_to"]
+			_, hasDynamicRouteTo := action["dynamic_route_to"]
+			if !ok || !hasRouteTo && !hasDynamicRouteTo {
+				errorMsgs = append(errorMsgs, fmt.Sprintf("Rule %d: at least one of 'route_to' or 'dynamic_route_to' must be specified in actions", ri))
+			}
+		}
+		// Existing dynamic route validation
 		dra := diff.Get(fmt.Sprintf("set.0.rule.%d.actions.0.dynamic_route_to", ri))
 		hasDra := isNonEmptyList(dra)
 		if !hasDra {
@@ -363,7 +379,10 @@ func expandRules(v interface{}) []*pagerduty.EventOrchestrationPathRule {
 func expandRouterActions(v interface{}) *pagerduty.EventOrchestrationPathRuleActions {
 	actions := new(pagerduty.EventOrchestrationPathRuleActions)
 	for _, ai := range v.([]interface{}) {
-		am := ai.(map[string]interface{})
+		am, ok := ai.(map[string]interface{})
+		if !ok {
+			continue
+		}
 		dra := am["dynamic_route_to"]
 		if isNonEmptyList(dra) {
 			actions.DynamicRouteTo = expandRouterDynamicRouteToAction(dra)

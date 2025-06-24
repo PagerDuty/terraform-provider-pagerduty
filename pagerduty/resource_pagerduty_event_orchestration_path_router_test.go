@@ -37,6 +37,7 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 	}
 	invalidDynamicRouteToPlacementMessage := "Invalid Dynamic Routing rule configuration:\n- A Router can have at most one Dynamic Routing rule; Rules with the dynamic_route_to action found at indexes: 1, 2\n- The Dynamic Routing rule must be the first rule in a Router"
 	invalidDynamicRouteToConfigMessage := "Invalid Dynamic Routing rule configuration:\n- Dynamic Routing rules cannot have conditions\n- Dynamic Routing rules cannot have the `route_to` action"
+	invalidEmptyActionsMessage := "at least one of 'route_to' or 'dynamic_route_to' must be specified in actions"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -60,6 +61,12 @@ func TestAccPagerDutyEventOrchestrationPathRouter_Basic(t *testing.T) {
 				Config:      testAccCheckPagerDutyEventOrchestrationRouterInvalidDynamicRoutingRuleConfig(team, escalationPolicy, service, orchestration, "\"PARASOL\""),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(invalidDynamicRouteToConfigMessage),
+			},
+			// Invalid rule empty actions
+			{
+				Config:      testAccCheckPagerDutyEventOrchestrationRouterEmptyActionsConfig(team, escalationPolicy, service, orchestration),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(invalidEmptyActionsMessage),
 			},
 			{
 				Config: testAccCheckPagerDutyEventOrchestrationRouterConfigNoRules(team, escalationPolicy, service, orchestration),
@@ -674,6 +681,26 @@ func testAccCheckPagerDutyEventOrchestrationRouterEnableRoutingRuleConfigUpdated
 
 func testAccCheckPagerDutyEventOrchestrationRouterConfigDelete(t, ep, s, o string) string {
 	return createBaseConfig(t, ep, s, o)
+}
+
+func testAccCheckPagerDutyEventOrchestrationRouterEmptyActionsConfig(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o), `resource "pagerduty_event_orchestration_router" "router" {
+	event_orchestration = pagerduty_event_orchestration.orch.id
+	set {
+		id = "start"
+		rule {
+			disabled = false
+			label = "rule1 label"
+			actions {
+			}
+		}
+	}
+	catch_all {
+		actions {
+			route_to = "unrouted"
+		}
+	}
+}`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(router, service string, catchAll bool) resource.TestCheckFunc {

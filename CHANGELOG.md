@@ -1,3 +1,9 @@
+## v3.26.3 (Jun 24th, 2025)
+
+BUG FIXES:
+
+* `resource/pagerduty_event_orchestration_router`: Validate `actions` have either `route_to` or `dynamic_route_to` ([1033](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1033))
+
 ## v3.26.2 (Jun 16th, 2025)
 
 BUG FIXES:

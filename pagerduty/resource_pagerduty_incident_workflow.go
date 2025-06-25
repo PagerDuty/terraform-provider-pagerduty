@@ -514,7 +514,7 @@ func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps
 			inlineInputs = specifiedStep.SpecifiedInlineInputs
 		}
 
-		m["input"] = flattenIncidentWorkflowStepInput(s.Configuration.Inputs, inputNames, isImport)
+		m["input"] = flattenIncidentWorkflowStepInput(s.Configuration.Inputs, inputNames, isImport, s.Configuration.ActionID)
 		m["inline_steps_input"] = flattenIncidentWorkflowStepInlineStepsInput(
 			s.Configuration.InlineStepsInputs,
 			inlineInputs,
@@ -527,7 +527,7 @@ func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps
 	return newSteps
 }
 
-func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowActionInput, specifiedInputNames []string, isImport bool) *[]interface{} {
+func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowActionInput, specifiedInputNames []string, isImport bool, actionID string) *[]interface{} {
 	newInputs := make([]interface{}, len(inputs))
 
 	for i, v := range inputs {
@@ -535,7 +535,7 @@ func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowAction
 		m["name"] = v.Name
 		m["value"] = v.Value
 
-		if !isImport && !isInputInNonGeneratedInputNames(v, specifiedInputNames) {
+		if !isImport && !isInputInNonGeneratedInputNames(v, specifiedInputNames, actionID) {
 			m["generated"] = true
 		}
 
@@ -581,7 +581,7 @@ func flattenIncidentWorkflowStepInlineStepsInputSteps(
 			inlineInputs = specifiedStep.SpecifiedInlineInputs
 		}
 
-		m["input"] = flattenIncidentWorkflowStepInput(v.Configuration.Inputs, inputNames, isImport)
+		m["input"] = flattenIncidentWorkflowStepInput(v.Configuration.Inputs, inputNames, isImport, v.Configuration.ActionID)
 		if v.Configuration.InlineStepsInputs != nil && len(v.Configuration.InlineStepsInputs) > 0 {
 			// We should prefer to not set inline_steps_input if the array is empty. This doubles as a schema edge guard
 			// and prevents an invalid set if we try to set inline_steps_input to an empty array where the schema
@@ -598,7 +598,15 @@ func flattenIncidentWorkflowStepInlineStepsInputSteps(
 	return &newInlineSteps
 }
 
-func isInputInNonGeneratedInputNames(i *pagerduty.IncidentWorkflowActionInput, names []string) bool {
+func isInputInNonGeneratedInputNames(i *pagerduty.IncidentWorkflowActionInput, names []string, actionID string) bool {
+	// Special case for Slack send-markdown-message action: treat "Channel ID" as non-generated.
+	// This works around a bug in the PagerDuty API where the "Channel ID" input is always considered generated
+	// even when it is specified in the configuration.
+	if i.Name == "Channel ID" && actionID == "pagerduty.com:slack:send-markdown-message:2" {
+		return true
+	}
+
+	// Normal case - check if the input name is in the specified input names
 	for _, in := range names {
 		if i.Name == in {
 			return true
@@ -697,6 +705,7 @@ func buildIncidentWorkflowInputsStruct(in interface{}) (
 		if !generated {
 			specifiedInputNames = append(specifiedInputNames, input.Name)
 		}
+
 		newInputs[i] = &input
 	}
 	return newInputs, specifiedInputNames

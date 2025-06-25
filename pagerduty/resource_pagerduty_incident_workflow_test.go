@@ -664,3 +664,82 @@ func testAccPreCheckIncidentWorkflows(t *testing.T) {
 		t.Skip("PAGERDUTY_ACC_INCIDENT_WORKFLOWS not set. Skipping Incident Workflows-related test")
 	}
 }
+
+func TestIsInputInNonGeneratedInputNames(t *testing.T) {
+	const channelID = "Channel ID"
+	const slackAction = "pagerduty.com:slack:send-markdown-message:2"
+	const otherAction = "pagerduty.com:some-other-action:1"
+	const channelValue = "some-channel-id"
+	const messageInput = "Message"
+	const messageValue = "Hello world"
+
+	// Create test cases
+	testCases := []struct {
+		name           string
+		input          *pagerduty.IncidentWorkflowActionInput
+		specifiedNames []string
+		actionID       string
+		expected       bool
+	}{
+		{
+			name: "Channel ID with Slack action should be non-generated",
+			input: &pagerduty.IncidentWorkflowActionInput{
+				Name:  channelID,
+				Value: channelValue,
+			},
+			specifiedNames: []string{},
+			actionID:       slackAction,
+			expected:       true,
+		},
+		{
+			name: "Channel ID with non-Slack action should be generated",
+			input: &pagerduty.IncidentWorkflowActionInput{
+				Name:  channelID,
+				Value: channelValue,
+			},
+			specifiedNames: []string{},
+			actionID:       otherAction,
+			expected:       false,
+		},
+		{
+			name: "Channel ID with any action but in specified names should be non-generated",
+			input: &pagerduty.IncidentWorkflowActionInput{
+				Name:  channelID,
+				Value: channelValue,
+			},
+			specifiedNames: []string{channelID},
+			actionID:       otherAction,
+			expected:       true,
+		},
+		{
+			name: "Other input with Slack action should follow normal rules",
+			input: &pagerduty.IncidentWorkflowActionInput{
+				Name:  messageInput,
+				Value: messageValue,
+			},
+			specifiedNames: []string{},
+			actionID:       slackAction,
+			expected:       false,
+		},
+		{
+			name: "Other input that is in specified names should be non-generated",
+			input: &pagerduty.IncidentWorkflowActionInput{
+				Name:  messageInput,
+				Value: messageValue,
+			},
+			specifiedNames: []string{messageInput},
+			actionID:       slackAction,
+			expected:       true,
+		},
+	}
+
+	// Run tests
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := isInputInNonGeneratedInputNames(tc.input, tc.specifiedNames, tc.actionID)
+			if result != tc.expected {
+				t.Errorf("Expected %v, got %v", tc.expected, result)
+			}
+		})
+	}
+}

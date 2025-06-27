@@ -21,7 +21,7 @@ func resourcePagerDutyService() *schema.Resource {
 	return &schema.Resource{
 		Create:        resourcePagerDutyServiceCreate,
 		Read:          resourcePagerDutyServiceRead,
-		Update:        resourcePagerDutyServiceUpdate,
+		UpdateContext: resourcePagerDutyServiceUpdateContext,
 		Delete:        resourcePagerDutyServiceDelete,
 		CustomizeDiff: customizePagerDutyServiceDiff,
 		Importer: &schema.ResourceImporter{
@@ -76,7 +76,6 @@ func resourcePagerDutyService() *schema.Resource {
 			"alert_grouping_parameters": {
 				Type:          schema.TypeList,
 				Optional:      true,
-				Computed:      true,
 				MaxItems:      1,
 				Deprecated:    "Use a resource `pagerduty_alert_grouping_setting` instead.\nFollow the migration guide at https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/alert_grouping_setting#migration-from-alert_grouping_parameters",
 				ConflictsWith: []string{"alert_grouping", "alert_grouping_timeout"},
@@ -326,21 +325,6 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		}
 	}
 
-	// Due to alert_grouping_parameters.type = null is a valid configuration
-	// for disabling Service's Alert Grouping configuration and having an
-	// empty alert_grouping_parameters.config block is also valid, API ignore
-	// this input fields, and turns out that API response for Service
-	// configuration doesn't bring a representation of this HCL, which leads
-	// to a permadiff, described in
-	// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/700
-	//
-	// So, bellow is the formated representation alert_grouping_parameters
-	// value when this permadiff appears and must be ignored.
-	ignoreThisAlertGroupingParamsConfigDiff := `[]interface {}{map[string]interface {}{"config":[]interface {}{interface {}(nil)}, "type":""}}`
-	if agpdiff, ok := diff.Get("alert_grouping_parameters").([]interface{}); ok && diff.NewValueKnown("alert_grouping_parameters") && fmt.Sprintf("%#v", agpdiff) == ignoreThisAlertGroupingParamsConfigDiff {
-		diff.Clear("alert_grouping_parameters")
-	}
-
 	if agpType, ok := diff.Get("alert_grouping_parameters.0.type").(string); ok {
 		agppath := "alert_grouping_parameters.0.config.0."
 		timeoutVal := diff.Get(agppath + "timeout").(int)
@@ -429,8 +413,7 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
 		service.AlertGroupingParameters = expandAlertGroupingParameters(attr)
 	} else {
-		// Clear AlertGroupingParameters as it takes precedence over AlertGrouping and AlertGroupingTimeout which are apparently deprecated (that's not explicitly documented in the API)
-		service.AlertGroupingParameters = nil
+		service.AlertGroupingParameters = &pagerduty.AlertGroupingParameters{Type: nil}
 	}
 
 	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
@@ -542,25 +525,40 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 	return fetchService(d, meta, handleNotFoundError)
 }
 
-func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePagerDutyServiceUpdateContext(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
 	client, err := meta.(*Config).Client()
 	if err != nil {
-		return err
+		diags = diag.FromErr(err)
+		return
 	}
 
 	service, err := buildServiceStruct(d)
 	if err != nil {
-		return err
+		diags = diag.FromErr(err)
+		return
 	}
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
 
 	_, _, err = client.Services.Update(d.Id(), service)
 	if err != nil {
-		return handleNotFoundError(err, d)
+		diags = diag.FromErr(handleNotFoundError(err, d))
+		return
 	}
 
-	return fetchService(d, meta, handleNotFoundError)
+	// Check if alert_grouping_parameters is being removed
+	if d.HasChange("alert_grouping_parameters") {
+		oldVal, newVal := d.GetChange("alert_grouping_parameters")
+		if oldVal != nil && newVal != nil && len(oldVal.([]interface{})) > 0 && len(newVal.([]interface{})) == 0 {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Deleting alert_grouping_parameters might delete an alert_grouping_setting depending on it, please run terraform plan and apply again after these changes are applied in order to ensure Alert Grouping Settings are up and running",
+			})
+		}
+	}
+
+	diags = append(diags, diag.FromErr(fetchService(d, meta, handleNotFoundError))...)
+	return
 }
 
 func resourcePagerDutyServiceDelete(d *schema.ResourceData, meta interface{}) error {
@@ -605,15 +603,19 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 	}
 
-	if service.AlertGrouping != nil && *service.AlertGrouping != nil {
-		if ag := **service.AlertGrouping; ag != "" && ag != "rules" {
-			d.Set("alert_grouping", ag)
-		}
-	}
+	d.Set("alert_creation", service.AlertCreation)
 	if service.AlertGroupingTimeout == nil {
 		d.Set("alert_grouping_timeout", "null")
 	} else {
 		d.Set("alert_grouping_timeout", strconv.Itoa(*service.AlertGroupingTimeout))
+	}
+
+	if service.AlertGrouping != nil && *service.AlertGrouping != nil && **service.AlertGrouping != "" {
+		if **service.AlertGrouping == "rules" {
+			d.Set("alert_grouping", nil)
+		} else {
+			d.Set("alert_grouping", **service.AlertGrouping)
+		}
 	}
 
 	_, hasGrouping := d.GetOk("alert_grouping")
@@ -654,19 +656,18 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 }
 
 func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParameters {
-	alertGroupingParameters := &pagerduty.AlertGroupingParameters{
-		Config: &pagerduty.AlertGroupingConfig{},
-	}
+	alertGroupingParameters := &pagerduty.AlertGroupingParameters{}
+
 	// First We capture a possible nil value for the interface to avoid the a
 	// panic
 	ragp, ok := v.([]interface{})
 	if !ok || isNilFunc(ragp[0]) {
-		return nil
+		return alertGroupingParameters
 	}
 	ragpVal := ragp[0].(map[string]interface{})
 	groupingType := ""
-	if ragpVal["type"].(string) != "" {
-		groupingType = ragpVal["type"].(string)
+	if typ, ok := ragpVal["type"].(string); ok && typ != "" {
+		groupingType = typ
 		alertGroupingParameters.Type = &groupingType
 	}
 

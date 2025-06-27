@@ -432,7 +432,7 @@ func TestAccPagerDutyService_AlertGroupingContentBased(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "alert_creation", "create_alerts_and_incidents"),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "alert_grouping", "rules"),
+						"pagerduty_service.foo", "alert_grouping", ""),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "alert_grouping_parameters.0.config.0.aggregate", "all"),
 					resource.TestCheckResourceAttr(
@@ -1531,9 +1531,6 @@ resource "pagerduty_escalation_policy" "foo" {
 resource "pagerduty_service" "foo" {
 	name                    = "%s"
 	escalation_policy       = pagerduty_escalation_policy.foo.id
-	alert_grouping_parameters {
-		type = null
-	}
 }`, username, email, escalationPolicy, service)
 }
 

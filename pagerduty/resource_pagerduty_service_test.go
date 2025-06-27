@@ -684,6 +684,38 @@ func TestAccPagerDutyService_AlertContentGroupingIntelligentTimeWindow(t *testin
 	})
 }
 
+func TestAccPagerDutyService_Delete24HAlertGrouping(t *testing.T) {
+	group := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", group)
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGrouping24H(group, email, group, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr("pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr("pagerduty_service.foo", "alert_grouping_parameters.0.type", "content_based"),
+					resource.TestCheckResourceAttr("pagerduty_service.foo", "alert_grouping_parameters.0.config.0.time_window", "86400"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceConfigWithAlertContentGrouping24HUpdated(group, email, group, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr("pagerduty_service.foo", "name", service),
+					resource.TestCheckNoResourceAttr("pagerduty_service.foo", "alert_grouping_parameters.0.type"),
+					resource.TestCheckNoResourceAttr("pagerduty_service.foo", "alert_grouping_parameters.0.config.0.time_window"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyService_AutoPauseNotificationsParameters(t *testing.T) {
 	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	email := fmt.Sprintf("%s@foo.test", username)
@@ -1442,6 +1474,67 @@ resource "pagerduty_service" "foo" {
     }
 }
 `, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertContentGrouping24H(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_grouping_parameters {
+		type = "content_based"
+		config {
+			time_window = 86400
+			aggregate = "all"
+			fields = ["custom_details.field1"]
+		}
+	}
+}`, username, email, escalationPolicy, service)
+}
+
+func testAccCheckPagerDutyServiceConfigWithAlertContentGrouping24HUpdated(username, email, escalationPolicy, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	num_loops   = 2
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+	alert_grouping_parameters {
+		type = null
+	}
+}`, username, email, escalationPolicy, service)
 }
 
 func testAccCheckPagerDutyServiceConfigWithAlertContentGroupingIntelligentTimeWindow(username, email, escalationPolicy, service string) string {

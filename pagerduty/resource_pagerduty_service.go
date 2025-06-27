@@ -76,7 +76,6 @@ func resourcePagerDutyService() *schema.Resource {
 			"alert_grouping_parameters": {
 				Type:          schema.TypeList,
 				Optional:      true,
-				Computed:      true,
 				MaxItems:      1,
 				Deprecated:    "Use a resource `pagerduty_alert_grouping_setting` instead.\nFollow the migration guide at https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/alert_grouping_setting#migration-from-alert_grouping_parameters",
 				ConflictsWith: []string{"alert_grouping", "alert_grouping_timeout"},
@@ -326,21 +325,6 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		}
 	}
 
-	// Due to alert_grouping_parameters.type = null is a valid configuration
-	// for disabling Service's Alert Grouping configuration and having an
-	// empty alert_grouping_parameters.config block is also valid, API ignore
-	// this input fields, and turns out that API response for Service
-	// configuration doesn't bring a representation of this HCL, which leads
-	// to a permadiff, described in
-	// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/700
-	//
-	// So, bellow is the formated representation alert_grouping_parameters
-	// value when this permadiff appears and must be ignored.
-	ignoreThisAlertGroupingParamsConfigDiff := `[]interface {}{map[string]interface {}{"config":[]interface {}{interface {}(nil)}, "type":""}}`
-	if agpdiff, ok := diff.Get("alert_grouping_parameters").([]interface{}); ok && diff.NewValueKnown("alert_grouping_parameters") && fmt.Sprintf("%#v", agpdiff) == ignoreThisAlertGroupingParamsConfigDiff {
-		diff.Clear("alert_grouping_parameters")
-	}
-
 	if agpType, ok := diff.Get("alert_grouping_parameters.0.type").(string); ok {
 		agppath := "alert_grouping_parameters.0.config.0."
 		timeoutVal := diff.Get(agppath + "timeout").(int)
@@ -429,8 +413,7 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
 		service.AlertGroupingParameters = expandAlertGroupingParameters(attr)
 	} else {
-		// Clear AlertGroupingParameters as it takes precedence over AlertGrouping and AlertGroupingTimeout which are apparently deprecated (that's not explicitly documented in the API)
-		service.AlertGroupingParameters = nil
+		service.AlertGroupingParameters = &pagerduty.AlertGroupingParameters{Type: nil}
 	}
 
 	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
@@ -603,7 +586,11 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	}
 	d.Set("alert_creation", service.AlertCreation)
 	if service.AlertGrouping != nil && *service.AlertGrouping != nil && **service.AlertGrouping != "" {
-		d.Set("alert_grouping", **service.AlertGrouping)
+		if **service.AlertGrouping == "rules" {
+			d.Set("alert_grouping", nil)
+		} else {
+			d.Set("alert_grouping", **service.AlertGrouping)
+		}
 	}
 	if service.AlertGroupingTimeout == nil {
 		d.Set("alert_grouping_timeout", "null")
@@ -649,19 +636,18 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 }
 
 func expandAlertGroupingParameters(v interface{}) *pagerduty.AlertGroupingParameters {
-	alertGroupingParameters := &pagerduty.AlertGroupingParameters{
-		Config: &pagerduty.AlertGroupingConfig{},
-	}
+	alertGroupingParameters := &pagerduty.AlertGroupingParameters{}
+
 	// First We capture a possible nil value for the interface to avoid the a
 	// panic
 	ragp, ok := v.([]interface{})
 	if !ok || isNilFunc(ragp[0]) {
-		return nil
+		return alertGroupingParameters
 	}
 	ragpVal := ragp[0].(map[string]interface{})
 	groupingType := ""
-	if ragpVal["type"].(string) != "" {
-		groupingType = ragpVal["type"].(string)
+	if typ, ok := ragpVal["type"].(string); ok && typ != "" {
+		groupingType = typ
 		alertGroupingParameters.Type = &groupingType
 	}
 

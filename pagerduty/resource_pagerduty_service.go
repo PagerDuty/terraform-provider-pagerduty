@@ -352,7 +352,7 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		if agpType == "content_based" && (aggregateVal == "" || len(fieldsVal) == 0) {
 			return fmt.Errorf("When using Alert grouping parameters configuration of type \"content_based\" is in use, attributes \"aggregate\" and \"fields\" are required")
 		}
-		if timeWindowVal == 86400 && agpType != "content_based" {
+		if timeWindowVal == 86400 && agpType != "" && agpType != "content_based" {
 			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" with a value of 86400 is only supported by \"content-based\" type Alert Grouping")
 		}
 		if (aggregateVal != "" || len(fieldsVal) > 0) && (agpType != "" && hasChangeAgpType && agpType != "content_based") {

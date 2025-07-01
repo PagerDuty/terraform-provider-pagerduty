@@ -352,7 +352,7 @@ func customizePagerDutyServiceDiff(context context.Context, diff *schema.Resourc
 		if agpType == "content_based" && (aggregateVal == "" || len(fieldsVal) == 0) {
 			return fmt.Errorf("When using Alert grouping parameters configuration of type \"content_based\" is in use, attributes \"aggregate\" and \"fields\" are required")
 		}
-		if timeWindowVal == 86400 && agpType != "content_based" {
+		if timeWindowVal == 86400 && agpType != "" && agpType != "content_based" {
 			return fmt.Errorf("Alert grouping parameters configuration attribute \"time_window\" with a value of 86400 is only supported by \"content-based\" type Alert Grouping")
 		}
 		if (aggregateVal != "" || len(fieldsVal) > 0) && (agpType != "" && hasChangeAgpType && agpType != "content_based") {
@@ -590,20 +590,25 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)
+	d.Set("alert_creation", service.AlertCreation)
+	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
+
 	if service.AutoResolveTimeout == nil {
 		d.Set("auto_resolve_timeout", "null")
 	} else {
 		d.Set("auto_resolve_timeout", strconv.Itoa(*service.AutoResolveTimeout))
 	}
-	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
+
 	if service.AcknowledgementTimeout == nil {
 		d.Set("acknowledgement_timeout", "null")
 	} else {
 		d.Set("acknowledgement_timeout", strconv.Itoa(*service.AcknowledgementTimeout))
 	}
-	d.Set("alert_creation", service.AlertCreation)
-	if service.AlertGrouping != nil && *service.AlertGrouping != nil && **service.AlertGrouping != "" {
-		d.Set("alert_grouping", **service.AlertGrouping)
+
+	if service.AlertGrouping != nil && *service.AlertGrouping != nil {
+		if ag := **service.AlertGrouping; ag != "" && ag != "rules" {
+			d.Set("alert_grouping", ag)
+		}
 	}
 	if service.AlertGroupingTimeout == nil {
 		d.Set("alert_grouping_timeout", "null")

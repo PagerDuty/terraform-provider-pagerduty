@@ -52,14 +52,19 @@ type AnalyticsRawIncidentsResponse struct {
 // AnalyticsFilter represents the set of filters as part of the request to PagerDuty when
 // requesting analytics.
 type AnalyticsFilter struct {
-	CreatedAtStart string   `json:"created_at_start,omitempty"`
-	CreatedAtEnd   string   `json:"created_at_end,omitempty"`
-	Urgency        string   `json:"urgency,omitempty"`
-	Major          bool     `json:"major,omitempty"`
-	ServiceIDs     []string `json:"service_ids,omitempty"`
-	TeamIDs        []string `json:"team_ids,omitempty"`
-	PriorityIDs    []string `json:"priority_ids,omitempty"`
-	PriorityNames  []string `json:"priority_names,omitempty"`
+	CreatedAtStart        string   `json:"created_at_start,omitempty"`
+	CreatedAtEnd          string   `json:"created_at_end,omitempty"`
+	Urgency               string   `json:"urgency,omitempty"`
+	Major                 bool     `json:"major,omitempty"`
+	MinAcknowledgements   int      `json:"min_acknowledgements,omitempty"`
+	MinTimeoutEscalations int      `json:"min_timeout_escalations,omitempty"`
+	MinManualEscalations  int      `json:"min_manual_escalations,omitempty"`
+	TeamIDs               []string `json:"team_ids,omitempty"`
+	ServiceIDs            []string `json:"service_ids,omitempty"`
+	EscalationPolicyIDs   []string `json:"escalation_policy_ids,omitempty"`
+	PriorityIDs           []string `json:"priority_ids,omitempty"`
+	PriorityNames         []string `json:"priority_names,omitempty"`
+	PDAdvanceUsed         bool     `json:"pd_advance_used,omitempty"`
 }
 
 // AnalyticsData represents the structure of the aggregated analytics we have available.
@@ -68,6 +73,8 @@ type AnalyticsData struct {
 	ServiceName                    string  `json:"service_name,omitempty"`
 	TeamID                         string  `json:"team_id,omitempty"`
 	TeamName                       string  `json:"team_name,omitempty"`
+	EscalationPolicyID             string  `json:"escalation_policy_id,omitempty"`
+	EscalationPolicyName           string  `json:"escalation_policy_name,omitempty"`
 	MeanSecondsToResolve           int     `json:"mean_seconds_to_resolve,omitempty"`
 	MeanSecondsToFirstAck          int     `json:"mean_seconds_to_first_ack,omitempty"`
 	MeanSecondsToEngage            int     `json:"mean_seconds_to_engage,omitempty"`
@@ -89,32 +96,55 @@ type AnalyticsData struct {
 
 // AnalyticsRawIncident represents the structure of the raw incident analytics we have available.
 type AnalyticsRawIncident struct {
-	AssignmentCount           int    `json:"assignment_count,omitempty"`
-	BusinessHourInterruptions int    `json:"business_hour_interruptions,omitempty"`
-	CreatedAt                 string `json:"created_at,omitempty"`
-	Description               string `json:"description,omitempty"`
-	EngagedSeconds            int    `json:"engaged_seconds,omitempty"`
-	EngagedUserCount          int    `json:"engaged_user_count,omitempty"`
-	EscalationCount           int    `json:"escalation_count,omitempty"`
-	ID                        string `json:"id,omitempty"`
-	IncidentNumber            int    `json:"incident_number,omitempty"`
-	IsMajor                   bool   `json:"major,omitempty"`
-	OffHourInterruptions      int    `json:"off_hour_interruptions,omitempty"`
-	PriorityID                string `json:"priority_id,omitempty"`
-	PriorityName              string `json:"priority_name,omitempty"`
-	ResolvedAt                string `json:"resolved_at,omitempty"`
-	SecondsToEngage           int    `json:"seconds_to_engage,omitempty"`
-	SecondsToFirstAck         int    `json:"seconds_to_first_ack,omitempty"`
-	SecondsToMobilize         int    `json:"seconds_to_mobilize,omitempty"`
-	SecondsToResolve          int    `json:"seconds_to_resolve,omitempty"`
-	ServiceID                 string `json:"service_id,omitempty"`
-	ServiceName               string `json:"service_name,omitempty"`
-	SleepHourInterruptions    int    `json:"sleep_hour_interruptions,omitempty"`
-	SnoozedSeconds            int    `json:"snoozed_seconds,omitempty"`
-	TeamID                    string `json:"team_id,omitempty"`
-	TeamName                  string `json:"team_name,omitempty"`
-	Urgency                   string `json:"urgency,omitempty"`
-	UserDefinedEffortSeconds  int    `json:"user_defined_effort_seconds,omitempty"`
+	AcknowledgedUserIDs       []string `json:"acknowledged_user_ids,omitempty"`
+	AcknowledgedUserNames     []string `json:"acknowledged_user_names,omitempty"`
+	AcknowledgementCount      int      `json:"acknowledgement_count,omitempty"`
+	ActiveUserCount           int      `json:"active_user_count,omitempty"`
+	AssignedUserIDs           []string `json:"assigned_user_ids,omitempty"`
+	AssignedUserNames         []string `json:"assigned_user_names,omitempty"`
+	AssignmentCount           int      `json:"assignment_count,omitempty"`
+	IsAutoResolved            bool     `json:"auto_resolved,omitempty"`
+	BusinessHourInterruptions int      `json:"business_hour_interruptions,omitempty"`
+	CreatedAt                 string   `json:"created_at,omitempty"`
+	UpdatedAt                 string   `json:"updated_at,omitempty"`
+	Description               string   `json:"description,omitempty"`
+	EngagedSeconds            int      `json:"engaged_seconds,omitempty"`
+	EngagedUserCount          int      `json:"engaged_user_count,omitempty"`
+	EscalationCount           int      `json:"escalation_count,omitempty"`
+	EscalationPolicyID        string   `json:"escalation_policy_id,omitempty"`
+	EscalationPolicyName      string   `json:"escalation_policy_name,omitempty"`
+	ID                        string   `json:"id,omitempty"`
+	IncidentNumber            int      `json:"incident_number,omitempty"`
+	IncidentTypeID            string   `json:"incident_type_id,omitempty"`
+	IncidentTypeName          string   `json:"incident_type_name,omitempty"`
+	JoinedUserIDs             []string `json:"joined_user_ids,omitempty"`
+	JoinedUserNames           []string `json:"joined_user_names,omitempty"`
+	IsMajor                   bool     `json:"major,omitempty"`
+	ManualEscalationCount     int      `json:"manual_escalation_count,omitempty"`
+	OffHourInterruptions      int      `json:"off_hour_interruptions,omitempty"`
+	PriorityID                string   `json:"priority_id,omitempty"`
+	PriorityName              string   `json:"priority_name,omitempty"`
+	PriorityOrder             int      `json:"priority_order,omitempty"`
+	ReassignmentCount         int      `json:"reassignment_count,omitempty"`
+	ResolvedAt                string   `json:"resolved_at,omitempty"`
+	ResolvedByUserID          string   `json:"resolved_by_user_id,omitempty"`
+	ResolvedByUserName        string   `json:"resolved_by_user_name,omitempty"`
+	SecondsToEngage           int      `json:"seconds_to_engage,omitempty"`
+	SecondsToFirstAck         int      `json:"seconds_to_first_ack,omitempty"`
+	SecondsToMobilize         int      `json:"seconds_to_mobilize,omitempty"`
+	SecondsToResolve          int      `json:"seconds_to_resolve,omitempty"`
+	ServiceID                 string   `json:"service_id,omitempty"`
+	ServiceName               string   `json:"service_name,omitempty"`
+	SleepHourInterruptions    int      `json:"sleep_hour_interruptions,omitempty"`
+	SnoozedSeconds            int      `json:"snoozed_seconds,omitempty"`
+	Status                    string   `json:"status,omitempty"`
+	TeamID                    string   `json:"team_id,omitempty"`
+	TeamName                  string   `json:"team_name,omitempty"`
+	TimeoutEscalationCount    int      `json:"timeout_escalation_count,omitempty"`
+	TotalInterruptions        int      `json:"total_interruptions,omitempty"`
+	TotalNotifications        int      `json:"total_notifications,omitempty"`
+	Urgency                   string   `json:"urgency,omitempty"`
+	UserDefinedEffortSeconds  int      `json:"user_defined_effort_seconds,omitempty"`
 }
 
 // GetAggregatedIncidentData gets the aggregated incident analytics for the requested data.
@@ -130,6 +160,11 @@ func (c *Client) GetAggregatedServiceData(ctx context.Context, analytics Analyti
 // GetAggregatedTeamData gets the aggregated team analytics for the requested data.
 func (c *Client) GetAggregatedTeamData(ctx context.Context, analytics AnalyticsRequest) (AnalyticsResponse, error) {
 	return c.getAggregatedData(ctx, analytics, "teams")
+}
+
+// GetAggregatedEscalationPolicyData gets the aggregated escalation policy analytics for the requested data.
+func (c *Client) GetAggregatedEscalationPolicyData(ctx context.Context, analytics AnalyticsRequest) (AnalyticsResponse, error) {
+	return c.getAggregatedData(ctx, analytics, "escalation_policies")
 }
 
 func (c *Client) getAggregatedData(ctx context.Context, analytics AnalyticsRequest, endpoint string) (AnalyticsResponse, error) {

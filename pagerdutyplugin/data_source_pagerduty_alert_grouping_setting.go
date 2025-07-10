@@ -98,6 +98,10 @@ func (d *dataSourceAlertGroupingSetting) Read(ctx context.Context, req datasourc
 	}
 
 	if found == nil {
+		resp.Diagnostics.AddWarning(
+			"Alert Grouping Setting Not Found",
+			"It is no longer necessary to read a data.pagerduty_alert_grouping_setting to migrate from alert_grouping_parameters. You might want to delete this `data` block. Please read https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/resources/alert_grouping_setting#migration-from-alert_grouping_parameters",
+		)
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Unable to locate any alert grouping setting with the name: %s", searchName),
 			"",

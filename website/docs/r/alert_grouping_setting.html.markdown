@@ -72,10 +72,6 @@ If you are using `timeout = 0` or `time_window = 0` in order to use the values
 recommended by PagerDuty you also need to set its value to null or delete it,
 since a value of `0` is no longer accepted.
 
-Since the `alert_grouping_parameters` field creates an Alert Grouping Setting
-behind the scenes, it is necessary to import them if you want to keep your
-configuration the same as it is right now.
-
 **Example**:
 
 Before:
@@ -107,15 +103,6 @@ resource "pagerduty_service" "foo" {
     escalation_policy = data.pagerduty_escalation_policy.default.id
 }
 
-data "pagerduty_alert_grouping_setting" "foo_alert" {
-    name = "Foo"
-}
-
-import {
-  id = data.pagerduty_alert_grouping_setting.foo_alert.id
-  to = pagerduty_alert_grouping_setting.foo_alert
-}
-
 resource "pagerduty_alert_grouping_setting" "foo_alert" {
     name = "Alert Grouping for Foo-like services"
     type = "time"
@@ -123,97 +110,6 @@ resource "pagerduty_alert_grouping_setting" "foo_alert" {
         time = null
     }
     services = [pagerduty_service.foo.id]
-}
-```
-
-But if you prefer to have a clean restart, you can do it in two steps: delete
-the current `alert_grouping_parameters` and later create a new
-`alert_grouping_setting` associated to your resources now free to be associated
-with this Alert Grouping Setting.
-
-**Example**:
-
-Before:
-```
-data "pagerduty_escalation_policy" "default" {
-    name = "Default"
-}
-
-resource "pagerduty_service" "foo" {
-    name              = "Foo"
-    escalation_policy = data.pagerduty_escalation_policy.default.id
-    alert_grouping_parameters {
-        type = "content_based"
-        config {
-            time_window = 300
-            aggregate = "all"
-            fields = ["summary"]
-        }
-    }
-}
-
-resource "pagerduty_service" "bar" {
-    name              = "Bar"
-    escalation_policy = data.pagerduty_escalation_policy.default.id
-    alert_grouping_parameters {
-        type = "content_based"
-        config {
-            time_window = 300
-            aggregate = "all"
-            fields = ["summary"]
-        }
-    }
-}
-```
-
-Step 1:
-```
-data "pagerduty_escalation_policy" "default" {
-    name = "Default"
-}
-
-resource "pagerduty_service" "foo" {
-    name              = "Foo"
-    escalation_policy = data.pagerduty_escalation_policy.default.id
-    alert_grouping_parameters {}
-}
-
-resource "pagerduty_service" "bar" {
-    name              = "Bar"
-    escalation_policy = data.pagerduty_escalation_policy.default.id
-    alert_grouping_parameters {}
-}
-```
-
-Step 2:
-```
-data "pagerduty_escalation_policy" "default" {
-    name = "Default"
-}
-
-resource "pagerduty_service" "foo" {
-    name              = "Foo"
-    escalation_policy = data.pagerduty_escalation_policy.default.id
-}
-
-resource "pagerduty_service" "bar" {
-    name              = "Bar"
-    escalation_policy = data.pagerduty_escalation_policy.default.id
-}
-
-resource "pagerduty_alert_grouping_setting" "type_a" {
-    name = "Type A"
-    description = "Configuration used for all services of type A"
-    type = "content_based"
-    config {
-        time_window = 300
-        aggregate = "all"
-        fields = ["summary"]
-    }
-    services = [
-        pagerduty_service.foo.id,
-        pagerduty_service.bar.id,
-    ]
 }
 ```
 

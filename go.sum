@@ -2,6 +2,8 @@ dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
 dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
+github.com/PagerDuty/go-pagerduty v1.8.1-0.20250621215354-4abe829df968 h1:Jv9u3R3qwccWfezOGOzMVeifmzbW5yQ/w3R3rhcydGg=
+github.com/PagerDuty/go-pagerduty v1.8.1-0.20250621215354-4abe829df968/go.mod h1:ilimTqwHSBjmvKeYA/yayDBZvzf/CX4Pwa9Qbhekzok=
 github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c h1:kMFnB0vCcX7IL/m9Y5LO+KQYv+t1CQOiFe6+SV2J7bE=
 github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azugULFRteWMNc0=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
@@ -105,8 +107,6 @@ github.com/hashicorp/yamux v0.1.1 h1:yrQxtgseBDrq9Y652vSRDvsKCJKOUD+GzTS4Y0Y8pvE
 github.com/hashicorp/yamux v0.1.1/go.mod h1:CtWFDAQgb7dxtzFs4tWbplKIe2jSi3+5vKbgIO0SLnQ=
 github.com/heimweh/go-pagerduty v0.0.0-20250414155133-f9f4e0b0c59b h1:5t9zhRQsn3IFnfLwdbJlsnuHz2UH+OT/XAMfH519PQU=
 github.com/heimweh/go-pagerduty v0.0.0-20250414155133-f9f4e0b0c59b/go.mod h1:r59w5iyN01Qvi734yA5hZldbSeJJmsJzee/1kQ/MK7s=
-github.com/imjaroiswebdev/go-pagerduty-cli v0.0.0-20250430235248-b1651b4542a1 h1:HPxgZ+w1yhlSnQtwM7w6NFbxbK0iZHLjTB+1nZ/wZ7k=
-github.com/imjaroiswebdev/go-pagerduty-cli v0.0.0-20250430235248-b1651b4542a1/go.mod h1:ilimTqwHSBjmvKeYA/yayDBZvzf/CX4Pwa9Qbhekzok=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
 github.com/jhump/protoreflect v1.15.1 h1:HUMERORf3I3ZdX05WaQ6MIpd/NJ434hTp5YiKgfCL6c=

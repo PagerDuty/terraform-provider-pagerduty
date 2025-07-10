@@ -1,3 +1,15 @@
+## v3.27.0 (Jul 10th, 2025)
+
+FEATURES:
+
+* `resource/pagerduty_service`: Ensure empty `alert_grouping_parameters` get deleted ([1036](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1036))
+
+## v3.26.4 (Jul 10th, 2025)
+
+BUG FIXES:
+
+* `resource/pagerduty_service`: Allow deleting `alert_grouping_parameters` with a `time_window` equal to 86400 ([1035](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1035))
+
 ## v3.26.3 (Jun 24th, 2025)
 
 BUG FIXES:

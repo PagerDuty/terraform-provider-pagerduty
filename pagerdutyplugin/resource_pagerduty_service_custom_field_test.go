@@ -79,6 +79,8 @@ func TestAccPagerDutyServiceCustomField_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_custom_field.test", "display_name", updatedDisplayName),
 					resource.TestCheckResourceAttr(
+						"pagerduty_service_custom_field.test", "summary", updatedDisplayName),
+					resource.TestCheckResourceAttr(
 						"pagerduty_service_custom_field.test", "data_type", "string"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_custom_field.test", "field_type", "single_value"),
@@ -128,8 +130,8 @@ func TestAccPagerDutyServiceCustomField_WithOptions(t *testing.T) {
 					testAccCheckPagerDutyServiceCustomFieldExists("pagerduty_service_custom_field.test_options"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_custom_field.test_options", "field_option.#", "4"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service_custom_field.test_options", "default_value", `"staging"`),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service_custom_field.test_options", "default_value"),
 				),
 			},
 			{
@@ -358,7 +360,6 @@ resource "pagerduty_service_custom_field" "test_options" {
   field_type   = "single_value_fixed"
   description  = "Test service custom field with options"
   enabled      = true
-  default_value = jsonencode("staging")
 
   field_option {
     data_type = "string"

@@ -2,12 +2,12 @@ package pagerduty
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util/planmodify"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -60,9 +60,16 @@ func (r *ServiceCustomFieldResource) Schema(_ context.Context, _ resource.Schema
 				Optional:    true,
 			},
 			"summary": schema.StringAttribute{
-				Description:   "A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to display_name",
-				Computed:      true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Description: "A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to display_name",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{planmodify.UseStateForUnknownIf(
+					func(ctx context.Context, req planmodifier.StringRequest) bool {
+						var state, plan types.String
+						_ = req.State.GetAttribute(ctx, path.Root("display_name"), &state)
+						_ = req.Plan.GetAttribute(ctx, path.Root("display_name"), &plan)
+						return state.ValueString() == plan.ValueString()
+					},
+				)},
 			},
 			"type": schema.StringAttribute{
 				Description:   "API object type",
@@ -159,19 +166,22 @@ func (r *ServiceCustomFieldResource) Create(ctx context.Context, req resource.Cr
 		field.Description = plan.Description.ValueString()
 	}
 
-	if !plan.DefaultValue.IsNull() {
-		var v any
-		err := json.Unmarshal([]byte(plan.DefaultValue.ValueString()), &v)
-		if err != nil {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("default_value"),
-				"Invalid value",
-				"Invalid JSON string: "+err.Error(),
-			)
-			return
+	/* TODO: uncomment to re-activate default value */
+	/*
+		if !plan.DefaultValue.IsNull() {
+			var v any
+			err := json.Unmarshal([]byte(plan.DefaultValue.ValueString()), &v)
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("default_value"),
+					"Invalid value",
+					"Invalid JSON string: "+err.Error(),
+				)
+				return
+			}
+			field.DefaultValue = v
 		}
-		field.DefaultValue = v
-	}
+	*/
 
 	if !plan.FieldOptions.IsNull() {
 		var fieldOptions []ServiceCustomFieldOptionModel
@@ -219,12 +229,15 @@ func (r *ServiceCustomFieldResource) Create(ctx context.Context, req resource.Cr
 		plan.Description = types.StringNull()
 	}
 
-	if createdField.DefaultValue != nil {
-		buf, _ := json.Marshal(createdField.DefaultValue)
-		plan.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
-	} else {
-		plan.DefaultValue = jsontypes.NewNormalizedNull()
-	}
+	/* TODO: uncomment to re-activate default value */
+	/*
+		if createdField.DefaultValue != nil {
+			buf, _ := json.Marshal(createdField.DefaultValue)
+			plan.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
+		} else {
+			plan.DefaultValue = jsontypes.NewNormalizedNull()
+		}
+	*/
 
 	if len(createdField.FieldOptions) > 0 {
 		fieldOptions := make([]ServiceCustomFieldOptionModel, 0, len(createdField.FieldOptions))
@@ -291,12 +304,15 @@ func (r *ServiceCustomFieldResource) Read(ctx context.Context, req resource.Read
 		state.Description = types.StringNull()
 	}
 
-	if field.DefaultValue != nil {
-		buf, _ := json.Marshal(field.DefaultValue)
-		state.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
-	} else {
-		state.DefaultValue = jsontypes.NewNormalizedNull()
-	}
+	/* TODO: uncomment to re-activate default value */
+	/*
+		if field.DefaultValue != nil {
+			buf, _ := json.Marshal(field.DefaultValue)
+			state.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
+		} else {
+			state.DefaultValue = jsontypes.NewNormalizedNull()
+		}
+	*/
 
 	if len(field.FieldOptions) > 0 {
 		fieldOptions := make([]ServiceCustomFieldOptionModel, 0, len(field.FieldOptions))
@@ -341,19 +357,22 @@ func (r *ServiceCustomFieldResource) Update(ctx context.Context, req resource.Up
 		field.Description = plan.Description.ValueString()
 	}
 
-	if !plan.DefaultValue.IsNull() {
-		var v any
-		err := json.Unmarshal([]byte(plan.DefaultValue.ValueString()), &v)
-		if err != nil {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("default_value"),
-				"Invalid value",
-				"Invalid JSON string: "+err.Error(),
-			)
-			return
+	/* TODO: uncomment to re-activate default value */
+	/*
+		if !plan.DefaultValue.IsNull() {
+			var v any
+			err := json.Unmarshal([]byte(plan.DefaultValue.ValueString()), &v)
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("default_value"),
+					"Invalid value",
+					"Invalid JSON string: "+err.Error(),
+				)
+				return
+			}
+			field.DefaultValue = v
 		}
-		field.DefaultValue = v
-	}
+	*/
 
 	if !plan.FieldOptions.IsNull() {
 		var fieldOptions []ServiceCustomFieldOptionModel
@@ -404,12 +423,15 @@ func (r *ServiceCustomFieldResource) Update(ctx context.Context, req resource.Up
 		plan.Description = types.StringNull()
 	}
 
-	if updatedField.DefaultValue != nil {
-		buf, _ := json.Marshal(updatedField.DefaultValue)
-		plan.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
-	} else {
-		plan.DefaultValue = jsontypes.NewNormalizedNull()
-	}
+	/* TODO: uncomment to re-activate default value */
+	/*
+		if updatedField.DefaultValue != nil {
+			buf, _ := json.Marshal(updatedField.DefaultValue)
+			plan.DefaultValue = jsontypes.NewNormalizedValue(string(buf))
+		} else {
+			plan.DefaultValue = jsontypes.NewNormalizedNull()
+		}
+	*/
 
 	if len(updatedField.FieldOptions) > 0 {
 		fieldOptions := make([]ServiceCustomFieldOptionModel, 0, len(updatedField.FieldOptions))

@@ -1,3 +1,10 @@
+## v3.27.1 (Jul 15th, 2025)
+
+BUG FIXES:
+
+* `resource/pagerduty_service_custom_field`: Improve documentation to represent actual API values ([1037](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1037))
+* `resource/pagerduty_service_custom_field`: Fix Update. Omit name, prevent state inconsistency on invalidated summary ([1037](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1037))
+
 ## v3.27.0 (Jul 10th, 2025)
 
 FEATURES:

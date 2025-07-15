@@ -36,7 +36,6 @@ The following attributes are exported:
 * `description` - A description of the data this field contains.
 * `data_type` - The kind of data the custom field is allowed to contain.
 * `field_type` - The type of data this field contains. In combination with the data_type field.
-* `default_value` - The default value for the custom field, if any.
 * `enabled` - Whether the field is enabled.
 * `field_options` - The options for the custom field. Only applies to `single_value_fixed` and `multi_value_fixed` field types. Each field option contains:
   * `value` - The value of the field option.

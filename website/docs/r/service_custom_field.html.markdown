@@ -32,7 +32,6 @@ resource "pagerduty_service_custom_field" "deployment_tier" {
   data_type     = "string"
   field_type    = "single_value_fixed"
   description   = "The deployment tier of the service"
-  default_value = jsonencode("production")
 
   field_option {
     value     = "production"
@@ -76,7 +75,6 @@ resource "pagerduty_service_custom_field" "critical" {
   data_type     = "boolean"
   field_type    = "single_value"
   description   = "Whether this is a critical service"
-  default_value = jsonencode(true)
 }
 
 # Integer field
@@ -86,7 +84,6 @@ resource "pagerduty_service_custom_field" "priority" {
   data_type     = "integer"
   field_type    = "single_value"
   description   = "Service priority level"
-  default_value = jsonencode(1)
 }
 ```
 
@@ -99,7 +96,6 @@ The following arguments are supported:
 * `data_type` - (Required) The kind of data the custom field is allowed to contain. Can be one of: `string`, `integer`, `float`, `boolean`, `datetime`, or `url`.
 * `field_type` - (Required) The type of field. Must be one of: `single_value`, `single_value_fixed`, `multi_value`, or `multi_value_fixed`.
 * `description` - (Optional) A description of the data this field contains.
-* `default_value` - (Optional) The default value for the field. Must be provided as a JSON-encoded string matching the field's data type.
 * `enabled` - (Optional) Whether the field is enabled. Defaults to `true`.
 * `field_option` - (Optional) Configuration block for defining options for `single_value_fixed` or `multi_value_fixed` field types. Can be specified multiple times for multiple options.
   * `value` - (Required) The value of the option.

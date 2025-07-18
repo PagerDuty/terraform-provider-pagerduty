@@ -46,7 +46,7 @@ type AlertGroupingConfig struct {
 
 // AlertGroupingParameters defines how alerts are grouped into incidents
 type AlertGroupingParameters struct {
-	Type   *string              `json:"type"`
+	Type   *string              `json:"type,omitempty"`
 	Config *AlertGroupingConfig `json:"config,omitempty"`
 }
 

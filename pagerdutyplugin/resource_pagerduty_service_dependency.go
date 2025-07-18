@@ -165,13 +165,35 @@ func (r *resourceServiceDependency) Create(ctx context.Context, req resource.Cre
 			if util.IsBadRequestError(err) {
 				return retry.NonRetryableError(err)
 			}
+			if util.IsNotFoundError(err) {
+				log.Printf("[DEBUG] Service dependency creation failed with 404, retrying for eventual consistency. Supporting: %s, Dependent: %s, Error: %s",
+					serviceDependency.SupportingService.ID, serviceDependency.DependentService.ID, err.Error())
+				return retry.RetryableError(err)
+			}
 			return retry.NonRetryableError(err)
 		}
 		model = flattenServiceDependency(list.Relationships, &resp.Diagnostics)
 		return nil
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error associating service dependency", err.Error())
+		if util.IsNotFoundError(err) {
+			resp.Diagnostics.AddError("Error associating service dependency",
+				fmt.Sprintf("%s\n\nThis error persisted after retries, indicating either:\n"+
+					"1. Supporting service (ID: %s) doesn't exist in your PagerDuty account\n"+
+					"2. Dependent service (ID: %s) doesn't exist in your PagerDuty account\n"+
+					"3. Services exist but have incorrect service types specified\n"+
+					"4. Your API token lacks permissions to access these services\n\n"+
+					"Please verify:\n"+
+					"- Both services exist at https://your-subdomain.pagerduty.com/service-directory\n"+
+					"- Service IDs are correct (not service names)\n"+
+					"- Service types are correct (business_service vs service)\n"+
+					"- Your API token has appropriate team permissions",
+					err.Error(),
+					serviceDependency.SupportingService.ID,
+					serviceDependency.DependentService.ID))
+		} else {
+			resp.Diagnostics.AddError("Error associating service dependency", err.Error())
+		}
 		return
 	}
 
@@ -197,15 +219,36 @@ func (r *resourceServiceDependency) Read(ctx context.Context, req resource.ReadR
 
 	log.Printf("Reading PagerDuty dependency %s", serviceDependency.ID)
 
-	serviceDependency, err := r.requestGetServiceDependency(ctx, serviceDependency.ID, serviceDependency.DependentService.ID, serviceDependency.DependentService.Type)
-	if serviceDependency == nil || util.IsNotFoundError(err) {
+	var foundDependency *pagerduty.ServiceDependency
+
+	err := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+		dep, err := r.requestGetServiceDependency(ctx, serviceDependency.ID, serviceDependency.DependentService.ID, serviceDependency.DependentService.Type)
+		if err != nil {
+			if util.IsNotFoundError(err) {
+				log.Printf("[DEBUG] Service dependency read failed with 404, retrying for eventual consistency. ID: %s, Error: %s", serviceDependency.ID, err.Error())
+				return retry.RetryableError(err)
+			}
+			if util.IsBadRequestError(err) {
+				return retry.NonRetryableError(err)
+			}
+			return retry.RetryableError(err)
+		}
+		foundDependency = dep
+		return nil
+	})
+
+	if foundDependency == nil {
+		log.Printf("[DEBUG] Service dependency %s not found after retries, removing from state", serviceDependency.ID)
 		resp.State.RemoveResource(ctx)
 		return
 	}
+
 	if err != nil {
-		resp.Diagnostics.AddError("Error listing service dependencies", err.Error())
+		resp.Diagnostics.AddError("Error reading service dependency", err.Error())
 		return
 	}
+
+	serviceDependency = foundDependency
 
 	model = flattenServiceDependency([]*pagerduty.ServiceDependency{serviceDependency}, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -312,8 +355,12 @@ func (r *resourceServiceDependency) requestGetServiceDependency(ctx context.Cont
 			return retry.RetryableError(err)
 		}
 		if err != nil {
-			if util.IsBadRequestError(err) || util.IsNotFoundError(err) {
+			if util.IsBadRequestError(err) {
 				return retry.NonRetryableError(err)
+			}
+			if util.IsNotFoundError(err) {
+				log.Printf("[DEBUG] List service dependencies failed with 404, could be eventual consistency. Service: %s, Type: %s, Error: %s", depID, rt, err.Error())
+				return retry.RetryableError(err)
 			}
 			return retry.RetryableError(err)
 		}
@@ -324,6 +371,14 @@ func (r *resourceServiceDependency) requestGetServiceDependency(ctx context.Cont
 				break
 			}
 		}
+
+		// If we didn't find the dependency in the list, that's also potentially
+		// an eventual consistency issue - the dependency might have been created
+		// but not yet indexed in the list
+		if found == nil {
+			log.Printf("[DEBUG] Service dependency %s not found in list for service %s (%s), could be eventual consistency", id, depID, rt)
+		}
+
 		return nil
 	})
 

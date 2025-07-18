@@ -1,3 +1,9 @@
+## v3.27.2 (Jul 18th, 2025)
+
+IMPROVEMENTS:
+
+* `resource/pagerduty_service_dependency`: Handle race condition in service dependency creation ([1039](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1039))
+
 ## v3.27.1 (Jul 15th, 2025)
 
 BUG FIXES:

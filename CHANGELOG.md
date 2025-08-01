@@ -1,41 +1,49 @@
-## v3.27.2 (Jul 18th, 2025)
+## v3.27.3 (Aug 1, 2025)
+
+BUG FIXES:
+
+* `PagerDuty/pagerduty`: Bump golang.org/x/oauth2 from 0.15.0 to 0.27.0 ([1038](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1038))
+* `resource/pagerduty_tag_assignment`: Add missing early return at import for tag\_assignment  ([1042](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1042))
+* `PagerDuty/pagerduty`: Fix regression on dependencies heimweh/go-pagerduty ([1042](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1042))
+
+## v3.27.2 (Jul 18, 2025)
 
 IMPROVEMENTS:
 
 * `resource/pagerduty_service_dependency`: Handle race condition in service dependency creation ([1039](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1039))
 
-## v3.27.1 (Jul 15th, 2025)
+## v3.27.1 (Jul 15, 2025)
 
 BUG FIXES:
 
 * `resource/pagerduty_service_custom_field`: Improve documentation to represent actual API values ([1037](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1037))
 * `resource/pagerduty_service_custom_field`: Fix Update. Omit name, prevent state inconsistency on invalidated summary ([1037](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1037))
 
-## v3.27.0 (Jul 10th, 2025)
+## v3.27.0 (Jul 10, 2025)
 
 FEATURES:
 
 * `resource/pagerduty_service`: Ensure empty `alert_grouping_parameters` get deleted ([1036](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1036))
 
-## v3.26.4 (Jul 10th, 2025)
+## v3.26.4 (Jul 10, 2025)
 
 BUG FIXES:
 
 * `resource/pagerduty_service`: Allow deleting `alert_grouping_parameters` with a `time_window` equal to 86400 ([1035](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1035))
 
-## v3.26.3 (Jun 24th, 2025)
+## v3.26.3 (Jun 24, 2025)
 
 BUG FIXES:
 
 * `resource/pagerduty_event_orchestration_router`: Validate `actions` have either `route_to` or `dynamic_route_to` ([1033](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1033))
 
-## v3.26.2 (Jun 16th, 2025)
+## v3.26.2 (Jun 16, 2025)
 
 BUG FIXES:
 
 * `PagerDuty/pagerduty`: Fix missing docs for automation Action `map_to_all_services` ([1031](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1031))
 
-## v3.26.1 (Jun 13th, 2025)
+## v3.26.1 (Jun 13, 2025)
 
 BUG FIXES:
 

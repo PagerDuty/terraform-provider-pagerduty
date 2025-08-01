@@ -261,6 +261,7 @@ func (r *resourceTagAssignment) ImportState(ctx context.Context, req resource.Im
 			"Error importing pagerduty_tag_assignment",
 			err.Error(),
 		)
+		return
 	}
 
 	isFound := false

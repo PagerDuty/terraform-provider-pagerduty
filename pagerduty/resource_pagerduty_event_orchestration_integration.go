@@ -135,6 +135,10 @@ func resourcePagerDutyEventOrchestrationIntegrationRead(ctx context.Context, d *
 				return retry.NonRetryableError(err)
 			}
 
+			if e := handleNotFoundError(err, d); e == nil {
+				return nil
+			}
+
 			return retry.RetryableError(err)
 		}
 

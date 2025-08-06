@@ -47,6 +47,7 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				Computed:      true,
 				ConflictsWith: []string{"vendor"},
 				ValidateDiagFunc: validateValueDiagFunc([]string{
+					"app_event_transform_inbound_integration",
 					"aws_cloudwatch_inbound_integration",
 					"cloudkick_inbound_integration",
 					"event_transformer_api_inbound_integration",

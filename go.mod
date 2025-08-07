@@ -4,8 +4,6 @@ go 1.23.0
 
 toolchain go1.24.2
 
-replace github.com/PagerDuty/go-pagerduty => ../go-pagerduty-cli
-
 require (
 	github.com/PagerDuty/go-pagerduty v1.8.1-0.20250715201041-a061a75163e3
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
@@ -81,3 +79,5 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
+
+replace github.com/PagerDuty/go-pagerduty => github.com/imjaroiswebdev/go-pagerduty-cli v0.0.0-20250807164326-ac58cc0e9b8c

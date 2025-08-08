@@ -1,3 +1,9 @@
+## v3.28.0 (Aug 8, 2025)
+
+FEATURES:
+
+* `resource/pagerduty_enablement`: Add pagerduty_enablement resource with polymorphic entity support ([1045](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1045))
+
 ## v3.27.3 (Aug 1, 2025)
 
 BUG FIXES:

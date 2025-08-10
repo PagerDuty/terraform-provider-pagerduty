@@ -77,7 +77,7 @@ func (r *resourceEnablement) Create(ctx context.Context, req resource.CreateRequ
 	enablement := buildEnablement(&model)
 	log.Printf("[INFO] Creating PagerDuty enablement %s for %s entity with ID %s with enabled=%t", enablement.Feature, enablement.EntityType, enablement.EntityID, enablement.Enabled)
 
-	err := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		var enablementResult *pagerduty.Enablement
 		var err error
 
@@ -95,6 +95,13 @@ func (r *resourceEnablement) Create(ctx context.Context, req resource.CreateRequ
 				return retry.NonRetryableError(err)
 			}
 			return retry.RetryableError(err)
+		}
+
+		// Validate that the API response matches the requested state
+		if enablementResult.Enabled != enablement.Enabled {
+			return retry.RetryableError(fmt.Errorf(
+				"API returned enabled=%t when %t was requested for enablement %s on %s %s. This may be due to distributed consistency issues, retrying...",
+				enablementResult.Enabled, enablement.Enabled, enablement.Feature, enablement.EntityType, enablement.EntityID))
 		}
 
 		// Update the model with the actual enabled state from API response
@@ -236,7 +243,7 @@ func (r *resourceEnablement) Update(ctx context.Context, req resource.UpdateRequ
 	enablement := buildEnablement(&model)
 	log.Printf("[INFO] Updating PagerDuty enablement %s for %s entity with ID %s", enablement.Feature, enablement.EntityType, enablement.EntityID)
 
-	err := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		var enablementResult *pagerduty.Enablement
 		var err error
 
@@ -254,6 +261,13 @@ func (r *resourceEnablement) Update(ctx context.Context, req resource.UpdateRequ
 				return retry.NonRetryableError(err)
 			}
 			return retry.RetryableError(err)
+		}
+
+		// Validate that the API response matches the requested state
+		if enablementResult.Enabled != enablement.Enabled {
+			return retry.RetryableError(fmt.Errorf(
+				"API returned enabled=%t when %t was requested for enablement %s on %s %s. This may be due to distributed consistency issues, retrying...",
+				enablementResult.Enabled, enablement.Enabled, enablement.Feature, enablement.EntityType, enablement.EntityID))
 		}
 
 		// Update the model with the actual enabled state from API response

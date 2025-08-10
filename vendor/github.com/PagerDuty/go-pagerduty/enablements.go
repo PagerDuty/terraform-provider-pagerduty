@@ -195,16 +195,49 @@ func getEnablementFromResponse(c *Client, resp *http.Response, err error, entity
 		return nil, handleEnablementError(err, "updating", entityType, entityID)
 	}
 
-	var target EnablementResponse
-	if dErr := c.decodeJSON(resp, &target); dErr != nil {
+	// Different API endpoints use different response formats:
+	// - Service endpoints return {"enablements": [...]}
+	// - Event orchestration endpoints return {"enablement": {...}}
+
+	var dErr error
+	// Based on entity type, try the appropriate parsing method first
+	if entityType == "event_orchestration" {
+		// Try parsing as single enablement response (event orchestrations)
+		var singleTarget EnablementResponse
+		dErr = c.decodeJSON(resp, &singleTarget)
+		if dErr == nil && singleTarget.Enablement.Feature == feature {
+			return &singleTarget.Enablement, nil
+		}
+	}
+
+	if entityType == "service" {
+		// Try parsing as array response (services)
+		var listTarget ListEnablementsResponse
+		dErr = c.decodeJSON(resp, &listTarget)
+		if dErr == nil {
+		}
+
+		// Handle warnings without failing the operation
+		handleAPIWarnings(listTarget.Warnings)
+
+		// Find the matching enablement in the list
+		for _, enablement := range listTarget.Enablements {
+			if enablement.Feature == feature {
+				return &enablement, nil
+			}
+		}
+	}
+
+	if dErr != nil {
 		return nil, handleEnablementError(
 			fmt.Errorf("could not decode JSON response: %w", dErr),
 			"updating", entityType, entityID)
 	}
 
-	return &target.Enablement, nil
+	return nil, handleEnablementError(
+		fmt.Errorf("enablement %s not found in API response", feature),
+		"updating", entityType, entityID)
 }
-
 
 // ListServiceEnablementsWithContext lists all enablements for a service.
 func (c *Client) ListServiceEnablementsWithContext(ctx context.Context, serviceID string) ([]Enablement, error) {
@@ -221,7 +254,6 @@ func (c *Client) ListServiceEnablementsWithContext(ctx context.Context, serviceI
 	return getEnablementsFromResponse(c, resp, err, "service", serviceID)
 }
 
-
 // ListEventOrchestrationEnablementsWithContext lists all enablements for an event orchestration.
 func (c *Client) ListEventOrchestrationEnablementsWithContext(ctx context.Context, orchestrationID string) ([]Enablement, error) {
 	if err := validateEntityID(orchestrationID); err != nil {
@@ -236,7 +268,6 @@ func (c *Client) ListEventOrchestrationEnablementsWithContext(ctx context.Contex
 	resp, err := c.get(ctx, path, nil)
 	return getEnablementsFromResponse(c, resp, err, "event_orchestration", orchestrationID)
 }
-
 
 // UpdateServiceEnablementWithContext updates a specific enablement for a service.
 func (c *Client) UpdateServiceEnablementWithContext(ctx context.Context, serviceID, feature string, enabled bool) (*Enablement, error) {
@@ -268,7 +299,6 @@ func (c *Client) UpdateServiceEnablementWithContext(ctx context.Context, service
 	return getEnablementFromResponse(c, resp, err, "service", serviceID, feature)
 }
 
-
 // UpdateEventOrchestrationEnablementWithContext updates a specific enablement for an event orchestration.
 func (c *Client) UpdateEventOrchestrationEnablementWithContext(ctx context.Context, orchestrationID, feature string, enabled bool) (*Enablement, error) {
 	if err := validateEntityID(orchestrationID); err != nil {
@@ -298,4 +328,3 @@ func (c *Client) UpdateEventOrchestrationEnablementWithContext(ctx context.Conte
 	resp, err := c.put(ctx, path, req, nil)
 	return getEnablementFromResponse(c, resp, err, "event_orchestration", orchestrationID, feature)
 }
-

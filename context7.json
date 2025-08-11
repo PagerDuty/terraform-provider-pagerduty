@@ -1,0 +1,37 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Terraform Provider for PagerDuty",
+  "description": "The Terraform Pagerduty provider is a plugin for Terraform that allows for the management of PagerDuty resources using HCL, enabling infrastructure as code for PagerDuty configurations.",
+  "folders": [
+    "website",
+    "website/docs"
+  ],
+  "excludeFolders": [
+    "pagerduty",
+    "pagerdutyplugin",
+    "scripts",
+    "util",
+    "vendor"
+  ],
+  "excludeFiles": [
+    "CHANGELOG.md",
+    "LICENSE.md",
+    "CODE_OF_CONDUCT.md",
+    "code_of_conduct.md"
+  ],
+  "rules": [
+    "Use the PagerDuty Terraform provider to create, update, and delete users in your PagerDuty account as code.",
+    "Define and manage on-call schedules in PagerDuty using Terraform, ensuring consistent and version-controlled rotation policies.",
+    "Use Terraform to create and maintain PagerDuty escalation policies, automating incident response workflows across your teams.",
+    "Use pagerduty_service to define incident-managed services",
+    "Use pagerduty_schedule to automate on-call rotations",
+    "Use pagerduty_escalation_policy to codify escalation workflows",
+    "Use pagerduty_user to provision PagerDuty users",
+    "Use pagerduty_team to manage response teams",
+    "Use pagerduty_team_membership to assign users to teams",
+    "Use pagerduty_service_integration to connect monitoring tools",
+    "Use pagerduty_event_orchestration along with pagerduty_event_orchestration_router to automate event routing",
+    "Use pagerduty_extension to add Slack or webhook notifications",
+    "Use pagerduty_business_service to model business-impacting services"
+  ]
+}

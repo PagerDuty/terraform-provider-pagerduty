@@ -1,8 +1,15 @@
+## v3.28.1 (Aug 10, 2025)
+
+BUG FIXES:
+
+* `resource/pagerduty_enablement`: Fix API response parsing and add warning diagnostics for enablement resources ([1046](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1046))
+
 ## v3.28.0 (Aug 8, 2025)
 
 FEATURES:
 
 * `resource/pagerduty_enablement`: Add pagerduty_enablement resource with polymorphic entity support ([1045](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1045))
+* `resource/resource_pagerduty_event_orchestration_integration`: Handle not found error on event orchestration integration ([1044](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1044))
 
 ## v3.27.3 (Aug 1, 2025)
 

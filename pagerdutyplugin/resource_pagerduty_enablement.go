@@ -77,15 +77,32 @@ func (r *resourceEnablement) Create(ctx context.Context, req resource.CreateRequ
 	enablement := buildEnablement(&model)
 	log.Printf("[INFO] Creating PagerDuty enablement %s for %s entity with ID %s with enabled=%t", enablement.Feature, enablement.EntityType, enablement.EntityID, enablement.Enabled)
 
+	// API may return warnings if account is not entitled to AIOps features but the setting is still updated
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		var enablementResult *pagerduty.Enablement
 		var err error
 
 		switch enablement.EntityType {
 		case "service":
-			enablementResult, err = r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err := r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
+				}
+				enablementResult = result.Enablement
+			} else {
+				enablementResult = nil
+			}
 		case "event_orchestration":
-			enablementResult, err = r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err := r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
+				}
+				enablementResult = result.Enablement
+			} else {
+				enablementResult = nil
+			}
 		default:
 			return retry.NonRetryableError(fmt.Errorf("unsupported entity type: %s", enablement.EntityType))
 		}
@@ -154,9 +171,25 @@ func (r *resourceEnablement) requestGetEnablement(ctx context.Context, model *re
 
 		switch enablement.EntityType {
 		case "service":
-			enablements, err = r.client.ListServiceEnablementsWithContext(ctx, enablement.EntityID)
+			result, err := r.client.ListServiceEnablementsWithContext(ctx, enablement.EntityID)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					diags.AddWarning("PagerDuty API Warning", warning)
+				}
+				enablements = result.Enablements
+			} else {
+				enablements = nil
+			}
 		case "event_orchestration":
-			enablements, err = r.client.ListEventOrchestrationEnablementsWithContext(ctx, enablement.EntityID)
+			result, err := r.client.ListEventOrchestrationEnablementsWithContext(ctx, enablement.EntityID)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					diags.AddWarning("PagerDuty API Warning", warning)
+				}
+				enablements = result.Enablements
+			} else {
+				enablements = nil
+			}
 		default:
 			return retry.NonRetryableError(fmt.Errorf("unsupported entity type: %s", enablement.EntityType))
 		}
@@ -243,15 +276,32 @@ func (r *resourceEnablement) Update(ctx context.Context, req resource.UpdateRequ
 	enablement := buildEnablement(&model)
 	log.Printf("[INFO] Updating PagerDuty enablement %s for %s entity with ID %s", enablement.Feature, enablement.EntityType, enablement.EntityID)
 
+	// API may return warnings if account is not entitled to AIOps features but the setting is still updated
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		var enablementResult *pagerduty.Enablement
 		var err error
 
 		switch enablement.EntityType {
 		case "service":
-			enablementResult, err = r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err := r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
+				}
+				enablementResult = result.Enablement
+			} else {
+				enablementResult = nil
+			}
 		case "event_orchestration":
-			enablementResult, err = r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err := r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
+				}
+				enablementResult = result.Enablement
+			} else {
+				enablementResult = nil
+			}
 		default:
 			return retry.NonRetryableError(fmt.Errorf("unsupported entity type: %s", enablement.EntityType))
 		}
@@ -302,9 +352,19 @@ func (r *resourceEnablement) Delete(ctx context.Context, req resource.DeleteRequ
 
 		switch enablement.EntityType {
 		case "service":
-			_, err = r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
+			result, err := r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
+				}
+			}
 		case "event_orchestration":
-			_, err = r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
+			result, err := r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
+			if err == nil {
+				for _, warning := range result.Warnings {
+					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
+				}
+			}
 		default:
 			return retry.NonRetryableError(fmt.Errorf("unsupported entity type: %s", enablement.EntityType))
 		}
@@ -403,9 +463,21 @@ func (r *resourceEnablement) ImportState(ctx context.Context, req resource.Impor
 
 		switch entityType {
 		case "service":
-			enablements, err = r.client.ListServiceEnablementsWithContext(ctx, entityID)
+			result, err := r.client.ListServiceEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				// Note: Warnings from ImportState are not surfaced since resp is not available here
+				enablements = result.Enablements
+			} else {
+				enablements = nil
+			}
 		case "event_orchestration":
-			enablements, err = r.client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			result, err := r.client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				// Note: Warnings from ImportState are not surfaced since resp is not available here
+				enablements = result.Enablements
+			} else {
+				enablements = nil
+			}
 		}
 
 		if err != nil {
@@ -444,9 +516,21 @@ func (r *resourceEnablement) validateEnablementExists(ctx context.Context, entit
 
 		switch entityType {
 		case "service":
-			enablements, err = r.client.ListServiceEnablementsWithContext(ctx, entityID)
+			result, err := r.client.ListServiceEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				// Note: Warnings from validateEnablementExists are not surfaced since resp is not available here
+				enablements = result.Enablements
+			} else {
+				enablements = nil
+			}
 		case "event_orchestration":
-			enablements, err = r.client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			result, err := r.client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				// Note: Warnings from validateEnablementExists are not surfaced since resp is not available here
+				enablements = result.Enablements
+			} else {
+				enablements = nil
+			}
 		default:
 			return retry.NonRetryableError(fmt.Errorf("unsupported entity type: %s", entityType))
 		}

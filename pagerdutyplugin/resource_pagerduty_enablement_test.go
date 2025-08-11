@@ -39,13 +39,13 @@ func testSweepEnablement(region string) error {
 	for _, service := range servicesResp.Services {
 		// Only sweep test services
 		if strings.HasPrefix(service.Name, "tf-") {
-			enablements, err := client.ListServiceEnablementsWithContext(ctx, service.ID)
+			enablementsResult, err := client.ListServiceEnablementsWithContext(ctx, service.ID)
 			if err != nil {
 				log.Printf("Error listing enablements for service %s during sweep: %s", service.ID, err)
 				continue
 			}
 
-			for _, enablement := range enablements {
+			for _, enablement := range enablementsResult.Enablements {
 				if enablement.Enabled {
 					log.Printf("Disabling enablement %s for service %s during sweep", enablement.Feature, service.ID)
 					_, err := client.UpdateServiceEnablementWithContext(ctx, service.ID, enablement.Feature, false)
@@ -68,13 +68,13 @@ func testSweepEnablement(region string) error {
 	for _, orchestration := range orchestrationsResp.Orchestrations {
 		// Only sweep test orchestrations
 		if strings.HasPrefix(orchestration.Name, "tf-") {
-			enablements, err := client.ListEventOrchestrationEnablementsWithContext(ctx, orchestration.ID)
+			enablementsResult, err := client.ListEventOrchestrationEnablementsWithContext(ctx, orchestration.ID)
 			if err != nil {
 				log.Printf("Error listing enablements for event orchestration %s during sweep: %s", orchestration.ID, err)
 				continue
 			}
 
-			for _, enablement := range enablements {
+			for _, enablement := range enablementsResult.Enablements {
 				if enablement.Enabled {
 					log.Printf("Disabling enablement %s for event orchestration %s during sweep", enablement.Feature, orchestration.ID)
 					_, err := client.UpdateEventOrchestrationEnablementWithContext(ctx, orchestration.ID, enablement.Feature, false)
@@ -280,9 +280,15 @@ func testAccCheckPagerDutyEnablementDestroy(s *terraform.State) error {
 		var err error
 		switch entityType {
 		case "service":
-			enablements, err = client.ListServiceEnablementsWithContext(ctx, entityID)
+			result, err := client.ListServiceEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				enablements = result.Enablements
+			}
 		case "event_orchestration":
-			enablements, err = client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			result, err := client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				enablements = result.Enablements
+			}
 		default:
 			err = fmt.Errorf("unsupported entity type: %s", entityType)
 		}
@@ -334,9 +340,15 @@ func testAccCheckPagerDutyEnablementExists(n string) resource.TestCheckFunc {
 		var err error
 		switch entityType {
 		case "service":
-			enablements, err = client.ListServiceEnablementsWithContext(ctx, entityID)
+			result, err := client.ListServiceEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				enablements = result.Enablements
+			}
 		case "event_orchestration":
-			enablements, err = client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			result, err := client.ListEventOrchestrationEnablementsWithContext(ctx, entityID)
+			if err == nil {
+				enablements = result.Enablements
+			}
 		default:
 			err = fmt.Errorf("unsupported entity type: %s", entityType)
 		}

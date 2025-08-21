@@ -13,10 +13,12 @@ allows you to set values for custom fields on a PagerDuty service. These values
 provide additional context for services and can be used for filtering, search,
 and analytics.
 
+~> The API is optimized to receive multiple `custom_fields` blocks on the same resource when they share `service_id`, and not for the scenario where there is many resources pointing to the same service. So writing only 1 `pagerduty_service_custom_field_value` resource per service would result in quicker terraform applies and reduce the risk of encountering errors. See below for an example of the recommended usage pattern.
+
 ## Example Usage
 
 ```hcl
-# First, create a service custom field
+# First, create service custom fields
 resource "pagerduty_service_custom_field" "environment" {
   name         = "environment"
   display_name = "Environment"
@@ -25,25 +27,6 @@ resource "pagerduty_service_custom_field" "environment" {
   description  = "The environment this service runs in"
 }
 
-# Create a service
-resource "pagerduty_service" "example" {
-  name                    = "Example Service"
-  auto_resolve_timeout    = 14400
-  acknowledgement_timeout = 600
-  escalation_policy       = pagerduty_escalation_policy.example.id
-}
-
-# Set a custom field value on the service
-resource "pagerduty_service_custom_field_value" "example" {
-  service_id = pagerduty_service.example.id
-  
-  custom_fields {
-    name  = pagerduty_service_custom_field.environment.name
-    value = jsonencode("production")
-  }
-}
-
-# Set multiple custom field values on a service
 resource "pagerduty_service_custom_field" "region" {
   name         = "region"
   display_name = "Region"
@@ -52,21 +35,6 @@ resource "pagerduty_service_custom_field" "region" {
   description  = "The region this service is deployed in"
 }
 
-resource "pagerduty_service_custom_field_value" "multiple_example" {
-  service_id = pagerduty_service.example.id
-  
-  custom_fields {
-    name  = pagerduty_service_custom_field.environment.name
-    value = jsonencode("production")
-  }
-  
-  custom_fields {
-    name  = pagerduty_service_custom_field.region.name
-    value = jsonencode("us-east-1")
-  }
-}
-
-# Example with a boolean field
 resource "pagerduty_service_custom_field" "is_critical" {
   name         = "is_critical"
   display_name = "Is Critical"
@@ -75,16 +43,6 @@ resource "pagerduty_service_custom_field" "is_critical" {
   description  = "Whether this service is critical"
 }
 
-resource "pagerduty_service_custom_field_value" "boolean_example" {
-  service_id = pagerduty_service.example.id
-  
-  custom_fields {
-    name  = pagerduty_service_custom_field.is_critical.name
-    value = jsonencode(true)
-  }
-}
-
-# Example with a multi-value field
 resource "pagerduty_service_custom_field" "regions" {
   name         = "regions"
   display_name = "AWS Regions"
@@ -103,9 +61,37 @@ resource "pagerduty_service_custom_field" "regions" {
   }
 }
 
-resource "pagerduty_service_custom_field_value" "multi_value_example" {
+# Create a service
+resource "pagerduty_service" "example" {
+  name                    = "Example Service"
+  auto_resolve_timeout    = 14400
+  acknowledgement_timeout = 600
+  escalation_policy       = pagerduty_escalation_policy.example.id
+}
+
+# Set custom field values on the service
+resource "pagerduty_service_custom_field_value" "example" {
   service_id = pagerduty_service.example.id
   
+  # String field
+  custom_fields {
+    name  = pagerduty_service_custom_field.environment.name
+    value = jsonencode("production")
+  }
+
+  # String field
+  custom_fields {
+    name  = pagerduty_service_custom_field.region.name
+    value = jsonencode("us-east-1")
+  }
+
+  # Boolean field
+  custom_fields {
+    name  = pagerduty_service_custom_field.is_critical.name
+    value = jsonencode(true)
+  }
+
+  # Multi-value field
   custom_fields {
     name  = pagerduty_service_custom_field.regions.name
     value = jsonencode(["us-east-1", "us-west-1"])

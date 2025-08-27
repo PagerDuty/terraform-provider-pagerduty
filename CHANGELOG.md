@@ -1,3 +1,7 @@
+## v3.28.2 (Aug 27, 2025)
+
+* `resource/pagerduty_service_custom_field_value`: Update documentation to clarify recommended usage
+
 ## v3.28.1 (Aug 10, 2025)
 
 BUG FIXES:

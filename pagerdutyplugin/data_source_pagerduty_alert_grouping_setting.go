@@ -43,11 +43,15 @@ func (*dataSourceAlertGroupingSetting) Schema(ctx context.Context, req datasourc
 						Computed: true,
 					},
 					"aggregate": schema.StringAttribute{
-						Optional: true,
+						Computed: true,
 					},
 					"fields": schema.SetAttribute{
 						ElementType: types.StringType,
-						Optional:    true,
+						Computed:    true,
+					},
+					"iag_fields": schema.ListAttribute{
+						ElementType: types.StringType,
+						Computed:    true,
 					},
 				},
 			},

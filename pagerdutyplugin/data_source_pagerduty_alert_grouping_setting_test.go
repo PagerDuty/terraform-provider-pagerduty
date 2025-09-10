@@ -55,6 +55,30 @@ func TestAccDataSourcePagerDutyAlertGroupingSetting_ContentBased(t *testing.T) {
 	})
 }
 
+func TestAccDataSourcePagerDutyAlertGroupingSetting_Intelligent_Basic(t *testing.T) {
+	name := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDataSourcePagerDutyAlertGroupingSettingIntelligentBasicConfig(name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccDataSourcePagerDutyAlertGroupingSetting("pagerduty_alert_grouping_setting.test", "data.pagerduty_alert_grouping_setting.by_name"),
+					resource.TestCheckResourceAttr("data.pagerduty_alert_grouping_setting.by_name", "name", name),
+					resource.TestCheckResourceAttr("data.pagerduty_alert_grouping_setting.by_name", "type", "intelligent"),
+					resource.TestCheckResourceAttrSet("data.pagerduty_alert_grouping_setting.by_name", "description"),
+					resource.TestCheckResourceAttr("data.pagerduty_alert_grouping_setting.by_name", "services.#", "1"),
+					resource.TestCheckResourceAttr("data.pagerduty_alert_grouping_setting.by_name", "config.time_window", "300"),
+					resource.TestCheckResourceAttr("data.pagerduty_alert_grouping_setting.by_name", "config.iag_fields.#", "1"),
+					resource.TestCheckResourceAttr("data.pagerduty_alert_grouping_setting.by_name", "config.iag_fields.0", "summary"),
+				),
+			},
+		},
+	})
+}
+
 func testAccDataSourcePagerDutyAlertGroupingSetting(src, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		srcR := s.RootModule().Resources[src]
@@ -122,6 +146,30 @@ resource "pagerduty_alert_grouping_setting" "test" {
 		aggregate = "any"
 		fields = ["summary"]
 	}
+}
+
+data "pagerduty_alert_grouping_setting" "by_name" {
+	name = pagerduty_alert_grouping_setting.test.name
+}
+`, name)
+}
+
+func testAccDataSourcePagerDutyAlertGroupingSettingIntelligentBasicConfig(name string) string {
+	return fmt.Sprintf(`
+data "pagerduty_escalation_policy" "test" {
+	name = "Default"
+}
+
+resource "pagerduty_service" "test" {
+	name = "%s"
+	escalation_policy = data.pagerduty_escalation_policy.test.id
+}
+
+resource "pagerduty_alert_grouping_setting" "test" {
+	name = "%[1]s"
+	type = "intelligent"
+	services = [pagerduty_service.test.id]
+	config {}
 }
 
 data "pagerduty_alert_grouping_setting" "by_name" {

@@ -89,6 +89,12 @@ func (r *resourceAlertGroupingSetting) Schema(_ context.Context, _ resource.Sche
 						Computed:   true,
 						Validators: []validator.Int64{int64validator.NoneOf(0)},
 					},
+					"iag_fields": schema.ListAttribute{
+						Optional:    true,
+						Computed:    true,
+						ElementType: types.StringType,
+						Description: "An array of strings which represent the iag fields with which to intelligently group against",
+					},
 					"time_window": schema.Int64Attribute{
 						Optional:   true,
 						Computed:   true,
@@ -147,6 +153,27 @@ func (r *resourceAlertGroupingSetting) ModifyPlan(ctx context.Context, req resou
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Set default iag_fields for intelligent type if not specified
+	var typeValue types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("type"), &typeValue)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if typeValue.ValueString() == "intelligent" {
+		var iagFields types.List
+		resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("iag_fields"), &iagFields)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// If iag_fields is null or unknown, set default value
+		if iagFields.IsNull() || iagFields.IsUnknown() {
+			defaultIagFields := types.ListValueMust(types.StringType, []attr.Value{types.StringValue("summary")})
+			resp.Plan.SetAttribute(ctx, path.Root("config").AtName("iag_fields"), defaultIagFields)
+		}
 	}
 
 	if timeFieldChanged || timeFieldChangedAlt {
@@ -414,6 +441,7 @@ func buildPagerdutyAlertGroupingSettingConfig(ctx context.Context, model *resour
 		TimeWindow types.Int64  `tfsdk:"time_window"`
 		Aggregate  types.String `tfsdk:"aggregate"`
 		Fields     types.Set    `tfsdk:"fields"`
+		IagFields  types.List   `tfsdk:"iag_fields"`
 	}
 
 	switch model.Type.ValueString() {
@@ -432,8 +460,11 @@ func buildPagerdutyAlertGroupingSettingConfig(ctx context.Context, model *resour
 
 	case string(pagerduty.AlertGroupingSettingIntelligentType):
 		diags.Append(model.Config.As(ctx, &target, basetypes.ObjectAsOptions{})...)
+		iagFields := []string{}
+		diags.Append(target.IagFields.ElementsAs(ctx, &iagFields, false)...)
 		return pagerduty.AlertGroupingSettingConfigIntelligent{
 			TimeWindow: uint(target.TimeWindow.ValueInt64()),
+			IagFields:  iagFields,
 		}
 
 	case string(pagerduty.AlertGroupingSettingTimeType):
@@ -474,6 +505,7 @@ func flattenAlertGroupingSettingConfig(response *pagerduty.AlertGroupingSetting)
 		"time_window": types.Int64Type,
 		"aggregate":   types.StringType,
 		"fields":      types.SetType{ElemType: types.StringType},
+		"iag_fields":  types.ListType{ElemType: types.StringType},
 	}
 
 	var obj map[string]attr.Value
@@ -490,14 +522,20 @@ func flattenAlertGroupingSettingConfig(response *pagerduty.AlertGroupingSetting)
 			"time_window": tw,
 			"aggregate":   types.StringValue(c.Aggregate),
 			"fields":      types.SetValueMust(types.StringType, fields),
+			"iag_fields":  types.ListNull(types.StringType),
 		}
 
 	case pagerduty.AlertGroupingSettingConfigIntelligent:
+		iagFields := make([]attr.Value, 0, len(c.IagFields))
+		for _, f := range c.IagFields {
+			iagFields = append(iagFields, types.StringValue(f))
+		}
 		obj = map[string]attr.Value{
 			"timeout":     types.Int64Null(),
 			"time_window": types.Int64Value(int64(c.TimeWindow)),
 			"aggregate":   types.StringNull(),
 			"fields":      types.SetNull(types.StringType),
+			"iag_fields":  types.ListValueMust(types.StringType, iagFields),
 		}
 
 	case pagerduty.AlertGroupingSettingConfigTime:
@@ -506,9 +544,9 @@ func flattenAlertGroupingSettingConfig(response *pagerduty.AlertGroupingSetting)
 			"time_window": types.Int64Null(),
 			"aggregate":   types.StringNull(),
 			"fields":      types.SetNull(types.StringType),
+			"iag_fields":  types.ListNull(types.StringType),
 		}
 	}
-
 	return types.ObjectValueMust(alertGroupingSettingConfigAttrTypes, obj)
 }
 

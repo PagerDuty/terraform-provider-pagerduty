@@ -97,7 +97,7 @@ func TestAccPagerDutyUserContactMethodPhone_FormatValidation(t *testing.T) {
 			{
 				Config:      testAccCheckPagerDutyUserContactMethodPhoneFormatValidationConfig(username, email, "sms_contact_method", "52", "15558889999"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Mexico-based SMS numbers should be free of area code prefixes, so please remove the leading 1 in the number"),
+				ExpectError: regexp.MustCompile(`Mexico-based SMS numbers should be free of area code prefixes, so please\s+remove the leading 1 in the number`),
 			},
 		},
 	})

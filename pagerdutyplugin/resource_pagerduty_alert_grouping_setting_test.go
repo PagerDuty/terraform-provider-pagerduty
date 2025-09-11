@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -213,6 +214,106 @@ func TestAccPagerDutyAlertGroupingSetting_Time_WithTimeoutZero(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyAlertGroupingSetting_Intelligent_Basic(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	name := ref
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+
+	configType := string(pagerduty.AlertGroupingSettingIntelligentType)
+	recommendedTimeWindow := 300
+	config := pagerduty.AlertGroupingSettingConfigIntelligent{}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAlertGroupingSettingConfig(ref, name, configType, service, config),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists("pagerduty_alert_grouping_setting."+ref),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "name", name),
+					resource.TestCheckResourceAttrSet("pagerduty_alert_grouping_setting."+ref, "description"),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "type", configType),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.time_window", fmt.Sprint(recommendedTimeWindow)),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.#", "1"),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.0", "summary"),
+					resource.TestCheckResourceAttrSet("pagerduty_alert_grouping_setting."+ref, "services.0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyAlertGroupingSetting_Intelligent_WithIagFields(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	name := ref
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+
+	configType := string(pagerduty.AlertGroupingSettingIntelligentType)
+	recommendedTimeWindow := 300
+	config := pagerduty.AlertGroupingSettingConfigIntelligent{IagFields: []string{
+		"summary",
+		"component",
+		"custom_details.host",
+		"custom_details.field1.field2",
+	}}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAlertGroupingSettingConfig(ref, name, configType, service, config),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists("pagerduty_alert_grouping_setting."+ref),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "name", name),
+					resource.TestCheckResourceAttrSet("pagerduty_alert_grouping_setting."+ref, "description"),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "type", configType),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.time_window", fmt.Sprint(recommendedTimeWindow)),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.#", "4"),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.0", config.IagFields[0]),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.1", config.IagFields[1]),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.2", config.IagFields[2]),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.3", config.IagFields[3]),
+					resource.TestCheckResourceAttrSet("pagerduty_alert_grouping_setting."+ref, "services.0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyAlertGroupingSetting_Intelligent_WithIagFieldsEmpty(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	name := ref
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+
+	configType := string(pagerduty.AlertGroupingSettingIntelligentType)
+	recommendedTimeWindow := 300
+	config := pagerduty.AlertGroupingSettingConfigIntelligent{IagFields: []string{}}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAlertGroupingSettingConfig(ref, name, configType, service, config),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists("pagerduty_alert_grouping_setting."+ref),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "name", name),
+					resource.TestCheckResourceAttrSet("pagerduty_alert_grouping_setting."+ref, "description"),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "type", configType),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.time_window", fmt.Sprint(recommendedTimeWindow)),
+					resource.TestCheckResourceAttr("pagerduty_alert_grouping_setting."+ref, "config.iag_fields.#", "0"),
+					resource.TestCheckResourceAttrSet("pagerduty_alert_grouping_setting."+ref, "services.0"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyAlertGroupingSetting_serviceNotExist(t *testing.T) {
 	ref := fmt.Sprint("tf-", acctest.RandString(5))
 	service := fmt.Sprint("tf-", acctest.RandString(5))
@@ -294,13 +395,21 @@ func helperConfigPagerDutyAlertGroupingSettingConfig(config interface{}) string 
 		if c.TimeWindow != 0 {
 			timeWindowStr = fmt.Sprintf("time_window = %d", c.TimeWindow)
 		}
-		return fmt.Sprintf("{\n\t%s\n}", timeWindowStr)
+		iagFieldsStr := ""
+		if !util.IsNilFunc(c.IagFields) {
+			contents := ""
+			if len(c.IagFields) > 0 {
+				contents = `"` + strings.Join(c.IagFields, `","`) + `"`
+			}
+			iagFieldsStr = fmt.Sprintf(`iag_fields = [%s]`, contents)
+		}
+		return fmt.Sprintf("{\n%s\n%s\n}", timeWindowStr, iagFieldsStr)
 	case pagerduty.AlertGroupingSettingConfigTime:
 		timeoutStr := ""
 		if c.Timeout != 0 {
 			timeoutStr = fmt.Sprintf("timeout = %d", c.Timeout)
 		}
-		return fmt.Sprintf("{\n%s\n}", timeoutStr)
+		return fmt.Sprintf("{\n\t%s\n}", timeoutStr)
 	}
 	return "{}"
 }

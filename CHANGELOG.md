@@ -1,4 +1,17 @@
+## v3.29.0 (Sep 11, 2025)
+
+FEATURES:
+
+* `resource/pagerduty_alert_grouping_setting`: Add property iag\_fields ([1053](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1053))
+* `data/pagerduty_alert_grouping_setting`: Add property iag\_fields ([1053](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1053))
+
+BUG FIXES:
+
+* `resource/pagerduty_user_contact_method`: Fix missing device\_type for user contact method ([1052](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1052))
+
 ## v3.28.2 (Aug 27, 2025)
+
+BUG FIXES:
 
 * `resource/pagerduty_service_custom_field_value`: Update documentation to clarify recommended usage
 

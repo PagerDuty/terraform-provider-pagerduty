@@ -270,16 +270,6 @@ func (r *resourceUserContactMethod) ImportState(ctx context.Context, req resourc
 	resp.Diagnostics.Append(d...)
 	d = resp.State.SetAttribute(ctx, path.Root("user_id"), types.StringValue(uid))
 	resp.Diagnostics.Append(d...)
-
-	// model, err := requestGetUserContactMethod(ctx, r.client, uid, id, true, &resp.Diagnostics)
-	// if err != nil {
-	// 	resp.Diagnostics.AddError(
-	// 		fmt.Sprintf("Error importing PagerDuty user contact method %s", req.ID),
-	// 		err.Error(),
-	// 	)
-	// }
-	//
-	// resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 type resourceUserContactMethodModel struct {
@@ -410,6 +400,7 @@ func flattenUserContactMethod(response *pagerduty.ContactMethod, userID string) 
 		SendShortEmail: types.BoolValue(response.SendShortEmail),
 		Type:           types.StringValue(response.Type),
 		UserID:         types.StringValue(userID),
+		DeviceType:     types.StringValue(response.DeviceType),
 	}
 	return model
 }

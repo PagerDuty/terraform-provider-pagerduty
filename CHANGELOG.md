@@ -1,3 +1,10 @@
+## v3.29.1 (Sep 26, 2025)
+
+BUG FIXES:
+
+* `PagerDuty/pagerduty`: Retry listing /abilities on set-up of provider's client
+* `resource/pagerduty_user_contact_method`: Fix missing device\_type for user contact method on imports
+
 ## v3.29.0 (Sep 11, 2025)
 
 FEATURES:

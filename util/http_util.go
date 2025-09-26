@@ -35,3 +35,11 @@ func IsNotFoundError(err error) bool {
 	// this regexp.
 	return notFoundErrorRegexp.MatchString(err.Error())
 }
+
+func IsAuthError(err error) bool {
+	var apiErr pagerduty.APIError
+	if errors.As(err, &apiErr) {
+		return apiErr.StatusCode == http.StatusUnauthorized || apiErr.StatusCode == http.StatusForbidden
+	}
+	return false
+}

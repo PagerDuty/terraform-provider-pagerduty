@@ -110,7 +110,8 @@ resource "pagerduty_jira_cloud_account_mapping_rule" "foo" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the rule.
-* `account_mapping` - (Required) [Updating can cause a resource replacement] The account mapping this rule belongs to. 
+* `account_mapping` - (Required) [Updating can cause a resource replacement] The account mapping this rule belongs to.
+* `enabled` - Indicates if the rule is enabled. Defaults to `true`.
 * `config` - (Required) Configuration for bidirectional synchronization between Jira issues and PagerDuty incidents.
 
 The `config` block contains the following arguments:

@@ -1,4 +1,4 @@
-# github.com/PagerDuty/go-pagerduty v1.8.1-0.20250910143746-9bbd1f0aa2a6
+# github.com/PagerDuty/go-pagerduty v1.8.1-0.20250930115347-7908616aa3cd
 ## explicit; go 1.19
 github.com/PagerDuty/go-pagerduty
 # github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
@@ -167,7 +167,6 @@ github.com/hashicorp/terraform-plugin-framework/resource/schema
 github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault
 github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier
 github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults
-github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault
 github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier
 github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier
 github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier

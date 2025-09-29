@@ -51,6 +51,13 @@ func (r *resourceJiraCloudAccountMappingRule) Schema(_ context.Context, _ resour
 				Required:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
+			"enabled": schema.BoolAttribute{
+				Description:   "Indicates if the rule is enabled.",
+				Optional:      true,
+				Computed:      true,
+				Default:       booldefault.StaticBool(true),
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
 			"autocreate_jql_disabled_reason": schema.StringAttribute{
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
@@ -328,6 +335,7 @@ type resourceJiraCloudAccountMappingRuleModel struct {
 	ID                          types.String `tfsdk:"id"`
 	Name                        types.String `tfsdk:"name"`
 	AccountsMapping             types.String `tfsdk:"account_mapping"`
+	Enabled                     types.Bool   `tfsdk:"enabled"`
 	Config                      types.Object `tfsdk:"config"`
 	AutocreateJQLDisabledReason types.String `tfsdk:"autocreate_jql_disabled_reason"`
 	AutocreateJQLDisabledUntil  types.String `tfsdk:"autocreate_jql_disabled_until"`
@@ -355,11 +363,18 @@ func requestGetJiraCloudAccountsMappingRule(ctx context.Context, client *pagerdu
 }
 
 func buildPagerdutyJiraCloudAccountsMappingRule(ctx context.Context, model *resourceJiraCloudAccountMappingRuleModel, diags *diag.Diagnostics) (string, pagerduty.JiraCloudAccountsMappingRule) {
-	return model.AccountsMapping.ValueString(), pagerduty.JiraCloudAccountsMappingRule{
+	rule := pagerduty.JiraCloudAccountsMappingRule{
 		ID:     model.ID.ValueString(),
 		Name:   model.Name.ValueString(),
 		Config: buildPagerdutyJiraCloudAccountsMappingRuleConfig(ctx, model, diags),
 	}
+
+	if !model.Enabled.IsNull() && !model.Enabled.IsUnknown() {
+		enabled := model.Enabled.ValueBool()
+		rule.Enabled = &enabled
+	}
+
+	return model.AccountsMapping.ValueString(), rule
 }
 
 func buildPagerdutyJiraCloudAccountsMappingRuleConfig(ctx context.Context, model *resourceJiraCloudAccountMappingRuleModel, diags *diag.Diagnostics) pagerduty.JiraCloudAccountsMappingRuleConfig {
@@ -567,10 +582,16 @@ func flattenJiraCloudAccountsMappingRule(response *pagerduty.JiraCloudAccountsMa
 		autocreateJQLDisabledUntil = types.StringValue(response.AutocreateJqlDisabledUntil)
 	}
 
+	enabled := types.BoolNull()
+	if response.Enabled != nil {
+		enabled = types.BoolValue(*response.Enabled)
+	}
+
 	model := resourceJiraCloudAccountMappingRuleModel{
 		ID:                          id,
 		Config:                      flattenJiraCloudAccountsMappingRuleConfig(response),
 		Name:                        types.StringValue(response.Name),
+		Enabled:                     enabled,
 		AccountsMapping:             types.StringValue(response.AccountsMapping.ID),
 		AutocreateJQLDisabledReason: autocreateJQLDisabledReason,
 		AutocreateJQLDisabledUntil:  autocreateJQLDisabledUntil,

@@ -36,6 +36,7 @@ func TestAccPagerDutyJiraCloudAccountsMappingRule_Basic(t *testing.T) {
 
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "name", rule),
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "account_mapping", accountMappingID),
+					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "enabled", "true"),
 					resource.TestCheckNoResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "autocreate_jql_disabled_reason"),
 					resource.TestCheckNoResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "autocreate_jql_disabled_until"),
 					resource.TestCheckResourceAttrSet("pagerduty_jira_cloud_account_mapping_rule.foo", "config.service"),
@@ -96,6 +97,7 @@ func TestAccPagerDutyJiraCloudAccountsMappingRule_Basic(t *testing.T) {
 					testAccCheckPagerDutyJiraCloudAccountsMappingRuleExists("pagerduty_jira_cloud_account_mapping_rule.foo"),
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "name", ruleUpdated),
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "account_mapping", accountMappingID),
+					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "enabled", "false"),
 					resource.TestCheckNoResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "autocreate_jql_disabled_reason"),
 					resource.TestCheckNoResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "autocreate_jql_disabled_until"),
 					resource.TestCheckResourceAttrSet("pagerduty_jira_cloud_account_mapping_rule.foo", "config.service"),
@@ -301,6 +303,7 @@ resource "pagerduty_service" "foo" {
 resource "pagerduty_jira_cloud_account_mapping_rule" "foo" {
 	name = "%s"
 	account_mapping = "%s"
+	enabled = false
 	config {
 		service = pagerduty_service.foo.id
 		jira {

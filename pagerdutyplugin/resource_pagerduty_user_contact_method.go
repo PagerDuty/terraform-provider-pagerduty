@@ -400,7 +400,13 @@ func flattenUserContactMethod(response *pagerduty.ContactMethod, userID string) 
 		SendShortEmail: types.BoolValue(response.SendShortEmail),
 		Type:           types.StringValue(response.Type),
 		UserID:         types.StringValue(userID),
-		DeviceType:     types.StringValue(response.DeviceType),
 	}
+
+	if response.DeviceType == "" {
+		model.DeviceType = types.StringNull()
+	} else {
+		model.DeviceType = types.StringValue(response.DeviceType)
+	}
+
 	return model
 }

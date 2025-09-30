@@ -1,3 +1,12 @@
+## v3.30.0 (Sep 30, 2025)
+
+FEATURES:
+* `resource/pagerduty_jira_cloud_account_mapping_rule`: Add field 'enabled' ([1057](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1057))
+
+BUG FIXES:
+* `resource/pagerduty_alert_grouping_setting`: Fix "grouping" spelling ([1054](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1054))
+* `resource/pagerduty_user_contact_method`: Fix inconsistency on device type ([1058](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1058))
+
 ## v3.29.1 (Sep 26, 2025)
 
 BUG FIXES:

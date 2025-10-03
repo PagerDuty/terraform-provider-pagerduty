@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -458,4 +459,60 @@ resource "pagerduty_enablement" "test_aiops" {
   enabled     = false
 }
 `, username, email, escalationPolicy, serviceName)
+}
+
+// TestAccPagerDutyEnablement_InvalidServiceError tests error handling
+// when attempting to create an enablement with an invalid service ID.
+// This test validates the fix for the variable shadowing bug that caused
+// nil pointer panics when API calls returned errors.
+func TestAccPagerDutyEnablement_InvalidServiceError(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckPagerDutyEnablementInvalidServiceConfig(),
+				ExpectError: regexp.MustCompile("(?i)(not found|invalid|does not exist|404|failed to find)"),
+			},
+		},
+	})
+}
+
+// TestAccPagerDutyEnablement_InvalidEventOrchestrationError tests error handling
+// when attempting to create an enablement with an invalid event orchestration ID.
+// This test validates the fix for the variable shadowing bug that caused
+// nil pointer panics when API calls returned errors.
+func TestAccPagerDutyEnablement_InvalidEventOrchestrationError(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckPagerDutyEnablementInvalidEventOrchestrationConfig(),
+				ExpectError: regexp.MustCompile("(?i)(not found|invalid|does not exist|404|failed to find)"),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyEnablementInvalidServiceConfig() string {
+	return `
+resource "pagerduty_enablement" "test" {
+  entity_type = "service"
+  entity_id   = "PINVALID"
+  feature     = "aiops"
+  enabled     = true
+}
+`
+}
+
+func testAccCheckPagerDutyEnablementInvalidEventOrchestrationConfig() string {
+	return `
+resource "pagerduty_enablement" "test" {
+  entity_type = "event_orchestration"
+  entity_id   = "PINVALID"
+  feature     = "aiops"
+  enabled     = true
+}
+`
 }

@@ -141,6 +141,10 @@ func (r *resourceTagAssignment) requestGetTagAssignents(ctx context.Context, mod
 				break
 			}
 		}
+		// The new tag assignment may not be propagated yet, so retry if not found
+		if !isFound {
+			return retry.RetryableError(fmt.Errorf("tag %s not found for %s entity %s", assign.TagID, assign.EntityType, assign.EntityID))
+		}
 		return nil
 	})
 	if err != nil {

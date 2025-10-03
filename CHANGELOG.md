@@ -1,3 +1,8 @@
+## v3.30.1 (Oct 3, 2025)
+
+BUG FIXES:
+* `resource/pagerduty_enablement`: Fix nil pointer panic for `pagerduty_enablement` ([1060](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1060))
+
 ## v3.30.0 (Sep 30, 2025)
 
 FEATURES:

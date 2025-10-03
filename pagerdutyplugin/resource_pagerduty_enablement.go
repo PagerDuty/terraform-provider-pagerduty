@@ -80,11 +80,12 @@ func (r *resourceEnablement) Create(ctx context.Context, req resource.CreateRequ
 	// API may return warnings if account is not entitled to AIOps features but the setting is still updated
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		var enablementResult *pagerduty.Enablement
+		var result *pagerduty.EnablementWithWarnings
 		var err error
 
 		switch enablement.EntityType {
 		case "service":
-			result, err := r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err = r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
 			if err == nil {
 				for _, warning := range result.Warnings {
 					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
@@ -94,7 +95,7 @@ func (r *resourceEnablement) Create(ctx context.Context, req resource.CreateRequ
 				enablementResult = nil
 			}
 		case "event_orchestration":
-			result, err := r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err = r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
 			if err == nil {
 				for _, warning := range result.Warnings {
 					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
@@ -279,11 +280,12 @@ func (r *resourceEnablement) Update(ctx context.Context, req resource.UpdateRequ
 	// API may return warnings if account is not entitled to AIOps features but the setting is still updated
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		var enablementResult *pagerduty.Enablement
+		var result *pagerduty.EnablementWithWarnings
 		var err error
 
 		switch enablement.EntityType {
 		case "service":
-			result, err := r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err = r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
 			if err == nil {
 				for _, warning := range result.Warnings {
 					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
@@ -293,7 +295,7 @@ func (r *resourceEnablement) Update(ctx context.Context, req resource.UpdateRequ
 				enablementResult = nil
 			}
 		case "event_orchestration":
-			result, err := r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
+			result, err = r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, enablement.Enabled)
 			if err == nil {
 				for _, warning := range result.Warnings {
 					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
@@ -348,18 +350,19 @@ func (r *resourceEnablement) Delete(ctx context.Context, req resource.DeleteRequ
 
 	// Disable the enablement by setting enabled=false
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+		var result *pagerduty.EnablementWithWarnings
 		var err error
 
 		switch enablement.EntityType {
 		case "service":
-			result, err := r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
+			result, err = r.client.UpdateServiceEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
 			if err == nil {
 				for _, warning := range result.Warnings {
 					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)
 				}
 			}
 		case "event_orchestration":
-			result, err := r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
+			result, err = r.client.UpdateEventOrchestrationEnablementWithContext(ctx, enablement.EntityID, enablement.Feature, false)
 			if err == nil {
 				for _, warning := range result.Warnings {
 					resp.Diagnostics.AddWarning("PagerDuty API Warning", warning)

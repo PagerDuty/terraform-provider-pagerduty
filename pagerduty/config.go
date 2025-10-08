@@ -10,6 +10,7 @@ import (
 
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 	"github.com/heimweh/go-pagerduty/persistentconfig"
 )
@@ -112,9 +113,20 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	}
 
 	if !c.SkipCredsValidation {
-		// Validate the credentials by calling the abilities endpoint,
-		// if we get a 401 response back we return an error to the user
-		if err := client.ValidateAuth(); err != nil {
+		err := retry.Retry(2*time.Minute, func() *retry.RetryError {
+			if err := client.ValidateAuth(); err != nil {
+				return retry.NonRetryableError(err)
+			}
+
+			// Validate the credentials by calling the abilities endpoint,
+			// if we get a 401 response back we return an error to the user
+			if err := client.ValidateAuth(); err != nil {
+				return retry.RetryableError(err)
+			}
+			return nil
+		})
+
+		if err != nil {
 			return nil, fmt.Errorf(fmt.Sprintf("%s\n%s", err, invalidCreds))
 		}
 	}

@@ -1,3 +1,8 @@
+## v3.30.2 (Oct 8, 2025)
+
+BUG FIXES:
+* `resource/pagerduty`: Retry on abilities call for sdk v2 config - Client.Timeout exceeded while awaiting headers ([1063](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1063))
+
 ## v3.30.1 (Oct 3, 2025)
 
 BUG FIXES:

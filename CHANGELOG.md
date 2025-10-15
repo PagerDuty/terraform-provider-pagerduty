@@ -1,3 +1,8 @@
+## v3.30.3 (Oct 15, 2025)
+
+BUG FIXES:
+* `resource/pagerduty_tag_assignment`: Retry if tag assignment is not found ([1062](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1062))
+
 ## v3.30.2 (Oct 8, 2025)
 
 BUG FIXES:

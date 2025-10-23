@@ -1,3 +1,8 @@
+## v3.30.4 (Oct 23, 2025)
+
+BUG FIXES:
+* `resource/pagerduty_alert_grouping_setting` add retry mechanism and consistency checks ([1018](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1018))
+
 ## v3.30.3 (Oct 15, 2025)
 
 BUG FIXES:

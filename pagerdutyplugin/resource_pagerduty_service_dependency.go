@@ -221,7 +221,7 @@ func (r *resourceServiceDependency) Read(ctx context.Context, req resource.ReadR
 
 	var foundDependency *pagerduty.ServiceDependency
 
-	err := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		dep, err := r.requestGetServiceDependency(ctx, serviceDependency.ID, serviceDependency.DependentService.ID, serviceDependency.DependentService.Type)
 		if err != nil {
 			if util.IsNotFoundError(err) {

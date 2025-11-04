@@ -238,7 +238,7 @@ func resourcePagerDutyEventOrchestrationPathServiceRead(ctx context.Context, d *
 
 	serviceID := d.Get("service").(string)
 	if path != nil {
-		retryErr = retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+		retryErr = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 			log.Printf("[INFO] Reading PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
 			pathServiceActiveStatus, _, err := client.EventOrchestrationPaths.GetServiceActiveStatusContext(ctx, serviceID)
 			// It should not retry request to the status endpoint after it starts to
@@ -290,7 +290,7 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 
 	log.Printf("[INFO] Saving PagerDuty Event Orchestration Service Path: %s", serviceID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		if response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", payload); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)
@@ -315,7 +315,7 @@ func resourcePagerDutyEventOrchestrationPathServiceUpdate(ctx context.Context, d
 		enableEOForService := d.Get("enable_event_orchestration_for_service").(bool)
 		log.Printf("[INFO] Updating PagerDuty Event Orchestration Path Service Active Status for service: %s", serviceID)
 
-		retryErr = retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+		retryErr = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 			resp, _, err := client.EventOrchestrationPaths.UpdateServiceActiveStatusContext(ctx, serviceID, enableEOForService)
 			if err != nil && isErrCode(err, http.StatusGone) {
 				return nil
@@ -381,7 +381,7 @@ func resourcePagerDutyEventOrchestrationPathServiceDelete(ctx context.Context, d
 
 	log.Printf("[INFO] Deleting PagerDuty Event Orchestration Service Path: %s", serviceID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, serviceID, "service", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)

@@ -410,12 +410,6 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 		}
 	}
 
-	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
-		service.AlertGroupingParameters = expandAlertGroupingParameters(attr)
-	} else {
-		service.AlertGroupingParameters = &pagerduty.AlertGroupingParameters{Type: nil}
-	}
-
 	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
 		if attr.(string) != "null" {
 			if val, err := strconv.Atoi(attr.(string)); err == nil {
@@ -425,6 +419,13 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 			}
 		}
 	}
+
+	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
+		service.AlertGroupingParameters = expandAlertGroupingParameters(attr)
+	} else if d.HasChanges("alert_grouping", "alert_grouping_timeout", "alert_grouping_parameters") {
+		service.AlertGroupingParameters = &pagerduty.AlertGroupingParameters{Type: nil}
+	}
+
 	if attr, ok := d.GetOk("auto_pause_notifications_parameters"); ok {
 		service.AutoPauseNotificationsParameters = expandAutoPauseNotificationsParameters(attr)
 	}

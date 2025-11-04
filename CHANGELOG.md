@@ -1,3 +1,9 @@
+## v3.30.5 (Nov 4, 2025)
+
+BUG FIXES:
+* `PagerDuty/pagerduty`: Increase the minimum retry window to 2 minutes ([1070](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1070))
+* `resource/pagerduty_service`: Prevent deletion of `alert_grouping_parameters` when there's no change on alert grouping fields ([1071](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1071))
+
 ## v3.30.4 (Oct 23, 2025)
 
 BUG FIXES:

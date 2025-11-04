@@ -224,7 +224,7 @@ func resourcePagerDutyEventOrchestrationPathGlobalUpdate(ctx context.Context, d 
 
 	log.Printf("[INFO] Creating PagerDuty Event Orchestration Global Path: %s", payload.Parent.ID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		if response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, payload.Parent.ID, "global", payload); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)
@@ -261,7 +261,7 @@ func resourcePagerDutyEventOrchestrationPathGlobalDelete(ctx context.Context, d 
 
 	log.Printf("[INFO] Deleting PagerDuty Global Event Orchestration Path: %s", orchestrationID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, orchestrationID, "global", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)

@@ -256,7 +256,7 @@ func resourcePagerDutyEventOrchestrationPathRouterDelete(ctx context.Context, d 
 
 	log.Printf("[INFO] Deleting PagerDuty Event Orchestration Router Path: %s", routerID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerID, "router", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)
@@ -288,7 +288,7 @@ func resourcePagerDutyEventOrchestrationPathRouterUpdate(ctx context.Context, d 
 
 	log.Printf("[INFO] Updating PagerDuty Event Orchestration Path of type %s for orchestration: %s", "router", routerPath.Parent.ID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, routerPath.Parent.ID, "router", routerPath)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {

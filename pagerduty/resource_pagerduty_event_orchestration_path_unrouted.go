@@ -219,7 +219,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedDelete(ctx context.Context, 
 
 	log.Printf("[INFO] Deleting PagerDuty Unrouted Event Orchestration Path: %s", orchestrationID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		if _, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, orchestrationID, "unrouted", emptyPath); err != nil {
 			if isErrCode(err, http.StatusBadRequest) {
 				return retry.NonRetryableError(err)
@@ -251,7 +251,7 @@ func resourcePagerDutyEventOrchestrationPathUnroutedUpdate(ctx context.Context, 
 
 	log.Printf("[INFO] Updating PagerDuty EventOrchestrationPath of type: %s for orchestration: %s", "unrouted", unroutedPath.Parent.ID)
 
-	retryErr := retry.RetryContext(ctx, 30*time.Second, func() *retry.RetryError {
+	retryErr := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		response, _, err := client.EventOrchestrationPaths.UpdateContext(ctx, unroutedPath.Parent.ID, "unrouted", unroutedPath)
 		if err != nil {
 			if isErrCode(err, http.StatusBadRequest) {

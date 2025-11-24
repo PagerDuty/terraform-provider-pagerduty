@@ -1,3 +1,8 @@
+## v3.30.6 (Nov 24, 2025)
+
+BUG FIXES
+* `resource/pagerduty_user_contact_method`: Prevent false positive validation error ([1074](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1074))
+
 ## v3.30.5 (Nov 4, 2025)
 
 BUG FIXES:

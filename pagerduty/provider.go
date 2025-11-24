@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -282,14 +283,14 @@ func expandAppOauthTokenParams(v interface{}) *persistentconfig.AppOauthScopedTo
 	return aotp
 }
 
-var validationAuthMethodConfigWarning = "PagerDuty Provider has been set to authenticate API calls utilizing API token and App Oauth token at same time, in this scenario the use of App Oauth token is prioritised over API token authentication configuration. It is recommended to explicitely set just one authentication method.\nWe also suggest you to check your environment variables in case `token` being automatically read by Provider configuration through `PAGERDUTY_TOKEN` environment variable."
+var authMethodConfigErr = errors.New("PagerDuty Provider has been set to authenticate API calls utilizing API token and App Oauth token at same time, in this scenario the use of App Oauth token is prioritised over API token authentication configuration. It is recommended to explicitely set just one authentication method.\nWe also suggest you to check your environment variables in case `token` being automatically read by Provider configuration through `PAGERDUTY_TOKEN` environment variable.")
 
 func validateAuthMethodConfig(data *schema.ResourceData) error {
 	_, isSetAPIToken := data.GetOk("token")
 	_, isSetUseAppOauthScopedToken := data.GetOk("use_app_oauth_scoped_token")
 
 	if isSetUseAppOauthScopedToken && isSetAPIToken {
-		return fmt.Errorf(validationAuthMethodConfigWarning)
+		return authMethodConfigErr
 	}
 
 	return nil

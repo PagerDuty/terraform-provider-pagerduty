@@ -35,6 +35,12 @@ func (v contactAddressValidator) ValidateString(ctx context.Context, req validat
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Skip validation if any required value is unknown (e.g., from variable references)
+	if typeConfig.IsUnknown() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
 	t := typeConfig.ValueString()
 	code := int(countryCode.ValueInt64())
 	addr := req.ConfigValue.ValueString()

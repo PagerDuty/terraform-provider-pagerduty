@@ -127,7 +127,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		})
 
 		if err != nil {
-			return nil, fmt.Errorf(fmt.Sprintf("%s\n%s", err, invalidCreds))
+			return nil, fmt.Errorf("%s\n%s", err, invalidCreds)
 		}
 	}
 

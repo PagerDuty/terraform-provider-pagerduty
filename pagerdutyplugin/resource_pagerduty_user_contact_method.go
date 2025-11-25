@@ -80,9 +80,11 @@ func (r *resourceUserContactMethod) ValidateConfig(ctx context.Context, req reso
 	}
 
 	if cfg.Type.ValueString() == "push_notification_contact_method" {
-		if allowed, got := []string{"android", "ios"}, cfg.DeviceType.ValueString(); !slices.Contains(allowed, got) {
-			resp.Diagnostics.AddAttributeError(path.Root("device_type"), "Invalid value", fmt.Sprintf("Attribute device_type value must be one of %q, got %q", allowed, got))
-			return
+		if !cfg.DeviceType.IsNull() && !cfg.DeviceType.IsUnknown() {
+			if allowed, got := []string{"android", "ios"}, cfg.DeviceType.ValueString(); !slices.Contains(allowed, got) {
+				resp.Diagnostics.AddAttributeError(path.Root("device_type"), "Invalid value", fmt.Sprintf("Attribute device_type value must be one of %q, got %q", allowed, got))
+				return
+			}
 		}
 	}
 

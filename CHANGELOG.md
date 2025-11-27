@@ -1,3 +1,8 @@
+## v3.30.7 (Nov 27, 2025)
+
+BUG FIXES
+* `resource/pagerduty_user_contact_method`: Skip validation for unknown push device type ([1077](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1077))
+
 ## v3.30.6 (Nov 24, 2025)
 
 BUG FIXES

@@ -221,26 +221,37 @@ func requestGetTeamMembership(ctx context.Context, client *pagerduty.Client, id 
 	}
 
 	err = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		resp, err := client.ListTeamMembers(ctx, teamID, pagerduty.ListTeamMembersOptions{Limit: 100})
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
-			}
-			if !retryNotFound && util.IsNotFoundError(err) {
-				return retry.NonRetryableError(err)
-			}
-			return retry.RetryableError(err)
-		}
+		offset := uint(0)
+		more := true
 
-		for _, m := range resp.Members {
-			if m.User.ID == userID {
-				if neededRole != nil && m.Role != *neededRole {
-					err = fmt.Errorf("Role %q fetched is different from configuration %q", m.Role, *neededRole)
-					return retry.RetryableError(err)
+		for more {
+			resp, err := client.ListTeamMembers(ctx, teamID, pagerduty.ListTeamMembersOptions{
+				Limit:  100,
+				Offset: offset,
+			})
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
 				}
-				model = flattenTeamMembership(userID, teamID, m.Role)
-				return nil
+				if !retryNotFound && util.IsNotFoundError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
+
+			for _, m := range resp.Members {
+				if m.User.ID == userID {
+					if neededRole != nil && m.Role != *neededRole {
+						err = fmt.Errorf("Role %q fetched is different from configuration %q", m.Role, *neededRole)
+						return retry.RetryableError(err)
+					}
+					model = flattenTeamMembership(userID, teamID, m.Role)
+					return nil
+				}
+			}
+
+			more = resp.More
+			offset += resp.Limit
 		}
 
 		err = pagerduty.APIError{StatusCode: http.StatusNotFound}

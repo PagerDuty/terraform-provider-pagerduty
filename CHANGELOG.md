@@ -1,3 +1,8 @@
+## v3.30.8 (Dec 4, 2025)
+
+BUG FIXES
+* `resource/pagerduty_team_membership`: Add proper pagination to listing of Read method ([1079](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1079))
+
 ## v3.30.7 (Nov 27, 2025)
 
 BUG FIXES

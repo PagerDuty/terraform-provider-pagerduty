@@ -357,24 +357,36 @@ func (r *resourceAlertGroupingSetting) validateServicesReuse(ctx context.Context
 		serviceIDs[i] = s.ID
 	}
 
-	list, err := r.client.ListAlertGroupingSettings(ctx, pagerduty.ListAlertGroupingSettingsOptions{
-		ServiceIDs: serviceIDs,
-	})
-	if err != nil {
-		diags.AddError(
-			"Unable to obtain list of alert grouping settings",
-			err.Error(),
-		)
-		return
+	var allSettings []pagerduty.AlertGroupingSetting
+	offset := uint(0)
+	more := true
+
+	for more {
+		list, err := r.client.ListAlertGroupingSettings(ctx, pagerduty.ListAlertGroupingSettingsOptions{
+			ServiceIDs: serviceIDs,
+			Limit:      100,
+			Offset:     offset,
+		})
+		if err != nil {
+			diags.AddError(
+				"Unable to obtain list of alert grouping settings",
+				err.Error(),
+			)
+			return
+		}
+
+		allSettings = append(allSettings, list.AlertGroupingSettings...)
+		more = list.More
+		offset += list.Limit
 	}
 
 	var reused []pagerduty.AlertGroupingSetting
 	if plan.ID == "" {
-		for _, a := range list.AlertGroupingSettings {
+		for _, a := range allSettings {
 			reused = append(reused, a)
 		}
 	} else {
-		for _, a := range list.AlertGroupingSettings {
+		for _, a := range allSettings {
 			if a.ID != plan.ID {
 				reused = append(reused, a)
 			}

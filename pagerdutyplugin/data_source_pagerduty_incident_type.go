@@ -52,18 +52,30 @@ func (d *dataSourceIncidentType) Read(ctx context.Context, req datasource.ReadRe
 
 	var found *pagerduty.IncidentType
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		response, err := d.client.ListIncidentTypes(ctx, pagerduty.ListIncidentTypesOptions{Filter: "all"})
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
+		offset := uint(0)
+		more := true
+
+		for more {
+			response, err := d.client.ListIncidentTypes(ctx, pagerduty.ListIncidentTypesOptions{
+				Filter: "all",
+				Limit:  100,
+				Offset: offset,
+			})
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
-			return retry.RetryableError(err)
-		}
-		for _, it := range response.IncidentTypes {
-			if it.DisplayName == searchName.ValueString() {
-				found = &it
-				break
+			for _, it := range response.IncidentTypes {
+				if it.DisplayName == searchName.ValueString() {
+					found = &it
+					return nil
+				}
 			}
+
+			more = response.More
+			offset += response.Limit
 		}
 		return nil
 	})

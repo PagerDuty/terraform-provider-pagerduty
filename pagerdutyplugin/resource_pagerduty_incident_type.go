@@ -91,16 +91,28 @@ func (r *resourceIncidentType) Create(ctx context.Context, req resource.CreateRe
 	}
 	log.Printf("[INFO] Creating PagerDuty incident type %s", plan.Name)
 
-	if list, err := r.client.ListIncidentTypes(ctx, pagerduty.ListIncidentTypesOptions{
-		Filter: "disabled",
-	}); err == nil {
-		for _, it := range list.IncidentTypes {
-			if it.Name == plan.Name {
-				resp.Diagnostics.AddWarning(
-					"Incident Type disabled",
-					fmt.Sprintf("Incident Type with name %q already exists but it is disabled", plan.Name),
-				)
+	offset := uint(0)
+	more := true
+	for more {
+		list, err := r.client.ListIncidentTypes(ctx, pagerduty.ListIncidentTypesOptions{
+			Filter: "disabled",
+			Limit:  100,
+			Offset: offset,
+		})
+		if err == nil {
+			for _, it := range list.IncidentTypes {
+				if it.Name == plan.Name {
+					resp.Diagnostics.AddWarning(
+						"Incident Type disabled",
+						fmt.Sprintf("Incident Type with name %q already exists but it is disabled", plan.Name),
+					)
+					break
+				}
 			}
+			more = list.More
+			offset += list.Limit
+		} else {
+			break
 		}
 	}
 

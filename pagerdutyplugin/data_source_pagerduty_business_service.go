@@ -48,19 +48,30 @@ func (d *dataSourceBusinessService) Read(ctx context.Context, req datasource.Rea
 
 	var found *pagerduty.BusinessService
 	err := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
-		list, err := d.client.ListBusinessServices(pagerduty.ListBusinessServiceOptions{})
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
-			}
-			return retry.RetryableError(err)
-		}
+		offset := uint(0)
+		more := true
 
-		for _, bs := range list.BusinessServices {
-			if bs.Name == searchName.ValueString() {
-				found = bs
-				break
+		for more {
+			list, err := d.client.ListBusinessServices(pagerduty.ListBusinessServiceOptions{
+				Limit:  100,
+				Offset: offset,
+			})
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
+
+			for _, bs := range list.BusinessServices {
+				if bs.Name == searchName.ValueString() {
+					found = bs
+					return nil
+				}
+			}
+
+			more = list.More
+			offset += list.Limit
 		}
 		return nil
 	})

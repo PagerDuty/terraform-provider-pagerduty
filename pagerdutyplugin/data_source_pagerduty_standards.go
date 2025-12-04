@@ -46,13 +46,26 @@ func (d *dataSourceStandards) Read(ctx context.Context, req datasource.ReadReque
 		opts.ResourceType = data.ResourceType.ValueString()
 	}
 
-	list, err := d.client.ListStandards(ctx, opts)
-	if err != nil {
-		resp.Diagnostics.AddError("Error calling ListStandards", err.Error())
-		return
+	var allStandards []pagerduty.Standard
+	offset := uint(0)
+	more := true
+
+	for more {
+		opts.Limit = 100
+		opts.Offset = offset
+
+		list, err := d.client.ListStandards(ctx, opts)
+		if err != nil {
+			resp.Diagnostics.AddError("Error calling ListStandards", err.Error())
+			return
+		}
+
+		allStandards = append(allStandards, list.Standards...)
+		more = list.More
+		offset += list.Limit
 	}
 
-	standards, diags := flattenStandards(ctx, list.Standards)
+	standards, diags := flattenStandards(ctx, allStandards)
 	resp.Diagnostics.Append(diags...)
 	data.Standards = standards
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

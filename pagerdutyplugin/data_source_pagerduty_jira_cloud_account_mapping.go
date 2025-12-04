@@ -48,19 +48,30 @@ func (d *dataSourceJiraCloudAccountMapping) Read(ctx context.Context, req dataso
 
 	var found *pagerduty.JiraCloudAccountsMapping
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		response, err := d.client.ListJiraCloudAccountsMappings(ctx, pagerduty.ListJiraCloudAccountsMappingsOptions{})
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
-			}
-			return retry.RetryableError(err)
-		}
+		offset := uint(0)
+		more := true
 
-		for _, m := range response.AccountsMappings {
-			if m.PagerDutyAccount.Subdomain == searchSubdomain.ValueString() {
-				found = &m
-				break
+		for more {
+			response, err := d.client.ListJiraCloudAccountsMappings(ctx, pagerduty.ListJiraCloudAccountsMappingsOptions{
+				Limit:  100,
+				Offset: offset,
+			})
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
+
+			for _, m := range response.AccountsMappings {
+				if m.PagerDutyAccount.Subdomain == searchSubdomain.ValueString() {
+					found = &m
+					return nil
+				}
+			}
+
+			more = response.More
+			offset += response.Limit
 		}
 		return nil
 	})

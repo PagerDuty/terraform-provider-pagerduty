@@ -97,19 +97,30 @@ func (d *dataSourceServiceCustomField) Read(ctx context.Context, req datasource.
 
 	var found *pagerduty.ServiceCustomField
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		response, err := d.client.ListServiceCustomFields(ctx, pagerduty.ListServiceCustomFieldsOptions{})
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
-			}
-			return retry.RetryableError(err)
-		}
+		offset := uint(0)
+		more := true
 
-		for _, field := range response.Fields {
-			if field.DisplayName == searchName.ValueString() {
-				found = &field
-				break
+		for more {
+			response, err := d.client.ListServiceCustomFields(ctx, pagerduty.ListServiceCustomFieldsOptions{
+				Limit:  100,
+				Offset: offset,
+			})
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
+
+			for _, field := range response.Fields {
+				if field.DisplayName == searchName.ValueString() {
+					found = &field
+					return nil
+				}
+			}
+
+			more = response.More
+			offset += response.Limit
 		}
 		return nil
 	})

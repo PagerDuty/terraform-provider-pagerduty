@@ -74,20 +74,30 @@ func (d *dataSourceIncidentTypeCustomField) Read(ctx context.Context, req dataso
 
 	var found *pagerduty.IncidentTypeField
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		response, err := d.client.ListIncidentTypeFields(ctx, incidentTypeID, pagerduty.ListIncidentTypeFieldsOptions{
-			Includes: []string{"field_options"},
-		})
-		if err != nil {
-			if util.IsBadRequestError(err) {
-				return retry.NonRetryableError(err)
+		offset := uint(0)
+		more := true
+
+		for more {
+			response, err := d.client.ListIncidentTypeFields(ctx, incidentTypeID, pagerduty.ListIncidentTypeFieldsOptions{
+				Includes: []string{"field_options"},
+				Limit:    100,
+				Offset:   offset,
+			})
+			if err != nil {
+				if util.IsBadRequestError(err) {
+					return retry.NonRetryableError(err)
+				}
+				return retry.RetryableError(err)
 			}
-			return retry.RetryableError(err)
-		}
-		for _, f := range response.Fields {
-			if f.DisplayName == searchName.ValueString() {
-				found = &f
-				break
+			for _, f := range response.Fields {
+				if f.DisplayName == searchName.ValueString() {
+					found = &f
+					return nil
+				}
 			}
+
+			more = response.More
+			offset += response.Limit
 		}
 		return nil
 	})

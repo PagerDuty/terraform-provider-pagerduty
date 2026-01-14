@@ -1,3 +1,8 @@
+## v3.30.9 (Jan 14, 2026)
+
+BUG FIXES
+* `resource/pagerduty_event_orchestration`: Improve handling of `null` conditions in response from Event Orchestration ([1082](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1082))
+
 ## v3.30.8 (Dec 4, 2025)
 
 BUG FIXES

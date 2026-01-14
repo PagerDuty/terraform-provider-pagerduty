@@ -193,6 +193,9 @@ func expandEventOrchestrationPathConditions(v interface{}) []*pagerduty.EventOrc
 	conditions := []*pagerduty.EventOrchestrationPathRuleCondition{}
 
 	for _, cond := range v.([]interface{}) {
+		if cond == nil {
+			continue
+		}
 		c := cond.(map[string]interface{})
 
 		cx := &pagerduty.EventOrchestrationPathRuleCondition{

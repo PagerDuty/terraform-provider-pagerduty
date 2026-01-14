@@ -222,6 +222,44 @@ func TestAccPagerDutyEventOrchestrationPathRouter_EnableRoutingRule(t *testing.T
 	})
 }
 
+func TestAccPagerDutyEventOrchestrationPathRouter_NilConditionHandling(t *testing.T) {
+	team := fmt.Sprintf("tf-name-%s", acctest.RandString(5))
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	orchestration := fmt.Sprintf("tf-orchestration-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyEventOrchestrationRouterDestroy,
+		Steps: []resource.TestStep{
+			// Test router with rule without explicit conditions (potential nil condition scenario)
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationRouterNilConditionConfig(team, escalationPolicy, service, orchestration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyEventOrchestrationRouterExists("pagerduty_event_orchestration_router.router"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "set.0.rule.0.label", "rule with nil condition"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_event_orchestration_router.router", "set.0.rule.0.condition.#", "0"),
+					testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(
+						"pagerduty_event_orchestration_router.router", "pagerduty_service.bar", false),
+				),
+			},
+			// Import test to verify state consistency
+			{
+				ResourceName:      "pagerduty_event_orchestration_router.router",
+				ImportStateIdFunc: testAccCheckPagerDutyEventOrchestrationPathRouterID,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"set.0.rule.0.id",
+				},
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyEventOrchestrationRouterDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -701,6 +739,32 @@ func testAccCheckPagerDutyEventOrchestrationRouterEmptyActionsConfig(t, ep, s, o
 		}
 	}
 }`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationRouterNilConditionConfig(t, ep, s, o string) string {
+	return fmt.Sprintf("%s%s", createBaseConfig(t, ep, s, o),
+		`resource "pagerduty_event_orchestration_router" "router" {
+			event_orchestration = pagerduty_event_orchestration.orch.id
+
+			catch_all {
+				actions {
+					route_to = "unrouted"
+				}
+			}
+
+			set {
+				id = "start"
+
+				rule {
+					label = "rule with nil condition"
+					disabled = false
+					actions {
+						route_to = pagerduty_service.bar.id
+					}
+				}
+			}
+		}
+	`)
 }
 
 func testAccCheckPagerDutyEventOrchestrationRouterPathRouteToMatch(router, service string, catchAll bool) resource.TestCheckFunc {

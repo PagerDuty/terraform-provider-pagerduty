@@ -131,6 +131,13 @@ func resourcePagerDutySchedule() *schema.Resource {
 							},
 						},
 
+						"preserve_rotation_position": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "When true, adding or removing users will automatically adjust rotation_virtual_start to preserve who is currently on-call. This prevents rotation resets when modifying the user list.",
+						},
+
 						"rendered_coverage_percentage": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -366,6 +373,11 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 				schedule.ScheduleLayers = append(schedule.ScheduleLayers, o)
 			}
 		}
+
+		// Handle preserve_rotation_position for each layer
+		if err := preserveRotationPositions(client, d, schedule); err != nil {
+			return err
+		}
 	}
 
 	log.Printf("[INFO] Updating PagerDuty schedule: %s", d.Id())
@@ -382,6 +394,137 @@ func resourcePagerDutyScheduleUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	return nil
+}
+
+// preserveRotationPositions adjusts rotation_virtual_start for layers with
+// preserve_rotation_position=true to maintain who is currently on-call when
+// users are added or removed.
+func preserveRotationPositions(client *pagerduty.Client, d *schema.ResourceData, schedule *pagerduty.Schedule) error {
+	layers := d.Get("layer").([]interface{})
+
+	for li, layer := range layers {
+		layerMap := layer.(map[string]interface{})
+
+		// Skip if preserve_rotation_position is not enabled
+		preserveRotation, ok := layerMap["preserve_rotation_position"].(bool)
+		if !ok || !preserveRotation {
+			continue
+		}
+
+		// Check if users changed for this layer
+		usersKey := fmt.Sprintf("layer.%d.users", li)
+		if !d.HasChange(usersKey) {
+			continue
+		}
+
+		log.Printf("[INFO] Layer %d has preserve_rotation_position=true and users changed, adjusting virtual_start", li)
+
+		// Fetch current schedule to find who is on-call
+		currentSchedule, _, err := client.Schedules.Get(d.Id(), &pagerduty.GetScheduleOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to fetch current schedule for rotation preservation: %w", err)
+		}
+
+		// Find the matching layer by ID
+		layerID := layerMap["id"].(string)
+		if layerID == "" {
+			// New layer, nothing to preserve
+			continue
+		}
+
+		var currentLayer *pagerduty.ScheduleLayer
+		for _, sl := range currentSchedule.ScheduleLayers {
+			if sl.ID == layerID {
+				currentLayer = sl
+				break
+			}
+		}
+		if currentLayer == nil {
+			continue
+		}
+
+		// Get current on-call user from rendered entries
+		currentOncallUserID := getCurrentOncallUser(currentLayer)
+		if currentOncallUserID == "" {
+			log.Printf("[WARN] Could not determine current on-call user for layer %d", li)
+			continue
+		}
+
+		// Find this user's position in the new user list
+		newUsers := layerMap["users"].([]interface{})
+		newPosition := -1
+		for i, u := range newUsers {
+			if u.(string) == currentOncallUserID {
+				newPosition = i
+				break
+			}
+		}
+
+		if newPosition == -1 {
+			// Current on-call user was removed, we can't preserve their position
+			log.Printf("[WARN] Current on-call user %s was removed from layer %d, rotation will change", currentOncallUserID, li)
+			continue
+		}
+
+		// Calculate new rotation_virtual_start to keep this user on-call
+		rotationLength := layerMap["rotation_turn_length_seconds"].(int)
+		newVirtualStart := computeVirtualStartForPosition(newPosition, rotationLength, len(newUsers))
+
+		// Update the schedule layer with the new virtual start
+		if li < len(schedule.ScheduleLayers) {
+			schedule.ScheduleLayers[li].RotationVirtualStart = newVirtualStart
+			log.Printf("[INFO] Adjusted rotation_virtual_start for layer %d to %s to preserve on-call user %s",
+				li, newVirtualStart, currentOncallUserID)
+		}
+	}
+
+	return nil
+}
+
+// getCurrentOncallUser returns the user ID of whoever is currently on-call for a layer.
+func getCurrentOncallUser(layer *pagerduty.ScheduleLayer) string {
+	if layer == nil || len(layer.RenderedScheduleEntries) == 0 {
+		return ""
+	}
+
+	now := time.Now()
+	for _, entry := range layer.RenderedScheduleEntries {
+		start, err := time.Parse(time.RFC3339, entry.Start)
+		if err != nil {
+			continue
+		}
+		end, err := time.Parse(time.RFC3339, entry.End)
+		if err != nil {
+			continue
+		}
+		if now.After(start) && now.Before(end) && entry.User != nil {
+			return entry.User.ID
+		}
+	}
+
+	// Fallback: return first entry's user
+	if layer.RenderedScheduleEntries[0].User != nil {
+		return layer.RenderedScheduleEntries[0].User.ID
+	}
+	return ""
+}
+
+// computeVirtualStartForPosition calculates a rotation_virtual_start time that
+// results in the user at the given position being on-call right now.
+//
+// The math: PagerDuty determines who is on-call by:
+//   currentPosition = floor((now - virtualStart) / rotationLength) % numUsers
+//
+// To make a specific user (at `position`) be on-call, we solve for virtualStart:
+//   virtualStart = now - (position * rotationLength)
+func computeVirtualStartForPosition(position int, rotationLengthSeconds int, _ int) string {
+	now := time.Now().UTC()
+	rotationLength := time.Duration(rotationLengthSeconds) * time.Second
+
+	offset := time.Duration(position) * rotationLength
+	virtualStart := now.Add(-offset)
+
+	return virtualStart.Format(time.RFC3339)
 }
 
 func resourcePagerDutyScheduleDelete(d *schema.ResourceData, meta interface{}) error {

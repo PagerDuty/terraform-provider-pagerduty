@@ -508,7 +508,7 @@ func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps
 
 		var inputNames []string
 		inlineInputs := make(map[string][]*SpecifiedStep)
-		if !isImport {
+		if !isImport && i < len(specifiedSteps) {
 			specifiedStep := *specifiedSteps[i]
 			inputNames = specifiedStep.SpecifiedInputNames
 			inlineInputs = specifiedStep.SpecifiedInlineInputs
@@ -575,7 +575,7 @@ func flattenIncidentWorkflowStepInlineStepsInputSteps(
 
 		var inputNames []string
 		inlineInputs := make(map[string][]*SpecifiedStep)
-		if !isImport {
+		if !isImport && i < len(specifiedSteps) {
 			specifiedStep := *specifiedSteps[i]
 			inputNames = specifiedStep.SpecifiedInputNames
 			inlineInputs = specifiedStep.SpecifiedInlineInputs

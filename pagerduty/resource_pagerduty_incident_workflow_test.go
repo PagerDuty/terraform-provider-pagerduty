@@ -664,3 +664,164 @@ func testAccPreCheckIncidentWorkflows(t *testing.T) {
 		t.Skip("PAGERDUTY_ACC_INCIDENT_WORKFLOWS not set. Skipping Incident Workflows-related test")
 	}
 }
+
+// TestFlattenIncidentWorkflowSteps_IndexOutOfRange tests the scenario where
+// the API returns more steps than what exists in specifiedSteps.
+// This can happen when a workflow is modified outside of Terraform.
+func TestFlattenIncidentWorkflowSteps_IndexOutOfRange(t *testing.T) {
+	// Create a workflow with 5 steps (simulating API response)
+	iw := &pagerduty.IncidentWorkflow{
+		ID:   "PTEST123",
+		Name: "Test Workflow",
+		Steps: []*pagerduty.IncidentWorkflowStep{
+			{
+				ID:   "step1",
+				Name: "Step 1",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action1",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+			{
+				ID:   "step2",
+				Name: "Step 2",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action2",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+			{
+				ID:   "step3",
+				Name: "Step 3",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action3",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+			{
+				ID:   "step4",
+				Name: "Step 4",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action4",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+			{
+				ID:   "step5",
+				Name: "Step 5",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action5",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+		},
+	}
+
+	// Create specifiedSteps with only 4 elements (less than iw.Steps)
+	// This simulates the scenario where Terraform state has 4 steps but API returns 5
+	specifiedSteps := []*SpecifiedStep{
+		{
+			SpecifiedInputNames:   []string{},
+			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
+		},
+		{
+			SpecifiedInputNames:   []string{},
+			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
+		},
+		{
+			SpecifiedInputNames:   []string{},
+			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
+		},
+		{
+			SpecifiedInputNames:   []string{},
+			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
+		},
+	}
+
+	// Call the function with isImport=false to trigger the code path that accesses specifiedSteps
+	// Without the fix, this will panic with: index out of range [4] with length 4
+	// With the fix, this should not panic
+	result := flattenIncidentWorkflowSteps(iw, specifiedSteps, false)
+
+	// Verify we got the expected number of steps back
+	if len(result) != 5 {
+		t.Errorf("Expected 5 steps in result, got %d", len(result))
+	}
+
+	// Verify all steps have the expected fields
+	for i, step := range result {
+		if step["id"] == nil {
+			t.Errorf("Step %d missing id field", i)
+		}
+		if step["name"] == nil {
+			t.Errorf("Step %d missing name field", i)
+		}
+		if step["action"] == nil {
+			t.Errorf("Step %d missing action field", i)
+		}
+	}
+}
+
+// TestFlattenIncidentWorkflowSteps_EmptySpecifiedSteps tests with empty specifiedSteps
+// which simulates a fresh import or read operation
+func TestFlattenIncidentWorkflowSteps_EmptySpecifiedSteps(t *testing.T) {
+	iw := &pagerduty.IncidentWorkflow{
+		ID:   "PTEST456",
+		Name: "Test Workflow 2",
+		Steps: []*pagerduty.IncidentWorkflowStep{
+			{
+				ID:   "step1",
+				Name: "Step 1",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action1",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+			{
+				ID:   "step2",
+				Name: "Step 2",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action2",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+		},
+	}
+
+	// Empty specifiedSteps
+	specifiedSteps := []*SpecifiedStep{}
+
+	// This should not panic
+	result := flattenIncidentWorkflowSteps(iw, specifiedSteps, false)
+
+	if len(result) != 2 {
+		t.Errorf("Expected 2 steps in result, got %d", len(result))
+	}
+}
+
+// TestFlattenIncidentWorkflowSteps_Import tests the import path
+func TestFlattenIncidentWorkflowSteps_Import(t *testing.T) {
+	iw := &pagerduty.IncidentWorkflow{
+		ID:   "PTEST789",
+		Name: "Test Workflow 3",
+		Steps: []*pagerduty.IncidentWorkflowStep{
+			{
+				ID:   "step1",
+				Name: "Step 1",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "action1",
+					Inputs:   []*pagerduty.IncidentWorkflowActionInput{},
+				},
+			},
+		},
+	}
+
+	// When isImport=true, specifiedSteps is not accessed, so it can be empty
+	specifiedSteps := []*SpecifiedStep{}
+
+	result := flattenIncidentWorkflowSteps(iw, specifiedSteps, true)
+
+	if len(result) != 1 {
+		t.Errorf("Expected 1 step in result, got %d", len(result))
+	}
+}

@@ -1,3 +1,12 @@
+## v3.31.0 (Feb 17, 2026)
+
+BUG FIXES
+* `resource/pagerduty_alert_grouping_setting`: Fix issues during import ([1086](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1086))
+* `resource/pagerduty_incident_workflow`: Fix index out of range panic in incident workflow flattening ([1084](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1084))
+
+NOTES
+* `resource/pagerduty_alert_grouping_setting`: Field `name` is now Optional (not retrocompatible)
+
 ## v3.30.9 (Jan 14, 2026)
 
 BUG FIXES

@@ -47,7 +47,7 @@ func (r *resourceAlertGroupingSetting) Schema(_ context.Context, _ resource.Sche
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"name": schema.StringAttribute{
-				Required: true,
+				Optional: true,
 			},
 			"description": schema.StringAttribute{
 				Computed:      true,
@@ -257,6 +257,9 @@ func (r *resourceAlertGroupingSetting) Read(ctx context.Context, req resource.Re
 	}
 	log.Printf("[INFO] Reading PagerDuty alert grouping setting %s", id)
 
+	// Detect if this is an import scenario (state only has ID, no other fields)
+	isImport := expected.Type.IsNull() && expected.Services.IsNull()
+
 	const maxRetries = 6
 	const retryInterval = 10 * time.Second
 	var lastErr error
@@ -274,7 +277,8 @@ func (r *resourceAlertGroupingSetting) Read(ctx context.Context, req resource.Re
 			continue
 		}
 
-		if isAlertGroupingConfigConsistent(ctx, &expected, &state) {
+		// Skip consistency check during import, as expected state is minimal
+		if isImport || isAlertGroupingConfigConsistent(ctx, &expected, &state) {
 			resp.Diagnostics.Append(resp.State.Set(ctx, state)...) // Only update state if config is consistent
 			return
 		}
@@ -449,11 +453,13 @@ func requestGetAlertGroupingSetting(ctx context.Context, client *pagerduty.Clien
 func buildPagerdutyAlertGroupingSetting(ctx context.Context, model *resourceAlertGroupingSettingModel, diags *diag.Diagnostics) pagerduty.AlertGroupingSetting {
 	alertGroupingSetting := pagerduty.AlertGroupingSetting{
 		ID:          model.ID.ValueString(),
-		Name:        model.Name.ValueString(),
 		Description: model.Description.ValueString(),
 		Type:        pagerduty.AlertGroupingSettingType(model.Type.ValueString()),
 		Config:      buildPagerdutyAlertGroupingSettingConfig(ctx, model, diags),
 		Services:    buildPagerdutyAlertGroupingSettingServices(model),
+	}
+	if !model.Name.IsNull() && !model.Name.IsUnknown() {
+		alertGroupingSetting.Name = model.Name.ValueString()
 	}
 	return alertGroupingSetting
 }
@@ -513,11 +519,13 @@ func buildPagerdutyAlertGroupingSettingServices(model *resourceAlertGroupingSett
 func flattenAlertGroupingSetting(response *pagerduty.AlertGroupingSetting) resourceAlertGroupingSettingModel {
 	model := resourceAlertGroupingSettingModel{
 		ID:          types.StringValue(response.ID),
-		Name:        types.StringValue(response.Name),
 		Description: types.StringValue(response.Description),
 		Type:        types.StringValue(string(response.Type)),
 		Config:      flattenAlertGroupingSettingConfig(response),
 		Services:    flattenAlertGroupingSettingServices(response),
+	}
+	if response.Name != "" {
+		model.Name = types.StringValue(response.Name)
 	}
 	return model
 }

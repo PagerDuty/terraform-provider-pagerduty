@@ -336,6 +336,156 @@ func TestAccPagerDutyAlertGroupingSetting_serviceNotExist(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyAlertGroupingSetting_ContentBased_import(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	resourceRef := "pagerduty_alert_grouping_setting." + ref
+
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+	name := ref + "'s name"
+
+	configType := string(pagerduty.AlertGroupingSettingContentBasedType)
+	config := pagerduty.AlertGroupingSettingConfigContentBased{
+		TimeWindow: 600,
+		Aggregate:  "all",
+		Fields:     []string{"custom_details.remote_node"},
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAlertGroupingSettingConfig(ref, name, configType, service, config),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists(resourceRef),
+					resource.TestCheckResourceAttr(resourceRef, "name", name),
+					resource.TestCheckResourceAttr(resourceRef, "type", configType),
+					resource.TestCheckResourceAttr(resourceRef, "config.time_window", fmt.Sprint(config.TimeWindow)),
+					resource.TestCheckResourceAttr(resourceRef, "config.aggregate", config.Aggregate),
+					resource.TestCheckResourceAttr(resourceRef, "config.fields.0", config.Fields[0]),
+				),
+			},
+			{
+				ResourceName:      resourceRef,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyAlertGroupingSetting_Time_import(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	resourceRef := "pagerduty_alert_grouping_setting." + ref
+	name := ref
+
+	configType := string(pagerduty.AlertGroupingSettingTimeType)
+	config := pagerduty.AlertGroupingSettingConfigTime{Timeout: 60}
+
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAlertGroupingSettingConfig(ref, name, configType, service, config),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists(resourceRef),
+					resource.TestCheckResourceAttr(resourceRef, "name", name),
+					resource.TestCheckResourceAttr(resourceRef, "type", configType),
+					resource.TestCheckResourceAttr(resourceRef, "config.timeout", fmt.Sprint(config.Timeout)),
+				),
+			},
+			{
+				ResourceName:      resourceRef,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyAlertGroupingSetting_Intelligent_import(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	resourceRef := "pagerduty_alert_grouping_setting." + ref
+	name := ref
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+
+	configType := string(pagerduty.AlertGroupingSettingIntelligentType)
+	recommendedTimeWindow := 300
+	config := pagerduty.AlertGroupingSettingConfigIntelligent{IagFields: []string{
+		"summary",
+		"component",
+	}}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAlertGroupingSettingConfig(ref, name, configType, service, config),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists(resourceRef),
+					resource.TestCheckResourceAttr(resourceRef, "name", name),
+					resource.TestCheckResourceAttr(resourceRef, "type", configType),
+					resource.TestCheckResourceAttr(resourceRef, "config.time_window", fmt.Sprint(recommendedTimeWindow)),
+					resource.TestCheckResourceAttr(resourceRef, "config.iag_fields.#", "2"),
+					resource.TestCheckResourceAttr(resourceRef, "config.iag_fields.0", config.IagFields[0]),
+					resource.TestCheckResourceAttr(resourceRef, "config.iag_fields.1", config.IagFields[1]),
+				),
+			},
+			{
+				ResourceName:      resourceRef,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyAlertGroupingSetting_ContentBasedIntelligent_import(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	resourceRef := "pagerduty_alert_grouping_setting." + ref
+
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+	name := ref + "'s name"
+
+	configType := string(pagerduty.AlertGroupingSettingContentBasedIntelligentType)
+	config := pagerduty.AlertGroupingSettingConfigContentBased{
+		TimeWindow: 300,
+		Aggregate:  "any",
+		Fields:     []string{"summary", "custom_details.field1"},
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyAlertGroupingSettingDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAlertGroupingSettingConfig(ref, name, configType, service, config),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAlertGroupingSettingExists(resourceRef),
+					resource.TestCheckResourceAttr(resourceRef, "name", name),
+					resource.TestCheckResourceAttr(resourceRef, "type", configType),
+					resource.TestCheckResourceAttr(resourceRef, "config.time_window", fmt.Sprint(config.TimeWindow)),
+					resource.TestCheckResourceAttr(resourceRef, "config.aggregate", config.Aggregate),
+					resource.TestCheckResourceAttr(resourceRef, "config.fields.#", "2"),
+				),
+			},
+			{
+				ResourceName:      resourceRef,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyAlertGroupingSettingDestroy(s *terraform.State) error {
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_alert_grouping_setting" {

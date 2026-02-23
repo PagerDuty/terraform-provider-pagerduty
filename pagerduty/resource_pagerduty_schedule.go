@@ -18,10 +18,11 @@ import (
 
 func resourcePagerDutySchedule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerDutyScheduleCreate,
-		Read:   resourcePagerDutyScheduleRead,
-		Update: resourcePagerDutyScheduleUpdate,
-		Delete: resourcePagerDutyScheduleDelete,
+		DeprecationMessage: "Use pagerduty_schedulev2 instead. pagerduty_schedule uses the legacy v1 API and will be removed in a future release.",
+		Create:             resourcePagerDutyScheduleCreate,
+		Read:               resourcePagerDutyScheduleRead,
+		Update:             resourcePagerDutyScheduleUpdate,
+		Delete:             resourcePagerDutyScheduleDelete,
 		CustomizeDiff: func(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 			ln := diff.Get("layer.#").(int)
 			for li := 0; li <= ln; li++ {

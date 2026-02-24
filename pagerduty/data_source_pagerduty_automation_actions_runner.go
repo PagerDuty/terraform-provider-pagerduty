@@ -35,9 +35,10 @@ func dataSourcePagerDutyAutomationActionsRunner() *schema.Resource {
 				Computed: true,
 			},
 			"last_seen": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Optional:   true,
+				Deprecated: "This field will be set as Computed-only in a future version. The last_seen timestamp represents runtime state and may not be consistently available.",
 			},
 			"description": {
 				Type:     schema.TypeString,

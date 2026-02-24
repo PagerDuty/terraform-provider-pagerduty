@@ -1,3 +1,14 @@
+## v3.31.1 (Feb 24, 2026)
+
+BUG FIXES
+* `resource/pagerduty_automation_actions_action`: Remove restrictive validation on `action_classification` to accept any string value, matching API behavior ([1088](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1088))
+* `resource/pagerduty_service_integration`: Fix vendor/type conflict during import ([1088](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1088))
+* `resource/pagerduty_tag_assignment`: Increased verification retry timeout from 2 to 5 minutes and added initial delay to handle eventual consistency in EU region, fixing intermittent "Missing Resource State After Create" errors ([1088](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1088))
+
+ENHANCEMENTS
+* `resource/pagerduty_automation_actions_runner`: The `last_seen` field is now deprecated. This field represents runtime state from the API and should not be managed by Terraform. It will be set as Computed-only in a future major version. ([1088](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1088))
+* `data_source/pagerduty_automation_actions_runner`: The `last_seen` field is now deprecated for consistency with the resource. ([1088](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1088))
+
 ## v3.31.0 (Feb 17, 2026)
 
 BUG FIXES

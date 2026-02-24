@@ -80,10 +80,6 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 			"action_classification": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ValidateDiagFunc: validateValueDiagFunc([]string{
-					"diagnostic",
-					"remediation",
-				}),
 			},
 			"runner_type": {
 				Type:     schema.TypeString,

@@ -92,6 +92,9 @@ func (r *resourceTagAssignment) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
+	// Allow time for tag assignment to propagate across regions (eventual consistency)
+	time.Sleep(5 * time.Second)
+
 	isFound := r.requestGetTagAssignents(ctx, model, &resp.Diagnostics)
 	if !isFound {
 		resp.State.RemoveResource(ctx)
@@ -126,7 +129,7 @@ func (r *resourceTagAssignment) requestGetTagAssignents(ctx context.Context, mod
 	}
 
 	isFound = false
-	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+	err := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		opts := pagerduty.ListTagOptions{}
 		response, err := r.client.GetTagsForEntity(assign.EntityType, assign.EntityID, opts)
 		if err != nil {
@@ -143,6 +146,7 @@ func (r *resourceTagAssignment) requestGetTagAssignents(ctx context.Context, mod
 		}
 		// The new tag assignment may not be propagated yet, so retry if not found
 		if !isFound {
+			log.Printf("[DEBUG] Tag assignment verification: tag %s not found for %s entity %s, retrying for eventual consistency", assign.TagID, assign.EntityType, assign.EntityID)
 			return retry.RetryableError(fmt.Errorf("tag %s not found for %s entity %s", assign.TagID, assign.EntityType, assign.EntityID))
 		}
 		return nil
@@ -162,7 +166,7 @@ func (r *resourceTagAssignment) requestGetTagAssignents(ctx context.Context, mod
 func (r *resourceTagAssignment) isFoundTagAssignment(ctx context.Context, entityType, entityID string, diags *diag.Diagnostics) bool {
 	isFound := false
 
-	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
+	err := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
 		var err error
 
 		switch entityType {

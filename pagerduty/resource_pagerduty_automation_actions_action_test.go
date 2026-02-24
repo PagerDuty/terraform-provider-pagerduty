@@ -174,6 +174,39 @@ func TestAccPagerDutyAutomationActionsActionTypeScript_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyAutomationActionsActionCustomClassification_Basic(t *testing.T) {
+	actionName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyAutomationActionsActionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyAutomationActionsActionCustomClassificationConfig(actionName, "qwerty"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAutomationActionsActionExists("pagerduty_automation_actions_action.foo"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_classification", "qwerty"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyAutomationActionsActionCustomClassificationConfig(actionName, "Diagnostic"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAutomationActionsActionExists("pagerduty_automation_actions_action.foo"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_classification", "Diagnostic"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyAutomationActionsActionCustomClassificationConfig(actionName, "my-custom-category"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyAutomationActionsActionExists("pagerduty_automation_actions_action.foo"),
+					resource.TestCheckResourceAttr("pagerduty_automation_actions_action.foo", "action_classification", "my-custom-category"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyAutomationActionsActionDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -271,6 +304,8 @@ resource "pagerduty_automation_actions_action" "foo" {
 	name = "%s"
 	description = "PA Action created by TF"
 	action_type = "script"
+	allow_invocation_from_event_orchestration = "false"
+	allow_invocation_manually = "false"
 	action_data_reference {
 		script = "java --version"
 		invocation_command = "/bin/bash"
@@ -286,9 +321,25 @@ func testAccCheckPagerDutyAutomationActionsActionTypeScriptConfigUpdated(actionN
 		description = "%s"
 		action_type = "script"
 		action_classification = "%s"
+		allow_invocation_from_event_orchestration = "false"
+		allow_invocation_manually = "false"
 		action_data_reference {
 			script = "echo 777"
 		  }
 	}
 `, actionName, actionDescription, actionClassification)
+}
+
+func testAccCheckPagerDutyAutomationActionsActionCustomClassificationConfig(actionName, classification string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_automation_actions_action" "foo" {
+    name = "%s"
+    description = "PA Action with custom classification"
+    action_type = "script"
+    action_classification = "%s"
+    action_data_reference {
+        script = "echo 'test'"
+    }
+}
+`, actionName, classification)
 }

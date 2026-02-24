@@ -43,7 +43,7 @@ The following arguments are supported:
   * `action_type` - (Required) The type of the action. The only allowed values are `process_automation` and `script`. Cannot be changed once set.
   * `action_data_reference` - (Required) Action Data block. Action Data is documented below.
   * `runner_id` - (Optional) The Process Automation Actions runner to associate the action with. Cannot be changed for the `process_automation` action type once set.
-  * `action_classification` - (Optional) The category of the action. The only allowed values are `diagnostic` and `remediation`.
+  * `action_classification` - (Optional) The category of the action, e.g. `diagnostic`, `remediation`.
   * `only_invocable_on_unresolved_incidents` - (Optional) Whether the action can be invoked on unresolved incidents.
   * `allow_invocation_manually` - (Optional) Whether the action can be invoked manually by a user on the PagerDuty website.
   * `allow_invocation_from_event_orchestration` - (Optional) Whether the action can be invoked automatically from a PagerDuty Event Orchestration.

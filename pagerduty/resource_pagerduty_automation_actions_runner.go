@@ -56,9 +56,14 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 				Computed: true,
 			},
 			"last_seen": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Optional:   true,
+				Deprecated: "This field will be set as Computed-only in a future version. The last_seen timestamp is provided by the API but should not be managed by Terraform as it represents runtime state.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					// Always suppress diffs for last_seen as it's a read-only runtime field
+					return true
+				},
 			},
 		},
 	}

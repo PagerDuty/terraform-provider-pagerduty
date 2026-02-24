@@ -32,8 +32,6 @@ func TestAccPagerDutyServiceIntegration_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "name", serviceIntegration),
 					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "type", "generic_events_api_inbound_integration"),
-					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "vendor", "PAM4FGS"),
 				),
 			},
@@ -43,8 +41,6 @@ func TestAccPagerDutyServiceIntegration_Basic(t *testing.T) {
 					testAccCheckPagerDutyServiceIntegrationExists("pagerduty_service_integration.foo"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "name", serviceIntegrationUpdated),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service_integration.foo", "type", "generic_events_api_inbound_integration"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service_integration.foo", "vendor", "PAM4FGS"),
 					resource.TestCheckResourceAttrSet(

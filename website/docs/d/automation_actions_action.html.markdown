@@ -37,7 +37,7 @@ The following attributes are exported:
 * `description` - (Optional) The description of the action.
 * `runner_id` - (Optional) The Process Automation Actions runner to associate the action with.
 * `runner_type` - (Optional) The type of the runner associated with the action.
-* `action_classification` - (Optional) The category of the action. The only allowed values are `diagnostic` and `remediation`.
+* `action_classification` - (Optional) The category of the action, e.g. `diagnostic`, `remediation`.
 * `modify_time` - (Optional) The last time action has been modified. Represented as an ISO 8601 timestamp.
 * `only_invocable_on_unresolved_incidents` - (Optional) Whether or not the action can be invoked on unresolved incidents.
 * `allow_invocation_manually` - (Optional) Whether or not the action can be invoked manually by a user on the PagerDuty website.

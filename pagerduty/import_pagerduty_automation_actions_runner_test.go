@@ -23,7 +23,7 @@ func TestAccPagerDutyAutomationActionsRunner_import(t *testing.T) {
 				ResourceName:            "pagerduty_automation_actions_runner.foo",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"runbook_api_key"},
+				ImportStateVerifyIgnore: []string{"runbook_api_key", "last_seen"},
 			},
 		},
 	})

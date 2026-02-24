@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -41,23 +42,12 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				ForceNew: true,
 			},
 			"type": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				Computed:      true,
-				ConflictsWith: []string{"vendor"},
-				ValidateDiagFunc: validateValueDiagFunc([]string{
-					"aws_cloudwatch_inbound_integration",
-					"cloudkick_inbound_integration",
-					"event_transformer_api_inbound_integration",
-					"events_api_v2_inbound_integration",
-					"generic_email_inbound_integration",
-					"generic_events_api_inbound_integration",
-					"keynote_inbound_integration",
-					"nagios_inbound_integration",
-					"pingdom_inbound_integration",
-					"sql_monitor_inbound_integration",
-				}),
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Computed:         true,
+				ConflictsWith:    []string{"vendor"},
+				ValidateDiagFunc: validateValueDiagFunc(getAllowedIntegrationTypesList()),
 			},
 			"vendor": {
 				Type:          schema.TypeString,
@@ -670,18 +660,24 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 			return retry.RetryableError(err)
 		}
 
-		if err := d.Set("type", serviceIntegration.Type); err != nil {
-			return retry.RetryableError(err)
-		}
-
-		if serviceIntegration.Service != nil {
-			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
+		// Determine whether to set type or vendor based on the API response.
+		// Priority: If vendor exists, it's a vendor-based integration (e.g., Datadog, Email vendor).
+		// Otherwise, it's a type-based integration (e.g., events_api_v2, generic_email).
+		// This prevents conflicts with the ConflictsWith constraint between type and vendor fields.
+		if serviceIntegration.Vendor != nil {
+			// This is a vendor-specific integration, set only vendor
+			if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
+				return retry.RetryableError(err)
+			}
+		} else {
+			// This is a type-based integration (no vendor), set only type
+			if err := d.Set("type", serviceIntegration.Type); err != nil {
 				return retry.RetryableError(err)
 			}
 		}
 
-		if serviceIntegration.Vendor != nil {
-			if err := d.Set("vendor", serviceIntegration.Vendor.ID); err != nil {
+		if serviceIntegration.Service != nil {
+			if err := d.Set("service", serviceIntegration.Service.ID); err != nil {
 				return retry.RetryableError(err)
 			}
 		}
@@ -842,4 +838,32 @@ func resourcePagerDutyServiceIntegrationImport(d *schema.ResourceData, meta inte
 	d.Set("service", sid)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// allowedIntegrationTypes defines the integration types that can be specified
+// directly via the "type" field, rather than through a vendor reference
+var allowedIntegrationTypes = map[string]bool{
+	"app_event_transform_inbound_integration":   true,
+	"aws_cloudwatch_inbound_integration":        true,
+	"cloudkick_inbound_integration":             true,
+	"event_transformer_api_inbound_integration": true,
+	"events_api_v2_inbound_integration":         true,
+	"generic_email_inbound_integration":         true,
+	"generic_events_api_inbound_integration":    true,
+	"keynote_inbound_integration":               true,
+	"nagios_inbound_integration":                true,
+	"pingdom_inbound_integration":               true,
+	"sql_monitor_inbound_integration":           true,
+}
+
+// getAllowedIntegrationTypesList returns a sorted list of allowed integration types
+// for use in schema validation
+func getAllowedIntegrationTypesList() []string {
+	types := make([]string, 0, len(allowedIntegrationTypes))
+	for t := range allowedIntegrationTypes {
+		types = append(types, t)
+	}
+	// Sort to ensure consistent ordering
+	sort.Strings(types)
+	return types
 }

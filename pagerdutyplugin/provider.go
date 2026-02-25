@@ -65,6 +65,7 @@ func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSourc
 		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourcePriority{} },
 		func() datasource.DataSource { return &dataSourceSchedule{} },
+		func() datasource.DataSource { return &dataSourceScheduleV2{} },
 		func() datasource.DataSource { return &dataSourceServiceCustomField{} },
 		func() datasource.DataSource { return &dataSourceServiceCustomFieldValue{} },
 		func() datasource.DataSource { return &dataSourceService{} },
@@ -99,6 +100,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceUserNotificationRule{} },
 		func() resource.Resource { return &resourceUserContactMethod{} },
 		func() resource.Resource { return &resourceEnablement{} },
+		func() resource.Resource { return &resourceScheduleV2{} },
 	}
 }
 

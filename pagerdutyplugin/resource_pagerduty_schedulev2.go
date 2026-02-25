@@ -8,6 +8,7 @@ import (
 
 	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
+	"github.com/PagerDuty/terraform-provider-pagerduty/util/validate"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -47,6 +48,7 @@ func (r *resourceScheduleV2) Schema(_ context.Context, _ resource.SchemaRequest,
 			"time_zone": schema.StringAttribute{
 				Required:    true,
 				Description: "The time zone of the schedule (IANA format, e.g. 'America/New_York').",
+				Validators:  []validator.String{validate.ValidTimeZone()},
 			},
 			"description": schema.StringAttribute{
 				Optional:      true,
@@ -243,7 +245,11 @@ func (r *resourceScheduleV2) createRotationsAndEvents(ctx context.Context, sched
 				return diags
 			}
 
-			updatedEvents = append(updatedEvents, flattenEventV3(ctx, createdEvent, &diags))
+			flattened := flattenEventV3(ctx, createdEvent, &diags)
+			// The API normalizes past effective_since dates to current time. Preserve
+			// the config value so the post-apply state matches the plan.
+			flattened.EffectiveSince = evtModel.EffectiveSince
+			updatedEvents = append(updatedEvents, flattened)
 		}
 
 		rotModel.Events = updatedEvents
@@ -446,10 +452,14 @@ func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, ro
 			return diags
 		}
 
-		updatedEvents = append(updatedEvents, flattenEventV3(ctx, updatedEvent, &diags))
+		flattened := flattenEventV3(ctx, updatedEvent, &diags)
 		if diags.HasError() {
 			return diags
 		}
+		// The API normalizes past effective_since dates to current time. Preserve
+		// the plan value so the post-apply state matches the plan.
+		flattened.EffectiveSince = desiredEvt.EffectiveSince
+		updatedEvents = append(updatedEvents, flattened)
 	}
 
 	// Delete extra events no longer needed
@@ -497,10 +507,14 @@ func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, ro
 			return diags
 		}
 
-		updatedEvents = append(updatedEvents, flattenEventV3(ctx, createdEvent, &diags))
+		flattened := flattenEventV3(ctx, createdEvent, &diags)
 		if diags.HasError() {
 			return diags
 		}
+		// The API normalizes past effective_since dates to current time. Preserve
+		// the plan value so the post-apply state matches the plan.
+		flattened.EffectiveSince = desiredEvt.EffectiveSince
+		updatedEvents = append(updatedEvents, flattened)
 	}
 
 	*result = updatedEvents
@@ -707,6 +721,11 @@ func flattenScheduleV3(ctx context.Context, schedule *pagerduty.ScheduleV3, stat
 				}
 				if !st.EndTime.IsNull() && semanticallyEqualTime(st.EndTime.ValueString(), evtModel.EndTime.ValueString()) {
 					evtModel.EndTime = st.EndTime
+				}
+				// The API normalizes past effective_since dates to current time. Preserve
+				// the state value to prevent perpetual plan diffs on subsequent refresh.
+				if !st.EffectiveSince.IsNull() && !st.EffectiveSince.IsUnknown() {
+					evtModel.EffectiveSince = st.EffectiveSince
 				}
 			}
 

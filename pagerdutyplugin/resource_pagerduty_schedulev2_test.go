@@ -266,6 +266,167 @@ resource "pagerduty_schedulev2" "test" {
 `, username, email, scheduleName, startTime, endTime, effectiveSince)
 }
 
+func TestAccPagerDutyScheduleV2_PastEffectiveSince(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_V3"); v == "" {
+		t.Skip("PAGERDUTY_ACC_SCHEDULE_V3 must be set to run v3 schedule acceptance tests")
+	}
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	scheduleName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	// Use a date 48 hours in the past. The API normalizes past effective_since
+	// values to the current server time. The provider must preserve the configured
+	// value in state to avoid a Framework "inconsistent result after apply" error.
+	effectiveSince := time.Now().UTC().Add(-48 * time.Hour).Format(time.RFC3339)
+	startTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T09:00:00Z"
+	endTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T17:00:00Z"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					// State must hold the configured value, not the API-normalized current time.
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.0.event.0.effective_since", effectiveSince),
+				),
+			},
+			{
+				// Re-plan with the same config. Fails if there is a perpetual diff
+				// caused by the read-side normalization not preserving the state value.
+				Config:             testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTime, endTime),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyScheduleV2_EffectiveUntil(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_V3"); v == "" {
+		t.Skip("PAGERDUTY_ACC_SCHEDULE_V3 must be set to run v3 schedule acceptance tests")
+	}
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	scheduleName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	effectiveSince := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
+	effectiveUntil := time.Now().UTC().Add(30 * 24 * time.Hour).Format(time.RFC3339)
+	startTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T09:00:00Z"
+	endTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T17:00:00Z"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPagerDutyScheduleV2EffectiveUntilConfig(username, email, scheduleName, effectiveSince, effectiveUntil, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.0.event.0.effective_until", effectiveUntil),
+				),
+			},
+			{
+				// Remove effective_until — the event becomes indefinite.
+				Config: testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckNoResourceAttr("pagerduty_schedulev2.test", "rotation.0.event.0.effective_until"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyScheduleV2_UpdateEvents(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_V3"); v == "" {
+		t.Skip("PAGERDUTY_ACC_SCHEDULE_V3 must be set to run v3 schedule acceptance tests")
+	}
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	scheduleName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	effectiveSince := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
+	startTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T09:00:00Z"
+	endTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T17:00:00Z"
+	startTimeUpdated := time.Now().UTC().Add(48*time.Hour).Format("2006-01-02") + "T08:00:00Z"
+	endTimeUpdated := time.Now().UTC().Add(48*time.Hour).Format("2006-01-02") + "T20:00:00Z"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPagerDutyScheduleV2UpdateEventsConfig(username, email, scheduleName, effectiveSince, startTime, endTime, "Weekly On-Call", "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.0.event.0.name", "Weekly On-Call"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.0.event.0.recurrence.0", "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"),
+				),
+			},
+			{
+				Config: testAccPagerDutyScheduleV2UpdateEventsConfig(username, email, scheduleName, effectiveSince, startTimeUpdated, endTimeUpdated, "Daily On-Call", "RRULE:FREQ=DAILY"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.0.event.0.name", "Daily On-Call"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.0.event.0.recurrence.0", "RRULE:FREQ=DAILY"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyScheduleV2_RotationCountChange(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_V3"); v == "" {
+		t.Skip("PAGERDUTY_ACC_SCHEDULE_V3 must be set to run v3 schedule acceptance tests")
+	}
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	scheduleName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	effectiveSince := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
+	startTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T09:00:00Z"
+	endTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T17:00:00Z"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.#", "1"),
+				),
+			},
+			{
+				// Add a second rotation, exercising the new-rotation creation branch.
+				Config: testAccPagerDutyScheduleV2MultipleRotationsConfig(username, email, scheduleName, effectiveSince, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.#", "2"),
+					resource.TestCheckResourceAttrSet("pagerduty_schedulev2.test", "rotation.0.id"),
+					resource.TestCheckResourceAttrSet("pagerduty_schedulev2.test", "rotation.1.id"),
+				),
+			},
+			{
+				// Remove the second rotation, exercising the rotation deletion branch.
+				Config: testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "rotation.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccPagerDutyScheduleV2MultipleRotationsConfig(username, email, scheduleName, effectiveSince, startTime, endTime string) string {
 	return fmt.Sprintf(`
 resource "pagerduty_user" "test" {
@@ -317,4 +478,73 @@ resource "pagerduty_schedulev2" "test" {
   }
 }
 `, username, email, scheduleName, startTime, endTime, effectiveSince, startTime, endTime, effectiveSince)
+}
+
+func testAccPagerDutyScheduleV2EffectiveUntilConfig(username, email, scheduleName, effectiveSince, effectiveUntil, startTime, endTime string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "test" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedulev2" "test" {
+  name        = "%s"
+  time_zone   = "America/New_York"
+  description = "Managed by Terraform"
+
+  rotation {
+    event {
+      name            = "Weekly On-Call"
+      start_time      = "%s"
+      end_time        = "%s"
+      effective_since = "%s"
+      effective_until = "%s"
+      recurrence      = ["RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"]
+
+      assignment_strategy {
+        type = "user_assignment_strategy"
+
+        member {
+          type    = "user_member"
+          user_id = pagerduty_user.test.id
+        }
+      }
+    }
+  }
+}
+`, username, email, scheduleName, startTime, endTime, effectiveSince, effectiveUntil)
+}
+
+func testAccPagerDutyScheduleV2UpdateEventsConfig(username, email, scheduleName, effectiveSince, startTime, endTime, eventName, recurrence string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "test" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedulev2" "test" {
+  name        = "%s"
+  time_zone   = "America/New_York"
+  description = "Managed by Terraform"
+
+  rotation {
+    event {
+      name            = "%s"
+      start_time      = "%s"
+      end_time        = "%s"
+      effective_since = "%s"
+      recurrence      = ["%s"]
+
+      assignment_strategy {
+        type = "user_assignment_strategy"
+
+        member {
+          type    = "user_member"
+          user_id = pagerduty_user.test.id
+        }
+      }
+    }
+  }
+}
+`, username, email, scheduleName, eventName, startTime, endTime, effectiveSince, recurrence)
 }

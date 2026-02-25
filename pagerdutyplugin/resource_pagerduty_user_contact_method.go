@@ -57,6 +57,7 @@ func (r *resourceUserContactMethod) Schema(_ context.Context, _ resource.SchemaR
 						"phone_contact_method",
 						"push_notification_contact_method",
 						"sms_contact_method",
+						"slack_contact_method",
 					),
 				},
 			},

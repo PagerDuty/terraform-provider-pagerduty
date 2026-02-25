@@ -73,7 +73,7 @@ func (r *resourceTagAssignment) Create(ctx context.Context, req resource.CreateR
 		},
 	}
 
-	err := retry.RetryContext(ctx, 5*time.Minute, func() *retry.RetryError {
+	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		err := r.client.AssignTagsWithContext(ctx, assign.EntityType, assign.EntityID, assignments)
 		if err != nil {
 			if util.IsBadRequestError(err) {
@@ -95,11 +95,20 @@ func (r *resourceTagAssignment) Create(ctx context.Context, req resource.CreateR
 	// Allow time for tag assignment to propagate across regions (eventual consistency)
 	time.Sleep(5 * time.Second)
 
-	isFound := r.requestGetTagAssignents(ctx, model, &resp.Diagnostics)
-	if !isFound {
+	// Lookup with retries (eventual consistency)
+	err = retry.RetryContext(ctx, 1*time.Minute, func() *retry.RetryError {
+		isFound := r.requestGetTagAssignents(ctx, model, &resp.Diagnostics)
+		if !isFound {
+			time.Sleep(2 * time.Second)
+			return retry.RetryableError(fmt.Errorf("Tag assignment %s not found", model.ID.String()))
+		}
+		return nil
+	})
+	if err != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 

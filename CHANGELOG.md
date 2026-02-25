@@ -1,3 +1,12 @@
+## v3.31.2 (Feb 25, 2026)
+
+BUG FIXES
+* `resource/pagerduty_tag_assignment`: Added retry mechanism for tag assignment lookup after creation with 1-minute timeout, improving handling of eventual consistency ([1089](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1089))
+* `resource/pagerduty_team`: API calls using POST or PUT now wraps "team" data appropriately ([1089](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1089))
+
+ENHANCEMENTS
+* `resource/pagerduty_user_contact_method`: Added support for `slack_contact_method` type ([1089](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1089))
+
 ## v3.31.1 (Feb 24, 2026)
 
 BUG FIXES

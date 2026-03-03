@@ -522,3 +522,8 @@ func CalculateDiff(from, to []string) (additions, deletions []string) {
 }
 
 var UserAgentAppend string
+
+// Custom type for PagerDuty context keys
+type pagerDutyKey string
+
+var IsImportKey = pagerDutyKey("isimport")

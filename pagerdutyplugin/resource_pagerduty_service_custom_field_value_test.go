@@ -61,10 +61,12 @@ func TestAccPagerDutyServiceCustomFieldValue_Basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            "pagerduty_service_custom_field_value.test",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"custom_fields"},
+				ResourceName:      "pagerduty_service_custom_field_value.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// The id field within custom_fields is populated during import but not in config,
+				// since the config uses name to reference the field. This is expected behavior.
+				ImportStateVerifyIgnore: []string{"custom_fields.0.id"},
 			},
 		},
 	})

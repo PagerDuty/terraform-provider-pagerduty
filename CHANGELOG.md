@@ -1,3 +1,12 @@
+## v3.31.3 (Mar 4, 2026)
+
+BUG FIXES
+* `resource/pagerduty_service_custom_field_value`: Properly add custom values to service custom field value during import ([1091](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1091))
+* `PagerDuty/pagerduty`: Bump github.com/cloudflare/circl from 1.6.1 to 1.6.3 ([1090](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1090))
+
+ENHANCEMENTS
+* `resource/pagerduty_user_contact_method`: Added support for `whatsapp_contact_method` type ([1094](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1094))
+
 ## v3.31.2 (Feb 25, 2026)
 
 BUG FIXES

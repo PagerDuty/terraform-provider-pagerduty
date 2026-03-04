@@ -37,7 +37,7 @@ type ServiceCustomFieldValueResource struct {
 type ServiceCustomFieldValueResourceModel struct {
 	ID           types.String `tfsdk:"id"`
 	ServiceID    types.String `tfsdk:"service_id"`
-	CustomFields types.List   `tfsdk:"custom_fields"`
+	CustomFields types.Set    `tfsdk:"custom_fields"`
 }
 
 type ServiceCustomFieldValueModel struct {
@@ -68,7 +68,7 @@ func (r *ServiceCustomFieldValueResource) Schema(_ context.Context, _ resource.S
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"custom_fields": schema.ListAttribute{
+			"custom_fields": schema.SetAttribute{
 				Description: "The custom field values to set for the service.",
 				Required:    true,
 				ElementType: types.ObjectType{
@@ -172,7 +172,7 @@ func (r *ServiceCustomFieldValueResource) Create(ctx context.Context, req resour
 	plan.ID = types.StringValue(serviceID)
 
 	// Map response back to model
-	if err := r.mapResponseToModel(ctx, result, &plan); err != nil {
+	if err := r.mapResponseToModelRead(ctx, result, &plan); err != nil {
 		resp.Diagnostics.AddError(
 			"Error Mapping Response",
 			fmt.Sprintf("Could not map response: %s", err),
@@ -208,7 +208,7 @@ func (r *ServiceCustomFieldValueResource) Read(ctx context.Context, req resource
 	}
 
 	// Map response to model
-	if err := r.mapResponseToModel(ctx, result, &state); err != nil {
+	if err := r.mapResponseToModelRead(ctx, result, &state); err != nil {
 		resp.Diagnostics.AddError(
 			"Error Mapping Response",
 			fmt.Sprintf("Could not map response: %s", err),
@@ -278,7 +278,7 @@ func (r *ServiceCustomFieldValueResource) Update(ctx context.Context, req resour
 	}
 
 	// Map response to model
-	if err := r.mapResponseToModel(ctx, result, &plan); err != nil {
+	if err := r.mapResponseToModelRead(ctx, result, &plan); err != nil {
 		resp.Diagnostics.AddError(
 			"Error Mapping Response",
 			fmt.Sprintf("Could not map response: %s", err),
@@ -300,25 +300,77 @@ func (r *ServiceCustomFieldValueResource) ImportState(ctx context.Context, req r
 	resource.ImportStatePassthroughID(ctx, path.Root("service_id"), req, resp)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
 
-	// For import, we'll use the Read method to populate the state
-	// This ensures consistency with how the resource normally behaves
-	readReq := resource.ReadRequest{
-		State: resp.State,
-	}
-	readResp := resource.ReadResponse{
-		State: resp.State,
+	var state ServiceCustomFieldValueResourceModel
+	resp.Diagnostics.Append(resp.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	r.Read(ctx, readReq, &readResp)
+	serviceID := state.ServiceID.ValueString()
 
-	// Copy any diagnostics from the read response
-	resp.Diagnostics.Append(readResp.Diagnostics...)
+	// Get current custom field values
+	result, err := r.client.GetServiceCustomFieldValues(ctx, serviceID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading PagerDuty Service Custom Field Values",
+			fmt.Sprintf("Could not read custom field values for service %s: %s", serviceID, err),
+		)
+		return
+	}
 
-	// Copy the state from the read response
-	resp.State = readResp.State
+	// For import, map all custom fields from the API response
+	if err := r.mapResponseToModelImport(ctx, result, &state); err != nil {
+		resp.Diagnostics.AddError(
+			"Error Mapping Response",
+			fmt.Sprintf("Could not map response: %s", err),
+		)
+		return
+	}
+
+	// Set state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *ServiceCustomFieldValueResource) mapResponseToModel(ctx context.Context, result *pagerduty.ListServiceCustomFieldValuesResponse, model *ServiceCustomFieldValueResourceModel) error {
+func (r *ServiceCustomFieldValueResource) mapResponseToModelImport(ctx context.Context, result *pagerduty.ListServiceCustomFieldValuesResponse, model *ServiceCustomFieldValueResourceModel) error {
+	fieldValues := make([]ServiceCustomFieldValueModel, 0, len(result.CustomFields))
+	for _, cf := range result.CustomFields {
+		m := ServiceCustomFieldValueModel{}
+
+		if cf.ID != "" {
+			m.ID = types.StringValue(cf.ID)
+		}
+
+		buf, err := json.Marshal(cf.Value)
+		if err != nil {
+			// Fall back to a normalized null value if marshalling fails,
+			// to avoid storing an empty JSON string and causing confusing diffs.
+			m.Value = jsontypes.NewNormalizedNull()
+		} else {
+			m.Value = jsontypes.NewNormalizedValue(string(buf))
+		}
+
+		m.Name = types.StringValue(cf.Name)
+
+		fieldValues = append(fieldValues, m)
+	}
+
+	// Create the list value from the updated fields
+	fieldsList, diags := types.SetValueFrom(ctx, types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"id":    types.StringType,
+			"name":  types.StringType,
+			"value": jsontypes.NormalizedType{},
+		},
+	}, fieldValues)
+	if diags.HasError() {
+		return fmt.Errorf("error creating custom fields list: %v", diags)
+	}
+
+	model.CustomFields = fieldsList
+	return nil
+}
+
+func (r *ServiceCustomFieldValueResource) mapResponseToModelRead(ctx context.Context, result *pagerduty.ListServiceCustomFieldValuesResponse, model *ServiceCustomFieldValueResourceModel) error {
 	// First, extract the current custom fields from the model to maintain the same order and selection
 	var currentFields []ServiceCustomFieldValueModel
 	if !model.CustomFields.IsNull() {
@@ -366,8 +418,6 @@ func (r *ServiceCustomFieldValueResource) mapResponseToModel(ctx context.Context
 				updatedField.ID = types.StringValue(apiField.ID)
 			}
 
-			// Format the value based on its type
-
 			buf, _ := json.Marshal(apiField.Value)
 			updatedField.Value = jsontypes.NewNormalizedValue(string(buf))
 		}
@@ -376,7 +426,7 @@ func (r *ServiceCustomFieldValueResource) mapResponseToModel(ctx context.Context
 	}
 
 	// Create the list value from the updated fields
-	fieldsList, diags := types.ListValueFrom(ctx, types.ObjectType{
+	fieldsList, diags := types.SetValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"id":    types.StringType,
 			"name":  types.StringType,

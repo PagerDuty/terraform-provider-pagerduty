@@ -58,6 +58,7 @@ func (r *resourceUserContactMethod) Schema(_ context.Context, _ resource.SchemaR
 						"push_notification_contact_method",
 						"sms_contact_method",
 						"slack_contact_method",
+						"whatsapp_contact_method",
 					),
 				},
 			},
@@ -96,7 +97,7 @@ func (r *resourceUserContactMethod) ValidateConfig(ctx context.Context, req reso
 		c = cfg.CountryCode.ValueInt64()
 	}
 
-	if t == "sms_contact_method" || t == "phone_contact_method" {
+	if t == "sms_contact_method" || t == "phone_contact_method" || t == "whatsapp_contact_method" {
 		maxLength := 40
 		if len(a) > maxLength {
 			resp.Diagnostics.AddAttributeError(path.Root("address"), "Invalid phone number", "phone numbers may not exceed 40 characters")

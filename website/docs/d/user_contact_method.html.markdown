@@ -40,7 +40,7 @@ resource "pagerduty_user_notification_rule" "low_urgency_sms" {
 The following arguments are supported:
 
   * `user_id` - (Required) The ID of the user.
-  * `type` - (Required) The contact method type. May be (`email_contact_method`, `phone_contact_method`, `sms_contact_method`, `push_notification_contact_method`).
+  * `type` - (Required) The contact method type. May be (`email_contact_method`, `phone_contact_method`, `sms_contact_method`, `push_notification_contact_method`, `whatsapp_contact_method`).
   * `label` - (Required) The label (e.g., "Work", "Mobile", "Ashley's iPhone", etc.).
 
 ## Attributes Reference

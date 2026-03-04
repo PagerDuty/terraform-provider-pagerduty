@@ -39,6 +39,7 @@ func resourcePagerDutyUserContactMethod() *schema.Resource {
 					"push_notification_contact_method",
 					"sms_contact_method",
 					"slack_contact_method",
+					"whatsapp_contact_method",
 				}),
 			},
 

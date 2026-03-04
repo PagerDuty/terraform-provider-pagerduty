@@ -12,8 +12,8 @@ import (
 func TestAccDataSourcePagerDutyUserContactMethod_Basic(t *testing.T) {
 	name := fmt.Sprintf("%s %s", acctest.RandString(8), acctest.RandString(10))
 	method_type := "email_contact_method"
-	address := fmt.Sprintf("%s@%s.com", acctest.RandString(6), acctest.RandString(7))
-	second_address := fmt.Sprintf("%s@%s.com", acctest.RandString(6), acctest.RandString(7))
+	address := fmt.Sprintf("%s@foo.test", acctest.RandString(6))
+	second_address := fmt.Sprintf("%s@foo.test", acctest.RandString(6))
 	label := "Work"
 
 	resource.Test(t, resource.TestCase{

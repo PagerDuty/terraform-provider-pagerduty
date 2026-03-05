@@ -266,6 +266,7 @@ func (r *resourceUserContactMethod) ImportState(ctx context.Context, req resourc
 			"Error importing PagerDuty user contact method",
 			"Expecting an ID formed as '<user_id>:<contact_method_id>'",
 		)
+		return
 	}
 	uid, id := ids[0], ids[1]
 

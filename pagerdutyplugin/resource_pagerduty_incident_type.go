@@ -218,14 +218,14 @@ func (r *resourceIncidentType) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
-func (r *resourceIncidentType) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *resourceIncidentType) Delete(_ context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
 	resp.Diagnostics.AddWarning(
 		"Cannot delete incident type",
 		"This action has no effect, and you might want to disable your incident type by changing it with `enabled = false`. If you want terraform to stop tracking this resource please use `terraform state rm`.",
 	)
 }
 
-func (r *resourceIncidentType) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *resourceIncidentType) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	resp.Diagnostics.Append(ConfigurePagerdutyClient(&r.client, req.ProviderData)...)
 }
 
@@ -270,6 +270,11 @@ func requestGetIncidentType(ctx context.Context, client *pagerduty.Client, id, p
 }
 
 func flattenIncidentType(ctx context.Context, client *pagerduty.Client, response *pagerduty.IncidentType, parent string) (resourceIncidentTypeModel, error) {
+	if parent == "" && response.Parent != nil && response.Parent.ID != "" {
+		// Fill required parent from response during `import`
+		parent = response.Parent.ID
+	}
+
 	if response.Parent != nil && parent != response.Parent.ID {
 		incidentType, err := client.GetIncidentType(ctx, parent, pagerduty.GetIncidentTypeOptions{})
 		if err != nil {

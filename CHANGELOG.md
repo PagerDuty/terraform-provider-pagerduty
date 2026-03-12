@@ -1,3 +1,9 @@
+## v3.31.4 (Mar 12, 2026)
+
+BUG FIXES
+* `resource/pagerduty_incident_type`: Add missing parent_type during import ([1096](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1096))
+* `resource/pagerduty_user_contact_method`: Fix error handling to properly return after invalid import ID format
+
 ## v3.31.3 (Mar 4, 2026)
 
 BUG FIXES

@@ -155,16 +155,18 @@ func resourcePagerDutyService() *schema.Resource {
 				Default:  "14400",
 			},
 			"last_incident_timestamp": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "The last_incident_timestamp attribute is no longer set as it caused persistent drift in plan output. Use data.pagerduty_service if you need this value.",
 			},
 			"created_at": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "The status attribute is no longer set as it caused persistent drift in plan output. Use data.pagerduty_service if you need this value.",
 			},
 			"acknowledgement_timeout": {
 				Type:     schema.TypeString,
@@ -585,12 +587,10 @@ func flattenService(d *schema.ResourceData, service *pagerduty.Service) error {
 	d.Set("name", service.Name)
 	d.Set("type", service.Type)
 	d.Set("html_url", service.HTMLURL)
-	d.Set("status", service.Status)
 	d.Set("created_at", service.CreatedAt)
 	d.Set("escalation_policy", service.EscalationPolicy.ID)
 	d.Set("description", service.Description)
 	d.Set("alert_creation", service.AlertCreation)
-	d.Set("last_incident_timestamp", service.LastIncidentTimestamp)
 
 	if service.AutoResolveTimeout == nil {
 		d.Set("auto_resolve_timeout", "null")

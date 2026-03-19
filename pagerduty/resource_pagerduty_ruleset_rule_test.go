@@ -27,6 +27,8 @@ func TestAccPagerDutyRulesetRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "position", "0"),
 					resource.TestCheckResourceAttr(
+						"pagerduty_ruleset_rule.foo", "catch_all", "false"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "disabled", "true"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_ruleset_rule.foo", "variable.#", "2"),

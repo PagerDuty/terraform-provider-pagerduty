@@ -27,14 +27,6 @@ resource "pagerduty_service_custom_field" "environment" {
   description  = "The environment this service runs in"
 }
 
-resource "pagerduty_service_custom_field" "region" {
-  name         = "region"
-  display_name = "Region"
-  data_type    = "string"
-  field_type   = "single_value"
-  description  = "The region this service is deployed in"
-}
-
 resource "pagerduty_service_custom_field" "is_critical" {
   name         = "is_critical"
   display_name = "Is Critical"
@@ -49,12 +41,17 @@ resource "pagerduty_service_custom_field" "regions" {
   data_type    = "string"
   field_type   = "multi_value_fixed"
   description  = "AWS regions where this service is deployed"
-  
+
   field_option {
     value     = "us-east-1"
     data_type = "string"
   }
-  
+
+  field_option {
+    value     = "us-east-2"
+    data_type = "string"
+  }
+
   field_option {
     value     = "us-west-1"
     data_type = "string"
@@ -72,30 +69,24 @@ resource "pagerduty_service" "example" {
 # Set custom field values on the service
 resource "pagerduty_service_custom_field_value" "example" {
   service_id = pagerduty_service.example.id
-  
-  # String field
-  custom_fields {
-    name  = pagerduty_service_custom_field.environment.name
-    value = jsonencode("production")
-  }
 
-  # String field
-  custom_fields {
-    name  = pagerduty_service_custom_field.region.name
-    value = jsonencode("us-east-1")
-  }
-
-  # Boolean field
-  custom_fields {
-    name  = pagerduty_service_custom_field.is_critical.name
-    value = jsonencode(true)
-  }
-
-  # Multi-value field
-  custom_fields {
-    name  = pagerduty_service_custom_field.regions.name
-    value = jsonencode(["us-east-1", "us-west-1"])
-  }
+  custom_fields = [
+    # String field
+    {
+      name  = pagerduty_service_custom_field.environment.name
+      value = jsonencode("production")
+    },
+    # Boolean field
+    {
+      name  = pagerduty_service_custom_field.is_critical.name
+      value = jsonencode(true)
+    },
+    # Multi-value field
+    {
+      name  = pagerduty_service_custom_field.regions.name
+      value = jsonencode(["us-east-1", "us-west-1"])
+    }
+  ]
 }
 ```
 
@@ -104,7 +95,7 @@ resource "pagerduty_service_custom_field_value" "example" {
 The following arguments are supported:
 
 * `service_id` - (Required) The ID of the service to set custom field values for.
-* `custom_fields` - (Required) A list of custom field values to set on the service. Each block supports the following:
+* `custom_fields` - (Required) A set of custom field values to set on the service. Each object in the set supports the following:
   * `id` - (Optional) The ID of the custom field. Either `id` or `name` must be provided.
   * `name` - (Optional) The name of the custom field. Either `id` or `name` must be provided.
   * `value` - (Required) The value to set for the custom field. Must be provided as a JSON-encoded string matching the field's data type. Use the `jsonencode()` function to ensure proper formatting.

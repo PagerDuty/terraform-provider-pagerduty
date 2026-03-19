@@ -851,6 +851,7 @@ func resourcePagerDutyRulesetRuleRead(d *schema.ResourceData, meta interface{}) 
 			}
 			d.Set("position", rule.Position)
 			d.Set("disabled", rule.Disabled)
+			d.Set("catch_all", rule.CatchAll)
 			d.Set("ruleset", rulesetID)
 		}
 		return nil

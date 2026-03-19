@@ -196,7 +196,10 @@ func expandEventOrchestrationPathConditions(v interface{}) []*pagerduty.EventOrc
 		if cond == nil {
 			continue
 		}
-		c := cond.(map[string]interface{})
+		c, ok := cond.(map[string]interface{})
+		if !ok || c == nil {
+			continue
+		}
 
 		cx := &pagerduty.EventOrchestrationPathRuleCondition{
 			Expression: c["expression"].(string),
@@ -225,7 +228,10 @@ func expandEventOrchestrationPathVariables(v interface{}) []*pagerduty.EventOrch
 	res := []*pagerduty.EventOrchestrationPathActionVariables{}
 
 	for _, er := range v.([]interface{}) {
-		rer := er.(map[string]interface{})
+		rer, ok := er.(map[string]interface{})
+		if !ok || rer == nil {
+			continue
+		}
 
 		av := &pagerduty.EventOrchestrationPathActionVariables{
 			Name:  rer["name"].(string),
@@ -259,7 +265,10 @@ func expandEventOrchestrationPathIncidentCustomFields(v interface{}) []*pagerdut
 	res := []*pagerduty.EventOrchestrationPathIncidentCustomFieldUpdate{}
 
 	for _, eai := range v.([]interface{}) {
-		ea := eai.(map[string]interface{})
+		ea, ok := eai.(map[string]interface{})
+		if !ok || ea == nil {
+			continue
+		}
 		ext := &pagerduty.EventOrchestrationPathIncidentCustomFieldUpdate{
 			ID:    ea["id"].(string),
 			Value: ea["value"].(string),
@@ -273,7 +282,10 @@ func expandEventOrchestrationPathExtractions(v interface{}) []*pagerduty.EventOr
 	res := []*pagerduty.EventOrchestrationPathActionExtractions{}
 
 	for _, eai := range v.([]interface{}) {
-		ea := eai.(map[string]interface{})
+		ea, ok := eai.(map[string]interface{})
+		if !ok || ea == nil {
+			continue
+		}
 		ext := &pagerduty.EventOrchestrationPathActionExtractions{
 			Target:   ea["target"].(string),
 			Regex:    ea["regex"].(string),
@@ -304,7 +316,10 @@ func expandEventOrchestrationPathAutomationActions(v interface{}) []*pagerduty.E
 	result := []*pagerduty.EventOrchestrationPathAutomationAction{}
 
 	for _, i := range v.([]interface{}) {
-		a := i.(map[string]interface{})
+		a, ok := i.(map[string]interface{})
+		if !ok || a == nil {
+			continue
+		}
 		aa := &pagerduty.EventOrchestrationPathAutomationAction{
 			Name:         a["name"].(string),
 			Url:          a["url"].(string),
@@ -324,7 +339,10 @@ func expandEventOrchestrationAutomationActionObjects(v interface{}) []*pagerduty
 	result := []*pagerduty.EventOrchestrationPathAutomationActionObject{}
 
 	for _, i := range v.([]interface{}) {
-		o := i.(map[string]interface{})
+		o, ok := i.(map[string]interface{})
+		if !ok || o == nil {
+			continue
+		}
 		obj := &pagerduty.EventOrchestrationPathAutomationActionObject{
 			Key:   o["key"].(string),
 			Value: o["value"].(string),

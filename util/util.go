@@ -298,8 +298,8 @@ func ValidateTZValueDiagFunc(v interface{}, p cty.Path) diag.Diagnostics {
 	value := v.(string)
 	valid := false
 
-	foundAt := sort.SearchStrings(validTZ, value)
-	if foundAt < len(validTZ) && validTZ[foundAt] == value {
+	foundAt := sort.SearchStrings(ValidTZ, value)
+	if foundAt < len(ValidTZ) && ValidTZ[foundAt] == value {
 		valid = true
 	}
 
@@ -314,9 +314,11 @@ func ValidateTZValueDiagFunc(v interface{}, p cty.Path) diag.Diagnostics {
 	return diags
 }
 
-// validTZ at the moment there not an API to fetch this values, so hardcoding
+// ValidTZ at the moment there not an API to fetch this values, so hardcoding
 // them here
-var validTZ []string = []string{
+// ValidTZ is the list of IANA time zone values accepted by the PagerDuty API.
+// See https://developer.pagerduty.com/docs/1afe25e9c94cb-types#time-zone
+var ValidTZ []string = []string{
 	"Africa/Algiers",
 	"Africa/Cairo",
 	"Africa/Casablanca",

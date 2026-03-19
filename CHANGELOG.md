@@ -1,3 +1,13 @@
+## v3.31.5 (Mar 19, 2026)
+
+BUG FIXES
+* `resource/pagerduty_alert_grouping_setting`: Remove consistency check mechanism to prevent false positive warnings when alert grouping settings are modified outside Terraform ([1103](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1103))
+* `resource/pagerduty_event_orchestration`: Fix index out of range panic when handling event orchestration conditions ([1097](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1097))
+* `resource/pagerduty_service`: Stop setting `last_incident_timestamp` and `status` during read to prevent plan drift ([1100](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1100))
+* `resource/pagerduty_ruleset_rule`: Populate `catch_all` field in Read function ([1102](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1102))
+* `resource/pagerduty_service_custom_field_value`: Fix documentation, `custom_fields` is an attribute not a block
+* `PagerDuty/pagerduty`: Bump google.golang.org/grpc from 1.60.1 to 1.79.3
+
 ## v3.31.4 (Mar 12, 2026)
 
 BUG FIXES

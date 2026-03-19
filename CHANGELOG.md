@@ -1,3 +1,11 @@
+## v3.32.0 (Mar 19, 2026)
+
+FEATURES:
+
+* `resource/pagerduty_schedulev2`: Add `pagerduty_schedulev2` resource and data source (v3 Schedules API) ([1087](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1087))
+* `data/pagerduty_schedulev2`: Add `pagerduty_schedulev2` resource and data source (v3 Schedules API) ([1087](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1087))
+
+
 ## v3.31.5 (Mar 19, 2026)
 
 BUG FIXES

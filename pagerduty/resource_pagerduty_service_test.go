@@ -88,10 +88,10 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 						"pagerduty_service.foo", "html_url"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "type", "service"),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "last_incident_timestamp", ""),
-					resource.TestCheckResourceAttr(
-						"pagerduty_service.foo", "status", ""),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "last_incident_timestamp"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "status"),
 				),
 			},
 			{

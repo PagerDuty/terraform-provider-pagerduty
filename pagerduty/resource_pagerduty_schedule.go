@@ -736,7 +736,7 @@ func removeScheduleFromEP(c *pagerduty.Client, scheduleID string, ep *pagerduty.
 
 	for ri, r := range epr {
 		for index, target := range r.Targets {
-			isScheduleConfiguredInEscalationRule := target.Type == "schedule_reference" && target.ID == scheduleID
+			isScheduleConfiguredInEscalationRule := normalizeEscalationTargetType(target.Type) == "schedule_reference" && target.ID == scheduleID
 			if !isScheduleConfiguredInEscalationRule {
 				continue
 			}
@@ -795,7 +795,7 @@ func detectUseOfScheduleByEPsWithOneLayer(scheduleId string, eps []*pagerduty.Es
 			meetConditionMapping := make(map[int]bool)
 			for epli, epLayer := range ep.EscalationRules {
 				meetConditionMapping[epli] = false
-				isTargetingThisSchedule := epLayer.Targets[0].Type == "schedule_reference" && epLayer.Targets[0].ID == scheduleId
+				isTargetingThisSchedule := normalizeEscalationTargetType(epLayer.Targets[0].Type) == "schedule_reference" && epLayer.Targets[0].ID == scheduleId
 				if len(epLayer.Targets) == 1 && isTargetingThisSchedule {
 					meetConditionMapping[epli] = true
 				}

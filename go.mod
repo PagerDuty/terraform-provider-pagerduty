@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.2
 
 require (
-	github.com/PagerDuty/go-pagerduty v1.8.1-0.20260225153834-d34fb98c0985
+	github.com/PagerDuty/go-pagerduty v1.8.1-0.20260324212034-e4de2e38c6fa
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/hc-install v0.6.2

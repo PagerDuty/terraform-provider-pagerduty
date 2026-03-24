@@ -1,4 +1,4 @@
-# github.com/PagerDuty/go-pagerduty v1.8.1-0.20260225153834-d34fb98c0985
+# github.com/PagerDuty/go-pagerduty v1.8.1-0.20260324212034-e4de2e38c6fa
 ## explicit; go 1.19
 github.com/PagerDuty/go-pagerduty
 # github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c

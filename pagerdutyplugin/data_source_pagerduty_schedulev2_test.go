@@ -83,7 +83,7 @@ resource "pagerduty_schedulev2" "test" {
       recurrence      = ["RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"]
 
       assignment_strategy {
-        type = "user_assignment_strategy"
+        type = "rotating_member_assignment_strategy"
 
         member {
           type    = "user_member"

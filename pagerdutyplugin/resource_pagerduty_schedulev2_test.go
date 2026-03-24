@@ -619,3 +619,96 @@ resource "pagerduty_schedulev2" "test" {
 }
 `, username, email, scheduleName, startTime, endTime, effectiveSince)
 }
+
+// TestAccPagerDutyScheduleV2_WithEscalationPolicy covers the bug reported in
+// GitHub issue #1105 where any state refresh on a schedule that is referenced
+// by an escalation policy caused a JSON unmarshal panic:
+// "cannot unmarshal object into Go struct field
+//
+//	ScheduleV3.schedule.escalation_policies of type string"
+func TestAccPagerDutyScheduleV2_WithEscalationPolicy(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_V3"); v == "" {
+		t.Skip("PAGERDUTY_ACC_SCHEDULE_V3 must be set to run v3 schedule acceptance tests")
+	}
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	scheduleName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicyName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	effectiveSince := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
+	startTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T09:00:00Z"
+	endTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T17:00:00Z"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				// Create the schedule and an escalation policy that references it.
+				// On the subsequent plan/refresh the API will return escalation_policies
+				// as objects — this step validates the fix for issue #1105.
+				Config: testAccPagerDutyScheduleV2WithEscalationPolicyConfig(username, email, scheduleName, escalationPolicyName, effectiveSince, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttr("pagerduty_schedulev2.test", "name", scheduleName),
+				),
+			},
+			{
+				// Second plan/refresh — triggers the exact read path that caused
+				// the unmarshal panic. If the fix is correct, this must produce no error.
+				Config:   testAccPagerDutyScheduleV2WithEscalationPolicyConfig(username, email, scheduleName, escalationPolicyName, effectiveSince, startTime, endTime),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func testAccPagerDutyScheduleV2WithEscalationPolicyConfig(username, email, scheduleName, escalationPolicyName, effectiveSince, startTime, endTime string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "test" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedulev2" "test" {
+  name        = "%s"
+  time_zone   = "America/New_York"
+  description = "Managed by Terraform"
+
+  rotation {
+    event {
+      name            = "Weekly On-Call"
+      start_time      = "%s"
+      end_time        = "%s"
+      effective_since = "%s"
+      recurrence      = ["RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"]
+
+      assignment_strategy {
+        type = "rotating_member_assignment_strategy"
+
+        member {
+          type    = "user_member"
+          user_id = pagerduty_user.test.id
+        }
+      }
+    }
+  }
+}
+
+resource "pagerduty_escalation_policy" "test" {
+  name        = "%s"
+  description = "Managed by Terraform"
+  num_loops   = 1
+
+  rule {
+    escalation_delay_in_minutes = 10
+
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedulev2.test.id
+    }
+  }
+}
+`, username, email, scheduleName, startTime, endTime, effectiveSince, escalationPolicyName)
+}

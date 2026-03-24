@@ -386,7 +386,7 @@ func flattenEscalationRules(v []*pagerduty.EscalationRule, d *schema.ResourceDat
 				if ert == nil {
 					continue
 				}
-				escalationRuleTarget := map[string]interface{}{"id": ert.ID, "type": ert.Type}
+				escalationRuleTarget := map[string]interface{}{"id": ert.ID, "type": normalizeEscalationTargetType(ert.Type)}
 				targets = append(targets, escalationRuleTarget)
 				addedTargets[ert.ID] = struct{}{}
 			}
@@ -397,7 +397,7 @@ func flattenEscalationRules(v []*pagerduty.EscalationRule, d *schema.ResourceDat
 			if _, found := addedTargets[ert.ID]; found {
 				continue
 			}
-			escalationRuleTarget := map[string]interface{}{"id": ert.ID, "type": ert.Type}
+			escalationRuleTarget := map[string]interface{}{"id": ert.ID, "type": normalizeEscalationTargetType(ert.Type)}
 			targets = append(targets, escalationRuleTarget)
 		}
 
@@ -406,6 +406,17 @@ func flattenEscalationRules(v []*pagerduty.EscalationRule, d *schema.ResourceDat
 	}
 
 	return escalationRules
+}
+
+// normalizeEscalationTargetType maps v3-specific reference type aliases back to
+// the canonical type accepted by the resource schema. The v3 Schedules API
+// returns "schedule_v3_reference" for schedules created via /v3/schedules, but
+// the escalation policy resource only exposes "schedule_reference" to users.
+func normalizeEscalationTargetType(t string) string {
+	if t == "schedule_v3_reference" {
+		return "schedule_reference"
+	}
+	return t
 }
 
 func expandTeams(v interface{}) []*pagerduty.TeamReference {

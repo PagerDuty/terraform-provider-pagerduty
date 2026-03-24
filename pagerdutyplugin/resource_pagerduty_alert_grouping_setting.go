@@ -207,11 +207,6 @@ func (r *resourceAlertGroupingSetting) Create(ctx context.Context, req resource.
 	plan := buildPagerdutyAlertGroupingSetting(ctx, &model, &resp.Diagnostics)
 	log.Printf("[INFO] Creating PagerDuty alert grouping setting %s", plan.Name)
 
-	r.validateServicesReuse(ctx, plan, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		response, err := r.client.CreateAlertGroupingSetting(ctx, plan)
 		if err != nil {
@@ -228,6 +223,9 @@ func (r *resourceAlertGroupingSetting) Create(ctx context.Context, req resource.
 			fmt.Sprintf("Error creating PagerDuty alert grouping setting %s", plan.Name),
 			err.Error(),
 		)
+		if util.IsBadRequestError(err) {
+			r.validateServicesReuse(ctx, plan, &resp.Diagnostics)
+		}
 		return
 	}
 

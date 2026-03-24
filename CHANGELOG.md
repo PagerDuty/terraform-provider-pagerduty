@@ -1,3 +1,8 @@
+## v3.32.1 (Mar 24, 2026)
+
+BUG FIXES
+* `resource/pagerduty_pagerduty_schedulev2`: Fix(schedulev2): normalize schedule_v3_reference type and fix EscalationPolicies unmarshal ([1107](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1107))
+
 ## v3.32.0 (Mar 19, 2026)
 
 FEATURES:

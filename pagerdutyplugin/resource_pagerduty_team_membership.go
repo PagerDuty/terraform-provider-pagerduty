@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -24,7 +23,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
-type resourceTeamMembership struct{ client *pagerduty.Client }
+type resourceTeamMembership struct {
+	client *pagerduty.Client
+}
 
 var (
 	_ resource.ResourceWithConfigure   = (*resourceTeamMembership)(nil)
@@ -77,7 +78,8 @@ func (r *resourceTeamMembership) Create(ctx context.Context, req resource.Create
 	id := model.ID.ValueString()
 	role := model.Role.ValueString()
 
-	model, err := requestGetTeamMembership(ctx, r.client, id, &role, RetryNotFound, &resp.Diagnostics)
+	r.invalidateTeamMembershipCache(model.TeamID.ValueString(), "create")
+	model, err := requestGetTeamMembership(ctx, r.client, id, &role, teamMembershipReadPostWriteVerification, RetryNotFound, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Error creating PagerDuty team membership %s", model.ID),
@@ -101,7 +103,7 @@ func (r *resourceTeamMembership) Read(ctx context.Context, req resource.ReadRequ
 	}
 	log.Printf("[INFO] Reading PagerDuty team membership %s", id)
 
-	state, err := requestGetTeamMembership(ctx, r.client, id.ValueString(), nil, !RetryNotFound, &resp.Diagnostics)
+	state, err := requestGetTeamMembership(ctx, r.client, id.ValueString(), nil, teamMembershipReadSteadyState, !RetryNotFound, &resp.Diagnostics)
 	if err != nil {
 		if util.IsNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
@@ -129,7 +131,8 @@ func (r *resourceTeamMembership) Update(ctx context.Context, req resource.Update
 	id := model.ID.ValueString()
 	role := model.Role.ValueString()
 
-	model, err := requestGetTeamMembership(ctx, r.client, id, &role, RetryNotFound, &resp.Diagnostics)
+	r.invalidateTeamMembershipCache(model.TeamID.ValueString(), "update")
+	model, err := requestGetTeamMembership(ctx, r.client, id, &role, teamMembershipReadPostWriteVerification, RetryNotFound, &resp.Diagnostics)
 	if err != nil {
 		if util.IsNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
@@ -193,6 +196,7 @@ func (r *resourceTeamMembership) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
+	r.invalidateTeamMembershipCache(teamID, "delete")
 	resp.State.RemoveResource(ctx)
 }
 
@@ -209,59 +213,6 @@ type resourceTeamMembershipModel struct {
 	TeamID types.String `tfsdk:"team_id"`
 	UserID types.String `tfsdk:"user_id"`
 	Role   types.String `tfsdk:"role"`
-}
-
-func requestGetTeamMembership(ctx context.Context, client *pagerduty.Client, id string, neededRole *string, retryNotFound bool, diags *diag.Diagnostics) (resourceTeamMembershipModel, error) {
-	var model resourceTeamMembershipModel
-
-	userID, teamID, err := util.ResourcePagerDutyParseColonCompoundID(id)
-	if err != nil {
-		diags.AddError(fmt.Sprintf("Invalid Team Membership ID %s", id), err.Error())
-		return model, nil
-	}
-
-	err = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		offset := uint(0)
-		more := true
-
-		for more {
-			resp, err := client.ListTeamMembers(ctx, teamID, pagerduty.ListTeamMembersOptions{
-				Limit:  100,
-				Offset: offset,
-			})
-			if err != nil {
-				if util.IsBadRequestError(err) {
-					return retry.NonRetryableError(err)
-				}
-				if !retryNotFound && util.IsNotFoundError(err) {
-					return retry.NonRetryableError(err)
-				}
-				return retry.RetryableError(err)
-			}
-
-			for _, m := range resp.Members {
-				if m.User.ID == userID {
-					if neededRole != nil && m.Role != *neededRole {
-						err = fmt.Errorf("Role %q fetched is different from configuration %q", m.Role, *neededRole)
-						return retry.RetryableError(err)
-					}
-					model = flattenTeamMembership(userID, teamID, m.Role)
-					return nil
-				}
-			}
-
-			more = resp.More
-			offset += resp.Limit
-		}
-
-		err = pagerduty.APIError{StatusCode: http.StatusNotFound}
-		if retryNotFound {
-			return retry.RetryableError(err)
-		}
-		return retry.NonRetryableError(err)
-	})
-
-	return model, err
 }
 
 func requestAddTeamMembership(ctx context.Context, client *pagerduty.Client, plan SchemaGetter, diags *diag.Diagnostics) resourceTeamMembershipModel {
@@ -382,4 +333,11 @@ func flattenTeamMembership(userID, teamID, role string) resourceTeamMembershipMo
 
 func flattenTeamMembershipID(userID, teamID string) types.String {
 	return types.StringValue(fmt.Sprintf("%s:%s", userID, teamID))
+}
+
+func (r *resourceTeamMembership) invalidateTeamMembershipCache(teamID, reason string) {
+	if teamID == "" {
+		return
+	}
+	invalidateTeamMembershipReadCache(r.client, teamID, reason)
 }

@@ -76,6 +76,17 @@ var eventOrchestrationIncidentCustomFieldsObjectSchema = map[string]*schema.Sche
 	},
 }
 
+var eventOrchestrationIncidentTypeObjectSchema = map[string]*schema.Schema{
+	"id": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"name": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+}
+
 var eventOrchestrationAutomationActionSchema = map[string]*schema.Schema{
 	"name": {
 		Type:     schema.TypeString,
@@ -278,6 +289,18 @@ func expandEventOrchestrationPathIncidentCustomFields(v interface{}) []*pagerdut
 	return res
 }
 
+func expandEventOrchestrationPathIncidentType(v interface{}) *pagerduty.EventOrchestrationPathIncidentType {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil
+	}
+	it := l[0].(map[string]interface{})
+	return &pagerduty.EventOrchestrationPathIncidentType{
+		ID:   it["id"].(string),
+		Name: it["name"].(string),
+	}
+}
+
 func expandEventOrchestrationPathExtractions(v interface{}) []*pagerduty.EventOrchestrationPathActionExtractions {
 	res := []*pagerduty.EventOrchestrationPathActionExtractions{}
 
@@ -381,6 +404,18 @@ func flattenEventOrchestrationIncidentCustomFieldUpdates(v []*pagerduty.EventOrc
 	}
 
 	return result
+}
+
+func flattenEventOrchestrationPathIncidentType(v *pagerduty.EventOrchestrationPathIncidentType) []interface{} {
+	if v == nil {
+		return nil
+	}
+	return []interface{}{
+		map[string]string{
+			"id":   v.ID,
+			"name": v.Name,
+		},
+	}
 }
 
 func flattenEventOrchestrationAutomationActions(v []*pagerduty.EventOrchestrationPathAutomationAction) []interface{} {

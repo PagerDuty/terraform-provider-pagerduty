@@ -140,7 +140,14 @@ func (r *resourceAlertGroupingSetting) ValidateConfig(ctx context.Context, req r
 		if model.Config.Attributes()["aggregate"].IsNull() {
 			resp.Diagnostics.AddAttributeError(path.Root("config").AtName("aggregate"), "Invalid value", "'aggregate' cannot be blank")
 		}
-		return
+	}
+
+	if t != pagerduty.AlertGroupingSettingTimeType && !model.Config.Attributes()["timeout"].IsNull() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("config").AtName("timeout"),
+			"Invalid configuration",
+			fmt.Sprintf("'timeout' is only applicable when type is %q, got %q", pagerduty.AlertGroupingSettingTimeType, t),
+		)
 	}
 }
 

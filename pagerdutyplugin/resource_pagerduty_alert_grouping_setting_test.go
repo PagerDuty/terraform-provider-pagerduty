@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -687,6 +688,40 @@ resource "pagerduty_alert_grouping_setting" "foo" {
 	}
 	services = [pagerduty_service.foo.id]
 }`, service1, name)
+}
+
+func TestAccPagerDutyAlertGroupingSetting_Intelligent_TimeoutRejected(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "pagerduty_escalation_policy" "default" {
+	name = "Default"
+}
+
+resource "pagerduty_service" "%[2]s" {
+	name = "%[2]s"
+	escalation_policy = data.pagerduty_escalation_policy.default.id
+}
+
+resource "pagerduty_alert_grouping_setting" "%[1]s" {
+	name = "%[1]s"
+	type = "intelligent"
+	services = [pagerduty_service.%[2]s.id]
+	config {
+		timeout = 60
+	}
+}`, ref, service),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`'timeout' is only applicable when type is "time"`),
+			},
+		},
+	})
 }
 
 func testAccPagerDutyAlertGroupingSettingServiceNotExist(ref, service, name string) string {

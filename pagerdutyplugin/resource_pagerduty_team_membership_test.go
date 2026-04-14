@@ -171,6 +171,63 @@ func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependantAndMulti
 	})
 }
 
+// TestAccPagerDutyTeamMembership_MultipleMembers verifies that multiple
+// memberships on the same team are all read back correctly. This exercises
+// the shared-cache path where the second Read serves from the cached snapshot
+// rather than re-fetching the full member list.
+func TestAccPagerDutyTeamMembership_MultipleMembers(t *testing.T) {
+	userA := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	userB := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamMembershipMultipleMembersConfig(userA, userB, team),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.user_a"),
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.user_b"),
+					resource.TestCheckResourceAttr("pagerduty_team_membership.user_a", "role", "manager"),
+					resource.TestCheckResourceAttr("pagerduty_team_membership.user_b", "role", "observer"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccPagerDutyTeamMembership_RoleUpdateReflectsAfterWrite verifies that
+// after a role change the updated role is read back correctly, confirming that
+// the cache is invalidated on Update so stale data is never returned.
+func TestAccPagerDutyTeamMembership_RoleUpdateReflectsAfterWrite(t *testing.T) {
+	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, "observer"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
+					resource.TestCheckResourceAttr("pagerduty_team_membership.foo", "role", "observer"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, "manager"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
+					resource.TestCheckResourceAttr("pagerduty_team_membership.foo", "role", "manager"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyTeamMembershipDestroy(s *terraform.State) error {
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_team_membership" {
@@ -307,6 +364,37 @@ resource "pagerduty_team_membership" "foo" {
   role    = "%[3]v"
 }
 `, user, team, role)
+}
+
+func testAccCheckPagerDutyTeamMembershipMultipleMembersConfig(userA, userB, team string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "user_a" {
+  name  = "%[1]s"
+  email = "%[1]s@foo.test"
+}
+
+resource "pagerduty_user" "user_b" {
+  name  = "%[2]s"
+  email = "%[2]s@foo.test"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[3]s"
+  description = "foo"
+}
+
+resource "pagerduty_team_membership" "user_a" {
+  user_id = pagerduty_user.user_a.id
+  team_id = pagerduty_team.foo.id
+  role    = "manager"
+}
+
+resource "pagerduty_team_membership" "user_b" {
+  user_id = pagerduty_user.user_b.id
+  team_id = pagerduty_team.foo.id
+  role    = "observer"
+}
+`, userA, userB, team)
 }
 
 func testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant(userFoo, userBar, team, role, escalationPolicy string) string {

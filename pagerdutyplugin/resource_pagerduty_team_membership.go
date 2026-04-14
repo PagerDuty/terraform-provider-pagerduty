@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
@@ -22,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"golang.org/x/sync/singleflight"
 )
 
 type resourceTeamMembership struct{ client *pagerduty.Client }
@@ -30,6 +32,90 @@ var (
 	_ resource.ResourceWithConfigure   = (*resourceTeamMembership)(nil)
 	_ resource.ResourceWithImportState = (*resourceTeamMembership)(nil)
 )
+
+// teamMemberCaches is the global per-client cache registry.
+// The resource struct is recreated per RPC, so the *pagerduty.Client pointer
+// (a stable singleton per provider instance) is the only viable cache key.
+var teamMemberCaches sync.Map // key: *pagerduty.Client, value: *teamMemberCache
+
+type teamMemberCache struct {
+	group   singleflight.Group
+	mu      sync.RWMutex
+	members map[string][]pagerduty.Member // teamID → full member list
+}
+
+func teamMemberCacheFor(client *pagerduty.Client) *teamMemberCache {
+	v, _ := teamMemberCaches.LoadOrStore(client, &teamMemberCache{
+		members: make(map[string][]pagerduty.Member),
+	})
+	return v.(*teamMemberCache)
+}
+
+// getMembers returns the full member list for teamID, fetching once and caching
+// for subsequent calls within the same run. Concurrent calls for the same team
+// are deduplicated via singleflight so only one API page-walk occurs.
+func (c *teamMemberCache) getMembers(ctx context.Context, client *pagerduty.Client, teamID string) ([]pagerduty.Member, error) {
+	c.mu.RLock()
+	if members, ok := c.members[teamID]; ok {
+		c.mu.RUnlock()
+		return members, nil
+	}
+	c.mu.RUnlock()
+
+	result, err, _ := c.group.Do(teamID, func() (any, error) {
+		// Re-check after winning the singleflight race — another goroutine may
+		// have populated the cache between our RLock miss and this point.
+		c.mu.RLock()
+		if members, ok := c.members[teamID]; ok {
+			c.mu.RUnlock()
+			return members, nil
+		}
+		c.mu.RUnlock()
+
+		members, err := fetchAllTeamMembers(ctx, client, teamID)
+		if err != nil {
+			return nil, err
+		}
+
+		c.mu.Lock()
+		c.members[teamID] = members
+		c.mu.Unlock()
+
+		log.Printf("[DEBUG] team-members-cache stored team=%s count=%d", teamID, len(members))
+		return members, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.([]pagerduty.Member), nil
+}
+
+func (c *teamMemberCache) invalidate(teamID string) {
+	c.mu.Lock()
+	delete(c.members, teamID)
+	c.mu.Unlock()
+}
+
+func fetchAllTeamMembers(ctx context.Context, client *pagerduty.Client, teamID string) ([]pagerduty.Member, error) {
+	var all []pagerduty.Member
+	offset := uint(0)
+	more := true
+
+	for more {
+		resp, err := client.ListTeamMembers(ctx, teamID, pagerduty.ListTeamMembersOptions{
+			Limit:  100,
+			Offset: offset,
+		})
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, resp.Members...)
+		more = resp.More
+		offset += resp.Limit
+	}
+
+	return all, nil
+}
 
 func (r *resourceTeamMembership) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "pagerduty_team_membership"
@@ -77,6 +163,7 @@ func (r *resourceTeamMembership) Create(ctx context.Context, req resource.Create
 	id := model.ID.ValueString()
 	role := model.Role.ValueString()
 
+	teamMemberCacheFor(r.client).invalidate(model.TeamID.ValueString())
 	model, err := requestGetTeamMembership(ctx, r.client, id, &role, RetryNotFound, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -129,6 +216,7 @@ func (r *resourceTeamMembership) Update(ctx context.Context, req resource.Update
 	id := model.ID.ValueString()
 	role := model.Role.ValueString()
 
+	teamMemberCacheFor(r.client).invalidate(model.TeamID.ValueString())
 	model, err := requestGetTeamMembership(ctx, r.client, id, &role, RetryNotFound, &resp.Diagnostics)
 	if err != nil {
 		if util.IsNotFoundError(err) {
@@ -193,6 +281,7 @@ func (r *resourceTeamMembership) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
+	teamMemberCacheFor(r.client).invalidate(teamID)
 	resp.State.RemoveResource(ctx)
 }
 
@@ -220,45 +309,43 @@ func requestGetTeamMembership(ctx context.Context, client *pagerduty.Client, id 
 		return model, nil
 	}
 
+	cache := teamMemberCacheFor(client)
+
 	err = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
-		offset := uint(0)
-		more := true
-
-		for more {
-			resp, err := client.ListTeamMembers(ctx, teamID, pagerduty.ListTeamMembersOptions{
-				Limit:  100,
-				Offset: offset,
-			})
-			if err != nil {
-				if util.IsBadRequestError(err) {
-					return retry.NonRetryableError(err)
-				}
-				if !retryNotFound && util.IsNotFoundError(err) {
-					return retry.NonRetryableError(err)
-				}
-				return retry.RetryableError(err)
+		members, err := cache.getMembers(ctx, client, teamID)
+		if err != nil {
+			// Ensure the next retry fetches fresh data rather than a poison entry.
+			cache.invalidate(teamID)
+			if util.IsBadRequestError(err) {
+				return retry.NonRetryableError(err)
 			}
-
-			for _, m := range resp.Members {
-				if m.User.ID == userID {
-					if neededRole != nil && m.Role != *neededRole {
-						err = fmt.Errorf("Role %q fetched is different from configuration %q", m.Role, *neededRole)
-						return retry.RetryableError(err)
-					}
-					model = flattenTeamMembership(userID, teamID, m.Role)
-					return nil
-				}
+			if !retryNotFound && util.IsNotFoundError(err) {
+				return retry.NonRetryableError(err)
 			}
-
-			more = resp.More
-			offset += resp.Limit
-		}
-
-		err = pagerduty.APIError{StatusCode: http.StatusNotFound}
-		if retryNotFound {
 			return retry.RetryableError(err)
 		}
-		return retry.NonRetryableError(err)
+
+		for _, m := range members {
+			if m.User.ID == userID {
+				if neededRole != nil && m.Role != *neededRole {
+					// Role not yet propagated — drop the cached snapshot so the
+					// next attempt reads the current state from the API.
+					cache.invalidate(teamID)
+					return retry.RetryableError(fmt.Errorf("Role %q fetched is different from configuration %q", m.Role, *neededRole))
+				}
+				model = flattenTeamMembership(userID, teamID, m.Role)
+				return nil
+			}
+		}
+
+		notFoundErr := pagerduty.APIError{StatusCode: http.StatusNotFound}
+		if retryNotFound {
+			// Membership not yet visible — drop the snapshot so the next attempt
+			// re-fetches and can observe the newly created member.
+			cache.invalidate(teamID)
+			return retry.RetryableError(notFoundErr)
+		}
+		return retry.NonRetryableError(notFoundErr)
 	})
 
 	return model, err

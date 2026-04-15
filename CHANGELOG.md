@@ -1,3 +1,8 @@
+## v3.32.2 (Apr 15, 2026)
+
+ENHANCEMENTS
+* `resource/pagerduty_team_membership`: Fix #318: reduce repeated API calls for pagerduty_team_membership reads ([1111](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1111))
+
 ## v3.32.1 (Mar 24, 2026)
 
 BUG FIXES

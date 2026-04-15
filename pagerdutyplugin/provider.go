@@ -8,12 +8,14 @@ import (
 	"strings"
 
 	"github.com/PagerDuty/go-pagerduty"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -28,6 +30,9 @@ func (p *Provider) Metadata(_ context.Context, _ provider.MetadataRequest, resp 
 
 func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	useAppOauthScopedTokenBlock := schema.ListNestedBlock{
+		Validators: []validator.List{
+			listvalidator.SizeAtMost(1),
+		},
 		NestedObject: schema.NestedBlockObject{
 			Attributes: map[string]schema.Attribute{
 				"pd_client_id":     schema.StringAttribute{Optional: true},

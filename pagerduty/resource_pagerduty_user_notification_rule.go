@@ -211,9 +211,10 @@ func expandContactMethod(v interface{}) (*pagerduty.ContactMethodReference, erro
 		case "phone_contact_method":
 		case "push_notification_contact_method":
 		case "sms_contact_method":
+		case "whatsapp_contact_method":
 			// Valid
 		default:
-			return nil, fmt.Errorf("the `type` attribute of `contact_method` must be one of `email_contact_method`, `phone_contact_method`, `push_notification_contact_method` or `sms_contact_method`")
+			return nil, fmt.Errorf("the `type` attribute of `contact_method` must be one of `email_contact_method`, `phone_contact_method`, `push_notification_contact_method`, `sms_contact_method` or `whatsapp_contact_method`")
 		}
 	}
 

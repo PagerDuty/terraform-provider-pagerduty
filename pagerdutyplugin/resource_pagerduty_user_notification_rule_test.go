@@ -59,7 +59,8 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Invalid(t *testing.T) {
 				ExpectError: regexp.MustCompile(
 					`Attribute contact_method.type value must be one of: \["email_contact_method"` +
 						`\s+"phone_contact_method" "push_notification_contact_method"` +
-						`\s+"sms_contact_method"\], got: "invalid_contact_method`,
+						`\s+"sms_contact_method" "whatsapp_contact_method"\], got:` +
+						`\s+"invalid_contact_method`,
 				),
 			},
 		},

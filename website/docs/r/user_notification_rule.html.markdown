@@ -87,7 +87,7 @@ The following arguments are supported:
 Contact methods (`contact_method`) supports the following:
 
   * `id` - (Required) The id of the referenced contact method.
-  * `type` - (Required) The type of contact method. Can be `email_contact_method`, `phone_contact_method`, `push_notification_contact_method` or `sms_contact_method`.
+  * `type` - (Required) The type of contact method. Can be `email_contact_method`, `phone_contact_method`, `push_notification_contact_method`, `sms_contact_method` or `whatsapp_contact_method`.
 
 ## Attributes Reference
 

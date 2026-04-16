@@ -59,6 +59,7 @@ func (r *resourceUserNotificationRule) Schema(_ context.Context, _ resource.Sche
 								"phone_contact_method",
 								"push_notification_contact_method",
 								"sms_contact_method",
+								"whatsapp_contact_method",
 							),
 						},
 					},

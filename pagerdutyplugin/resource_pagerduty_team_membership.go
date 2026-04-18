@@ -252,14 +252,26 @@ func (r *resourceTeamMembership) Delete(ctx context.Context, req resource.Delete
 	}
 
 	userIsInEP := false
+	epRetryCount := 0
 	err = retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		if err := r.client.RemoveUserFromTeamWithContext(ctx, teamID, userID); err != nil {
-			userIsInEP = strings.Contains(err.Error(), "User cannot be removed as they belong to an escalation policy on this team")
+			if strings.Contains(err.Error(), "User cannot be removed as they belong to an escalation policy on this team") {
+				userIsInEP = true
+				// Retry a few times to handle the concurrent-destroy race where an
+				// escalation policy referencing this user is being deleted in parallel.
+				if epRetryCount < 5 {
+					epRetryCount++
+					return retry.RetryableError(err)
+				}
+				return retry.NonRetryableError(err)
+			}
+			userIsInEP = false
 			if util.IsBadRequestError(err) {
 				return retry.NonRetryableError(err)
 			}
 			return retry.RetryableError(err)
 		}
+		userIsInEP = false
 		return nil
 	})
 	if userIsInEP {

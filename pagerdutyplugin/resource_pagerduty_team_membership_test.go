@@ -171,6 +171,42 @@ func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependantAndMulti
 	})
 }
 
+// TestAccPagerDutyTeamMembership_DestroyWithConcurrentEscalationPolicyDeletion
+// guards against the regression where the EP-blocking 400 is treated as
+// non-retryable. It removes team_membership and escalation_policy from config
+// in the same step so Terraform destroys them in parallel, exercising the
+// concurrent-destroy race. With no retry the membership deletion fails the
+// moment it races with the in-flight EP deletion; with the retry fix the
+// transient 400 is absorbed and the step succeeds.
+func TestAccPagerDutyTeamMembership_DestroyWithConcurrentEscalationPolicyDeletion(t *testing.T) {
+	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyTeamMembershipWithConcurrentEPConfig(user, team, escalationPolicy),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
+				),
+			},
+			{
+				// Drop both team_membership.foo and escalation_policy.foo from config
+				// in the same step. Terraform destroys them concurrently because there
+				// is no explicit dependency between the two resources.
+				Config: testAccCheckPagerDutyTeamMembershipWithConcurrentEPConfigAfterDestroy(user, team),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyTeamMembershipNoExists("pagerduty_team_membership.foo"),
+				),
+			},
+		},
+	})
+}
+
 // TestAccPagerDutyTeamMembership_MultipleMembers verifies that multiple
 // memberships on the same team are all read back correctly. This exercises
 // the shared-cache path where the second Read serves from the cached snapshot
@@ -714,4 +750,59 @@ resource "pagerduty_team_membership" "two" {
   role    = "%[4]v"
 }
 `, user, teamOne, teamTwo, role)
+}
+
+// testAccCheckPagerDutyTeamMembershipWithConcurrentEPConfig creates a user,
+// team, team membership, and an escalation policy that references the user on
+// the same team. Destroying all of these from this state exercises the
+// concurrent-destroy race between team_membership and escalation_policy.
+func testAccCheckPagerDutyTeamMembershipWithConcurrentEPConfig(user, team, escalationPolicy string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%[1]s"
+  email = "%[1]s@foo.test"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[2]s"
+  description = "foo"
+}
+
+resource "pagerduty_team_membership" "foo" {
+  user_id = pagerduty_user.foo.id
+  team_id = pagerduty_team.foo.id
+  role    = "manager"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name      = "%[3]s"
+  num_loops = 2
+  teams     = [pagerduty_team.foo.id]
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+`, user, team, escalationPolicy)
+}
+
+// testAccCheckPagerDutyTeamMembershipWithConcurrentEPConfigAfterDestroy is the
+// follow-up config that omits both team_membership.foo and
+// escalation_policy.foo so Terraform destroys them in the same plan step.
+func testAccCheckPagerDutyTeamMembershipWithConcurrentEPConfigAfterDestroy(user, team string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name  = "%[1]s"
+  email = "%[1]s@foo.test"
+}
+
+resource "pagerduty_team" "foo" {
+  name        = "%[2]s"
+  description = "foo"
+}
+`, user, team)
 }

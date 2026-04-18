@@ -187,6 +187,16 @@ func isErrCode(err error, code int) bool {
 	return false
 }
 
+// isAccountLockError returns true when the PagerDuty API rejects a write
+// because it couldn't acquire an account-level lock under concurrent load.
+// This is transient and safe to retry.
+func isAccountLockError(err error) bool {
+	if e, ok := err.(*pagerduty.Error); ok {
+		return strings.Contains(fmt.Sprintf("%v", e.Errors), "could not be locked")
+	}
+	return false
+}
+
 func isMalformedNotFoundError(err error) bool {
 	// There are some errors that doesn't stick to expected error interface and
 	// fallback to a simple text error message that can be capture by this regexp.

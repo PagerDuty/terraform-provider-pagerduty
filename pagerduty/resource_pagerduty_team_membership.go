@@ -204,16 +204,17 @@ func resourcePagerDutyTeamMembershipDelete(d *schema.ResourceData, meta interfac
 	}
 
 	var isFoundErrRemovingUserFromTeam bool
+	epRetryCount := 0
 	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if _, err := client.Teams.RemoveUser(teamID, userID); err != nil {
 			if isErrCode(err, 400) && strings.Contains(err.Error(), "User cannot be removed as they belong to an escalation policy on this team") {
-				if !isFoundErrRemovingUserFromTeam {
-					// Giving some time for the escalation policies to be removed during destroy operations.
-					time.Sleep(2 * time.Second)
-					isFoundErrRemovingUserFromTeam = true
+				isFoundErrRemovingUserFromTeam = true
+				// Retry a few times to handle the concurrent-destroy race where an
+				// escalation policy referencing this user is being deleted in parallel.
+				if epRetryCount < 5 {
+					epRetryCount++
 					return retry.RetryableError(err)
 				}
-
 				return retry.NonRetryableError(err)
 			}
 			if isErrCode(err, 400) {

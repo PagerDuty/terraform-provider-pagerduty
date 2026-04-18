@@ -159,12 +159,22 @@ func resourcePagerDutyUserCreate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] Creating PagerDuty user %s", user.Name)
 
-	user, _, err = client.Users.Create(user)
-	if err != nil {
-		return err
+	var createdUser *pagerduty.User
+	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
+		createdUser, _, err = client.Users.Create(user)
+		if err != nil {
+			if isErrCode(err, http.StatusBadRequest) && isAccountLockError(err) {
+				return retry.RetryableError(err)
+			}
+			return retry.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		return retryErr
 	}
 
-	d.SetId(user.ID)
+	d.SetId(createdUser.ID)
 
 	return resourcePagerDutyUserUpdate(d, meta)
 }

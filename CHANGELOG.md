@@ -1,3 +1,9 @@
+## v3.32.3 (Apr 18, 2026)
+
+BUG FIXES
+* `resource/pagerduty_user`: Fix #1117: retry user creation on transient account-level lock error under concurrent load ([1118](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1118))
+* `resource/pagerduty_team_membership`: Fix #1119: retry team membership deletion when escalation policy is deleted concurrently, resolving regression introduced in #558 ([1120](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1120))
+
 ## v3.32.2 (Apr 15, 2026)
 
 ENHANCEMENTS

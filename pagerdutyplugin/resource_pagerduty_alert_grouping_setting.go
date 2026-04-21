@@ -121,6 +121,13 @@ func (r *resourceAlertGroupingSetting) ValidateConfig(ctx context.Context, req r
 		return
 	}
 
+	// When type is unknown (e.g. provided via a variable), we cannot
+	// validate cross-attribute constraints yet — skip until the value
+	// is resolved.
+	if model.Type.IsUnknown() {
+		return
+	}
+
 	t := pagerduty.AlertGroupingSettingType(model.Type.ValueString())
 	if t == pagerduty.AlertGroupingSettingTimeType {
 		if len(model.Services.Elements()) > 1 {
@@ -142,7 +149,8 @@ func (r *resourceAlertGroupingSetting) ValidateConfig(ctx context.Context, req r
 		}
 	}
 
-	if t != pagerduty.AlertGroupingSettingTimeType && !model.Config.Attributes()["timeout"].IsNull() {
+	timeout := model.Config.Attributes()["timeout"]
+	if t != pagerduty.AlertGroupingSettingTimeType && !timeout.IsNull() && !timeout.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("config").AtName("timeout"),
 			"Invalid configuration",

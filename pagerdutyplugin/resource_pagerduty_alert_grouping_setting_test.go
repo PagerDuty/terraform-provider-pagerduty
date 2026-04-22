@@ -724,6 +724,45 @@ resource "pagerduty_alert_grouping_setting" "%[1]s" {
 	})
 }
 
+func TestAccPagerDutyAlertGroupingSetting_VariableType_SkipsTimeoutValidation(t *testing.T) {
+	ref := fmt.Sprint("tf-", acctest.RandString(5))
+	service := fmt.Sprint("tf-", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+variable "grouping_type" {
+	type    = string
+	default = "time"
+}
+
+data "pagerduty_escalation_policy" "default" {
+	name = "Default"
+}
+
+resource "pagerduty_service" "%[2]s" {
+	name = "%[2]s"
+	escalation_policy = data.pagerduty_escalation_policy.default.id
+}
+
+resource "pagerduty_alert_grouping_setting" "%[1]s" {
+	name = "%[1]s"
+	type = var.grouping_type
+	services = [pagerduty_service.%[2]s.id]
+	config {
+		timeout = 60
+	}
+}`, ref, service),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccPagerDutyAlertGroupingSettingServiceNotExist(ref, service, name string) string {
 	return fmt.Sprintf(`
 data "pagerduty_escalation_policy" "default" {

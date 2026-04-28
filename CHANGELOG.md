@@ -1,3 +1,8 @@
+## v3.32.4 (Apr 28, 2026)
+
+BUG FIXES
+* `resource/pagerduty_alert_grouping_setting`: Fix #1115: skip cross-attribute validation in ValidateConfig when `type` or `config.timeout` is unknown (e.g. set from a variable) ([1121](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1121))
+
 ## v3.32.3 (Apr 18, 2026)
 
 BUG FIXES

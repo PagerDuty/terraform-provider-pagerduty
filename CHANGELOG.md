@@ -1,3 +1,8 @@
+## v3.32.4 (Apr 29, 2026)
+
+BUG FIXES
+* `resource/pagerduty_schedulev2`: Fix #1123: prevent "inconsistent result after apply" when modifying shift-defining fields of an active event ([1124](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1124))
+
 ## v3.32.3 (Apr 18, 2026)
 
 BUG FIXES

@@ -309,6 +309,63 @@ func TestAccPagerDutyScheduleV2_PastEffectiveSince(t *testing.T) {
 	})
 }
 
+// TestAccPagerDutyScheduleV2_ActiveEventFieldChange reproduces issue #1123:
+// when an event becomes active (effective_since in the past) and the user
+// changes a shift-defining field (start_time/end_time), the provider's
+// Update path must DELETE+CREATE the underlying event because the API
+// rejects PUTs that mutate those fields on active events. The new event
+// gets a new server-assigned ID. Without a plan modifier that marks the
+// ID as unknown for this case, Terraform fails the apply with
+// "Provider produced inconsistent result after apply".
+func TestAccPagerDutyScheduleV2_ActiveEventFieldChange(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_V3"); v == "" {
+		t.Skip("PAGERDUTY_ACC_SCHEDULE_V3 must be set to run v3 schedule acceptance tests")
+	}
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	scheduleName := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	// Past effective_since makes the event active immediately. The API
+	// normalizes the value server-side; the provider preserves the configured
+	// value in state, so subsequent updates still see an active event.
+	effectiveSince := time.Now().UTC().Add(-48 * time.Hour).Format(time.RFC3339)
+	startTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T09:00:00Z"
+	endTime := time.Now().UTC().Add(24*time.Hour).Format("2006-01-02") + "T17:00:00Z"
+	startTimeUpdated := time.Now().UTC().Add(48*time.Hour).Format("2006-01-02") + "T09:00:00Z"
+	endTimeUpdated := time.Now().UTC().Add(48*time.Hour).Format("2006-01-02") + "T17:00:00Z"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTime, endTime),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttrSet("pagerduty_schedulev2.test", "rotation.0.event.0.id"),
+				),
+			},
+			{
+				// Shift the start/end by 24h on an already-active event.
+				// Pre-fix this apply errors with "inconsistent result after apply"
+				// because the new event ID differs from state.
+				Config: testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTimeUpdated, endTimeUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleV2Exists("pagerduty_schedulev2.test"),
+					resource.TestCheckResourceAttrSet("pagerduty_schedulev2.test", "rotation.0.event.0.id"),
+				),
+			},
+			{
+				// Re-plan with the same config: must be empty.
+				Config:             testAccPagerDutyScheduleV2Config(username, email, scheduleName, effectiveSince, startTimeUpdated, endTimeUpdated),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
 func TestAccPagerDutyScheduleV2_EffectiveUntil(t *testing.T) {
 	if v := os.Getenv("PAGERDUTY_ACC_SCHEDULE_V3"); v == "" {
 		t.Skip("PAGERDUTY_ACC_SCHEDULE_V3 must be set to run v3 schedule acceptance tests")

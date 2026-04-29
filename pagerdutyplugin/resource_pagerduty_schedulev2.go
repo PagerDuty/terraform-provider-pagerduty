@@ -81,7 +81,7 @@ func (r *resourceScheduleV2) Schema(_ context.Context, _ resource.SchemaRequest,
 									"id": schema.StringAttribute{
 										Computed:      true,
 										Description:   "The ID of the event.",
-										PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+										PlanModifiers: []planmodifier.String{eventIDPlanModifier{}},
 									},
 									"name": schema.StringAttribute{
 										Required:    true,
@@ -914,6 +914,54 @@ func flattenEventV3(ctx context.Context, evt *pagerduty.EventV3, diags *diag.Dia
 	}
 
 	return evtModel
+}
+
+// eventIDPlanModifier behaves like UseStateForUnknown for the event ID, except
+// when the planned changes will force the provider to DELETE+CREATE the event
+// server-side (which the API requires for active events when shift-defining
+// fields change). In that case the resulting event has a new server-assigned
+// ID, so we must mark the planned ID as unknown to avoid Terraform's
+// "Provider produced inconsistent result after apply" check (issue #1123).
+type eventIDPlanModifier struct{}
+
+func (eventIDPlanModifier) Description(context.Context) string {
+	return "Preserves the event ID across plans, except when active-event field changes will force a server-side delete+recreate."
+}
+
+func (m eventIDPlanModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (eventIDPlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	// Resource creation: leave the framework default (unknown).
+	if req.StateValue.IsNull() {
+		return
+	}
+	// Resource destruction: nothing to plan.
+	if req.PlanValue.IsNull() {
+		return
+	}
+
+	parent := req.Path.ParentPath()
+	var stateEvt, planEvt eventV2Model
+	if d := req.State.GetAttribute(ctx, parent, &stateEvt); d.HasError() {
+		resp.Diagnostics.Append(d...)
+		return
+	}
+	if d := req.Plan.GetAttribute(ctx, parent, &planEvt); d.HasError() {
+		resp.Diagnostics.Append(d...)
+		return
+	}
+
+	// If the event is currently active and shift-defining fields are changing,
+	// the Update path will DELETE and CREATE the event, producing a new ID.
+	if isEventActive(stateEvt) && eventsDifferBeyondEffectiveUntil(ctx, stateEvt, planEvt) {
+		resp.PlanValue = types.StringUnknown()
+		return
+	}
+
+	// Stable case: keep the prior ID so plans show no spurious id churn.
+	resp.PlanValue = req.StateValue
 }
 
 // isEventActive returns true when an event's effective_since is in the past,

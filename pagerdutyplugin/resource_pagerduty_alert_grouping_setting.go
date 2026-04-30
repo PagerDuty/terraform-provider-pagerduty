@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
@@ -234,6 +235,10 @@ func (r *resourceAlertGroupingSetting) Create(ctx context.Context, req resource.
 		return nil
 	})
 	if err != nil {
+		if util.IsBadRequestError(err) && strings.Contains(err.Error(), "is already in another group") {
+			r.validateServicesReuse(ctx, plan, &resp.Diagnostics)
+			return
+		}
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Error creating PagerDuty alert grouping setting %s", plan.Name),
 			err.Error(),

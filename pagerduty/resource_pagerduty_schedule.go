@@ -821,30 +821,19 @@ func detectUseOfScheduleByEPsWithOneLayer(scheduleId string, eps []*pagerduty.Es
 		return nil
 	}
 
-	tfState, err := getTFStateSnapshot()
-	if err != nil {
-		return err
-	}
-
 	epsNames := []string{}
 	for _, ep := range epsFound {
-		epState := tfState.GetResourceStateById(ep.ID)
-
-		// To cover the case when the Schedule is used by an Escalation Policy which
-		// is not being managed by the same TF config which is managing this Schedule.
-		if epState == nil {
-			return fmt.Errorf("It is not possible to continue with the destruction of the Schedule %q, because it is being used by Escalation Policy %q which has only one layer configured. Nevertheless, the mentioned Escalation Policy is not managed by this Terraform configuration. So in order to unblock this resource destruction, We suggest you to first make the appropiate changes on the Escalation Policy %s and come back for retrying.", scheduleId, ep.ID, ep.HTMLURL)
-		}
-		epsNames = append(epsNames, epState.Name)
+		epsNames = append(epsNames, fmt.Sprintf("%s (%s) %s", ep.ID, ep.Name, ep.HTMLURL))
 	}
 
-	displayError := fmt.Errorf(`It is not possible to continue with the destruction of the Schedule %q, because it is being used by the Escalation Policy %[2]q which has only one layer configured. Therefore in order to unblock this resource destruction, We suggest you to first execute "terraform apply (or destroy, please act accordingly) -target=pagerduty_escalation_policy.%[2]s"`, scheduleId, epsNames[0])
+	epLabel := fmt.Sprintf("%s (%s)", epsFound[0].ID, epsFound[0].Name)
+	displayError := fmt.Errorf(`It is not possible to continue with the destruction of the Schedule %q, because it is being used by the Escalation Policy %[2]q which has only one layer configured. Search your Terraform configuration/state for Escalation Policy ID %s, or locate and update the Escalation Policy directly in PagerDuty. PagerDuty URL: %s.`, scheduleId, epLabel, epsFound[0].ID, epsFound[0].HTMLURL)
 	if len(epsNames) > 1 {
 		var epsListMessage string
 		for _, ep := range epsNames {
 			epsListMessage = fmt.Sprintf("%s\n%s", epsListMessage, ep)
 		}
-		displayError = fmt.Errorf(`It is not possible to continue with the destruction of the Schedule %q, because it is being used by multiple Escalation Policies which have only one layer configured. Therefore in order to unblock this resource destruction, We suggest you to first execute "terraform apply (or destroy, please act accordingly) -target=pagerduty_escalation_policy.<Escalation Policy Name here>". e.g: "terraform apply -target=pagerduty_escalation_policy.example". Replacing the example name with the following Escalation Policies which are blocking the deletion of the Schedule...%s`, scheduleId, epsListMessage)
+		displayError = fmt.Errorf(`It is not possible to continue with the destruction of the Schedule %q, because it is being used by multiple Escalation Policies which have only one layer configured. Search your Terraform configuration/state for the Escalation Policy IDs listed below, or locate and update the Escalation Policies directly in PagerDuty. The following Escalation Policies are blocking the deletion of the Schedule:%s`, scheduleId, epsListMessage)
 	}
 
 	return displayError

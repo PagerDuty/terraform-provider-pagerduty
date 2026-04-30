@@ -543,7 +543,7 @@ func resourcePagerDutyServiceUpdateContext(ctx context.Context, d *schema.Resour
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
 
-	_, _, err = client.Services.Update(d.Id(), service)
+	updatedService, _, err := client.Services.Update(d.Id(), service)
 	if err != nil {
 		diags = diag.FromErr(handleNotFoundError(err, d))
 		return
@@ -560,7 +560,7 @@ func resourcePagerDutyServiceUpdateContext(ctx context.Context, d *schema.Resour
 		}
 	}
 
-	diags = append(diags, diag.FromErr(fetchService(d, meta, handleNotFoundError))...)
+	diags = append(diags, diag.FromErr(flattenService(d, updatedService))...)
 	return
 }
 

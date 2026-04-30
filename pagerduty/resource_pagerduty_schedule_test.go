@@ -2186,3 +2186,512 @@ func testAccPreCheckScheduleUsedByEPWithOneLayer(t *testing.T) {
 		t.Skip("PAGERDUTY_ACC_SCHEDULE_USED_BY_EP_W_1_LAYER not set. Skipping Schedule related test")
 	}
 }
+
+// Unit tests for preserve_rotation_position helper functions
+
+func TestComputeVirtualStartForPosition(t *testing.T) {
+	tests := []struct {
+		name                  string
+		position              int
+		rotationLengthSeconds int
+		numUsers              int
+	}{
+		{
+			name:                  "first user in rotation (position 0)",
+			position:              0,
+			rotationLengthSeconds: 86400, // 1 day
+			numUsers:              3,
+		},
+		{
+			name:                  "second user in rotation (position 1)",
+			position:              1,
+			rotationLengthSeconds: 86400,
+			numUsers:              3,
+		},
+		{
+			name:                  "last user in 3-person rotation (position 2)",
+			position:              2,
+			rotationLengthSeconds: 86400,
+			numUsers:              3,
+		},
+		{
+			name:                  "weekly rotation third user",
+			position:              2,
+			rotationLengthSeconds: 604800, // 1 week
+			numUsers:              5,
+		},
+		{
+			name:                  "single user rotation",
+			position:              0,
+			rotationLengthSeconds: 86400,
+			numUsers:              1,
+		},
+		{
+			name:                  "large rotation - 10 users, position 7",
+			position:              7,
+			rotationLengthSeconds: 604800,
+			numUsers:              10,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := computeVirtualStartForPosition(tc.position, tc.rotationLengthSeconds, tc.numUsers)
+
+			// Verify it's a valid RFC3339 timestamp
+			parsed, err := time.Parse(time.RFC3339, result)
+			if err != nil {
+				t.Fatalf("computeVirtualStartForPosition returned invalid RFC3339: %s, error: %v", result, err)
+			}
+
+			// Verify the virtual start is in the past (or very close to now)
+			now := time.Now().UTC()
+			if parsed.After(now.Add(1 * time.Second)) {
+				t.Errorf("expected virtual start to be in the past, got %s (now: %s)", result, now.Format(time.RFC3339))
+			}
+
+			// Verify the math: (now - virtualStart) / rotationLength should equal position
+			elapsed := now.Sub(parsed)
+			rotationLength := time.Duration(tc.rotationLengthSeconds) * time.Second
+			calculatedPosition := int(elapsed / rotationLength)
+
+			if calculatedPosition != tc.position {
+				t.Errorf("expected position %d, but virtual start %s yields position %d (elapsed: %v, rotation: %v)",
+					tc.position, result, calculatedPosition, elapsed, rotationLength)
+			}
+		})
+	}
+}
+
+// TestComputeVirtualStartForPositionEdgeCases tests edge cases around position changes
+func TestComputeVirtualStartForPositionEdgeCases(t *testing.T) {
+	rotationLength := 86400 // 1 day in seconds
+
+	t.Run("position 0 should yield virtual start very close to now", func(t *testing.T) {
+		result := computeVirtualStartForPosition(0, rotationLength, 3)
+		parsed, _ := time.Parse(time.RFC3339, result)
+		now := time.Now().UTC()
+
+		// For position 0, virtual start should be within the current rotation period
+		elapsed := now.Sub(parsed)
+		if elapsed < 0 || elapsed > time.Duration(rotationLength)*time.Second {
+			t.Errorf("position 0 should have virtual start within current rotation, got elapsed: %v", elapsed)
+		}
+	})
+
+	t.Run("consecutive positions should differ by rotation length", func(t *testing.T) {
+		result0 := computeVirtualStartForPosition(0, rotationLength, 3)
+		result1 := computeVirtualStartForPosition(1, rotationLength, 3)
+		result2 := computeVirtualStartForPosition(2, rotationLength, 3)
+
+		parsed0, _ := time.Parse(time.RFC3339, result0)
+		parsed1, _ := time.Parse(time.RFC3339, result1)
+		parsed2, _ := time.Parse(time.RFC3339, result2)
+
+		diff01 := parsed0.Sub(parsed1)
+		diff12 := parsed1.Sub(parsed2)
+
+		expectedDiff := time.Duration(rotationLength) * time.Second
+
+		// Allow 1 second tolerance for timing
+		tolerance := 1 * time.Second
+		if diff01 < expectedDiff-tolerance || diff01 > expectedDiff+tolerance {
+			t.Errorf("diff between position 0 and 1 should be ~%v, got %v", expectedDiff, diff01)
+		}
+		if diff12 < expectedDiff-tolerance || diff12 > expectedDiff+tolerance {
+			t.Errorf("diff between position 1 and 2 should be ~%v, got %v", expectedDiff, diff12)
+		}
+	})
+}
+
+// TestFindUserNewPosition tests finding a user's position after list changes
+func TestFindUserNewPosition(t *testing.T) {
+	findPosition := func(userID string, users []string) int {
+		for i, u := range users {
+			if u == userID {
+				return i
+			}
+		}
+		return -1
+	}
+
+	tests := []struct {
+		name           string
+		currentOncall  string
+		originalUsers  []string
+		newUsers       []string
+		expectedNewPos int
+	}{
+		{
+			name:           "user stays at same position",
+			currentOncall:  "user1",
+			originalUsers:  []string{"user1", "user2", "user3"},
+			newUsers:       []string{"user1", "user2", "user3"},
+			expectedNewPos: 0,
+		},
+		{
+			name:           "first user removed, second user (now on-call) stays",
+			currentOncall:  "user2",
+			originalUsers:  []string{"user1", "user2", "user3"},
+			newUsers:       []string{"user2", "user3"},
+			expectedNewPos: 0, // user2 is now first
+		},
+		{
+			name:           "last user removed, middle user on-call stays",
+			currentOncall:  "user2",
+			originalUsers:  []string{"user1", "user2", "user3"},
+			newUsers:       []string{"user1", "user2"},
+			expectedNewPos: 1,
+		},
+		{
+			name:           "middle user removed, last user on-call shifts",
+			currentOncall:  "user3",
+			originalUsers:  []string{"user1", "user2", "user3"},
+			newUsers:       []string{"user1", "user3"},
+			expectedNewPos: 1, // user3 moves from position 2 to position 1
+		},
+		{
+			name:           "new user added at end, on-call user stays",
+			currentOncall:  "user1",
+			originalUsers:  []string{"user1", "user2"},
+			newUsers:       []string{"user1", "user2", "user3"},
+			expectedNewPos: 0,
+		},
+		{
+			name:           "new user added at beginning, on-call user shifts",
+			currentOncall:  "user1",
+			originalUsers:  []string{"user1", "user2"},
+			newUsers:       []string{"user0", "user1", "user2"},
+			expectedNewPos: 1, // user1 moves from position 0 to position 1
+		},
+		{
+			name:           "current on-call user removed",
+			currentOncall:  "user2",
+			originalUsers:  []string{"user1", "user2", "user3"},
+			newUsers:       []string{"user1", "user3"},
+			expectedNewPos: -1, // user2 not found
+		},
+		{
+			name:           "all users except on-call removed",
+			currentOncall:  "user2",
+			originalUsers:  []string{"user1", "user2", "user3"},
+			newUsers:       []string{"user2"},
+			expectedNewPos: 0, // only user left
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			newPos := findPosition(tc.currentOncall, tc.newUsers)
+			if newPos != tc.expectedNewPos {
+				t.Errorf("expected position %d, got %d", tc.expectedNewPos, newPos)
+			}
+		})
+	}
+}
+
+// TestPreserveRotationScenarios tests full scenarios of rotation preservation
+func TestPreserveRotationScenarios(t *testing.T) {
+	rotationLength := 86400 // 1 day
+
+	t.Run("adding user should keep current on-call", func(t *testing.T) {
+		// Scenario: user1 is on-call at position 0, we add user0 at the beginning
+		// user1 should stay on-call, but now at position 1
+		currentOncall := "user1"
+		newUsers := []string{"user0", "user1", "user2"}
+
+		// Find user1's new position
+		newPosition := -1
+		for i, u := range newUsers {
+			if u == currentOncall {
+				newPosition = i
+				break
+			}
+		}
+
+		if newPosition != 1 {
+			t.Fatalf("expected user1 at position 1, got %d", newPosition)
+		}
+
+		// Compute virtual start for position 1
+		virtualStart := computeVirtualStartForPosition(newPosition, rotationLength, len(newUsers))
+		parsed, _ := time.Parse(time.RFC3339, virtualStart)
+
+		// Verify the math works
+		now := time.Now().UTC()
+		elapsed := now.Sub(parsed)
+		calculatedPos := int(elapsed / (time.Duration(rotationLength) * time.Second))
+
+		if calculatedPos != 1 {
+			t.Errorf("virtual start should put user1 (position 1) on-call, but got position %d", calculatedPos)
+		}
+	})
+
+	t.Run("removing first user should keep second user on-call", func(t *testing.T) {
+		// Scenario: user2 is on-call at position 1, we remove user1 (position 0)
+		// user2 should stay on-call, but now at position 0
+		currentOncall := "user2"
+		newUsers := []string{"user2", "user3"} // user1 removed
+
+		newPosition := -1
+		for i, u := range newUsers {
+			if u == currentOncall {
+				newPosition = i
+				break
+			}
+		}
+
+		if newPosition != 0 {
+			t.Fatalf("expected user2 at position 0, got %d", newPosition)
+		}
+
+		virtualStart := computeVirtualStartForPosition(newPosition, rotationLength, len(newUsers))
+		parsed, _ := time.Parse(time.RFC3339, virtualStart)
+
+		now := time.Now().UTC()
+		elapsed := now.Sub(parsed)
+		calculatedPos := int(elapsed / (time.Duration(rotationLength) * time.Second))
+
+		if calculatedPos != 0 {
+			t.Errorf("virtual start should put user2 (position 0) on-call, but got position %d", calculatedPos)
+		}
+	})
+
+	t.Run("removing current on-call user cannot preserve", func(t *testing.T) {
+		currentOncall := "user1"
+		newUsers := []string{"user2", "user3"} // user1 removed
+
+		newPosition := -1
+		for i, u := range newUsers {
+			if u == currentOncall {
+				newPosition = i
+				break
+			}
+		}
+
+		// Should return -1, indicating we can't preserve
+		if newPosition != -1 {
+			t.Errorf("expected -1 when current on-call user is removed, got %d", newPosition)
+		}
+	})
+}
+
+func TestGetCurrentOncallUser(t *testing.T) {
+	now := time.Now()
+	pastStart := now.Add(-1 * time.Hour).Format(time.RFC3339)
+	futureEnd := now.Add(1 * time.Hour).Format(time.RFC3339)
+	pastEnd := now.Add(-30 * time.Minute).Format(time.RFC3339)
+	futureStart := now.Add(30 * time.Minute).Format(time.RFC3339)
+
+	tests := []struct {
+		name     string
+		layer    *pagerduty.ScheduleLayer
+		expected string
+	}{
+		{
+			name:     "nil layer",
+			layer:    nil,
+			expected: "",
+		},
+		{
+			name: "empty rendered entries",
+			layer: &pagerduty.ScheduleLayer{
+				RenderedScheduleEntries: []*pagerduty.ScheduleLayerEntry{},
+			},
+			expected: "",
+		},
+		{
+			name: "current user found",
+			layer: &pagerduty.ScheduleLayer{
+				RenderedScheduleEntries: []*pagerduty.ScheduleLayerEntry{
+					{
+						Start: pastStart,
+						End:   futureEnd,
+						User:  &pagerduty.UserReference{ID: "PUSER123"},
+					},
+				},
+			},
+			expected: "PUSER123",
+		},
+		{
+			name: "entry in past, fallback to first",
+			layer: &pagerduty.ScheduleLayer{
+				RenderedScheduleEntries: []*pagerduty.ScheduleLayerEntry{
+					{
+						Start: pastStart,
+						End:   pastEnd,
+						User:  &pagerduty.UserReference{ID: "PUSER_PAST"},
+					},
+				},
+			},
+			expected: "PUSER_PAST", // fallback to first entry
+		},
+		{
+			name: "multiple entries, find current",
+			layer: &pagerduty.ScheduleLayer{
+				RenderedScheduleEntries: []*pagerduty.ScheduleLayerEntry{
+					{
+						Start: pastStart,
+						End:   pastEnd,
+						User:  &pagerduty.UserReference{ID: "PUSER_PAST"},
+					},
+					{
+						Start: pastStart,
+						End:   futureEnd,
+						User:  &pagerduty.UserReference{ID: "PUSER_CURRENT"},
+					},
+					{
+						Start: futureStart,
+						End:   futureEnd,
+						User:  &pagerduty.UserReference{ID: "PUSER_FUTURE"},
+					},
+				},
+			},
+			expected: "PUSER_CURRENT",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := getCurrentOncallUser(tc.layer)
+			if result != tc.expected {
+				t.Errorf("expected %q, got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+// Acceptance test for preserve_rotation_position
+
+func TestAccPagerDutySchedule_PreserveRotationPosition(t *testing.T) {
+	username1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email1 := fmt.Sprintf("%s@foo.test", username1)
+	username2 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email2 := fmt.Sprintf("%s@foo.test", username2)
+	username3 := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email3 := fmt.Sprintf("%s@foo.test", username3)
+	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	location := "America/New_York"
+	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		Steps: []resource.TestStep{
+			// Step 1: Create schedule with 2 users and preserve_rotation_position=true
+			{
+				Config: testAccCheckPagerDutyScheduleConfigPreserveRotation(
+					username1, email1, username2, email2, schedule, location, start, rotationVirtualStart,
+					true, // preserve_rotation_position
+					"[pagerduty_user.foo1.id, pagerduty_user.foo2.id]",
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "name", schedule),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.preserve_rotation_position", "true"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.users.#", "2"),
+				),
+			},
+			// Step 2: Add a third user - rotation should be preserved
+			{
+				Config: testAccCheckPagerDutyScheduleConfigPreserveRotationWithThreeUsers(
+					username1, email1, username2, email2, username3, email3,
+					schedule, location, start, rotationVirtualStart,
+					true,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.users.#", "3"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.preserve_rotation_position", "true"),
+				),
+			},
+			// Step 3: Remove the third user - rotation should still be preserved
+			{
+				Config: testAccCheckPagerDutyScheduleConfigPreserveRotation(
+					username1, email1, username2, email2, schedule, location, start, rotationVirtualStart,
+					true,
+					"[pagerduty_user.foo1.id, pagerduty_user.foo2.id]",
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyScheduleExists("pagerduty_schedule.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_schedule.foo", "layer.0.users.#", "2"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyScheduleConfigPreserveRotation(username1, email1, username2, email2, schedule, location, start, rotationVirtualStart string, preserveRotation bool, users string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo1" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_user" "foo2" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "Test schedule for preserve_rotation_position"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    preserve_rotation_position   = %t
+    users                        = %s
+  }
+}
+`, username1, email1, username2, email2, schedule, location, start, rotationVirtualStart, preserveRotation, users)
+}
+
+func testAccCheckPagerDutyScheduleConfigPreserveRotationWithThreeUsers(username1, email1, username2, email2, username3, email3, schedule, location, start, rotationVirtualStart string, preserveRotation bool) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo1" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_user" "foo2" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_user" "foo3" {
+  name  = "%s"
+  email = "%s"
+}
+
+resource "pagerduty_schedule" "foo" {
+  name = "%s"
+
+  time_zone   = "%s"
+  description = "Test schedule for preserve_rotation_position"
+
+  layer {
+    name                         = "foo"
+    start                        = "%s"
+    rotation_virtual_start       = "%s"
+    rotation_turn_length_seconds = 86400
+    preserve_rotation_position   = %t
+    users                        = [pagerduty_user.foo1.id, pagerduty_user.foo2.id, pagerduty_user.foo3.id]
+  }
+}
+`, username1, email1, username2, email2, username3, email3, schedule, location, start, rotationVirtualStart, preserveRotation)
+}

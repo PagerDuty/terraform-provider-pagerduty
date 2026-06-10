@@ -1,3 +1,11 @@
+## v3.33.0 (Jun 10, 2026)
+
+ENHANCEMENTS
+* `resource/pagerduty_event_orchestration_path_service`: Validate existing config before create to prevent accidental overwrites ([1109](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1109))
+* `resource/pagerduty_event_orchestration_path_global`: Validate existing config before create to prevent accidental overwrites ([1109](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1109))
+* `resource/pagerduty_event_orchestration_path_router`: Validate existing config before create to prevent accidental overwrites ([1109](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1109))
+* `resource/pagerduty_event_orchestration_path_unrouted`: Validate existing config before create to prevent accidental overwrites ([1109](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1109))
+
 ## v3.32.4 (Apr 29, 2026)
 
 BUG FIXES

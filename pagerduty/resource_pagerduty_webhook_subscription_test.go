@@ -65,6 +65,18 @@ func TestAccPagerDutyWebhookSubscription_Basic(t *testing.T) {
 						"pagerduty_webhook_subscription.foo", "description", description),
 					resource.TestCheckResourceAttr(
 						"pagerduty_webhook_subscription.foo", "events.#", "13"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_webhook_subscription.foo", "delivery_method.0.secret"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyWebhookSubscriptionConfig(username, email, escalationPolicy, service, description+"-updated"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyWebhookSubscriptionExists("pagerduty_webhook_subscription.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_webhook_subscription.foo", "description", description+"-updated"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_webhook_subscription.foo", "delivery_method.0.secret"),
 				),
 			},
 		},

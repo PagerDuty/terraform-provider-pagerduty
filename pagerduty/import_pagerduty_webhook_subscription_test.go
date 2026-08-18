@@ -28,6 +28,10 @@ func TestAccPagerDutyWebhookSubscription_import(t *testing.T) {
 				ResourceName:      "pagerduty_webhook_subscription.foo",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// The API returns delivery_method.secret only in the response to the
+				// creation request, so it cannot be recovered by importing an existing
+				// webhook subscription.
+				ImportStateVerifyIgnore: []string{"delivery_method.0.secret"},
 			},
 		},
 	})

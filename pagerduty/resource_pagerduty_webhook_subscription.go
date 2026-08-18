@@ -42,6 +42,11 @@ func resourcePagerDutyWebhookSubscription() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"secret": {
+							Type:      schema.TypeString,
+							Computed:  true,
+							Sensitive: true,
+						},
 						"custom_header": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -150,6 +155,9 @@ func resourcePagerDutyWebhookSubscriptionCreate(d *schema.ResourceData, meta int
 			return retry.NonRetryableError(err)
 		} else if webhook != nil {
 			d.SetId(webhook.ID)
+			// The secret is only present in this response, so store it before
+			// Read() refreshes delivery_method from a GET that omits it.
+			d.Set("delivery_method", flattenDeliveryMethod(webhook.DeliveryMethod))
 		}
 		return nil
 	})
@@ -228,7 +236,17 @@ func setWebhookResourceData(d *schema.ResourceData, webhook *pagerduty.WebhookSu
 	d.Set("active", webhook.Active)
 	d.Set("description", webhook.Description)
 	d.Set("events", flattenConfigList(webhook.Events))
-	d.Set("delivery_method", flattenDeliveryMethod(webhook.DeliveryMethod))
+
+	// The API returns delivery_method.secret only in the response to the creation
+	// request; every read and update returns it empty. Keep the stored value.
+	method := webhook.DeliveryMethod
+	if method.Secret == "" {
+		if v, ok := d.Get("delivery_method.0.secret").(string); ok {
+			method.Secret = v
+		}
+	}
+	d.Set("delivery_method", flattenDeliveryMethod(method))
+
 	d.Set("filter", flattenFilter(webhook.Filter))
 }
 
@@ -273,6 +291,7 @@ func flattenDeliveryMethod(method pagerduty.DeliveryMethod) []map[string]interfa
 		"temporarily_disabled": method.TemporarilyDisabled,
 		"type":                 method.Type,
 		"url":                  method.URL,
+		"secret":               method.Secret,
 		"custom_header":        flattenCustomHeader(method.CustomHeaders),
 	}
 	methods = append(methods, methodMap)

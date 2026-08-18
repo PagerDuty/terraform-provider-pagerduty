@@ -54,6 +54,11 @@ resource "pagerduty_webhook_subscription" "foo" {
   type = "webhook_subscription"
 }
 
+output "webhook_secret" {
+  value     = pagerduty_webhook_subscription.foo.delivery_method[0].secret
+  sensitive = true
+}
+
 ```
 
 ## Argument Reference
@@ -86,6 +91,7 @@ The following arguments are supported:
 * `type` - (Required) Indicates the type of the delivery method. Allowed and default value: `http_delivery_method`.
 * `url` - (Required) The destination URL for webhook delivery.
 * `custom_header` - (Optional) The custom_header of a webhook subscription define any optional headers that will be passed along with the payload to the destination URL.
+* `secret` - The shared secret used to verify the `X-PagerDuty-Signature` on incoming webhook payloads. It is only returned by the API when the webhook subscription is created, so it is only populated for subscriptions created by Terraform; it is empty for subscriptions brought in with `terraform import`.
 
 ### Webhook filter (`filter`) supports the following:
 
@@ -96,9 +102,8 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-  * `id` - The ID of the slack connection.
-  * `source_name`- Name of the source (team or service) in Slack connection.
-  * `channel_name`- Name of the Slack channel in Slack connection.
+  * `id` - The ID of the webhook subscription.
+  * `delivery_method.secret` - The shared secret used to verify webhook payloads. See the note under `delivery_method` above.
 
 ## Import
 

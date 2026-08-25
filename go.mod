@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.6.0
-	github.com/heimweh/go-pagerduty v0.0.0-20250801140645-0b96cfc9bf17
+	github.com/heimweh/go-pagerduty v0.0.0-20260825185608-628ac36dcbe9
 	golang.org/x/sync v0.22.0
 )
 

@@ -48,20 +48,32 @@ resource "pagerduty_incident_workflow_trigger" "manual_trigger" {
   services   = [pagerduty_service.first_service.id]
 }
 
+resource "pagerduty_incident_type" "security_incident" {
+  display_name = "Security Incident"
+}
+
+resource "pagerduty_incident_workflow_trigger" "incident_type_trigger" {
+  type                       = "incident_type"
+  workflow                   = pagerduty_incident_workflow.my_first_workflow.id
+  incident_types             = [pagerduty_incident_type.security_incident.id]
+  subscribed_to_all_services = false
+}
+
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `type` - (Required) [Updating causes resource replacement] May be either `manual` or `conditional`.
+* `type` - (Required) [Updating causes resource replacement] May be `manual`, `conditional`, or `incident_type`.
 * `workflow` - (Required) The workflow ID for the workflow to trigger.
 * `services` - (Optional) A list of service IDs. Incidents in any of the listed services are eligible to fire this trigger.
-* `subscribed_to_all_services` - (Required) Set to `true` if the trigger should be eligible for firing on all services. Only allowed to be `true` if the services list is not defined or empty.
+* `subscribed_to_all_services` - (Required) Set to `true` if the trigger should be eligible for firing on all services. Only allowed to be `true` if the services list is not defined or empty. Must be `false` for `incident_type`-type triggers; the API rejects any other value for that type.
 * `permissions` - (Optional) Indicates who can start this Trigger. Applicable only to `manual`-type triggers.
   * `restricted` - (Optional) If `true`, indicates that the Trigger can only be started by authorized Users. If `false` (default), any user can start this Trigger. Applicable only to `manual`-type triggers.
   * `team_id` - (Optional) The ID of the Team whose members can manually start this Trigger. Required and allowed only if `restricted` is `true`.
-* `condition` - (Required for `conditional`-type triggers) A [PCL](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) condition string which must be satisfied for the trigger to fire.
+* `condition` - (Required for `conditional`-type triggers) A [PCL](https://developer.pagerduty.com/docs/ZG9jOjM1NTE0MDc0-pcl-overview) condition string which must be satisfied for the trigger to fire. Not allowed for any other trigger type.
+* `incident_types` - (Required for `incident_type`-type triggers) A list of Incident Type IDs, with at least one entry. Only applicable when `type` is `incident_type`; the trigger fires when an incident of one of the listed types is created or set. Not allowed for any other trigger type.
 
 ## Attributes Reference
 

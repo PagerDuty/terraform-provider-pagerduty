@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -55,6 +56,19 @@ func testSweepIncidentWorkflowTrigger(region string) error {
 	return nil
 }
 
+// testAccPreCheckIncidentType skips incident_type trigger tests unless the
+// account owner has provisioned two incident types out-of-band and supplied
+// their IDs. Incident types cannot be deleted through the API, so these tests
+// must never create their own.
+func testAccPreCheckIncidentType(t *testing.T) {
+	if v := os.Getenv("PAGERDUTY_ACC_INCIDENT_TYPE_ID"); v == "" {
+		t.Skip("PAGERDUTY_ACC_INCIDENT_TYPE_ID not set. Skipping incident_type trigger test")
+	}
+	if v := os.Getenv("PAGERDUTY_ACC_INCIDENT_TYPE_ID_UPDATED"); v == "" {
+		t.Skip("PAGERDUTY_ACC_INCIDENT_TYPE_ID_UPDATED not set. Skipping incident_type trigger test")
+	}
+}
+
 func TestAccPagerDutyIncidentWorkflowTrigger_BadType(t *testing.T) {
 	config := `
 resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
@@ -72,7 +86,7 @@ resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
 		Steps: []resource.TestStep{
 			{
 				Config:      config,
-				ExpectError: regexp.MustCompile(`"dummy" is an invalid value. Must be one of \[]string{"manual", "conditional"}`),
+				ExpectError: regexp.MustCompile(`"dummy" is an invalid value. Must be one of \[]string{"manual", "conditional", "incident_type"}`),
 			},
 		},
 	})
@@ -97,6 +111,59 @@ resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
 			{
 				Config:      config,
 				ExpectError: regexp.MustCompile("when trigger type manual is used, condition must not be specified"),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyIncidentWorkflowTrigger_ConditionWithIncidentType(t *testing.T) {
+	config := `
+resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
+  type             = "incident_type"
+  workflow         = "ignored"
+  condition        = "something"
+  subscribed_to_all_services = false
+}
+`
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile("when trigger type incident_type is used, condition must not be specified"),
+			},
+		},
+	})
+}
+
+// TestAccPagerDutyIncidentWorkflowTrigger_SubscribedToAllWithIncidentType
+// covers a constraint discovered against a live account rather than
+// documented in PagerDuty's OpenAPI spec: the API rejects
+// is_subscribed_to_all_services outright when trigger_type is "incident_type"
+// (400 "'is_subscribed_to_all_services' not allowed when trigger_type is
+// 'incident_type'"), so the provider requires it be false in that case.
+func TestAccPagerDutyIncidentWorkflowTrigger_SubscribedToAllWithIncidentType(t *testing.T) {
+	config := `
+resource "pagerduty_incident_workflow_trigger" "my_first_workflow_trigger" {
+  type                       = "incident_type"
+  workflow                   = "ignored"
+  subscribed_to_all_services = true
+}
+`
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile("subscribed_to_all_services must be false when trigger type is incident_type"),
 			},
 		},
 	})
@@ -167,6 +234,106 @@ resource "pagerduty_incident_workflow_trigger" "test" {
   subscribed_to_all_services = false
 }
 `, testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service), testAccCheckPagerDutyIncidentWorkflowConfig(workflow))
+}
+
+// TestAccPagerDutyIncidentWorkflowTrigger_BasicIncidentType exercises an
+// incident_type trigger against two pre-existing incident types, supplied via
+// PAGERDUTY_ACC_INCIDENT_TYPE_ID and PAGERDUTY_ACC_INCIDENT_TYPE_ID_UPDATED.
+//
+// Incident types are not created by this test (and pagerduty_incident_type is
+// a Plugin Framework resource not registered in this package's SDKv2-only
+// testAccProviderFactories, so it cannot be used here regardless). More
+// importantly, incident types cannot be deleted through the API, so tests
+// must never create throwaway ones; they reference IDs of incident types the
+// account owner has provisioned out-of-band instead.
+func TestAccPagerDutyIncidentWorkflowTrigger_BasicIncidentType(t *testing.T) {
+	workflow := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	incidentTypeID := os.Getenv("PAGERDUTY_ACC_INCIDENT_TYPE_ID")
+	incidentTypeIDUpdated := os.Getenv("PAGERDUTY_ACC_INCIDENT_TYPE_ID_UPDATED")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+			testAccPreCheckIncidentType(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPagerDutyIncidentWorkflowTriggerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigIncidentType(workflow, incidentTypeID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "incident_type"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "incident_types.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "incident_types.0", incidentTypeID),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyIncidentWorkflowTriggerConfigIncidentType(workflow, incidentTypeIDUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentWorkflowTriggerExists("pagerduty_incident_workflow_trigger.test"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "type", "incident_type"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "incident_types.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_workflow_trigger.test", "incident_types.0", incidentTypeIDUpdated),
+				),
+			},
+		},
+	})
+}
+
+// TestAccPagerDutyIncidentWorkflowTrigger_IncidentTypeWithEmptyIncidentTypes
+// covers a constraint discovered against a live account: the API rejects an
+// empty incident_types list outright ("must contain at least 1 items"), so
+// the provider must catch this at plan time rather than let it reach apply.
+func TestAccPagerDutyIncidentWorkflowTrigger_IncidentTypeWithEmptyIncidentTypes(t *testing.T) {
+	workflow := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentWorkflows(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckPagerDutyIncidentWorkflowTriggerConfigIncidentTypeEmpty(workflow),
+				ExpectError: regexp.MustCompile("incident_types must contain at least one item when trigger type is incident_type"),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyIncidentWorkflowTriggerConfigIncidentType(workflow, incidentTypeID string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "pagerduty_incident_workflow_trigger" "test" {
+  type                       = "incident_type"
+  workflow                   = pagerduty_incident_workflow.test.id
+  incident_types             = ["%s"]
+  subscribed_to_all_services = false
+}
+`, testAccCheckPagerDutyIncidentWorkflowConfig(workflow), incidentTypeID)
+}
+
+func testAccCheckPagerDutyIncidentWorkflowTriggerConfigIncidentTypeEmpty(workflow string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "pagerduty_incident_workflow_trigger" "test" {
+  type                       = "incident_type"
+  workflow                   = pagerduty_incident_workflow.test.id
+  incident_types             = []
+  subscribed_to_all_services = false
+}
+`, testAccCheckPagerDutyIncidentWorkflowConfig(workflow))
 }
 
 func TestAccPagerDutyIncidentWorkflowTrigger_BasicConditionalAllServices(t *testing.T) {

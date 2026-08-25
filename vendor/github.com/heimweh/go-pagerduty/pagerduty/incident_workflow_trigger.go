@@ -19,6 +19,10 @@ type IncidentWorkflowTrigger struct {
 	Condition               *string                             `json:"condition,omitempty"`
 	SubscribedToAllServices bool                                `json:"is_subscribed_to_all_services,omitempty"`
 	Permissions             *IncidentWorkflowTriggerPermissions `json:"permissions,omitempty"`
+	// IncidentTypes requires at least one element whenever it is sent; the API
+	// rejects an explicit empty list, so a plain slice (omitted by omitempty
+	// when nil or empty) is sufficient.
+	IncidentTypes []string `json:"incident_types,omitempty"`
 }
 
 type IncidentWorkflowTriggerPermissions struct {

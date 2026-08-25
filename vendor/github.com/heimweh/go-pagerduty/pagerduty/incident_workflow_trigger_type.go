@@ -13,6 +13,7 @@ const (
 	IncidentWorkflowTriggerTypeUnknown IncidentWorkflowTriggerType = iota
 	IncidentWorkflowTriggerTypeManual
 	IncidentWorkflowTriggerTypeConditional
+	IncidentWorkflowTriggerTypeIncidentType
 )
 
 func (d IncidentWorkflowTriggerType) String() string {
@@ -24,15 +25,17 @@ func IncidentWorkflowTriggerTypeFromString(s string) IncidentWorkflowTriggerType
 }
 
 var incidentWorkflowTriggerTypeToString = map[IncidentWorkflowTriggerType]string{
-	IncidentWorkflowTriggerTypeUnknown:     "unknown",
-	IncidentWorkflowTriggerTypeManual:      "manual",
-	IncidentWorkflowTriggerTypeConditional: "conditional",
+	IncidentWorkflowTriggerTypeUnknown:      "unknown",
+	IncidentWorkflowTriggerTypeManual:       "manual",
+	IncidentWorkflowTriggerTypeConditional:  "conditional",
+	IncidentWorkflowTriggerTypeIncidentType: "incident_type",
 }
 
 var incidentWorkflowTriggerTypeFromString = map[string]IncidentWorkflowTriggerType{
-	"unknown":     IncidentWorkflowTriggerTypeUnknown,
-	"manual":      IncidentWorkflowTriggerTypeManual,
-	"conditional": IncidentWorkflowTriggerTypeConditional,
+	"unknown":       IncidentWorkflowTriggerTypeUnknown,
+	"manual":        IncidentWorkflowTriggerTypeManual,
+	"conditional":   IncidentWorkflowTriggerTypeConditional,
+	"incident_type": IncidentWorkflowTriggerTypeIncidentType,
 }
 
 func (t IncidentWorkflowTriggerType) MarshalJSON() ([]byte, error) {

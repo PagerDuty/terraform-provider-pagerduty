@@ -33,3 +33,7 @@ website/vendor
 !command/test-fixtures/**/.terraform/
 
 /terraform-provider-pagerduty
+
+# Claude Code local/agent-specific files (not shared with the team)
+.claude/settings.local.json
+.claude/CLAUDE.local.md

@@ -4,6 +4,7 @@
 - Documentation: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs
 - Terraform Gitter: [![Terraform Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 - Mailing list: [Terraform Google Groups](http://groups.google.com/group/terraform-tool)
+- Repo documentation index: [docs/README.md](docs/README.md)
 
 [PagerDuty](https://www.pagerduty.com/) is an alarm aggregation and dispatching service for system administrators and support teams. It collects alerts from your monitoring tools, gives you an overall view of all of your monitoring alarms, and alerts an on duty engineer if there’s a problem. The Terraform Pagerduty provider is a plugin for Terraform that allows for the management of PagerDuty resources using HCL (HashiCorp Configuration Language).
 

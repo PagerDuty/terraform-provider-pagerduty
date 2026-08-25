@@ -1,5 +1,8 @@
 ## v3.36.0 (Aug 25, 2026)
 
+FEATURES
+* `resource/pagerduty_incident_workflow_trigger`: Add support for `type = "incident_type"` and a new `incident_types` attribute, so triggers can fire when an incident of a selected Incident Type is created or set ([NNNN](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/NNNN))
+
 ENHANCEMENTS
 * `resource/pagerduty_webhook_subscription`: Store and expose `delivery_method.secret`, the shared secret used to verify the `X-PagerDuty-Signature` header, which the API only returns in the creation response ([1144](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1144))
 

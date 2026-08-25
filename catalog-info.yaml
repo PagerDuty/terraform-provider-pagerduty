@@ -1,0 +1,24 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-provider-pagerduty
+  description: PagerDuty's terraform provider
+  annotations:
+    github.com/project-slug: pagerduty/terraform-provider-pagerduty
+    github.com/team-slug: pagerduty/terraform-provider
+  data_classification: general
+  tags:
+    - lang-go
+    - terraform
+    - public
+  links:
+    - url: https://github.com/PagerDuty/terraform-provider-pagerduty/edit/master/catalog-info.yaml
+      title: Edit Links
+      icon: edit
+    - url: https://registry.terraform.io/providers/PagerDuty/pagerduty/latest
+      title: Terraform Registry
+      icon: docs
+spec:
+  type: infra
+  lifecycle: production
+  owner: terraform-provider

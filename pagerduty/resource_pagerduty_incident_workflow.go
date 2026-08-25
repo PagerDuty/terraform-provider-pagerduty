@@ -506,15 +506,15 @@ func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps
 		m["name"] = s.Name
 		m["action"] = s.Configuration.ActionID
 
-		var inputNames []string
+		var specifiedInputs []*pagerduty.IncidentWorkflowActionInput
 		inlineInputs := make(map[string][]*SpecifiedStep)
 		if !isImport && i < len(specifiedSteps) {
 			specifiedStep := *specifiedSteps[i]
-			inputNames = specifiedStep.SpecifiedInputNames
+			specifiedInputs = specifiedStep.SpecifiedInputs
 			inlineInputs = specifiedStep.SpecifiedInlineInputs
 		}
 
-		m["input"] = flattenIncidentWorkflowStepInput(s.Configuration.Inputs, inputNames, isImport)
+		m["input"] = flattenIncidentWorkflowStepInput(s.Configuration.Inputs, specifiedInputs, isImport)
 		m["inline_steps_input"] = flattenIncidentWorkflowStepInlineStepsInput(
 			s.Configuration.InlineStepsInputs,
 			inlineInputs,
@@ -527,20 +527,38 @@ func flattenIncidentWorkflowSteps(iw *pagerduty.IncidentWorkflow, specifiedSteps
 	return newSteps
 }
 
-func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowActionInput, specifiedInputNames []string, isImport bool) *[]interface{} {
-	newInputs := make([]interface{}, len(inputs))
+func flattenIncidentWorkflowStepInput(inputs []*pagerduty.IncidentWorkflowActionInput, specifiedInputs []*pagerduty.IncidentWorkflowActionInput, isImport bool) *[]interface{} {
+	newInputs := make([]interface{}, 0, len(inputs))
+	returnedNames := make(map[string]bool, len(inputs))
 
-	for i, v := range inputs {
+	for _, v := range inputs {
 		m := make(map[string]interface{})
 		m["name"] = v.Name
 		m["value"] = v.Value
 
-		if !isImport && !isInputInNonGeneratedInputNames(v, specifiedInputNames) {
+		if !isImport && !isInputSpecified(v.Name, specifiedInputs) {
 			m["generated"] = true
 		}
 
-		newInputs[i] = m
+		newInputs = append(newInputs, m)
+		returnedNames[v.Name] = true
 	}
+
+	// Some action inputs (e.g. "Channel ID" for the Slack send-markdown-message action) are
+	// accepted on write but never returned by the API on read. Re-add any user-specified input
+	// the API omitted so state matches configuration; otherwise it shows as a perpetual diff
+	// after every apply. See https://github.com/PagerDuty/terraform-provider-pagerduty/issues/873.
+	if !isImport {
+		for _, si := range specifiedInputs {
+			if !returnedNames[si.Name] {
+				newInputs = append(newInputs, map[string]interface{}{
+					"name":  si.Name,
+					"value": si.Value,
+				})
+			}
+		}
+	}
+
 	return &newInputs
 }
 
@@ -573,15 +591,15 @@ func flattenIncidentWorkflowStepInlineStepsInputSteps(
 		m["name"] = v.Name
 		m["action"] = v.Configuration.ActionID
 
-		var inputNames []string
+		var specifiedInputs []*pagerduty.IncidentWorkflowActionInput
 		inlineInputs := make(map[string][]*SpecifiedStep)
 		if !isImport && i < len(specifiedSteps) {
 			specifiedStep := *specifiedSteps[i]
-			inputNames = specifiedStep.SpecifiedInputNames
+			specifiedInputs = specifiedStep.SpecifiedInputs
 			inlineInputs = specifiedStep.SpecifiedInlineInputs
 		}
 
-		m["input"] = flattenIncidentWorkflowStepInput(v.Configuration.Inputs, inputNames, isImport)
+		m["input"] = flattenIncidentWorkflowStepInput(v.Configuration.Inputs, specifiedInputs, isImport)
 		if v.Configuration.InlineStepsInputs != nil && len(v.Configuration.InlineStepsInputs) > 0 {
 			// We should prefer to not set inline_steps_input if the array is empty. This doubles as a schema edge guard
 			// and prevents an invalid set if we try to set inline_steps_input to an empty array where the schema
@@ -598,9 +616,9 @@ func flattenIncidentWorkflowStepInlineStepsInputSteps(
 	return &newInlineSteps
 }
 
-func isInputInNonGeneratedInputNames(i *pagerduty.IncidentWorkflowActionInput, names []string) bool {
-	for _, in := range names {
-		if i.Name == in {
+func isInputSpecified(name string, specifiedInputs []*pagerduty.IncidentWorkflowActionInput) bool {
+	for _, in := range specifiedInputs {
+		if in.Name == name {
 			return true
 		}
 	}
@@ -609,7 +627,7 @@ func isInputInNonGeneratedInputNames(i *pagerduty.IncidentWorkflowActionInput, n
 
 // Tracks specified inputs recursively to identify which are generated or not
 type SpecifiedStep struct {
-	SpecifiedInputNames   []string
+	SpecifiedInputs       []*pagerduty.IncidentWorkflowActionInput
 	SpecifiedInlineInputs map[string][]*SpecifiedStep
 }
 
@@ -664,11 +682,11 @@ func buildIncidentWorkflowStepsStruct(s interface{}) (
 		}
 
 		specifiedStep := SpecifiedStep{
-			SpecifiedInputNames:   make([]string, 0),
+			SpecifiedInputs:       make([]*pagerduty.IncidentWorkflowActionInput, 0),
 			SpecifiedInlineInputs: map[string][]*SpecifiedStep{},
 		}
 		step.Configuration.Inputs,
-			specifiedStep.SpecifiedInputNames = buildIncidentWorkflowInputsStruct(stepData["input"])
+			specifiedStep.SpecifiedInputs = buildIncidentWorkflowInputsStruct(stepData["input"])
 		step.Configuration.InlineStepsInputs,
 			specifiedStep.SpecifiedInlineInputs = buildIncidentWorkflowInlineStepsInputsStruct(stepData["inline_steps_input"])
 
@@ -680,11 +698,11 @@ func buildIncidentWorkflowStepsStruct(s interface{}) (
 
 func buildIncidentWorkflowInputsStruct(in interface{}) (
 	[]*pagerduty.IncidentWorkflowActionInput,
-	[]string,
+	[]*pagerduty.IncidentWorkflowActionInput,
 ) {
 	inputs := in.([]interface{})
 	newInputs := make([]*pagerduty.IncidentWorkflowActionInput, len(inputs))
-	specifiedInputNames := make([]string, 0)
+	specifiedInputs := make([]*pagerduty.IncidentWorkflowActionInput, 0)
 
 	for i, v := range inputs {
 		inputData := v.(map[string]interface{})
@@ -695,11 +713,11 @@ func buildIncidentWorkflowInputsStruct(in interface{}) (
 
 		generated := inputData["generated"].(bool)
 		if !generated {
-			specifiedInputNames = append(specifiedInputNames, input.Name)
+			specifiedInputs = append(specifiedInputs, &input)
 		}
 		newInputs[i] = &input
 	}
-	return newInputs, specifiedInputNames
+	return newInputs, specifiedInputs
 }
 
 func buildIncidentWorkflowInlineStepsInputsStruct(in interface{}) (
@@ -749,7 +767,7 @@ func buildIncidentWorkflowActionInlineStepsInputSteps(in interface{}) (
 
 		specifiedInlineStep := SpecifiedStep{}
 		inlineStep.Configuration.Inputs,
-			specifiedInlineStep.SpecifiedInputNames = buildIncidentWorkflowInputsStruct(inlineStepData["input"])
+			specifiedInlineStep.SpecifiedInputs = buildIncidentWorkflowInputsStruct(inlineStepData["input"])
 		inlineStep.Configuration.InlineStepsInputs,
 			specifiedInlineStep.SpecifiedInlineInputs = buildIncidentWorkflowInlineStepsInputsStruct(inlineStepData["inline_steps_input"])
 

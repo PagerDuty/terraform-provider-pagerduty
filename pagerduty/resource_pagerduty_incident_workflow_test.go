@@ -519,19 +519,19 @@ func TestFlattenIncidentWorkflowStepsOneGenerated(t *testing.T) {
 	specifiedSteps := []*SpecifiedStep{
 		{
 			// "step1-input1" is generated
-			SpecifiedInputNames: []string{"step1-input2", "step1-input3"},
+			SpecifiedInputs: []*pagerduty.IncidentWorkflowActionInput{{Name: "step1-input2"}, {Name: "step1-input3"}},
 			SpecifiedInlineInputs: map[string][]*SpecifiedStep{
 				"step1-inlineinput1": {
 					{
 						// "step1a-input1" is generated
-						SpecifiedInputNames:   []string{"step1a-input2"},
+						SpecifiedInputs:       []*pagerduty.IncidentWorkflowActionInput{{Name: "step1a-input2"}},
 						SpecifiedInlineInputs: map[string][]*SpecifiedStep{},
 					},
 				},
 				"step1-inlineinput2": {
 					{
 						// "step1b-input2" is generated
-						SpecifiedInputNames:   []string{"step1b-input1"},
+						SpecifiedInputs:       []*pagerduty.IncidentWorkflowActionInput{{Name: "step1b-input1"}},
 						SpecifiedInlineInputs: map[string][]*SpecifiedStep{},
 					},
 				},
@@ -659,6 +659,78 @@ func TestFlattenIncidentWorkflowStepsWithoutSpecifiedSteps(t *testing.T) {
 	}
 }
 
+// TestFlattenIncidentWorkflowSteps_PreservesSpecifiedInputNotReturnedByAPI reproduces
+// https://github.com/PagerDuty/terraform-provider-pagerduty/issues/873. The Slack
+// "send-markdown-message" action accepts a "Channel ID" input on write but never echoes
+// it back on read, so a user-specified input the API omits must be preserved in state;
+// otherwise it shows as a perpetual diff after every apply.
+func TestFlattenIncidentWorkflowSteps_PreservesSpecifiedInputNotReturnedByAPI(t *testing.T) {
+	iw := &pagerduty.IncidentWorkflow{
+		Steps: []*pagerduty.IncidentWorkflowStep{
+			{
+				ID:   "abc-123",
+				Name: "Send a Message",
+				Configuration: &pagerduty.IncidentWorkflowActionConfiguration{
+					ActionID: "pagerduty.com:slack:send-markdown-message:2",
+					// The API response does not include the user-specified "Channel ID".
+					Inputs: []*pagerduty.IncidentWorkflowActionInput{
+						{Name: "Workspace", Value: "T123"},
+						{Name: "Channel", Value: "A specific channel"},
+						{Name: "Select the Channel", Value: "testtest"},
+						{Name: "Message", Value: "hello"},
+						{Name: "Pinned message", Value: "No"},
+					},
+				},
+			},
+		},
+	}
+	specifiedSteps := []*SpecifiedStep{
+		{
+			SpecifiedInputs: []*pagerduty.IncidentWorkflowActionInput{
+				{Name: "Workspace", Value: "T123"},
+				{Name: "Channel", Value: "A specific channel"},
+				{Name: "Select the Channel", Value: "testtest"},
+				{Name: "Channel ID", Value: "C0AKWG1NSF5"},
+				{Name: "Message", Value: "hello"},
+			},
+			SpecifiedInlineInputs: map[string][]*SpecifiedStep{},
+		},
+	}
+
+	flattenedSteps := flattenIncidentWorkflowSteps(iw, specifiedSteps, false)
+	inputs := *flattenedSteps[0]["input"].(*[]interface{})
+
+	var channelID, pinned map[string]interface{}
+	for _, in := range inputs {
+		m := in.(map[string]interface{})
+		switch m["name"] {
+		case "Channel ID":
+			channelID = m
+		case "Pinned message":
+			pinned = m
+		}
+	}
+
+	// The user-specified "Channel ID" must be preserved even though the API omitted it.
+	if channelID == nil {
+		t.Fatalf("expected user-specified \"Channel ID\" to be preserved, but it was dropped from state (got %d inputs)", len(inputs))
+	}
+	if channelID["value"] != "C0AKWG1NSF5" {
+		t.Errorf("preserved \"Channel ID\" value = %q, want %q", channelID["value"], "C0AKWG1NSF5")
+	}
+	if gen, ok := channelID["generated"]; ok && gen.(bool) {
+		t.Errorf("preserved \"Channel ID\" should not be marked generated")
+	}
+
+	// "Pinned message" was returned by the API but not specified, so it stays generated.
+	if pinned == nil {
+		t.Fatalf("expected API-returned \"Pinned message\" input to be present")
+	}
+	if gen, ok := pinned["generated"]; !ok || !gen.(bool) {
+		t.Errorf("expected API-only \"Pinned message\" to be marked generated=true")
+	}
+}
+
 func testAccPreCheckIncidentWorkflows(t *testing.T) {
 	if v := os.Getenv("PAGERDUTY_ACC_INCIDENT_WORKFLOWS"); v == "" {
 		t.Skip("PAGERDUTY_ACC_INCIDENT_WORKFLOWS not set. Skipping Incident Workflows-related test")
@@ -721,19 +793,19 @@ func TestFlattenIncidentWorkflowSteps_IndexOutOfRange(t *testing.T) {
 	// This simulates the scenario where Terraform state has 4 steps but API returns 5
 	specifiedSteps := []*SpecifiedStep{
 		{
-			SpecifiedInputNames:   []string{},
+			SpecifiedInputs:       []*pagerduty.IncidentWorkflowActionInput{},
 			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
 		},
 		{
-			SpecifiedInputNames:   []string{},
+			SpecifiedInputs:       []*pagerduty.IncidentWorkflowActionInput{},
 			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
 		},
 		{
-			SpecifiedInputNames:   []string{},
+			SpecifiedInputs:       []*pagerduty.IncidentWorkflowActionInput{},
 			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
 		},
 		{
-			SpecifiedInputNames:   []string{},
+			SpecifiedInputs:       []*pagerduty.IncidentWorkflowActionInput{},
 			SpecifiedInlineInputs: make(map[string][]*SpecifiedStep),
 		},
 	}

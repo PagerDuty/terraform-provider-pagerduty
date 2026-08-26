@@ -41,3 +41,31 @@ func TestValidateTZValueDiagFunc(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateTimeOfDay(t *testing.T) {
+	cases := []struct {
+		given   string
+		wantErr bool
+	}{
+		// Valid HH:MM:SS values.
+		{given: "08:00:00", wantErr: false},
+		{given: "00:00:00", wantErr: false},
+		{given: "23:59:59", wantErr: false},
+		// Out-of-range components.
+		{given: "24:00:00", wantErr: true},
+		{given: "12:60:00", wantErr: true},
+		// Junk-wrapped values that must be rejected once the regex is anchored.
+		{given: "12:30:00xyz", wantErr: true},
+		{given: "xyz08:00:00", wantErr: true},
+		{given: "99:08:00:00", wantErr: true},
+		{given: "", wantErr: true},
+	}
+
+	for _, c := range cases {
+		_, errs := ValidateTimeOfDay(c.given, "start_time_of_day")
+		gotErr := len(errs) > 0
+		if gotErr != c.wantErr {
+			t.Errorf("ValidateTimeOfDay(%q): wantErr=%v, got errs=%v", c.given, c.wantErr, errs)
+		}
+	}
+}

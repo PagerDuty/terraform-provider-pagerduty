@@ -58,6 +58,23 @@ func GenErrorTimeFormatRFC339(value, k string) error {
 	return fmt.Errorf("%s is not a valid format for argument: %s. Expected format: %s (RFC3339)", value, k, time.RFC3339)
 }
 
+// timeOfDayRegex matches a 24-hour HH:MM:SS time of day. The pattern is
+// anchored so that only the whole string is a valid time; without the anchors
+// a substring match would let junk-wrapped values such as "12:30:00xyz" or
+// "xyz08:00:00" pass validation.
+var timeOfDayRegex = regexp.MustCompile(`^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$`)
+
+// ValidateTimeOfDay validates that a string is a 24-hour HH:MM:SS time of day,
+// e.g. "08:00:00".
+func ValidateTimeOfDay(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	if !timeOfDayRegex.MatchString(value) {
+		errors = append(errors, fmt.Errorf("%s is not a valid format for argument: %s. Expected format: HH:MM:SS, e.g. 08:00:00", value, k))
+	}
+
+	return
+}
+
 func SuppressRFC3339Diff(k, oldTime, newTime string, d *schema.ResourceData) bool {
 	oldT, newT, err := ParseRFC3339Time(k, oldTime, newTime)
 	if err != nil {

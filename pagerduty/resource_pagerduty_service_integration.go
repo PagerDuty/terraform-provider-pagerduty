@@ -58,9 +58,10 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				Computed:      true,
 			},
 			"integration_key": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:      schema.TypeString,
+				Optional:  true,
+				Computed:  true,
+				Sensitive: true,
 				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
 					v, ok := i.(string)
 					if !ok {

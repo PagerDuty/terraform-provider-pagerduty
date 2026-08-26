@@ -31,6 +31,7 @@ func resourcePagerDutyAutomationActionsRunner() *schema.Resource {
 				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"sidecar",
 					"runbook",
+					"ua_runner",
 				}),
 				ForceNew: true, // Requires creation of new resource while support for update is not implemented
 			},

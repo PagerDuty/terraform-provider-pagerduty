@@ -31,7 +31,7 @@ The following attributes are exported:
 * `id` - The ID of the found runner.
 * `name` - The name of the found runner.
 * `type` - The type of object. The value returned will be `runner`.
-* `runner_type` - The type of runner. Allowed values are `sidecar` and `runbook`.
+* `runner_type` - The type of runner. Allowed values are `sidecar`, `runbook`, and `ua_runner`.
 * `creation_time` - The time runner was created. Represented as an ISO 8601 timestamp.
 * `description` - (Optional) The description of the runner.
 * `last_seen` - (Optional) The last time runner has been seen. Represented as an ISO 8601 timestamp.

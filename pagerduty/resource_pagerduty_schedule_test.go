@@ -354,6 +354,98 @@ func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependantWithOneLayer(t *
 	})
 }
 
+func TestDetectUseOfScheduleByEPsWithOneLayer_SingleBlockerMessage(t *testing.T) {
+	scheduleID := "PSCHED1"
+	err := detectUseOfScheduleByEPsWithOneLayer(scheduleID, []*pagerduty.EscalationPolicy{
+		{
+			ID:      "PEP123",
+			Name:    "Primary On-Call",
+			HTMLURL: "https://app.pagerduty.com/escalation_policies/PEP123",
+			EscalationRules: []*pagerduty.EscalationRule{
+				{
+					Targets: []*pagerduty.EscalationTargetReference{
+						{ID: scheduleID, Type: "schedule_reference"},
+					},
+				},
+			},
+		},
+	})
+
+	if err == nil {
+		t.Fatal("expected an error for a blocking escalation policy")
+	}
+
+	message := err.Error()
+	for _, want := range []string{
+		scheduleID,
+		"PEP123",
+		"Primary On-Call",
+		"https://app.pagerduty.com/escalation_policies/PEP123",
+		"Search your Terraform configuration/state",
+	} {
+		if !strings.Contains(message, want) {
+			t.Fatalf("expected error message to contain %q, got %q", want, message)
+		}
+	}
+
+	if strings.Contains(message, "pagerduty_escalation_policy.") || strings.Contains(message, "-target=") {
+		t.Fatalf("expected no Terraform resource-address guidance, got %q", message)
+	}
+}
+
+func TestDetectUseOfScheduleByEPsWithOneLayer_MultipleBlockersMessage(t *testing.T) {
+	scheduleID := "PSCHED1"
+	err := detectUseOfScheduleByEPsWithOneLayer(scheduleID, []*pagerduty.EscalationPolicy{
+		{
+			ID:      "PEP123",
+			Name:    "Primary On-Call",
+			HTMLURL: "https://app.pagerduty.com/escalation_policies/PEP123",
+			EscalationRules: []*pagerduty.EscalationRule{
+				{
+					Targets: []*pagerduty.EscalationTargetReference{
+						{ID: scheduleID, Type: "schedule_reference"},
+					},
+				},
+			},
+		},
+		{
+			ID:      "PEP456",
+			Name:    "Secondary On-Call",
+			HTMLURL: "https://app.pagerduty.com/escalation_policies/PEP456",
+			EscalationRules: []*pagerduty.EscalationRule{
+				{
+					Targets: []*pagerduty.EscalationTargetReference{
+						{ID: scheduleID, Type: "schedule_reference"},
+					},
+				},
+				{
+					Targets: []*pagerduty.EscalationTargetReference{
+						{ID: scheduleID, Type: "schedule_reference"},
+					},
+				},
+			},
+		},
+	})
+
+	if err == nil {
+		t.Fatal("expected an error for multiple blocking escalation policies")
+	}
+
+	message := err.Error()
+	for _, want := range []string{
+		"multiple Escalation Policies",
+		"PEP123",
+		"Primary On-Call",
+		"PEP456",
+		"Secondary On-Call",
+		"Search your Terraform configuration/state",
+	} {
+		if !strings.Contains(message, want) {
+			t.Fatalf("expected error message to contain %q, got %q", want, message)
+		}
+	}
+}
+
 func TestAccPagerDutyScheduleWithTeams_EscalationPolicyDependantWithOpenIncidents(t *testing.T) {
 	service1 := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	service2 := fmt.Sprintf("tf-%s", acctest.RandString(5))

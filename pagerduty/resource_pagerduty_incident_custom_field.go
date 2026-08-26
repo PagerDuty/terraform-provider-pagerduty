@@ -186,7 +186,11 @@ func buildFieldStruct(d *schema.ResourceData) (*pagerduty.IncidentCustomField, e
 		field.Description = &str
 	}
 	if df, ok := d.GetOk("default_value"); ok {
-		field.DefaultValue = df
+		v, err := convertIncidentCustomFieldValueForBuild(df.(string), field.DataType, field.FieldType.IsMultiValue())
+		if err != nil {
+			return nil, err
+		}
+		field.DefaultValue = v
 	}
 	return &field, nil
 }

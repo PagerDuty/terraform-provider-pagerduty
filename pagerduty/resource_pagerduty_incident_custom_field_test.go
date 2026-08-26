@@ -190,6 +190,47 @@ resource "pagerduty_incident_custom_field" "input" {
 `, name, datatype, description)
 }
 
+// TestAccPagerDutyIncidentCustomField_TypedDefaultValue is a regression test for
+// #908: a non-string default_value (boolean/integer/float) must be sent to the API
+// as the corresponding typed value, not the raw Terraform string, otherwise the API
+// rejects it with "default_value must match field settings".
+func TestAccPagerDutyIncidentCustomField_TypedDefaultValue(t *testing.T) {
+	fieldName := fmt.Sprintf("tf_%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccPreCheckIncidentCustomFieldTests(t)
+		},
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPagerDutyIncidentCustomFieldDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyIncidentCustomFieldConfigWithDefaultValue(fieldName, "boolean", "false"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyIncidentCustomFieldExists("pagerduty_incident_custom_field.input"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_custom_field.input", "data_type", "boolean"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_incident_custom_field.input", "default_value", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckPagerDutyIncidentCustomFieldConfigWithDefaultValue(name, datatype, defaultValue string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_incident_custom_field" "input" {
+  name          = "%[1]s"
+  display_name  = "%[1]s"
+  data_type     = "%[2]s"
+  field_type    = "single_value"
+  default_value = "%[3]s"
+}
+`, name, datatype, defaultValue)
+}
+
 func testAccCheckPagerDutyIncidentCustomFieldDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {

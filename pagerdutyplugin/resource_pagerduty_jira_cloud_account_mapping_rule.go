@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
@@ -454,19 +455,12 @@ func buildPagerdutyJiraCloudCustomFields(ctx context.Context, list types.List, d
 
 	var customFields []pagerduty.JiraCloudCustomField
 	for _, cf := range target {
-		var v interface{}
-		valueString := cf.Value.ValueString()
-
-		if err := json.Unmarshal([]byte(valueString), &v); err != nil {
-			v = valueString
-		}
-
 		field := pagerduty.JiraCloudCustomField{
 			SourceIncidentField:  nil,
 			TargetIssueField:     cf.TargetIssueField.ValueString(),
 			TargetIssueFieldName: cf.TargetIssueFieldName.ValueString(),
 			Type:                 cf.Type.ValueString(),
-			Value:                v,
+			Value:                jiraCloudCustomFieldValue(cf.Value.ValueString()),
 		}
 		if !cf.SourceIncidentField.IsNull() && !cf.SourceIncidentField.IsUnknown() {
 			field.SourceIncidentField = cf.SourceIncidentField.ValueStringPointer()
@@ -564,6 +558,25 @@ func buildJiraCloudStatusMapping(ctx context.Context, obj types.Object, diags *d
 		Resolved:     resolved,
 		Triggered:    triggered,
 	}
+}
+
+// jiraCloudCustomFieldValue returns the API representation of a custom field
+// value. A JSON object or array (for example the output of jsonencode for a
+// jira_value field such as components) is sent decoded so the Jira Cloud
+// integration receives structured JSON. Every other value is sent verbatim as
+// a string: many Jira ids are all digits (an organization, a request type, an
+// option), and the integration silently creates no issue when it receives one
+// as a JSON number.
+func jiraCloudCustomFieldValue(s string) interface{} {
+	trimmed := strings.TrimSpace(s)
+	if trimmed == "" || (trimmed[0] != '{' && trimmed[0] != '[') {
+		return s
+	}
+	var v interface{}
+	if err := json.Unmarshal([]byte(trimmed), &v); err != nil {
+		return s
+	}
+	return v
 }
 
 func flattenJiraCloudAccountsMappingRule(response *pagerduty.JiraCloudAccountsMappingRule) resourceJiraCloudAccountMappingRuleModel {

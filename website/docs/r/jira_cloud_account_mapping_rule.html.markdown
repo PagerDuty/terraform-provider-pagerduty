@@ -136,7 +136,7 @@ A `custom_fields` block contains the following arguments:
 * `source_incident_field` - The PagerDuty incident field from which the value will be extracted (only applicable if `type` is `attribute`); one of `incident_number`, `incident_title`, `incident_description`, `incident_status`, `incident_created_at`, `incident_service`, `incident_escalation_policy`, `incident_impacted_services`, `incident_html_url`, `incident_assignees`, `incident_acknowledgers`, `incident_last_status_change_at`, `incident_last_status_change_by`, `incident_urgency` or `incident_priority`.
 * `target_issue_field` - (Required) The unique identifier key of the Jira field that will be set.
 * `target_issue_field_name` - (Required) The human-readable name of the Jira field.
-* `value` - The value to be set for the Jira field (only applicable if `type` is `const` or `jira_value`). It must be set as a JSON string.
+* `value` - The value to be set for the Jira field (only applicable if `type` is `const` or `jira_value`). Set it as a string. A JSON object or array (for example the output of `jsonencode`, as used for `jira_value` fields such as components) is sent to PagerDuty decoded; any other value is sent verbatim as a string, including numeric-looking ids such as a Jira organization, request type or option id.
 
 The `issue_type` block contains the following arguments:
 

@@ -66,6 +66,15 @@ func TestAccPagerDutyJiraCloudAccountsMappingRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.custom_fields.3.type", "const"),
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.custom_fields.3.value", "pagerduty, incident"),
 
+					// A numeric-looking const value must round-trip as the string
+					// "42", not as the JSON number 42, which the Jira Cloud
+					// integration accepts and then silently files no issue for.
+					resource.TestCheckNoResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.custom_fields.4.source_incident_field"),
+					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.custom_fields.4.target_issue_field", "customfield_10100"),
+					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.custom_fields.4.target_issue_field_name", "Organizations"),
+					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.custom_fields.4.type", "const"),
+					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.custom_fields.4.value", "42"),
+
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.issue_type.id", "10001"),
 					resource.TestCheckResourceAttr("pagerduty_jira_cloud_account_mapping_rule.foo", "config.jira.issue_type.name", "Incident"),
 
@@ -235,6 +244,12 @@ resource "pagerduty_jira_cloud_account_mapping_rule" "foo" {
 				target_issue_field_name = "Labels"
 				type = "const"
 				value = "pagerduty, incident"
+			}
+			custom_fields {
+				target_issue_field = "customfield_10100"
+				target_issue_field_name = "Organizations"
+				type = "const"
+				value = "42"
 			}
 			issue_type {
 				id = "10001"

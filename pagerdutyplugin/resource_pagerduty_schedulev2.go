@@ -179,7 +179,7 @@ func (r *resourceScheduleV2) Create(ctx context.Context, req resource.CreateRequ
 	}
 	log.Printf("[INFO] Creating PagerDuty v3 schedule: %s", scheduleInput.Name)
 
-	var scheduleID string
+	var createdSchedule *pagerduty.ScheduleV3
 	err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 		schedule, err := r.client.CreateScheduleV3(ctx, scheduleInput)
 		if err != nil {
@@ -188,7 +188,7 @@ func (r *resourceScheduleV2) Create(ctx context.Context, req resource.CreateRequ
 			}
 			return retry.RetryableError(err)
 		}
-		scheduleID = schedule.ID
+		createdSchedule = schedule
 		return nil
 	})
 	if err != nil {
@@ -196,7 +196,14 @@ func (r *resourceScheduleV2) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	scheduleID := createdSchedule.ID
 	model.ID = types.StringValue(scheduleID)
+	// description is Optional+Computed, so it is planned as unknown when the
+	// config omits it. Resolve it from the API response, since every value must
+	// be known once apply finishes.
+	if model.Description.IsUnknown() {
+		model.Description = types.StringValue(createdSchedule.Description)
+	}
 
 	// Create rotations and their events
 	resp.Diagnostics.Append(r.createRotationsAndEvents(ctx, scheduleID, model.TimeZone.ValueString(), model.Rotations, &model.Rotations)...)

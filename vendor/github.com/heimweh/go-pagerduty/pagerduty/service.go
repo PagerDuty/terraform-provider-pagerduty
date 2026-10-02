@@ -66,23 +66,38 @@ type IncidentUrgencyRule struct {
 
 // Integration represents a service integration.
 type Integration struct {
-	CreatedAt             string            `json:"created_at,omitempty"`
-	EmailIncidentCreation string            `json:"email_incident_creation,omitempty"`
-	EmailFilterMode       string            `json:"email_filter_mode,omitempty"`
-	EmailParsers          []*EmailParser    `json:"email_parsers,omitempty"`
-	EmailParsingFallback  string            `json:"email_parsing_fallback,omitempty"`
-	EmailFilters          []*EmailFilter    `json:"email_filters,omitempty"`
-	HTMLURL               string            `json:"html_url,omitempty"`
-	ID                    string            `json:"id,omitempty"`
-	Integration           *Integration      `json:"integration,omitempty"`
-	IntegrationEmail      string            `json:"integration_email,omitempty"`
-	IntegrationKey        string            `json:"integration_key,omitempty"`
-	Name                  string            `json:"name,omitempty"`
-	Self                  string            `json:"self,omitempty"`
-	Service               *ServiceReference `json:"service,omitempty"`
-	Summary               string            `json:"summary,omitempty"`
-	Type                  string            `json:"type,omitempty"`
-	Vendor                *VendorReference  `json:"vendor,omitempty"`
+	Config                *IntegrationConfig `json:"config,omitempty"`
+	CreatedAt             string             `json:"created_at,omitempty"`
+	EmailIncidentCreation string             `json:"email_incident_creation,omitempty"`
+	EmailFilterMode       string             `json:"email_filter_mode,omitempty"`
+	EmailParsers          []*EmailParser     `json:"email_parsers,omitempty"`
+	EmailParsingFallback  string             `json:"email_parsing_fallback,omitempty"`
+	EmailFilters          []*EmailFilter     `json:"email_filters,omitempty"`
+	HTMLURL               string             `json:"html_url,omitempty"`
+	ID                    string             `json:"id,omitempty"`
+	Integration           *Integration       `json:"integration,omitempty"`
+	IntegrationEmail      string             `json:"integration_email,omitempty"`
+	IntegrationKey        string             `json:"integration_key,omitempty"`
+	Name                  string             `json:"name,omitempty"`
+	Self                  string             `json:"self,omitempty"`
+	Service               *ServiceReference  `json:"service,omitempty"`
+	Summary               string             `json:"summary,omitempty"`
+	Type                  string             `json:"type,omitempty"`
+	Vendor                *VendorReference   `json:"vendor,omitempty"`
+}
+
+// IntegrationConfig represents the vendor specific configuration of a service
+// integration, keyed by field identifier. For example, the Amazon CloudWatch
+// integration exposes the "incident_key" (Correlate events by) and
+// "description" (Derive name from) fields.
+type IntegrationConfig struct {
+	Fields map[string]*IntegrationConfigField `json:"fields,omitempty"`
+}
+
+// IntegrationConfigField represents a single vendor specific configuration
+// field of a service integration.
+type IntegrationConfigField struct {
+	Value interface{} `json:"value,omitempty"`
 }
 
 // EmailFilter represents a integration email filters

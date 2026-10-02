@@ -77,6 +77,9 @@ resource "pagerduty_service_integration" "cloudwatch" {
   name    = data.pagerduty_vendor.cloudwatch.name
   service = pagerduty_service.example.id
   vendor  = data.pagerduty_vendor.cloudwatch.id
+
+  cloudwatch_correlate_events_by = "alarm_name"
+  cloudwatch_derive_name_from    = "alarm_description"
 }
 
 data "pagerduty_vendor" "email" {
@@ -171,6 +174,9 @@ The following arguments are supported:
   * `email_incident_creation` - (Optional) Behaviour of Email Management feature ([explained in PD docs](https://support.pagerduty.com/docs/email-management-filters-and-rules#control-when-a-new-incident-or-alert-is-triggered)). Can be `on_new_email`, `on_new_email_subject`, `only_if_no_open_incidents` or `use_rules`.
   * `email_filter_mode` - (Optional) Mode of Emails Filters feature ([explained in PD docs](https://support.pagerduty.com/docs/email-management-filters-and-rules#configure-a-regex-filter)). Can be `all-email`, `or-rules-email` or `and-rules-email`.
   * `email_parsing_fallback` - (Optional) Can be `open_new_incident` or `discard`.
+
+  * `cloudwatch_correlate_events_by` - (Optional) Only applies to the Amazon CloudWatch vendor integration. The CloudWatch event attribute used to correlate events into a single incident, shown as "Correlate events by" in the PagerDuty web app. Can be `alarm_name`, `always_create_new`, `event_name`, `finding_id`, `open_attach`, `region` or `source_origin`. Defaults to the value PagerDuty assigns when the integration is created.
+  * `cloudwatch_derive_name_from` - (Optional) Only applies to the Amazon CloudWatch vendor integration. The CloudWatch event attribute used as the incident name, shown as "Derive name from" in the PagerDuty web app. Can be `alarm_description`, `alarm_name` or `auto_generated`. Defaults to the value PagerDuty assigns when the integration is created.
 
   Email filters (`email_filter`) supports the following:
 

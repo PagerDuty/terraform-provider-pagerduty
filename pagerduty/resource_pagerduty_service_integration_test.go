@@ -3,9 +3,11 @@ package pagerduty
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -402,6 +404,111 @@ func TestAccPagerDutyServiceIntegration_GenericEmailNoFilters(t *testing.T) {
 	})
 }
 
+func TestAccPagerDutyServiceIntegration_CloudWatchConfig(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	serviceIntegration := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceIntegrationDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceIntegrationCloudWatchConfig(username, email, escalationPolicy, service, serviceIntegration, "alarm_name", "alarm_description"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceIntegrationExists("pagerduty_service_integration.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_integration.foo", "cloudwatch_correlate_events_by", "alarm_name"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_integration.foo", "cloudwatch_derive_name_from", "alarm_description"),
+					testAccCheckPagerDutyServiceIntegrationConfigField("pagerduty_service_integration.foo", "incident_key", "alarm_name"),
+					testAccCheckPagerDutyServiceIntegrationConfigField("pagerduty_service_integration.foo", "description", "alarm_description"),
+				),
+			},
+			{
+				Config:      testAccCheckPagerDutyServiceIntegrationCloudWatchConfig(username, email, escalationPolicy, service, serviceIntegration, "not_a_real_option", "alarm_name"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("not_a_real_option"),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceIntegrationCloudWatchConfig(username, email, escalationPolicy, service, serviceIntegration, "region", "alarm_name"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceIntegrationExists("pagerduty_service_integration.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_integration.foo", "cloudwatch_correlate_events_by", "region"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service_integration.foo", "cloudwatch_derive_name_from", "alarm_name"),
+					testAccCheckPagerDutyServiceIntegrationConfigField("pagerduty_service_integration.foo", "incident_key", "region"),
+					testAccCheckPagerDutyServiceIntegrationConfigField("pagerduty_service_integration.foo", "description", "alarm_name"),
+				),
+			},
+			{
+				ResourceName:      "pagerduty_service_integration.foo",
+				ImportStateIdFunc: testAccCheckPagerDutyServiceIntegrationId,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestExpandServiceIntegrationConfig(t *testing.T) {
+	d := schema.TestResourceDataRaw(t, resourcePagerDutyServiceIntegration().Schema, map[string]interface{}{
+		"service":                        "PSVC001",
+		"cloudwatch_correlate_events_by": "alarm_name",
+		"cloudwatch_derive_name_from":    "alarm_description",
+	})
+
+	got := expandServiceIntegrationConfig(d)
+	want := &pagerduty.IntegrationConfig{
+		Fields: map[string]*pagerduty.IntegrationConfigField{
+			"incident_key": {Value: "alarm_name"},
+			"description":  {Value: "alarm_description"},
+		},
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("expandServiceIntegrationConfig() = %#v, want %#v", got, want)
+	}
+}
+
+func TestExpandServiceIntegrationConfigUnset(t *testing.T) {
+	d := schema.TestResourceDataRaw(t, resourcePagerDutyServiceIntegration().Schema, map[string]interface{}{
+		"service": "PSVC001",
+	})
+
+	if got := expandServiceIntegrationConfig(d); got != nil {
+		t.Errorf("expandServiceIntegrationConfig() = %#v, want nil", got)
+	}
+}
+
+func TestFlattenServiceIntegrationConfig(t *testing.T) {
+	config := &pagerduty.IntegrationConfig{
+		Fields: map[string]*pagerduty.IntegrationConfigField{
+			"incident_key": {Value: "region"},
+			"description":  {Value: "auto_generated"},
+			"unknown":      {Value: true},
+		},
+	}
+
+	got := flattenServiceIntegrationConfig(config)
+	want := map[string]string{
+		"cloudwatch_correlate_events_by": "region",
+		"cloudwatch_derive_name_from":    "auto_generated",
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("flattenServiceIntegrationConfig() = %#v, want %#v", got, want)
+	}
+
+	if got := flattenServiceIntegrationConfig(nil); len(got) != 0 {
+		t.Errorf("flattenServiceIntegrationConfig(nil) = %#v, want empty", got)
+	}
+}
+
 func testAccCheckPagerDutyServiceIntegrationDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -445,6 +552,84 @@ func testAccCheckPagerDutyServiceIntegrationExists(n string) resource.TestCheckF
 
 		return nil
 	}
+}
+
+func testAccCheckPagerDutyServiceIntegrationConfigField(n, field, want string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		service, _ := s.RootModule().Resources["pagerduty_service.foo"]
+
+		client, _ := testAccProvider.Meta().(*Config).Client()
+
+		found, _, err := client.Services.GetIntegration(service.Primary.ID, rs.Primary.ID, &pagerduty.GetIntegrationOptions{})
+		if err != nil {
+			return fmt.Errorf("Service integration not found: %v", rs.Primary.ID)
+		}
+
+		if found.Config == nil || found.Config.Fields[field] == nil {
+			return fmt.Errorf("Service integration %v has no config field %q", rs.Primary.ID, field)
+		}
+
+		if got := found.Config.Fields[field].Value; got != want {
+			return fmt.Errorf("Service integration %v config field %q = %v, want %v", rs.Primary.ID, field, got, want)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckPagerDutyServiceIntegrationCloudWatchConfig(username, email, escalationPolicy, service, serviceIntegration, correlateEventsBy, deriveNameFrom string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+  name        = "%s"
+  email       = "%s"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+  name        = "%s"
+  description = "foo"
+  num_loops   = 1
+
+  rule {
+    escalation_delay_in_minutes = 10
+
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.foo.id
+    }
+  }
+}
+
+resource "pagerduty_service" "foo" {
+  name                    = "%s"
+  description             = "foo"
+  auto_resolve_timeout    = 1800
+  acknowledgement_timeout = 1800
+  escalation_policy       = pagerduty_escalation_policy.foo.id
+
+  incident_urgency_rule {
+    type = "constant"
+    urgency = "high"
+  }
+}
+
+data "pagerduty_vendor" "cloudwatch" {
+  name = "Amazon CloudWatch"
+}
+
+resource "pagerduty_service_integration" "foo" {
+  name    = "%s"
+  service = pagerduty_service.foo.id
+  vendor  = data.pagerduty_vendor.cloudwatch.id
+
+  cloudwatch_correlate_events_by = "%s"
+  cloudwatch_derive_name_from    = "%s"
+}
+`, username, email, escalationPolicy, service, serviceIntegration, correlateEventsBy, deriveNameFrom)
 }
 
 func testAccCheckPagerDutyServiceIntegrationConfig(username, email, escalationPolicy, service, serviceIntegration string) string {

@@ -94,6 +94,18 @@ func resourcePagerDutyServiceIntegration() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"cloudwatch_correlate_events_by": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				ValidateDiagFunc: validateValueDiagFunc(cloudWatchCorrelateEventsByValues),
+			},
+			"cloudwatch_derive_name_from": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				ValidateDiagFunc: validateValueDiagFunc(cloudWatchDeriveNameFromValues),
+			},
 			"email_incident_creation": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -442,11 +454,61 @@ func buildServiceIntegrationStruct(d *schema.ResourceData) (*pagerduty.Integrati
 		serviceIntegration.EmailFilters = filters
 	}
 
+	serviceIntegration.Config = expandServiceIntegrationConfig(d)
+
 	if serviceIntegration.Type == "generic_email_inbound_integration" && serviceIntegration.IntegrationEmail == "" {
 		return nil, errors.New(errEmailIntegrationMustHaveEmail)
 	}
 
 	return serviceIntegration, nil
+}
+
+func expandServiceIntegrationConfig(d *schema.ResourceData) *pagerduty.IntegrationConfig {
+	fields := map[string]*pagerduty.IntegrationConfigField{}
+	for attr, fieldID := range serviceIntegrationConfigFields {
+		if v, ok := d.GetOk(attr); ok {
+			fields[fieldID] = &pagerduty.IntegrationConfigField{Value: v.(string)}
+		}
+	}
+
+	if len(fields) == 0 {
+		return nil
+	}
+
+	return &pagerduty.IntegrationConfig{Fields: fields}
+}
+
+func flattenServiceIntegrationConfig(config *pagerduty.IntegrationConfig) map[string]string {
+	values := map[string]string{}
+	if config == nil {
+		return values
+	}
+
+	for attr, fieldID := range serviceIntegrationConfigFields {
+		field, ok := config.Fields[fieldID]
+		if !ok || field == nil {
+			continue
+		}
+		if value, ok := field.Value.(string); ok {
+			values[attr] = value
+		}
+	}
+
+	return values
+}
+
+func updateServiceIntegrationConfig(client *pagerduty.Client, service, id string, serviceIntegration *pagerduty.Integration) error {
+	log.Printf("[INFO] Applying PagerDuty service integration %s vendor configuration", id)
+
+	return retry.Retry(2*time.Minute, func() *retry.RetryError {
+		if _, _, err := client.Services.UpdateIntegration(service, id, serviceIntegration); err != nil {
+			if isErrCode(err, http.StatusNotFound) {
+				return retry.RetryableError(err)
+			}
+			return retry.NonRetryableError(err)
+		}
+		return nil
+	})
 }
 
 func expandEmailParsers(v interface{}) ([]*pagerduty.EmailParser, error) {
@@ -719,6 +781,12 @@ func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, 
 			}
 		}
 
+		for attr, value := range flattenServiceIntegrationConfig(serviceIntegration.Config) {
+			if err := d.Set(attr, value); err != nil {
+				return retry.RetryableError(err)
+			}
+		}
+
 		if serviceIntegration.EmailFilters != nil {
 			if err := d.Set("email_filter", flattenEmailFilters(serviceIntegration.EmailFilters)); err != nil {
 				return retry.RetryableError(err)
@@ -750,6 +818,12 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 
 	service := d.Get("service").(string)
 
+	// The create endpoint is not known to accept vendor configuration (the
+	// PagerDuty web app only ever sends it on update), so it is applied with a
+	// follow-up update once the integration exists.
+	config := serviceIntegration.Config
+	serviceIntegration.Config = nil
+
 	retryErr := retry.Retry(2*time.Minute, func() *retry.RetryError {
 		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
 			// The API rejects integrations on the Default Mobilization Service with a
@@ -771,6 +845,13 @@ func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta inte
 
 	if retryErr != nil {
 		return retryErr
+	}
+
+	if config != nil {
+		serviceIntegration.Config = config
+		if err := updateServiceIntegrationConfig(client, service, d.Id(), serviceIntegration); err != nil {
+			return err
+		}
 	}
 
 	return fetchPagerDutyServiceIntegration(d, meta, genError)
@@ -861,6 +942,32 @@ var allowedIntegrationTypes = map[string]bool{
 	"nagios_inbound_integration":                true,
 	"pingdom_inbound_integration":               true,
 	"sql_monitor_inbound_integration":           true,
+}
+
+// serviceIntegrationConfigFields maps resource attributes onto the field
+// identifiers of the integration "config.fields" object. This object is not
+// part of the documented REST API but is what the PagerDuty web app reads and
+// writes for the "Correlate events by" and "Derive name from" options of the
+// Amazon CloudWatch integration.
+var serviceIntegrationConfigFields = map[string]string{
+	"cloudwatch_correlate_events_by": "incident_key",
+	"cloudwatch_derive_name_from":    "description",
+}
+
+var cloudWatchCorrelateEventsByValues = []string{
+	"alarm_name",
+	"always_create_new",
+	"event_name",
+	"finding_id",
+	"open_attach",
+	"region",
+	"source_origin",
+}
+
+var cloudWatchDeriveNameFromValues = []string{
+	"alarm_description",
+	"alarm_name",
+	"auto_generated",
 }
 
 // getAllowedIntegrationTypesList returns a sorted list of allowed integration types

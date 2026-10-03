@@ -1,3 +1,8 @@
+## Unreleased
+
+ENHANCEMENTS
+* `resource/pagerduty_service_integration`: Add `cloudwatch_correlate_events_by` and `cloudwatch_derive_name_from` to manage the "Correlate events by" and "Derive name from" options of the Amazon CloudWatch integration ([260](https://github.com/PagerDuty/terraform-provider-pagerduty/issues/260))
+
 ## v3.36.0 (Aug 25, 2026)
 
 ENHANCEMENTS

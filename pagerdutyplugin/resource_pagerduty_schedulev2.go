@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -363,7 +364,8 @@ func (r *resourceScheduleV2) Update(ctx context.Context, req resource.UpdateRequ
 		}
 	}
 
-	// Reconcile rotations: compare plan vs state by position
+	// Reconcile rotations: compare plan vs state by position, and events within
+	// each rotation by pairEvents
 	resp.Diagnostics.Append(r.reconcileRotations(ctx, scheduleID, plan.TimeZone.ValueString(), plan.Rotations, state.Rotations, &plan.Rotations)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -435,17 +437,17 @@ func (r *resourceScheduleV2) reconcileRotations(ctx context.Context, scheduleID,
 
 func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, rotationID, scheduleTimeZone string, desired, current []eventV2Model, result *[]eventV2Model) diag.Diagnostics {
 	var diags diag.Diagnostics
-	updatedEvents := make([]eventV2Model, 0, len(desired))
+	updatedEvents := make([]eventV2Model, len(desired))
 
-	minLen := len(desired)
-	if len(current) < minLen {
-		minLen = len(current)
-	}
+	pairing := pairEvents(ctx, desired, current)
 
-	// Update events that exist in both (matched by position)
-	for i := 0; i < minLen; i++ {
+	// Update events that exist in both
+	for i, c := range pairing.current {
+		if c < 0 {
+			continue
+		}
 		desiredEvt := desired[i]
-		currentEvt := current[i]
+		currentEvt := current[c]
 		eventID := currentEvt.ID.ValueString()
 
 		// Skip the API call when nothing in this event has changed. This avoids
@@ -458,7 +460,7 @@ func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, ro
 			preserveConfiguredEventTimes(&desiredEvt, &currentEvt)
 			currentEvt.EffectiveSince = desiredEvt.EffectiveSince
 			preserveShiftsPerMember(&desiredEvt, &currentEvt)
-			updatedEvents = append(updatedEvents, currentEvt)
+			updatedEvents[i] = currentEvt
 			continue
 		}
 
@@ -519,7 +521,7 @@ func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, ro
 			flattened.EffectiveSince = desiredEvt.EffectiveSince
 			preserveConfiguredEventTimes(&desiredEvt, &flattened)
 			preserveShiftsPerMember(&desiredEvt, &flattened)
-			updatedEvents = append(updatedEvents, flattened)
+			updatedEvents[i] = flattened
 			continue
 		}
 
@@ -558,12 +560,12 @@ func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, ro
 		flattened.EffectiveSince = desiredEvt.EffectiveSince
 		preserveConfiguredEventTimes(&desiredEvt, &flattened)
 		preserveShiftsPerMember(&desiredEvt, &flattened)
-		updatedEvents = append(updatedEvents, flattened)
+		updatedEvents[i] = flattened
 	}
 
-	// Delete extra events no longer needed
-	for i := minLen; i < len(current); i++ {
-		eventID := current[i].ID.ValueString()
+	// Delete events no longer needed
+	for _, c := range pairing.stale {
+		eventID := current[c].ID.ValueString()
 		err := retry.RetryContext(ctx, 2*time.Minute, func() *retry.RetryError {
 			err := r.client.DeleteEventV3(ctx, scheduleID, rotationID, eventID)
 			if err != nil {
@@ -580,8 +582,11 @@ func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, ro
 		}
 	}
 
-	// Create new events that are needed beyond what currently exists
-	for i := minLen; i < len(desired); i++ {
+	// Create events that have no current counterpart
+	for i, c := range pairing.current {
+		if c >= 0 {
+			continue
+		}
 		desiredEvt := desired[i]
 		eventInput, d := buildEventV3Input(ctx, &desiredEvt, scheduleTimeZone)
 		diags.Append(d...)
@@ -615,7 +620,7 @@ func (r *resourceScheduleV2) reconcileEvents(ctx context.Context, scheduleID, ro
 		flattened.EffectiveSince = desiredEvt.EffectiveSince
 		preserveConfiguredEventTimes(&desiredEvt, &flattened)
 		preserveShiftsPerMember(&desiredEvt, &flattened)
-		updatedEvents = append(updatedEvents, flattened)
+		updatedEvents[i] = flattened
 	}
 
 	*result = updatedEvents
@@ -829,54 +834,51 @@ func flattenScheduleV3(ctx context.Context, schedule *pagerduty.ScheduleV3, stat
 		Teams:       teamsList,
 	}
 
+	stateRotationsByID := make(map[string]rotationV2Model, len(stateRotations))
+	for _, rot := range stateRotations {
+		stateRotationsByID[rot.ID.ValueString()] = rot
+	}
+
 	rotations := make([]rotationV2Model, 0, len(schedule.Rotations))
-	for i, rot := range schedule.Rotations {
+	for _, rot := range schedule.Rotations {
 		rotModel := rotationV2Model{
 			ID: types.StringValue(rot.ID),
 		}
 
-		// Try to find the matching state rotation to preserve event ordering context
-		var stateEvents []eventV2Model
-		if i < len(stateRotations) {
-			stateEvents = stateRotations[i].Events
-		}
-
-		events := make([]eventV2Model, 0, len(rot.Events))
-		for j, evt := range rot.Events {
-			evtModel := flattenEventV3(ctx, &evt, diags)
+		apiEvents := make(map[string]eventV2Model, len(rot.Events))
+		for _, evt := range rot.Events {
+			apiEvents[evt.ID] = flattenEventV3(ctx, &evt, diags)
 			if diags.HasError() {
 				return model
 			}
+		}
 
-			// The v3 API normalizes start_time/end_time to UTC. Preserve the state value
-			// when it represents the same instant to prevent perpetual diffs.
-			if j < len(stateEvents) {
-				st := stateEvents[j]
-				if !st.StartTime.IsNull() && semanticallyEqualTime(st.StartTime.ValueString(), evtModel.StartTime.ValueString()) {
-					evtModel.StartTime = st.StartTime
+		// Events are matched to prior state by ID and kept in state order, which
+		// is the order they are configured in. The API stops returning an event
+		// once its effective_until has passed, so such an event is kept from state
+		// as it was: it still describes what happened, and dropping it would shift
+		// every later event and show the configuration as drifted.
+		stateEvents := stateRotationsByID[rot.ID].Events
+		events := make([]eventV2Model, 0, len(rot.Events))
+		seen := make(map[string]bool, len(rot.Events))
+		for _, st := range stateEvents {
+			id := st.ID.ValueString()
+			evtModel, ok := apiEvents[id]
+			if !ok {
+				if eventHasEnded(st) {
+					events = append(events, st)
 				}
-				if !st.EndTime.IsNull() && semanticallyEqualTime(st.EndTime.ValueString(), evtModel.EndTime.ValueString()) {
-					evtModel.EndTime = st.EndTime
-				}
-				// effective_until is also UTC-normalized by the API; preserve the
-				// state representation when it denotes the same instant.
-				if semanticallyEqualTimeValue(st.EffectiveUntil, evtModel.EffectiveUntil) {
-					evtModel.EffectiveUntil = st.EffectiveUntil
-				}
-				// The API normalizes past effective_since dates to current time. Preserve
-				// the state value to prevent perpetual plan diffs on subsequent refresh.
-				if !st.EffectiveSince.IsNull() && !st.EffectiveSince.IsUnknown() {
-					evtModel.EffectiveSince = st.EffectiveSince
-				}
-				// If prior state had shifts_per_member = null (user didn't configure it),
-				// keep null so the API-returned default doesn't cause a perpetual diff.
-				if len(st.AssignmentStrategy) > 0 && len(evtModel.AssignmentStrategy) > 0 &&
-					st.AssignmentStrategy[0].ShiftsPerMember.IsNull() {
-					evtModel.AssignmentStrategy[0].ShiftsPerMember = types.Int64Null()
-				}
+				continue
 			}
-
+			seen[id] = true
+			preserveStateEventValues(&st, &evtModel)
 			events = append(events, evtModel)
+		}
+		// Events created outside of Terraform have no state to preserve.
+		for _, evt := range rot.Events {
+			if !seen[evt.ID] {
+				events = append(events, apiEvents[evt.ID])
+			}
 		}
 
 		rotModel.Events = events
@@ -885,6 +887,35 @@ func flattenScheduleV3(ctx context.Context, schedule *pagerduty.ScheduleV3, stat
 
 	model.Rotations = rotations
 	return model
+}
+
+// preserveStateEventValues keeps the representations recorded in state for an
+// event the API returned, where the API normalizes them.
+func preserveStateEventValues(st, evtModel *eventV2Model) {
+	// The v3 API normalizes start_time/end_time to UTC. Preserve the state value
+	// when it represents the same instant to prevent perpetual diffs.
+	if !st.StartTime.IsNull() && semanticallyEqualTime(st.StartTime.ValueString(), evtModel.StartTime.ValueString()) {
+		evtModel.StartTime = st.StartTime
+	}
+	if !st.EndTime.IsNull() && semanticallyEqualTime(st.EndTime.ValueString(), evtModel.EndTime.ValueString()) {
+		evtModel.EndTime = st.EndTime
+	}
+	// effective_until is also UTC-normalized by the API; preserve the
+	// state representation when it denotes the same instant.
+	if semanticallyEqualTimeValue(st.EffectiveUntil, evtModel.EffectiveUntil) {
+		evtModel.EffectiveUntil = st.EffectiveUntil
+	}
+	// The API normalizes past effective_since dates to current time. Preserve
+	// the state value to prevent perpetual plan diffs on subsequent refresh.
+	if !st.EffectiveSince.IsNull() && !st.EffectiveSince.IsUnknown() {
+		evtModel.EffectiveSince = st.EffectiveSince
+	}
+	// If prior state had shifts_per_member = null (user didn't configure it),
+	// keep null so the API-returned default doesn't cause a perpetual diff.
+	if len(st.AssignmentStrategy) > 0 && len(evtModel.AssignmentStrategy) > 0 &&
+		st.AssignmentStrategy[0].ShiftsPerMember.IsNull() {
+		evtModel.AssignmentStrategy[0].ShiftsPerMember = types.Int64Null()
+	}
 }
 
 func flattenEventV3(ctx context.Context, evt *pagerduty.EventV3, diags *diag.Diagnostics) eventV2Model {
@@ -961,16 +992,35 @@ func (eventIDPlanModifier) PlanModifyString(ctx context.Context, req planmodifie
 		return
 	}
 
-	parent := req.Path.ParentPath()
-	var stateEvt, planEvt eventV2Model
-	if d := req.State.GetAttribute(ctx, parent, &stateEvt); d.HasError() {
+	// The ID belongs to whichever current event the Update path pairs this
+	// event with, so pair the whole rotation's events the same way it does.
+	eventPath := req.Path.ParentPath()
+	step, _ := eventPath.Steps().LastStep()
+	index, ok := step.(path.PathStepElementKeyInt)
+	if !ok {
+		return
+	}
+	eventsPath := eventPath.ParentPath()
+	var stateEvents, planEvents []eventV2Model
+	if d := req.State.GetAttribute(ctx, eventsPath, &stateEvents); d.HasError() {
 		resp.Diagnostics.Append(d...)
 		return
 	}
-	if d := req.Plan.GetAttribute(ctx, parent, &planEvt); d.HasError() {
+	if d := req.Plan.GetAttribute(ctx, eventsPath, &planEvents); d.HasError() {
 		resp.Diagnostics.Append(d...)
 		return
 	}
+	if int(index) >= len(planEvents) {
+		return
+	}
+
+	c := pairEvents(ctx, planEvents, stateEvents).current[index]
+	if c < 0 {
+		// A new event: its ID is assigned on create.
+		resp.PlanValue = types.StringUnknown()
+		return
+	}
+	stateEvt, planEvt := stateEvents[c], planEvents[index]
 
 	// If the event is currently active and shift-defining fields are changing,
 	// the Update path will DELETE and CREATE the event, producing a new ID.
@@ -979,8 +1029,67 @@ func (eventIDPlanModifier) PlanModifyString(ctx context.Context, req planmodifie
 		return
 	}
 
-	// Stable case: keep the prior ID so plans show no spurious id churn.
-	resp.PlanValue = req.StateValue
+	// Stable case: keep the paired event's ID so plans show no spurious id churn.
+	resp.PlanValue = stateEvt.ID
+}
+
+// eventPairing records which current event each desired event updates.
+type eventPairing struct {
+	// current holds, for each desired event, the index of the current event it
+	// updates, or -1 when it has to be created.
+	current []int
+	// stale holds the indexes of current events that have to be deleted.
+	stale []int
+}
+
+// pairEvents decides which current event each desired event updates. Desired
+// events identical to a current event are paired with it first, so removing or
+// inserting an event does not change any other. Current events that have ended
+// are left out, since the API no longer has them. The remaining desired and
+// current events are paired in order, and whatever is left over on either side
+// is created or deleted.
+func pairEvents(ctx context.Context, desired, current []eventV2Model) eventPairing {
+	pairing := eventPairing{current: make([]int, len(desired))}
+	claimed := make([]bool, len(current))
+
+	for i, d := range desired {
+		pairing.current[i] = -1
+		for c, cur := range current {
+			if !claimed[c] && eventModelsEqual(ctx, d, cur) {
+				pairing.current[i] = c
+				claimed[c] = true
+				break
+			}
+		}
+	}
+
+	for c, cur := range current {
+		if !claimed[c] && eventHasEnded(cur) {
+			claimed[c] = true
+		}
+	}
+
+	next := 0
+	for i := range desired {
+		if pairing.current[i] >= 0 {
+			continue
+		}
+		for next < len(current) && claimed[next] {
+			next++
+		}
+		if next == len(current) {
+			break
+		}
+		pairing.current[i] = next
+		claimed[next] = true
+	}
+
+	for c := range current {
+		if !claimed[c] {
+			pairing.stale = append(pairing.stale, c)
+		}
+	}
+	return pairing
 }
 
 // isEventActive returns true when an event's effective_since is in the past,
@@ -993,13 +1102,44 @@ func isEventActive(evt eventV2Model) bool {
 	return time.Now().UTC().After(t)
 }
 
+// eventHasEnded returns true when an event's effective_until is in the past.
+// The API stops returning such an event.
+func eventHasEnded(evt eventV2Model) bool {
+	if evt.EffectiveUntil.IsNull() || evt.EffectiveUntil.IsUnknown() {
+		return false
+	}
+	t, err := time.Parse(time.RFC3339, evt.EffectiveUntil.ValueString())
+	if err != nil {
+		return false
+	}
+	return !time.Now().UTC().Before(t)
+}
+
+// equivalentEffectiveSince returns true when two effective_since values have the
+// same effect. Besides denoting the same instant, any two past values are
+// equivalent: the API moves a past effective_since to the current time, and an
+// active event's effective_since cannot be changed.
+func equivalentEffectiveSince(a, b types.String) bool {
+	if semanticallyEqualTime(a.ValueString(), b.ValueString()) {
+		return true
+	}
+	ta, errA := time.Parse(time.RFC3339, a.ValueString())
+	tb, errB := time.Parse(time.RFC3339, b.ValueString())
+	if errA != nil || errB != nil {
+		return false
+	}
+	now := time.Now().UTC()
+	return ta.Before(now) && tb.Before(now)
+}
+
 // eventsDifferBeyondEffectiveUntil returns true when the two events differ in
 // any field other than effective_until.
 func eventsDifferBeyondEffectiveUntil(ctx context.Context, a, b eventV2Model) bool {
-	// effective_since is compared semantically (the API normalizes it to UTC); a
-	// representation-only change must not be reported as a difference, since for an
-	// active event that would force a DELETE+CREATE of a live shift.
-	if !a.Name.Equal(b.Name) || !semanticallyEqualTime(a.EffectiveSince.ValueString(), b.EffectiveSince.ValueString()) || !a.Recurrence.Equal(b.Recurrence) {
+	// effective_since is compared by effect (the API normalizes it to UTC, and
+	// to the current time when past); a change without effect must not be
+	// reported as a difference, since for an active event that would force a
+	// DELETE+CREATE of a live shift.
+	if !a.Name.Equal(b.Name) || !equivalentEffectiveSince(a.EffectiveSince, b.EffectiveSince) || !a.Recurrence.Equal(b.Recurrence) {
 		return true
 	}
 	if !semanticallyEqualTime(a.StartTime.ValueString(), b.StartTime.ValueString()) ||
@@ -1032,9 +1172,10 @@ func eventModelsEqual(ctx context.Context, a, b eventV2Model) bool {
 	// All time fields are compared semantically: the API normalizes them to UTC,
 	// so two different string representations of the same instant must count as
 	// equal, otherwise an unchanged event is treated as modified (and an active
-	// event would be needlessly DELETE+CREATEd).
+	// event would be needlessly DELETE+CREATEd). effective_since is compared by
+	// effect, for the same reason.
 	if !a.Name.Equal(b.Name) ||
-		!semanticallyEqualTime(a.EffectiveSince.ValueString(), b.EffectiveSince.ValueString()) ||
+		!equivalentEffectiveSince(a.EffectiveSince, b.EffectiveSince) ||
 		!semanticallyEqualTimeValue(a.EffectiveUntil, b.EffectiveUntil) ||
 		!a.Recurrence.Equal(b.Recurrence) {
 		return false

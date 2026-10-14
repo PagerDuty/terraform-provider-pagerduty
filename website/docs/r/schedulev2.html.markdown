@@ -73,7 +73,7 @@ resource "pagerduty_user" "secondary" {
 
 resource "pagerduty_schedulev2" "all_hands" {
   name      = "Weekend All-Hands On-Call"
-  time_zone = "UTC"
+  time_zone = "Etc/UTC"
 
   rotation {
     event {

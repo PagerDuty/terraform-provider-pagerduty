@@ -50,7 +50,7 @@ The two resources use different abstractions for on-call coverage.
 | `pagerduty_schedule` | `pagerduty_schedulev2` | Notes |
 |---|---|---|
 | `name` | `name` | v1 is Optional; v2 is Required |
-| `time_zone` | `time_zone` | v1 rejects `"UTC"` — use `"Etc/UTC"`. v2 accepts `"UTC"` directly. Prefer the full IANA name (e.g. `"America/New_York"`) in both. |
+| `time_zone` | `time_zone` | Both require a full IANA name — use `"Etc/UTC"` rather than `"UTC"`. |
 | `description` | `description` | v1 defaults to `"Managed by Terraform"`; v2 has no default |
 | `overflow` | — | No equivalent |
 | `teams` | — | Not yet supported in v2 |
@@ -163,7 +163,7 @@ resource "pagerduty_schedule" "business_hours" {
 ```hcl
 resource "pagerduty_schedulev2" "business_hours" {
   name      = "Business Hours On-Call"
-  time_zone = "UTC"   # v2 accepts "UTC" directly
+  time_zone = "Etc/UTC"
 
   rotation {
     event {

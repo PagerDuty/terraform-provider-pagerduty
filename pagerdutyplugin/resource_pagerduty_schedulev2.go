@@ -799,12 +799,6 @@ func buildEventV3Input(ctx context.Context, model *eventV2Model, scheduleTimeZon
 }
 
 func flattenScheduleV3(ctx context.Context, schedule *pagerduty.ScheduleV3, stateRotations []rotationV2Model, priorTeams types.List, diags *diag.Diagnostics) resourceScheduleV2Model {
-	// The v3 API normalizes "UTC" to "Etc/UTC". Normalize back to prevent perpetual plan diffs.
-	tz := schedule.TimeZone
-	if tz == "Etc/UTC" {
-		tz = "UTC"
-	}
-
 	// The API returns associated teams in an unstable order; preserve the prior
 	// state's ordering to avoid a perpetual reorder diff on the `teams` list.
 	teamIDs := orderedTeamIDs(ctx, priorTeams, schedule.Teams, diags)
@@ -824,7 +818,7 @@ func flattenScheduleV3(ctx context.Context, schedule *pagerduty.ScheduleV3, stat
 	model := resourceScheduleV2Model{
 		ID:          types.StringValue(schedule.ID),
 		Name:        types.StringValue(schedule.Name),
-		TimeZone:    types.StringValue(tz),
+		TimeZone:    types.StringValue(schedule.TimeZone),
 		Description: types.StringValue(schedule.Description),
 		Teams:       teamsList,
 	}

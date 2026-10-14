@@ -1,11 +1,15 @@
+## Unreleased
+
+ENHANCEMENTS
+* `util`: Accept the Canadian time zones `America/Vancouver`, `America/Edmonton`, `America/Inuvik` and `America/Winnipeg` now supported by the API ([1156](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1156))
+
+BUG FIXES
+* `resource/pagerduty_schedulev2`: Stop rewriting the API's `Etc/UTC` time zone to `UTC`, which caused a perpetual `"UTC" -> "Etc/UTC"` plan diff. Schedules already in state with the rewritten `UTC` value are corrected on the next refresh; a plan run with `-refresh=false` shows the correction as a one-time in-place change ([1156](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1156))
+
 ## v3.36.0 (Aug 25, 2026)
 
 ENHANCEMENTS
 * `resource/pagerduty_webhook_subscription`: Store and expose `delivery_method.secret`, the shared secret used to verify the `X-PagerDuty-Signature` header, which the API only returns in the creation response ([1144](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1144))
-* `util`: Accept the Canadian time zones `America/Vancouver`, `America/Edmonton`, `America/Inuvik` and `America/Winnipeg` now supported by the API
-
-BUG FIXES
-* `resource/pagerduty_schedulev2`: Stop rewriting the API's `Etc/UTC` time zone to `UTC`, which caused a perpetual `"UTC" -> "Etc/UTC"` plan diff. Schedules already in state with the rewritten `UTC` value are corrected on the next refresh; a plan run with `-refresh=false` shows the correction as a one-time in-place change
 
 ## v3.35.0 (Aug 7, 2026)
 

@@ -1,3 +1,14 @@
+## v3.37.0 (Oct 26, 2026)
+
+ENHANCEMENTS
+* `util`: Accept the Canadian time zones `America/Vancouver`, `America/Edmonton`, `America/Inuvik` and `America/Winnipeg` now supported by the API ([1156](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1156))
+
+BUG FIXES
+* `resource/pagerduty_schedulev2`: Stop rewriting the API's `Etc/UTC` time zone to `UTC`, which caused a perpetual `"UTC" -> "Etc/UTC"` plan diff. Schedules already in state with the rewritten `UTC` value are corrected on the next refresh; a plan run with `-refresh=false` shows the correction as a one-time in-place change ([1156](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1156))
+
+DOCS
+* `resource/pagerduty_schedulev2`: Correct the `time_zone` examples in the resource page and the `pagerduty_schedule` migration guide, which used `UTC` — a value that has never passed validation — instead of `Etc/UTC` ([1156](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1156))
+
 ## v3.36.0 (Aug 25, 2026)
 
 ENHANCEMENTS

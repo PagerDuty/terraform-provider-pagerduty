@@ -28,6 +28,26 @@ func TestValidateTZValueDiagFunc(t *testing.T) {
 			path:  cty.Path{},
 		},
 		{
+			given: "America/Vancouver",
+			want:  nil,
+			path:  cty.Path{},
+		},
+		{
+			given: "America/Edmonton",
+			want:  nil,
+			path:  cty.Path{},
+		},
+		{
+			given: "America/Inuvik",
+			want:  nil,
+			path:  cty.Path{},
+		},
+		{
+			given: "America/Winnipeg",
+			want:  nil,
+			path:  cty.Path{},
+		},
+		{
 			given: notValidTZ1,
 			want:  diag.Diagnostics{diag.Diagnostic{Severity: 0, Summary: fmt.Sprintf("\"%s\" is a not valid input. Please refer to the list of allowed Time Zone values at https://developer.pagerduty.com/docs/1afe25e9c94cb-types#time-zone", notValidTZ1), Detail: "", AttributePath: cty.Path{cty.GetAttrStep{Name: "time_zone"}}}},
 			path:  cty.Path{cty.GetAttrStep{Name: "time_zone"}},

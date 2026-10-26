@@ -26,8 +26,8 @@ func (d *dataSourceService) Metadata(ctx context.Context, req datasource.Metadat
 func (d *dataSourceService) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id":                      schema.StringAttribute{Computed: true},
-			"name":                    schema.StringAttribute{Required: true},
+			"id":                      schema.StringAttribute{Optional: true, Computed: true},
+			"name":                    schema.StringAttribute{Optional: true, Computed: true},
 			"auto_resolve_timeout":    schema.Int64Attribute{Computed: true},
 			"acknowledgement_timeout": schema.Int64Attribute{Computed: true},
 			"alert_creation":          schema.StringAttribute{Computed: true},
@@ -55,47 +55,72 @@ func (d *dataSourceService) Configure(_ context.Context, req datasource.Configur
 func (d *dataSourceService) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	log.Printf("[INFO] Reading PagerDuty service")
 
-	var searchName types.String
-	if d := req.Config.GetAttribute(ctx, path.Root("name"), &searchName); d.HasError() {
-		resp.Diagnostics.Append(d...)
+	var searchID, searchName types.String
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("id"), &searchID)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("name"), &searchName)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := searchID.ValueString()
+	name := searchName.ValueString()
+	if (id == "") == (name == "") {
+		resp.Diagnostics.AddError(
+			"Invalid service data source configuration",
+			"Exactly one of `id` or `name` must be specified.",
+		)
 		return
 	}
 
 	var found *pagerduty.Service
-	err := apiutil.All(ctx, func(offset int) (bool, error) {
-		resp, err := d.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{
-			Query:    searchName.ValueString(),
-			Limit:    apiutil.Limit,
-			Offset:   uint(offset),
-			Includes: []string{"teams"},
+	if id != "" {
+		// A known ID resolves to a single service with one direct request,
+		// avoiding a paginated search over every service in the account.
+		service, err := d.client.GetServiceWithContext(ctx, id, &pagerduty.GetServiceOptions{Includes: []string{"teams"}})
+		if err != nil {
+			resp.Diagnostics.AddError(
+				fmt.Sprintf("Unable to read service with the id: %s", id),
+				err.Error(),
+			)
+			return
+		}
+		found = service
+	} else {
+		err := apiutil.All(ctx, func(offset int) (bool, error) {
+			list, err := d.client.ListServicesWithContext(ctx, pagerduty.ListServiceOptions{
+				Query:    name,
+				Limit:    apiutil.Limit,
+				Offset:   uint(offset),
+				Includes: []string{"teams"},
+			})
+			if err != nil {
+				return false, err
+			}
+
+			for _, service := range list.Services {
+				if service.Name == name {
+					found = &service
+					return false, nil
+				}
+			}
+
+			return list.More, nil
 		})
 		if err != nil {
-			return false, err
+			resp.Diagnostics.AddError(
+				fmt.Sprintf("Error searching Service %s", name),
+				err.Error(),
+			)
+			return
 		}
 
-		for _, service := range resp.Services {
-			if service.Name == searchName.ValueString() {
-				found = &service
-				return false, nil
-			}
+		if found == nil {
+			resp.Diagnostics.AddError(
+				fmt.Sprintf("Unable to locate any service with the name: %s", name),
+				"",
+			)
+			return
 		}
-
-		return resp.More, nil
-	})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Error searching Service %s", searchName),
-			err.Error(),
-		)
-		return
-	}
-
-	if found == nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Unable to locate any service with the name: %s", searchName),
-			"",
-		)
-		return
 	}
 
 	model := flattenServiceData(found, &resp.Diagnostics)

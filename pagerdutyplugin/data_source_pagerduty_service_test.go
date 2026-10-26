@@ -164,3 +164,54 @@ data "pagerduty_service" "one_team_service" {
 
 `, teamname, username, email, service, escalationPolicy)
 }
+
+func TestAccDataSourcePagerDutyService_ByID(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.test", username)
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDataSourcePagerDutyServiceByIDConfig(username, email, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccDataSourcePagerDutyService("pagerduty_service.test", "data.pagerduty_service.by_id"),
+				),
+			},
+		},
+	})
+}
+
+func testAccDataSourcePagerDutyServiceByIDConfig(username, email, service string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "test" {
+  name  = "%[1]s"
+  email = "%[2]s"
+}
+
+resource "pagerduty_escalation_policy" "test" {
+  name      = "%[3]s-ep"
+  num_loops = 2
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.test.id
+    }
+  }
+}
+
+resource "pagerduty_service" "test" {
+  name                    = "%[3]s"
+  auto_resolve_timeout    = 14400
+  acknowledgement_timeout = 600
+  escalation_policy       = pagerduty_escalation_policy.test.id
+}
+
+data "pagerduty_service" "by_id" {
+  id = pagerduty_service.test.id
+}
+`, username, email, service)
+}

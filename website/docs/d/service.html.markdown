@@ -17,6 +17,11 @@ data "pagerduty_service" "example" {
   name = "My Service"
 }
 
+# A service can also be looked up directly by its ID.
+data "pagerduty_service" "by_id" {
+  id = "PABCDEF"
+}
+
 data "pagerduty_vendor" "datadog" {
   name = "Datadog"
 }
@@ -31,9 +36,10 @@ resource "pagerduty_service_integration" "example" {
 
 ## Argument Reference
 
-The following arguments are supported:
+The following arguments are supported. Exactly one of `id` or `name` must be provided:
 
-* `name` - (Required) The service name to use to find a service in the PagerDuty API.
+* `id` - (Optional) The ID of the service to find in the PagerDuty API. When set, the service is fetched directly by ID with a single request instead of searching by name.
+* `name` - (Optional) The service name to use to find a service in the PagerDuty API.
 
 ## Attributes Reference
 

@@ -1,4 +1,4 @@
-## v3.37.0 (Oct 14, 2026)
+## v3.37.0 (Oct 26, 2026)
 
 ENHANCEMENTS
 * `util`: Accept the Canadian time zones `America/Vancouver`, `America/Edmonton`, `America/Inuvik` and `America/Winnipeg` now supported by the API ([1156](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/1156))

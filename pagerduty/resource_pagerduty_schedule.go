@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -154,7 +153,7 @@ func resourcePagerDutySchedule() *schema.Resource {
 									"start_time_of_day": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ValidateFunc: validation.StringMatch(regexp.MustCompile(`([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]`), "must be of 00:00:00 format"),
+										ValidateFunc: util.ValidateTimeOfDay,
 									},
 
 									"start_day_of_week": {

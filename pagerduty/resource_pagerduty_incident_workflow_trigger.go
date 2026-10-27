@@ -31,6 +31,7 @@ func resourcePagerDutyIncidentWorkflowTrigger() *schema.Resource {
 				ValidateDiagFunc: validateValueDiagFunc([]string{
 					"manual",
 					"conditional",
+					"incident_type",
 				}),
 			},
 			"workflow": {
@@ -48,6 +49,13 @@ func resourcePagerDutyIncidentWorkflowTrigger() *schema.Resource {
 			"subscribed_to_all_services": {
 				Type:     schema.TypeBool,
 				Required: true,
+			},
+			"incident_types": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"condition": {
 				Type:     schema.TypeString,
@@ -177,8 +185,8 @@ func resourcePagerDutyIncidentWorkflowTriggerDelete(ctx context.Context, d *sche
 func validateIncidentWorkflowTrigger(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	triggerType := d.Get("type").(string)
 	_, hadCondition := d.GetOk("condition")
-	if triggerType == "manual" && hadCondition {
-		return fmt.Errorf("when trigger type manual is used, condition must not be specified")
+	if triggerType != "conditional" && hadCondition {
+		return fmt.Errorf("when trigger type %s is used, condition must not be specified", triggerType)
 	}
 
 	// pagerduty_incident_workflow_trigger.permissions input validation
@@ -195,6 +203,20 @@ func validateIncidentWorkflowTrigger(_ context.Context, d *schema.ResourceDiff, 
 	all := d.Get("subscribed_to_all_services").(bool)
 	if all && hadServices && len(s.([]interface{})) > 0 {
 		return fmt.Errorf("when subscribed_to_all_services is true, services must either be not defined or empty")
+	}
+
+	// The API rejects is_subscribed_to_all_services outright when trigger_type
+	// is incident_type (it isn't a service-scoped trigger type), so require it
+	// be false in config rather than silently never sending a true value.
+	if triggerType == "incident_type" && all {
+		return fmt.Errorf("subscribed_to_all_services must be false when trigger type is incident_type")
+	}
+
+	// The API requires incident_types to contain at least one element whenever
+	// it is sent (it rejects an explicit empty list with "must contain at least
+	// 1 items"), so catch an empty list at plan time instead of a 400 at apply.
+	if triggerType == "incident_type" && len(d.Get("incident_types").([]interface{})) == 0 {
+		return fmt.Errorf("incident_types must contain at least one item when trigger type is incident_type")
 	}
 
 	return nil
@@ -237,7 +259,16 @@ func flattenIncidentWorkflowTrigger(d *schema.ResourceData, t *pagerduty.Inciden
 		d.Set("workflow", t.Workflow.ID)
 	}
 	d.Set("services", flattenIncidentWorkflowEnabledServices(t.Services))
-	d.Set("subscribed_to_all_services", t.SubscribedToAllServices)
+	if t.TriggerType == pagerduty.IncidentWorkflowTriggerTypeIncidentType {
+		// The API returns is_subscribed_to_all_services as true for incident_type
+		// triggers even though it's never sent on create/update (validated to
+		// always be false for this type); trusting the response here would
+		// produce a permanent plan diff against the only value config is ever
+		// allowed to hold for this type.
+		d.Set("subscribed_to_all_services", false)
+	} else {
+		d.Set("subscribed_to_all_services", t.SubscribedToAllServices)
+	}
 	if t.Condition != nil {
 		d.Set("condition", t.Condition)
 	}
@@ -248,6 +279,9 @@ func flattenIncidentWorkflowTrigger(d *schema.ResourceData, t *pagerduty.Inciden
 				"team_id":    t.Permissions.TeamID,
 			},
 		})
+	}
+	if len(t.IncidentTypes) > 0 {
+		d.Set("incident_types", t.IncidentTypes)
 	}
 
 	return nil
@@ -264,6 +298,11 @@ func flattenIncidentWorkflowEnabledServices(s []*pagerduty.ServiceReference) []s
 func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) (*pagerduty.IncidentWorkflowTrigger, error) {
 	triggerType := d.Get("type").(string)
 
+	// The API rejects is_subscribed_to_all_services outright for incident_type
+	// triggers. validateIncidentWorkflowTrigger requires it be false in config
+	// for that type, and the vendored client's omitempty tag on this plain bool
+	// field already omits a false value from the request, so this needs no
+	// special-casing here.
 	iwt := pagerduty.IncidentWorkflowTrigger{
 		SubscribedToAllServices: d.Get("subscribed_to_all_services").(bool),
 	}
@@ -279,6 +318,18 @@ func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) 
 		iwt.Services = buildIncidentWorkflowTriggerServices(services)
 	}
 
+	// IncidentTypes must be set unconditionally, outside the forUpdate block, so
+	// updates to the list are sent to the API (unlike Workflow/TriggerType, which
+	// are immutable and only sent on Create). Use d.Get rather than d.GetOk: GetOk
+	// treats an empty list as "no value", which would silently drop a shrink of
+	// the list instead of sending it to the API; validateIncidentWorkflowTrigger
+	// rejects an empty list for incident_type at plan time (the API requires at
+	// least one element), so build never needs to send an empty one. Gate on
+	// triggerType so manual/conditional triggers never send this field at all.
+	if triggerType == "incident_type" {
+		iwt.IncidentTypes = buildIncidentWorkflowTriggerIncidentTypes(d.Get("incident_types"))
+	}
+
 	// Special handling for condition to support empty string conditions
 	// GetOk won't return true for empty strings, but we need to set them
 	// for conditional triggers that execute on incident creation
@@ -287,7 +338,12 @@ func buildIncidentWorkflowTriggerStruct(d *schema.ResourceData, forUpdate bool) 
 		iwt.Condition = &condStr
 	}
 
-	if permissions, ok := d.GetOk("permissions"); ok {
+	// The API rejects the permissions key outright for incident_type triggers.
+	// permissions is Optional+Computed, so once a computed default is written
+	// to state by a prior apply, d.GetOk("permissions") sees it as present on
+	// every subsequent update even for a trigger whose config never mentions
+	// it; gate on triggerType rather than trusting GetOk alone.
+	if permissions, ok := d.GetOk("permissions"); ok && triggerType != "incident_type" {
 		p, err := expandIncidentWorkflowTriggerPermissions(permissions)
 		if err != nil {
 			return nil, err
@@ -307,6 +363,15 @@ func buildIncidentWorkflowTriggerServices(s interface{}) []*pagerduty.ServiceRef
 		}
 	}
 	return newServices
+}
+
+func buildIncidentWorkflowTriggerIncidentTypes(v interface{}) []string {
+	incidentTypes := v.([]interface{})
+	newIncidentTypes := make([]string, len(incidentTypes))
+	for i, v := range incidentTypes {
+		newIncidentTypes[i] = v.(string)
+	}
+	return newIncidentTypes
 }
 
 func expandIncidentWorkflowTriggerPermissions(v interface{}) (*pagerduty.IncidentWorkflowTriggerPermissions, error) {

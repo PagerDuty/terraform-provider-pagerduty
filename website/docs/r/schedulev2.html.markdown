@@ -239,6 +239,8 @@ Event blocks (`event`) support the following:
 * `recurrence` - (Required) List of RFC 5545 recurrence rule strings. Must contain exactly one `RRULE` entry. May optionally include one or more `EXDATE` entries (dates to exclude) and one or more `RDATE` entries (additional dates to include). Example: `["RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"]`. You can generate RRULE strings interactively using tools like [RRULE Tool](https://icalendar.org/rrule-tool.html).
 * `assignment_strategy` - (Required) A block defining how on-call responsibility is assigned. Assignment strategy documented below.
 
+~> **Note:** To hand over from one event to another at a set time, give the outgoing event an `effective_until` and the incoming event the same `effective_since`. Once `effective_until` has passed the API no longer returns the outgoing event; the provider keeps it in state so the configuration still matches, and removing it from the configuration later doesn't change the remaining events.
+
 ---
 
 Assignment strategy blocks (`assignment_strategy`) support the following:

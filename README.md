@@ -79,7 +79,7 @@ Make changes to the PagerDuty provider and post a pull request for review.
 
 1. [Create a fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) of the **upstream** repository `https://github.com/PagerDuty/terraform-provider-pagerduty`
 2. Clone the new **origin** repository to your local go src path: `$GOPATH/src/github.com/<your-github-username>/terraform-provider-pagerduty`
-3. optionally make development easier by setting the [**upstream**](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-for-a-fork) repository
+3. optionally make development easier by setting the [**upstream**](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/configuring-a-remote-repository-for-a-fork) repository
    ```
    $ git remote add upstream git@github.com:PagerDuty/terraform-provider-pagerduty.git
    ```

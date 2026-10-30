@@ -94,6 +94,14 @@ var eventOrchestrationPathGlobalCatchAllActionsSchema = map[string]*schema.Schem
 			Schema: eventOrchestrationIncidentCustomFieldsObjectSchema,
 		},
 	},
+	"incident_type": {
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: eventOrchestrationIncidentTypeObjectSchema,
+		},
+	},
 	"escalation_policy": {
 		Type:     schema.TypeString,
 		Optional: true,
@@ -417,6 +425,7 @@ func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRul
 		actions.Variables = expandEventOrchestrationPathVariables(a["variable"])
 		actions.Extractions = expandEventOrchestrationPathExtractions(a["extraction"])
 		actions.IncidentCustomFieldUpdates = expandEventOrchestrationPathIncidentCustomFields(a["incident_custom_field_update"])
+		actions.IncidentType = expandEventOrchestrationPathIncidentType(a["incident_type"])
 	}
 
 	return actions
@@ -497,6 +506,9 @@ func flattenGlobalPathActions(actions *pagerduty.EventOrchestrationPathRuleActio
 	}
 	if actions.IncidentCustomFieldUpdates != nil {
 		flattenedAction["incident_custom_field_update"] = flattenEventOrchestrationIncidentCustomFieldUpdates(actions.IncidentCustomFieldUpdates)
+	}
+	if actions.IncidentType != nil {
+		flattenedAction["incident_type"] = flattenEventOrchestrationPathIncidentType(actions.IncidentType)
 	}
 
 	actionsMap = append(actionsMap, flattenedAction)

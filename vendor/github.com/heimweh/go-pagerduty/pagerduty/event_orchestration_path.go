@@ -61,6 +61,7 @@ type EventOrchestrationPathRuleActions struct {
 	PagerdutyAutomationActions []*EventOrchestrationPathPagerdutyAutomationAction `json:"pagerduty_automation_actions"`
 	AutomationActions          []*EventOrchestrationPathAutomationAction          `json:"automation_actions"`
 	IncidentCustomFieldUpdates []*EventOrchestrationPathIncidentCustomFieldUpdate `json:"incident_custom_field_updates"`
+	IncidentType               *EventOrchestrationPathIncidentType                `json:"incident_type,omitempty"`
 	Severity                   string                                             `json:"severity"`
 	EventAction                string                                             `json:"event_action"`
 	Variables                  []*EventOrchestrationPathActionVariables           `json:"variables"`
@@ -77,6 +78,11 @@ type EventOrchestrationPathDynamicRouteTo struct {
 type EventOrchestrationPathIncidentCustomFieldUpdate struct {
 	ID    string `json:"id,omitempty"`
 	Value string `json:"value,omitempty"`
+}
+
+type EventOrchestrationPathIncidentType struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 type EventOrchestrationPathPagerdutyAutomationAction struct {

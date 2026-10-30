@@ -98,6 +98,11 @@ var eventOrchestrationPathGlobalCatchAllActionsSchema = map[string]*schema.Schem
 		Type:     schema.TypeString,
 		Optional: true,
 	},
+	"starting_phase": {
+		Type:             schema.TypeString,
+		Optional:         true,
+		ValidateDiagFunc: validateEventOrchestrationPathStartingPhase(),
+	},
 }
 
 var eventOrchestrationPathGlobalRuleActionsSchema = buildEventOrchestrationPathGlobalRuleActionsSchema()
@@ -410,6 +415,7 @@ func expandGlobalPathActions(v interface{}) *pagerduty.EventOrchestrationPathRul
 		actions.Suspend = intTypeToIntPtr(a["suspend"].(int))
 		actions.Priority = a["priority"].(string)
 		actions.EscalationPolicy = stringTypeToStringPtr(a["escalation_policy"].(string))
+		actions.StartingPhase = stringTypeToStringPtr(a["starting_phase"].(string))
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)
@@ -484,6 +490,7 @@ func flattenGlobalPathActions(actions *pagerduty.EventOrchestrationPathRuleActio
 		"priority":          actions.Priority,
 		"annotate":          actions.Annotate,
 		"escalation_policy": stringPtrToStringType(actions.EscalationPolicy),
+		"starting_phase":    stringPtrToStringType(actions.StartingPhase),
 	}
 
 	if actions.Variables != nil {

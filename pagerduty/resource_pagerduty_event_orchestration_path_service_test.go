@@ -318,6 +318,66 @@ func TestAccPagerDutyEventOrchestrationPathService_OverwriteGuard(t *testing.T) 
 	})
 }
 
+func TestAccPagerDutyEventOrchestrationPathService_StartingPhase(t *testing.T) {
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resourceName := "pagerduty_event_orchestration_service.serviceA"
+	serviceResourceName := "pagerduty_service.bar"
+
+	baseChecks := []resource.TestCheckFunc{
+		testAccCheckPagerDutyEventOrchestrationPathServiceExists(resourceName),
+		testAccCheckPagerDutyEventOrchestrationPathServiceServiceID(resourceName, serviceResourceName),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyEventOrchestrationServicePathDestroy,
+		Steps: []resource.TestStep{
+			// Invalid values are rejected at plan time
+			{
+				Config:      testAccCheckPagerDutyEventOrchestrationPathServiceStartingPhaseConfig(escalationPolicy, service, "", `starting_phase = "acknowledged"`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`"acknowledged" is an invalid value`),
+			},
+			// Create with starting_phase on a rule and on the catch-all
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceStartingPhaseConfig(escalationPolicy, service, `starting_phase = "triage"`, `starting_phase = "active"`),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "set.0.rule.0.actions.0.starting_phase", "triage"),
+						resource.TestCheckResourceAttr(resourceName, "catch_all.0.actions.0.starting_phase", "active"),
+					)...,
+				),
+			},
+			// Update both values
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceStartingPhaseConfig(escalationPolicy, service, `starting_phase = "active"`, `starting_phase = "triage"`),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "set.0.rule.0.actions.0.starting_phase", "active"),
+						resource.TestCheckResourceAttr(resourceName, "catch_all.0.actions.0.starting_phase", "triage"),
+					)...,
+				),
+			},
+			// Removing the attribute clears it (falls back to the account default)
+			{
+				Config: testAccCheckPagerDutyEventOrchestrationPathServiceStartingPhaseConfig(escalationPolicy, service, "", ""),
+				Check: resource.ComposeTestCheckFunc(
+					append(
+						baseChecks,
+						resource.TestCheckResourceAttr(resourceName, "set.0.rule.0.actions.0.starting_phase", ""),
+						resource.TestCheckResourceAttr(resourceName, "catch_all.0.actions.0.starting_phase", ""),
+					)...,
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckPagerDutyEventOrchestrationServicePathDestroy(s *terraform.State) error {
 	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
@@ -938,4 +998,32 @@ func testAccCheckPagerDutyEventOrchestrationPathServiceEnableEOForServiceDisable
 			}
 		}
 	`)
+}
+
+func testAccCheckPagerDutyEventOrchestrationPathServiceStartingPhaseConfig(ep, s, ruleStartingPhase, catchAllStartingPhase string) string {
+	return fmt.Sprintf("%s%s", createBaseServicePathConfig(ep, s),
+		fmt.Sprintf(`resource "pagerduty_event_orchestration_service" "serviceA" {
+			service = pagerduty_service.bar.id
+
+			set {
+				id = "start"
+				rule {
+					label = "set starting phase"
+					condition {
+						expression = "event.summary matches part 'starting phase'"
+					}
+					actions {
+						severity = "warning"
+						%s
+					}
+				}
+			}
+
+			catch_all {
+				actions {
+					%s
+				}
+			}
+		}
+	`, ruleStartingPhase, catchAllStartingPhase))
 }

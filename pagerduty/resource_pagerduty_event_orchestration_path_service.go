@@ -94,6 +94,11 @@ func buildEventOrchestrationPathServiceCatchAllActionsSchema() map[string]*schem
 			Type:     schema.TypeString,
 			Optional: true,
 		},
+		"starting_phase": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			ValidateDiagFunc: validateEventOrchestrationPathStartingPhase(),
+		},
 		"route_to": {
 			Type:       schema.TypeString,
 			Deprecated: "The 'route_to' attribute is no longer supported for catch-all rules.",
@@ -534,6 +539,7 @@ func expandServicePathActions(v interface{}) *pagerduty.EventOrchestrationPathRu
 		actions.Suspend = intTypeToIntPtr(a["suspend"].(int))
 		actions.Priority = a["priority"].(string)
 		actions.EscalationPolicy = stringTypeToStringPtr(a["escalation_policy"].(string))
+		actions.StartingPhase = stringTypeToStringPtr(a["starting_phase"].(string))
 		actions.Annotate = a["annotate"].(string)
 		actions.Severity = a["severity"].(string)
 		actions.EventAction = a["event_action"].(string)
@@ -624,6 +630,7 @@ func flattenServicePathActions(actions *pagerduty.EventOrchestrationPathRuleActi
 		"priority":          actions.Priority,
 		"annotate":          actions.Annotate,
 		"escalation_policy": stringPtrToStringType(actions.EscalationPolicy),
+		"starting_phase":    stringPtrToStringType(actions.StartingPhase),
 	}
 
 	if actions.Variables != nil {

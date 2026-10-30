@@ -70,6 +70,7 @@ resource "pagerduty_event_orchestration_global" "global" {
       }
       actions {
         escalation_policy = data.pagerduty_escalation_policy.sre_esc_policy.id
+        starting_phase = "triage"
       }
     }
     rule {
@@ -128,6 +129,7 @@ The following arguments are supported:
 * `suspend` - (Optional) The number of seconds to suspend the resulting alert before triggering. This effectively pauses incident notifications. If a `resolve` event arrives before the alert triggers then PagerDuty won't create an incident for this alert.
 * `priority` - (Optional) The ID of the priority you want to set on resulting incident. Consider using the [`pagerduty_priority`](https://registry.terraform.io/providers/PagerDuty/pagerduty/latest/docs/data-sources/priority) data source.
 * `escalation_policy` - (Optional) The ID of the Escalation Policy you want to assign incidents to. Event rules with this action will override the Escalation Policy already set on a Service's settings, with what is configured by this action.
+* `starting_phase` - (Optional) The phase the resulting incident starts in. Allowed values are: `triage`, `active`. If omitted, the account's default starting phase is used. Removing this attribute from the configuration clears it, so the account default applies again.
 * `annotate` - (Optional) Add this text as a note on the resulting incident.
 * `incident_custom_field_update` - (Optional) Assign a custom field to the resulting incident.
   * `id` - (Required) The custom field id

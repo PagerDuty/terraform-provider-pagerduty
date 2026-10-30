@@ -155,6 +155,13 @@ func validateEventOrchestrationPathEventAction() schema.SchemaValidateDiagFunc {
 	})
 }
 
+func validateEventOrchestrationPathStartingPhase() schema.SchemaValidateDiagFunc {
+	return validateValueDiagFunc([]string{
+		"triage",
+		"active",
+	})
+}
+
 func checkExtractions(context context.Context, diff *schema.ResourceDiff, i interface{}) error {
 	sn := diff.Get("set.#").(int)
 
@@ -498,7 +505,7 @@ func checkExistingOrchestrationPathConfig(ctx context.Context, client *pagerduty
 			suppressNonTrivial := a.Suppress && pathType != "unrouted"
 			if suppressNonTrivial || a.DropEvent || a.Priority != "" || a.Severity != "" ||
 				a.EventAction != "" || a.Annotate != "" || a.RouteTo != "" ||
-				a.Suspend != nil || a.EscalationPolicy != nil ||
+				a.Suspend != nil || a.EscalationPolicy != nil || a.StartingPhase != nil ||
 				len(a.Variables) > 0 || len(a.Extractions) > 0 ||
 				len(a.AutomationActions) > 0 || len(a.PagerdutyAutomationActions) > 0 ||
 				len(a.IncidentCustomFieldUpdates) > 0 {

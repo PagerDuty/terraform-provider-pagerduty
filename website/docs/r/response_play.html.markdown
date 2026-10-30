@@ -15,7 +15,7 @@ A [response play](https://developer.pagerduty.com/api-reference/b3A6Mjc0ODE2Ng-c
   <p>
     Response Play will end-of-life soon. We highly recommend that you
     <a
-      href="https://support.pagerduty.com/docs/upgrade-response-plays-to-incident-workflows"
+      href="https://docs.pagerduty.com/ai-automation/automation/incident-workflows"
       rel="noopener noreferrer"
       target="_blank"
       >migrate to Incident Workflows</a>
